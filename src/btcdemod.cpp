@@ -1,3 +1,4 @@
+#include "clientversion.h"
 #include "init.h"
 #include "util.h"
 #include "utiltime.h"
@@ -20,6 +21,21 @@ bool AppInit(int argc, char **argv)
 {
 	boost::thread_group thread_group;
 	bool ret = false;
+	
+	ParseParameters(argc, argv);
+	if (IsArgSet("-?") || IsArgSet("-h") || IsArgSet("-help") || IsArgSet("-version")) {
+		std::string usage = std::string(PACKAGE_STRING) + std::string("\n");
+		if (IsArgSet("-version")) {
+		
+		}
+		else {
+			usage += std::string("\nUsage:\n  btcdemod [options]                     Start ") +
+					 std::string(PACKAGE_NAME) + std::string(" Daemon\n\n");
+			usage += HelpMessage();
+		}
+		std::cout << usage;
+		return true;
+	}
 	
 	try {
 		if (!AppInitBasicSetup())

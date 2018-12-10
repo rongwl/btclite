@@ -8,7 +8,8 @@
 void Interrupt(boost::thread_group*);
 void Shutdown();
 bool get_shutdown_requested();
+std::string HelpMessage();
 bool AppInitBasicSetup();
 bool AppInitMain();
 
-#endif
+#endif // BTCDEMO_INIT_H

@@ -37,6 +37,15 @@ void HandleSIGTERM(int)
 	shutdown_requested = true;
 }
 
+std::string HelpMessage()
+{
+	std::string usage = HelpMessageGroup("Options:");
+	usage += HelpMessageOpt("-? or -h or --help", "Print this help message and exit");
+	usage += HelpMessageOpt("-version", "Print version and exit");
+	
+	return usage;
+}
+
 bool AppInitBasicSetup()
 {
 	// Clean shutdown on SIGTERM

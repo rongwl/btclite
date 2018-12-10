@@ -3,4 +3,4 @@
 
 #include <chrono>
 
-#endif
+#endif // BTCDEMO_UTILTIME_H
