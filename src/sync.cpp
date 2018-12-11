@@ -49,28 +49,11 @@ typedef std::set<std::pair<void*, void*> > InvLockOrders;
 
 boost::thread_specific_ptr<LockStack> lock_stack;
 
-class LockData {
-public:
-	LockData()
-		: available_(true) {}
-	~LockData()
-	{
-		available_ = false;
-	}
-	bool avaliable() const
-	{
-		return available_;
-	}
-	
-	LockOrders lock_orders_;
-	InvLockOrders invlock_orders_;
-	std::mutex mutex_;
-	
-private:
-	bool available_;
-	
-};
-static LockData lock_data;
+namespace {
+	LockOrders lock_orders;
+	InvLockOrders invlock_orders;
+	std::mutex lock_stack_mutex;
+}
 
 static void potential_deadlock_detected(const std::pair<void*, void*>& mismatch, const LockStack& s1, const LockStack& s2)
 {
@@ -100,17 +83,17 @@ void PushLock(void *c, const CLockLocation& lock_location, bool try_lock)
 	if (lock_stack.get() == NULL)
 		lock_stack.reset(new LockStack);
 
-	std::unique_lock<std::mutex> lock(lock_data.mutex_);
+	std::unique_lock<std::mutex> lock(lock_stack_mutex);
 	(*lock_stack).push_back(std::make_pair(c, lock_location));
 	for (auto it : *lock_stack) {
 		if (it.first == c)
 			break;
 		std::pair<void*, void*> pair = std::make_pair(it.first, c);
-		lock_data.lock_orders_[pair] = *lock_stack;
+		lock_orders[pair] = *lock_stack;
 		std::pair<void*, void*> invpair = std::make_pair(c, it.first);
-		lock_data.invlock_orders_.insert(invpair);
-		if (lock_data.lock_orders_.count(invpair))
-			potential_deadlock_detected(pair, lock_data.lock_orders_[invpair], lock_data.lock_orders_[pair]);
+		invlock_orders.insert(invpair);
+		if (lock_orders.count(invpair))
+			potential_deadlock_detected(pair, lock_orders[invpair], lock_orders[pair]);
 	}
 }
 
@@ -121,20 +104,17 @@ void PopLock()
 
 void DeleteLock(void *cs)
 {
-	if(!lock_data.avaliable())
-		return;
-
-	std::unique_lock<std::mutex> lock(lock_data.mutex_);
-	auto it = lock_data.lock_orders_.lower_bound(std::make_pair(cs, (void*)0));
-	while (it != lock_data.lock_orders_.end() && it->first.first == cs) {
-		lock_data.lock_orders_.erase(it);
-		lock_data.invlock_orders_.erase(std::make_pair(it->first.second, it->first.first));
+	std::unique_lock<std::mutex> lock(lock_stack_mutex);
+	auto it = lock_orders.lower_bound(std::make_pair(cs, (void*)0));
+	while (it != lock_orders.end() && it->first.first == cs) {
+		lock_orders.erase(it);
+		invlock_orders.erase(std::make_pair(it->first.second, it->first.first));
 		it++;
 	}
-	auto invit = lock_data.invlock_orders_.lower_bound(std::make_pair(cs, (void *)0));
-	while (invit != lock_data.invlock_orders_.end() && invit->first == cs) {
-		lock_data.invlock_orders_.erase(invit);
-		lock_data.lock_orders_.erase(std::make_pair(invit->second, invit->first));
+	auto invit = invlock_orders.lower_bound(std::make_pair(cs, (void *)0));
+	while (invit != invlock_orders.end() && invit->first == cs) {
+		invlock_orders.erase(invit);
+		lock_orders.erase(std::make_pair(invit->second, invit->first));
 		invit++;
 	}
 }
