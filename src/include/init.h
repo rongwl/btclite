@@ -9,6 +9,8 @@ void Interrupt(boost::thread_group*);
 void Shutdown();
 bool get_shutdown_requested();
 std::string HelpMessage();
+void PrintUsage();
+bool AppInitParameterInteraction();
 bool AppInitBasicSetup();
 bool AppInitMain();
 

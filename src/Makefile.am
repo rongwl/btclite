@@ -25,6 +25,7 @@ BTCDEMO_HEADER_FILES = \
 libbtcdemo_util_a_CPPFLAGS = $(BTCDEMO_INCLUDES)
 libbtcdemo_util_a_SOURCES = sync.cpp \
 							util.cpp \
+							utiltime.cpp \
 							$(BTCDEMO_HEADER_FILES)
 
 

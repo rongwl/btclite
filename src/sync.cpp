@@ -57,22 +57,22 @@ namespace {
 
 static void potential_deadlock_detected(const std::pair<void*, void*>& mismatch, const LockStack& s1, const LockStack& s2)
 {
-	std::cout << "POTENTIAL DEADLOCK DETECTED" << std::endl;
-	std::cout << "Previous lock order was:" << std::endl;
+	LogPrintf("POTENTIAL DEADLOCK DETECTED\n");
+    LogPrintf("Previous lock order was:\n");
 	for (auto it : s1) {
 		if (it.first == mismatch.first)
-			std::cout << " (1)";
+			LogPrintf(" (1)");
 		else if (it.first == mismatch.second)
-			std::cout << " (2)";
-		std::cout << it.second.ToString() << std::endl;
+			LogPrintf(" (2)");
+		LogPrintf(" %s\n", it.second.ToString());
 	}
-	std::cout << "Current lock order is:" << std::endl;
+	LogPrintf("Current lock order is:\n");
 	for (auto it : s2) {
 		if (it.first == mismatch.first)
-			std::cout << " (1)";
+			LogPrintf(" (1)");
 		else if (it.first == mismatch.second)
-			std::cout << " (2)";
-		std::cout << it.second.ToString() << std::endl;
+			LogPrintf(" (2)");
+		LogPrintf(" %s\n", it.second.ToString());
 	}
 	
 	assert(false);

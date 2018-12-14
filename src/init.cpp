@@ -1,4 +1,5 @@
 #include "init.h"
+#include "util.h"
 
 #include <signal.h>
 
@@ -13,7 +14,9 @@ void Interrupt(boost::thread_group* thread_group)
 
 void Shutdown()
 {
-	std::cout << "shutdown" << std::endl;
+	LogPrintf("%s: In progress...\n", __func__);
+	
+	LogPrintf("%s: done\n", __func__);
 }
 
 static void new_handle_terminate()
@@ -37,13 +40,24 @@ void HandleSIGTERM(int)
 	shutdown_requested = true;
 }
 
-std::string HelpMessage()
+void PrintUsage()
 {
-	std::string usage = HelpMessageGroup("Options:");
-	usage += HelpMessageOpt("-? or -h or --help", "Print this help message and exit");
-	usage += HelpMessageOpt("-version", "Print version and exit");
+	fprintf(stdout, "Usage: btcdemod [OPTIONS...]\n\n");
+	fprintf(stdout, "OPTIONS:\n");
+	fprintf(stdout, "  -h or -?,  --help     Print this help message and exit\n");
+	fprintf(stdout, "  --debug=<category>    Output debugging information(default: 0).\n");
+	fprintf(stdout, "                        <category> can be 1(output all debugging information),\n");
+	fprintf(stdout, "                        mempool, net.\n");
+                  //"                                                                                "
 	
-	return usage;
+	exit(EXIT_FAILURE);
+}
+
+bool AppInitParameterInteraction()
+{
+	output_debug = map_mutil_args.count("debug");
+
+	return true;
 }
 
 bool AppInitBasicSetup()
