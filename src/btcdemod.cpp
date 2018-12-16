@@ -38,7 +38,6 @@ bool AppInit(int argc, char **argv)
 	catch (...) {
 	
 	}
-	LogPrint("test", "hello\n");
 	
 	if (!ret) {
 		Interrupt(&thread_group);

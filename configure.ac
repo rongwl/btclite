@@ -31,6 +31,17 @@ CHECK_ATOMIC
  # Initialize libtool.
 LT_INIT([pic-only])
 
+# Enable debug
+AC_ARG_ENABLE([debug],
+	[AS_HELP_STRING([--enable-debug],
+                    [use debug compiler flags and macros (default is no)])],
+	[enable_debug=$enableval],
+	[enable_debug=no])
+
+if test "x$enable_debug" = xyes; then
+	CXXFLAGS="$CXXFLAGS -g3 -O0"
+fi
+
 # Checks lockorder
 AC_ARG_ENABLE([check-lockorder],
 [AS_HELP_STRING([--enable-check-lockorder],
