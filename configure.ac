@@ -5,16 +5,16 @@ AC_PREREQ([2.69])
 define(_CLIENT_VERSION_MAJOR, 0)
 define(_CLIENT_VERSION_MINOR, 1)
 define(_CLIENT_VERSION_REVISION, 0)
-AC_INIT([Btcdemo], [_CLIENT_VERSION_MAJOR._CLIENT_VERSION_MINOR._CLIENT_VERSION_REVISION], [https://github.com/rongwl/btcdemo/issues])
+AC_INIT([Btclite], [_CLIENT_VERSION_MAJOR._CLIENT_VERSION_MINOR._CLIENT_VERSION_REVISION], [https://github.com/rongwl/btclite/issues])
 AC_CONFIG_SRCDIR([src/validation.cpp])
-AC_CONFIG_HEADERS([src/config/btcdemo-config.h])
+AC_CONFIG_HEADERS([src/config/btclite-config.h])
 AC_CONFIG_MACRO_DIR([m4])
 
-BTCDEMO_DAEMON_NAME=bitdemod
+BTCLITE_DAEMON_NAME=btclited
 
-AH_TOP([#ifndef BTCDEMO_CONFIG_H])
-AH_TOP([#define BTCDEMO_CONFIG_H])
-AH_BOTTOM([#endif // BTCDEMO_CONFIG_H])
+AH_TOP([#ifndef BTCLITE_CONFIG_H])
+AH_TOP([#define BTCLITE_CONFIG_H])
+AH_BOTTOM([#endif // BTCLITE_CONFIG_H])
 
 AM_INIT_AUTOMAKE([subdir-objects foreign])
 
@@ -62,7 +62,7 @@ AC_CHECK_HEADER_STDBOOL
 
 # Checks for library functions.
 
-AC_SUBST(BTCDEMO_DAEMON_NAME)
+AC_SUBST(BTCLITE_DAEMON_NAME)
 
 AX_BOOST_BASE([1.47.0])
 AX_BOOST_SYSTEM

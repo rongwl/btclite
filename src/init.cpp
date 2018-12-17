@@ -42,7 +42,7 @@ void HandleSIGTERM(int)
 
 void PrintUsage()
 {
-	fprintf(stdout, "Usage: btcdemod [OPTIONS...]\n\n");
+	fprintf(stdout, "Usage: btclited [OPTIONS...]\n\n");
 	fprintf(stdout, "OPTIONS:\n");
 	fprintf(stdout, "  -h or -?,  --help     Print this help message and exit\n");
 	fprintf(stdout, "  --debug=<category>    Output debugging information(default: 0).\n");

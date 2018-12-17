@@ -1,5 +1,5 @@
-#ifndef BTCDEMO_SYNC_H
-#define BTCDEMO_SYNC_H
+#ifndef BTCLITE_SYNC_H
+#define BTCLITE_SYNC_H
 
 #include <mutex>
 
@@ -80,4 +80,4 @@ typedef CMutexLock<CCriticalSection> CCriticalBlock;
 #define LOCK(cs) CCriticalBlock PASTE2(criticalblock, __COUNTER__)(cs, #cs, __FILE__, __LINE__)
 #define TRY_LOCK(cs, name) CCriticalBlock name(cs, #cs, __FILE__, __LINE__, true)
 
-#endif // BTCDEMO_SYNC_H
+#endif // BTCLITE_SYNC_H

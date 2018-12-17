@@ -1,5 +1,5 @@
 #if defined(HAVE_CONFIG_H)
-#include "config/btcdemo-config.h"
+#include "config/btclite-config.h"
 #endif
 
 #include "utilstrencodings.h"

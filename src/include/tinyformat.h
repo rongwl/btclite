@@ -1,7 +1,7 @@
 // see https://github.com/bitcoin/bitcoin/blob/master/src/tinyformat.h
 
-#ifndef BTCDEMO_TINYFORMAT_H
-#define BTCDEMO_TINYFORMAT_H
+#ifndef BTCLITE_TINYFORMAT_H
+#define BTCLITE_TINYFORMAT_H
 
 namespace tinyformat {}
 //------------------------------------------------------------------------------
@@ -668,4 +668,4 @@ std::string format(const std::string &fmt, const Args&... args)
 
 #define strprintf tfm::format
 
-#endif // BTCDEMO_TINYFORMAT_H
+#endif // BTCLITE_TINYFORMAT_H

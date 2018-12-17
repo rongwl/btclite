@@ -1,5 +1,5 @@
-#ifndef BTCDEMO_INIT_H
-#define BTCDEMO_INIT_H
+#ifndef BTCLITE_INIT_H
+#define BTCLITE_INIT_H
 
 #include "util.h"
 
@@ -14,4 +14,4 @@ bool AppInitParameterInteraction();
 bool AppInitBasicSetup();
 bool AppInitMain();
 
-#endif // BTCDEMO_INIT_H
+#endif // BTCLITE_INIT_H

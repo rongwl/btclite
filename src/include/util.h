@@ -1,5 +1,5 @@
-#ifndef BTCDEMO_UTIL_H
-#define BTCDEMO_UTIL_H
+#ifndef BTCLITE_UTIL_H
+#define BTCLITE_UTIL_H
 
 #include "tinyformat.h"
 
@@ -33,4 +33,4 @@ LogPrintStr(tfm::format(__VA_ARGS__)); \
 void ParseParameters(int, char* const*);
 bool IsArgSet(const std::string&);
 
-#endif // BTCDEMO_UTIL_H
+#endif // BTCLITE_UTIL_H

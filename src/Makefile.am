@@ -1,40 +1,40 @@
 AM_CXXFLAGS = 
 EXTRA_LIBRARIES =
 
-BTCDEMO_CONFIG_INCLUDES = -I$(builddir)/config
-BTCDEMO_INCLUDES_PATH = $(srcdir)/include
-BTCDEMO_INCLUDES = -I$(BTCDEMO_INCLUDES_PATH)
+BTCLITE_CONFIG_INCLUDES = -I$(builddir)/config
+BTCLITE_INCLUDES_PATH = $(srcdir)/include
+BTCLITE_INCLUDES = -I$(BTCLITE_INCLUDES_PATH)
 
-LIBBTCDEMO_UTIL = libbtcdemo_util.a
+LIBBTCLITE_UTIL = libbtclite_util.a
 
 EXTRA_LIBRARIES += \
-				   $(LIBBTCDEMO_UTIL)
+				   $(LIBBTCLITE_UTIL)
 
-bin_PROGRAMS = btcdemod
+bin_PROGRAMS = btclited
 
-BTCDEMO_HEADER_FILES = \
-					   $(BTCDEMO_INCLUDES_PATH)/init.h \
-					   $(BTCDEMO_INCLUDES_PATH)/clientversion.h \
-					   $(BTCDEMO_INCLUDES_PATH)/serialize.h \
-					   $(BTCDEMO_INCLUDES_PATH)/sync.h \
-					   $(BTCDEMO_INCLUDES_PATH)/tinyformat.h \
-					   $(BTCDEMO_INCLUDES_PATH)/util.h \
-					   $(BTCDEMO_INCLUDES_PATH)/utilstrencodings.h \
-					   $(BTCDEMO_INCLUDES_PATH)/utiltime.h
+BTCLITE_HEADER_FILES = \
+					   $(BTCLITE_INCLUDES_PATH)/init.h \
+					   $(BTCLITE_INCLUDES_PATH)/clientversion.h \
+					   $(BTCLITE_INCLUDES_PATH)/serialize.h \
+					   $(BTCLITE_INCLUDES_PATH)/sync.h \
+					   $(BTCLITE_INCLUDES_PATH)/tinyformat.h \
+					   $(BTCLITE_INCLUDES_PATH)/util.h \
+					   $(BTCLITE_INCLUDES_PATH)/utilstrencodings.h \
+					   $(BTCLITE_INCLUDES_PATH)/utiltime.h
 
-libbtcdemo_util_a_CPPFLAGS = $(BTCDEMO_INCLUDES)
-libbtcdemo_util_a_SOURCES = sync.cpp \
+libbtclite_util_a_CPPFLAGS = $(BTCLITE_INCLUDES)
+libbtclite_util_a_SOURCES = sync.cpp \
 							util.cpp \
 							utiltime.cpp \
-							$(BTCDEMO_HEADER_FILES)
+							$(BTCLITE_HEADER_FILES)
 
 
 
-btcdemod_CPPFLAGS = $(BTCDEMO_INCLUDES)
-btcdemod_SOURCES = btcdemod.cpp \
+btclited_CPPFLAGS = $(BTCLITE_INCLUDES)
+btclited_SOURCES = btclited.cpp \
 				   init.cpp \
 				   validation.cpp \
-				   $(BTCDEMO_HEADER_FILES)
-btcdemod_LDADD = \
-				 $(LIBBTCDEMO_UTIL)
-btcdemod_LDADD += $(BOOST_LIBS)
+				   $(BTCLITE_HEADER_FILES)
+btclited_LDADD = \
+				 $(LIBBTCLITE_UTIL)
+btclited_LDADD += $(BOOST_LIBS)
