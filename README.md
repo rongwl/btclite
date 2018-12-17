@@ -1,2 +1,2 @@
 # btclite
-A lite implementation of Bitcoin full node
+A lite implementation of Bitcoin full node client
