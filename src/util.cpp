@@ -87,8 +87,21 @@ int LogPrintStr(const std::string &str)
     return ret;
 }
 
+void CheckOptions(int argc, char* const argv[])
+{
+	for (int i = 1; i < argc; i++) {
+		std::string str(argv[i]);
+		if (str.length() <= 2 || str.compare(0, 2, "--")) {
+			fprintf(stdout, "%s: invalid option '%s'\n", argv[0], str.c_str());
+			PrintUsage();
+			exit(EXIT_FAILURE);
+		}
+	}
+}
+
 void ParseParameters(int argc, char* const argv[])
 {
+	CheckOptions(argc, argv);
 	const static struct option options[] {
 		{ "help",  no_argument,       NULL, 'h' },
 		{ "debug", required_argument, NULL,  0  },
