@@ -5,18 +5,30 @@
 #include "utilstrencodings.h"
 #include "utiltime.h"
 
-#include <boost/date_time/posix_time/posix_time.hpp>
+#include <iomanip>
+#include <sys/time.h>
+
 
 int64_t GetTimeMicros()
 {
-    int64_t now = (boost::posix_time::microsec_clock::universal_time() -
-                   boost::posix_time::ptime(boost::gregorian::date(1970,1,1))).total_microseconds();
-    assert(now > 0);
-    return now;
+	struct timeval tv;
+	assert(0 == gettimeofday(&tv, NULL));
+	return tv.tv_sec*1000000+tv.tv_usec;
 }
 
 std::string DateTimeStrFormat()
 {
-	boost::posix_time::ptime t = boost::posix_time::microsec_clock::universal_time();	
-    return boost::posix_time::to_simple_string(t);
+	struct timeval tv;
+	assert(0 == gettimeofday(&tv, NULL));
+	struct tm tm;
+	assert(NULL != gmtime_r(&tv.tv_sec, &tm));
+	std::stringstream ss;
+	ss << tm.tm_year+1900 << "-" 
+	   << std::setw(2) << std::setfill('0') << tm.tm_mon+1 << "-"
+	   << std::setw(2) << std::setfill('0') << tm.tm_mday << " "
+	   << std::setw(2) << std::setfill('0') << tm.tm_hour << ":" 
+	   << std::setw(2) << std::setfill('0') << tm.tm_min << ":"
+	   << std::setw(2) << std::setfill('0') << tm.tm_sec << "."
+	   << tv.tv_usec;
+	return ss.str();
 }

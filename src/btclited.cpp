@@ -36,7 +36,7 @@ bool AppInit(int argc, char **argv)
 	catch (...) {
 	
 	}
-	
+
 	if (!ret) {
 		Interrupt();
 	}

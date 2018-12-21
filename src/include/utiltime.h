@@ -2,7 +2,8 @@
 #define BTCLITE_UTILTIME_H
 
 #include <chrono>
-#include <ctime>
+#include <cassert>
+#include <sstream>
 
 int64_t GetTimeMicros();
 std::string DateTimeStrFormat();
