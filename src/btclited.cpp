@@ -5,6 +5,8 @@
 #include "utiltime.h"
 #include <iostream>
 
+ArgsManger g_args;
+
 void WaitForShutdown(boost::thread_group* thread_group)
 {
 	bool shutdown = get_shutdown_requested();
@@ -22,14 +24,13 @@ bool AppInit(int argc, char **argv)
 {
 	boost::thread_group thread_group;
 	bool ret = false;
-	ParseParameters(argc, argv);
-	
+	g_args.ParseParameters(argc, argv);
+
 	try {
 		if (!AppInitBasicSetup())
 			exit(EXIT_FAILURE);
 		if (!AppInitParameterInteraction())
 			exit(EXIT_FAILURE);
-		
 		ret = AppInitMain();
 	}
 	catch (std::exception& e) {

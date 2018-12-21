@@ -5,6 +5,19 @@
 
 std::atomic<bool> shutdown_requested(false);
 
+const std::map<std::string, LogFlags::Flag> g_map_category = {
+	{"0",        LogFlags::NONE},
+	{"net",      LogFlags::NET},
+	{"mempool",  LogFlags::MEMPOOL},
+	{"http",     LogFlags::HTTP},
+	{"db",       LogFlags::DB},
+	{"rpc",      LogFlags::RPC},
+	{"prune",    LogFlags::PRUNE},
+	{"libevent", LogFlags::LIBEVENT},
+	{"coindb",   LogFlags::COINDB},
+	{"1",        LogFlags::ALL}
+};
+
 void Interrupt(boost::thread_group* thread_group)
 {
 	if (thread_group) {
@@ -44,8 +57,8 @@ void PrintUsage()
 {
 	fprintf(stdout, "Usage: btclited [OPTIONS...]\n\n");
 	fprintf(stdout, "OPTIONS:\n");
-	fprintf(stdout, "  -h or -?,  --help     Print this help message and exit\n");
-	fprintf(stdout, "  --debug=<category>    Output debugging information(default: 0).\n");
+	fprintf(stdout, "  -h or -?,  --%s     Print this help message and exit\n", BTCLITED_OPTION_HELP);
+	fprintf(stdout, "  --%s=<category>    Output debugging information(default: 0).\n", BTCLITED_OPTION_DEBUG);
 	fprintf(stdout, "                        <category> can be 1(output all debugging information),\n");
 	fprintf(stdout, "                        mempool, net.\n");
                   //"                                                                                "
@@ -55,7 +68,21 @@ void PrintUsage()
 
 bool AppInitParameterInteraction()
 {
-	output_debug = map_mutil_args.count("debug");
+	// ********************************************************* Step 3: parameter-to-internal-flags
+	if (g_args.IsArgSet(BTCLITED_OPTION_DEBUG)) {
+		const std::vector<std::string> arg_values = g_args.GetArgs(BTCLITED_OPTION_DEBUG);
+		if (std::none_of(arg_values.begin(), arg_values.end(),
+		[](const std::string& val) { return val == "0"; })) {
+			for (auto category : arg_values) {
+				auto it = g_map_category.find(category);
+				if (it == g_map_category.end()) {
+					fprintf(stderr, "Unsupported logging category: %s\n", category.c_str());
+					return false;
+				}
+				g_log_categories |= it->second;
+			}
+		}
+	}
 
 	return true;
 }

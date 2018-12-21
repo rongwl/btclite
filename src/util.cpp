@@ -12,45 +12,12 @@
 #include <stdarg.h>
 #include <boost/thread.hpp>
 
-CCriticalSection cs_args;
-std::map<std::string, std::string> map_args;
-static std::map<std::string, std::vector<std::string>> _map_multi_args;
-const std::map<std::string, std::vector<std::string>>& map_mutil_args = _map_multi_args;
 bool output_debug = false;
 bool print_to_console = true;
 bool print_to_file = false;
 
-bool LogAcceptCategory(const char* category)
-{
-    if (category != NULL)
-    {
-        if (!output_debug)
-            return false;
+std::atomic<uint32_t> g_log_categories(0);
 
-        // Give each thread quick access to -debug settings.
-        // This helps prevent issues debugging global destructors,
-        // where map_mutil_args might be deleted before another
-        // global destructor calls LogPrint()
-        static boost::thread_specific_ptr<std::set<std::string> > ptr_category;
-        if (ptr_category.get() == NULL)
-        {
-            if (map_mutil_args.count("debug")) {
-                const std::vector<std::string>& categories = map_mutil_args.at("debug");
-                ptr_category.reset(new std::set<std::string>(categories.begin(), categories.end()));
-                // thread_specific_ptr automatically deletes the set when the thread ends.
-            } else
-                ptr_category.reset(new std::set<std::string>());
-        }
-        const std::set<std::string>& set_categories = *ptr_category.get();
-
-        // if not debugging everything and not debugging specific category, LogPrint does nothing.
-        if (set_categories.count(std::string("")) == 0 &&
-				set_categories.count(std::string("1")) == 0 &&
-				set_categories.count(std::string(category)) == 0)
-            return false;
-    }
-    return true;
-}
 
 /**
  * started_newline is a state variable held by the calling context that will
@@ -87,7 +54,8 @@ int LogPrintStr(const std::string &str)
     return ret;
 }
 
-void CheckOptions(int argc, char* const argv[])
+/* Check options that getopt_long() can not print totally */
+void ArgsManger::CheckOptions(int argc, char* const argv[])
 {
 	for (int i = 1; i < argc; i++) {
 		std::string str(argv[i]);
@@ -99,15 +67,19 @@ void CheckOptions(int argc, char* const argv[])
 	}
 }
 
-void ParseParameters(int argc, char* const argv[])
+void ArgsManger::ParseParameters(int argc, char* const argv[])
 {
 	CheckOptions(argc, argv);
 	const static struct option options[] {
-		{ "help",  no_argument,       NULL, 'h' },
-		{ "debug", required_argument, NULL,  0  },
-		{ 0,       0,                 0,     0  }
+		{ BTCLITED_OPTION_HELP,  no_argument,       NULL, 'h' },
+		{ BTCLITED_OPTION_DEBUG, required_argument, NULL,  0  },
+		{ 0,                     0,                 0,     0  }
 	};
 	int c, option_index;
+	
+	LOCK(cs_args_);
+	map_args_.clear();
+	map_multi_args_.clear();
 	
 	while ((c = getopt_long(argc, argv, "h?", options, &option_index)) != -1) {
 		switch (c) {
@@ -115,8 +87,8 @@ void ParseParameters(int argc, char* const argv[])
 			{
 				std::string str(options[option_index].name);
 				std::string str_val(optarg);
-				map_args[str] = str_val;
-				_map_multi_args[str].push_back(str_val);
+				map_args_[str] = str_val;
+				map_multi_args_[str].push_back(str_val);
 				break;
 			}
 			case 'h' :
@@ -129,8 +101,18 @@ void ParseParameters(int argc, char* const argv[])
 	}
 }
 
-bool IsArgSet(const std::string& arg)
+std::vector<std::string> ArgsManger::GetArgs(const std::string& arg) const
 {
-	return map_args.count(arg);
+	LOCK(cs_args_);
+	auto it = map_multi_args_.find(arg);
+	if (it != map_multi_args_.end())
+		return it->second;
+	return {};
+}
+
+bool ArgsManger::IsArgSet(const std::string& arg) const
+{
+	LOCK(cs_args_);
+	return map_args_.count(arg);
 }
 
