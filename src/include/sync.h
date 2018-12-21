@@ -2,6 +2,7 @@
 #define BTCLITE_SYNC_H
 
 #include <mutex>
+#include <thread>
 
 #ifdef CHECK_LOCKORDER
 void EnterCritical(const char*, const char*, int, void*, bool try_lock = false);

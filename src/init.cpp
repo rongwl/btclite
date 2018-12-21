@@ -18,11 +18,9 @@ const std::map<std::string, LogFlags::Flag> g_map_category = {
 	{"1",        LogFlags::ALL}
 };
 
-void Interrupt(boost::thread_group* thread_group)
+void Interrupt()
 {
-	if (thread_group) {
-		thread_group->interrupt_all();
-	}
+	
 }
 
 void Shutdown()

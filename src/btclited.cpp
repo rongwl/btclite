@@ -7,7 +7,7 @@
 
 ArgsManger g_args;
 
-void WaitForShutdown(boost::thread_group* thread_group)
+void WaitForShutdown()
 {
 	bool shutdown = get_shutdown_requested();
 	
@@ -15,14 +15,11 @@ void WaitForShutdown(boost::thread_group* thread_group)
 		std::this_thread::sleep_for(std::chrono::milliseconds(200));
 		shutdown = get_shutdown_requested();
 	}
-	if (thread_group) {
-		thread_group->join_all();
-	}
+	Interrupt();
 }
 
 bool AppInit(int argc, char **argv)
 {
-	boost::thread_group thread_group;
 	bool ret = false;
 	g_args.ParseParameters(argc, argv);
 
@@ -41,10 +38,10 @@ bool AppInit(int argc, char **argv)
 	}
 	
 	if (!ret) {
-		Interrupt(&thread_group);
+		Interrupt();
 	}
 	else {
-		WaitForShutdown(&thread_group);
+		WaitForShutdown();
 	}
 	Shutdown();
 

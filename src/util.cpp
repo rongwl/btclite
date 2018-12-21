@@ -10,7 +10,6 @@
 
 #include <getopt.h>
 #include <stdarg.h>
-#include <boost/thread.hpp>
 
 bool output_debug = false;
 bool print_to_console = true;

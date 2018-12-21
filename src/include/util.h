@@ -11,7 +11,6 @@
 #include <set>
 #include <thread>
 
-#include <boost/thread/thread.hpp>
 
 #define BTCLITED_OPTION_HELP  "help"
 #define BTCLITED_OPTION_DEBUG "debug"

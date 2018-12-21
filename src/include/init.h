@@ -5,7 +5,7 @@
 
 #include <string>
 
-void Interrupt(boost::thread_group*);
+void Interrupt();
 void Shutdown();
 bool get_shutdown_requested();
 void PrintUsage();

@@ -3,7 +3,6 @@
 #include "utilstrencodings.h"
 
 #include <sstream>
-#include <boost/thread.hpp>
 
 #ifdef CHECK_LOCKORDER
 //
@@ -47,7 +46,7 @@ typedef std::vector<std::pair<void*, CLockLocation> > LockStack;
 typedef std::map<std::pair<void*, void*>, LockStack> LockOrders;
 typedef std::set<std::pair<void*, void*> > InvLockOrders;
 
-boost::thread_specific_ptr<LockStack> lock_stack;
+static thread_local LockStack g_lock_stack;
 
 namespace {
 	LockOrders lock_orders;
@@ -80,16 +79,13 @@ static void potential_deadlock_detected(const std::pair<void*, void*>& mismatch,
 
 void PushLock(void *c, const CLockLocation& lock_location, bool try_lock)
 {
-	if (lock_stack.get() == NULL)
-		lock_stack.reset(new LockStack);
-
 	std::unique_lock<std::mutex> lock(lock_stack_mutex);
-	(*lock_stack).push_back(std::make_pair(c, lock_location));
-	for (auto it : *lock_stack) {
+	g_lock_stack.push_back(std::make_pair(c, lock_location));
+	for (auto it : g_lock_stack) {
 		if (it.first == c)
 			break;
 		std::pair<void*, void*> pair = std::make_pair(it.first, c);
-		lock_orders[pair] = *lock_stack;
+		lock_orders[pair] = g_lock_stack;
 		std::pair<void*, void*> invpair = std::make_pair(c, it.first);
 		invlock_orders.insert(invpair);
 		if (lock_orders.count(invpair))
@@ -99,7 +95,7 @@ void PushLock(void *c, const CLockLocation& lock_location, bool try_lock)
 
 void PopLock()
 {
-	(*lock_stack).pop_back();
+	g_lock_stack.pop_back();
 }
 
 void DeleteLock(void *cs)
