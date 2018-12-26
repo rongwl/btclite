@@ -55,8 +55,9 @@ void PrintUsage()
 {
 	fprintf(stdout, "Usage: btclited [OPTIONS...]\n\n");
 	fprintf(stdout, "OPTIONS:\n");
-	fprintf(stdout, "  -h or -?,  --%s     Print this help message and exit\n", BTCLITED_OPTION_HELP);
-	fprintf(stdout, "  --%s=<category>    Output debugging information(default: 0).\n", BTCLITED_OPTION_DEBUG);
+	fprintf(stdout, "  -h or -?,  --help     Print this help message and exit.\n");
+	fprintf(stdout, "  --datadir=<dir>       Specify data directory.\n");
+	fprintf(stdout, "  --debug=<category>    Output debugging information(default: 0).\n");
 	fprintf(stdout, "                        <category> can be 1(output all debugging information),\n");
 	fprintf(stdout, "                        mempool, net.\n");
                   //"                                                                                "

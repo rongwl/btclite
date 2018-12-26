@@ -1,10 +1,11 @@
-AM_CXXFLAGS = 
+AM_CXXFLAGS = $(PTHREAD_CFLAGS) 
 EXTRA_LIBRARIES =
 
 BTCLITE_CONFIG_INCLUDES = -I$(builddir)/config
 BTCLITE_INCLUDES_PATH = $(srcdir)/include
 BTCLITE_INCLUDES = -I$(BTCLITE_INCLUDES_PATH)
 
+STDCPP_FILESYSTEM_LIBS = -lstdc++fs
 LIBBTCLITE_UTIL = libbtclite_util.a
 
 EXTRA_LIBRARIES += \
@@ -22,7 +23,7 @@ BTCLITE_HEADER_FILES = \
 					   $(BTCLITE_INCLUDES_PATH)/utilstrencodings.h \
 					   $(BTCLITE_INCLUDES_PATH)/utiltime.h
 
-libbtclite_util_a_CPPFLAGS = $(BTCLITE_INCLUDES)
+libbtclite_util_a_CPPFLAGS = $(AM_CXXFLAGS) $(BTCLITE_INCLUDES)
 libbtclite_util_a_SOURCES = sync.cpp \
 							util.cpp \
 							utiltime.cpp \
@@ -30,11 +31,12 @@ libbtclite_util_a_SOURCES = sync.cpp \
 
 
 
-btclited_CPPFLAGS = $(BTCLITE_INCLUDES)
+btclited_CPPFLAGS = $(AM_CXXFLAGS) $(BTCLITE_INCLUDES)
 btclited_SOURCES = btclited.cpp \
 				   init.cpp \
 				   validation.cpp \
 				   $(BTCLITE_HEADER_FILES)
 btclited_LDADD = \
 				 $(LIBBTCLITE_UTIL)
-btclited_LDADD += $(BOOST_LIBS)
+btclited_LDADD += $(PTHREAD_LIBS) \
+				  $(STDCPP_FILESYSTEM_LIBS)

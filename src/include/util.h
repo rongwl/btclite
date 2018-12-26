@@ -10,13 +10,25 @@
 #include <map>
 #include <set>
 #include <thread>
+#include <vector>
+
+#if __GNUC__ >= 8
+#include <filesystem>
+namespace fs = std::filesystem;
+#else 
+#include <experimental/filesystem>
+namespace fs = std::experimental::filesystem;
+#endif
 
 
-#define BTCLITED_OPTION_HELP  "help"
-#define BTCLITED_OPTION_DEBUG "debug"
+#define BTCLITED_OPTION_HELP    "help"
+#define BTCLITED_OPTION_DATADIR "datadir"
+#define BTCLITED_OPTION_DEBUG   "debug"
 
 extern bool output_debug;
 extern std::atomic<uint32_t> g_log_categories;
+
+void SetupEnvironment();
 
 namespace LogFlags {
 enum Flag : uint32_t {
@@ -52,9 +64,10 @@ int LogPrintStr(const std::string &str);
 LogPrintStr(tfm::format(__VA_ARGS__)); \
 } while(0)
 
-class ArgsManger {
+class ArgsManager {
 public:
-	void ParseParameters(int, char* const*);
+	bool ParseParameters(int, char* const*);
+	std::string GetArg(const std::string&, const std::string&) const;
 	std::vector<std::string> GetArgs(const std::string&) const;
 	bool IsArgSet(const std::string&) const;
 private:
@@ -62,9 +75,22 @@ private:
 	std::map<std::string, std::string> map_args_;
 	std::map<std::string, std::vector<std::string>> map_multi_args_;
 	
-	void CheckOptions(int, char* const*);
+	bool CheckOptions(int, char* const*);
 };
-extern ArgsManger g_args;
+extern ArgsManager g_args;
 
+class PathManager {
+public:
+	PathManager()
+		: path_(GetDefaultDataDir()) {}
+	fs::path GetDataDir() const;
+	void UpdateDataDir();
+	fs::path GetDefaultDataDir() const;
+	fs::path GetConfigFile(const std::string&) const;
+private:
+	mutable CCriticalSection cs_path_;
+	fs::path path_;
+};
+extern PathManager g_path;
 
 #endif // BTCLITE_UTIL_H

@@ -6,6 +6,7 @@ define(_CLIENT_VERSION_MAJOR, 0)
 define(_CLIENT_VERSION_MINOR, 1)
 define(_CLIENT_VERSION_REVISION, 0)
 AC_INIT([Btclite], [_CLIENT_VERSION_MAJOR._CLIENT_VERSION_MINOR._CLIENT_VERSION_REVISION], [https://github.com/rongwl/btclite/issues])
+AC_LANG(C++)
 AC_CONFIG_SRCDIR([src/validation.cpp])
 AC_CONFIG_HEADERS([src/config/btclite-config.h])
 AC_CONFIG_MACRO_DIR([m4])
@@ -23,10 +24,9 @@ AC_PROG_CXX
 AC_PROG_CC
 AC_PROG_INSTALL
 
-dnl Require C++11 compiler (no GNU extensions)
-AX_CXX_COMPILE_STDCXX([11], [noext], [mandatory], [nodefault])
-dnl Check if -latomic is required for <std::atomic>
-CHECK_ATOMIC
+dnl Require C++17 compiler (no GNU extensions)
+AX_CXX_COMPILE_STDCXX([17], [noext], [mandatory], [nodefault])
+
 
  # Initialize libtool.
 LT_INIT([pic-only])
@@ -64,11 +64,14 @@ AC_CHECK_HEADER_STDBOOL
 
 AC_SUBST(BTCLITE_DAEMON_NAME)
 
-AX_BOOST_BASE([1.47.0])
-AX_BOOST_SYSTEM
-AX_BOOST_THREAD
-BOOST_LIBS="$BOOST_LDFLAGS $BOOST_SYSTEM_LIB $BOOST_THREAD_LIB"
-AC_SUBST(BOOST_LIBS)
+# require -lpthread
+AX_PTHREAD
+
+#AX_BOOST_BASE([1.47.0])
+#AX_BOOST_SYSTEM
+#AX_BOOST_THREAD
+#BOOST_LIBS="$BOOST_LDFLAGS $BOOST_SYSTEM_LIB $BOOST_THREAD_LIB"
+#AC_SUBST(BOOST_LIBS)
 
 AC_CONFIG_FILES([Makefile src/Makefile])
 

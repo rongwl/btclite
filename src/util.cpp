@@ -9,6 +9,7 @@
 #include "utiltime.h"
 
 #include <getopt.h>
+#include <locale>
 #include <stdarg.h>
 
 bool output_debug = false;
@@ -16,7 +17,6 @@ bool print_to_console = true;
 bool print_to_file = false;
 
 std::atomic<uint32_t> g_log_categories(0);
-
 
 /**
  * started_newline is a state variable held by the calling context that will
@@ -54,25 +54,29 @@ int LogPrintStr(const std::string &str)
 }
 
 /* Check options that getopt_long() can not print totally */
-void ArgsManger::CheckOptions(int argc, char* const argv[])
+bool ArgsManager::CheckOptions(int argc, char* const argv[])
 {
 	for (int i = 1; i < argc; i++) {
 		std::string str(argv[i]);
 		if (str.length() <= 2 || str.compare(0, 2, "--")) {
 			fprintf(stdout, "%s: invalid option '%s'\n", argv[0], str.c_str());
 			PrintUsage();
-			exit(EXIT_FAILURE);
+			return false;
 		}
 	}
+	return true;
 }
 
-void ArgsManger::ParseParameters(int argc, char* const argv[])
+bool ArgsManager::ParseParameters(int argc, char* const argv[])
 {
-	CheckOptions(argc, argv);
+	if (!CheckOptions(argc, argv))
+		return false;
+	
 	const static struct option options[] {
-		{ BTCLITED_OPTION_HELP,  no_argument,       NULL, 'h' },
-		{ BTCLITED_OPTION_DEBUG, required_argument, NULL,  0  },
-		{ 0,                     0,                 0,     0  }
+		{ BTCLITED_OPTION_HELP,    no_argument,       NULL, 'h' },
+		{ BTCLITED_OPTION_DATADIR, required_argument, NULL,  0  },
+		{ BTCLITED_OPTION_DEBUG,   required_argument, NULL,  0  },
+		{ 0,                       0,                 0,     0  }
 	};
 	int c, option_index;
 	
@@ -86,6 +90,11 @@ void ArgsManger::ParseParameters(int argc, char* const argv[])
 			{
 				std::string str(options[option_index].name);
 				std::string str_val(optarg);
+				if (str_val.empty()) {
+					fprintf(stderr, "%s: option '--%s' requires an argument\n", argv[0], str.c_str());
+					PrintUsage();
+					return false;
+				}
 				map_args_[str] = str_val;
 				map_multi_args_[str].push_back(str_val);
 				break;
@@ -98,9 +107,20 @@ void ArgsManger::ParseParameters(int argc, char* const argv[])
 				break;
 		}
 	}
+	
+	return true;
 }
 
-std::vector<std::string> ArgsManger::GetArgs(const std::string& arg) const
+std::string ArgsManager::GetArg(const std::string& arg, const std::string& arg_default) const
+{
+	LOCK(cs_args_);
+	auto it = map_args_.find(arg);
+	if (it != map_args_.end())
+		return it->second;
+	return arg_default;
+}
+
+std::vector<std::string> ArgsManager::GetArgs(const std::string& arg) const
 {
 	LOCK(cs_args_);
 	auto it = map_multi_args_.find(arg);
@@ -109,9 +129,53 @@ std::vector<std::string> ArgsManger::GetArgs(const std::string& arg) const
 	return {};
 }
 
-bool ArgsManger::IsArgSet(const std::string& arg) const
+bool ArgsManager::IsArgSet(const std::string& arg) const
 {
 	LOCK(cs_args_);
 	return map_args_.count(arg);
+}
+
+fs::path PathManager::GetDefaultDataDir() const
+{
+	char *home_path = getenv("HOME");
+	if (home_path == NULL)
+		return fs::path("/") / ".btclite";
+	else
+		return fs::path(home_path) / ".btclite";
+}
+
+fs::path PathManager::GetDataDir() const
+{
+	LOCK(cs_path_);
+	return path_;
+}
+
+void PathManager::UpdateDataDir()
+{
+	LOCK(cs_path_);
+	if (g_args.IsArgSet(BTCLITED_OPTION_DATADIR)) {
+		path_ = fs::absolute(g_args.GetArg(BTCLITED_OPTION_DATADIR, ""));
+		if (!fs::is_directory(path_)) {
+			LogPrintf("Specified data directory \"%s\" does not exist. Use default data directory.\n", path_.c_str());
+			path_ = GetDefaultDataDir();
+		}
+	}
+}
+
+fs::path PathManager::GetConfigFile(const std::string& conf_path) const
+{
+	fs::path path(conf_path);
+	if (!path.is_absolute())
+		path = GetDataDir() / path;
+	return path;
+}
+
+void SetupEnvironment()
+{
+	try {
+        std::locale(""); // Raises a runtime error if current locale is invalid
+    } catch (const std::runtime_error&) {
+        setenv("LC_ALL", "C", 1);
+    }
 }
 

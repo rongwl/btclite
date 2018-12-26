@@ -5,7 +5,9 @@
 #include "utiltime.h"
 #include <iostream>
 
-ArgsManger g_args;
+ArgsManager g_args;
+PathManager g_path;
+
 
 void WaitForShutdown()
 {
@@ -21,13 +23,21 @@ void WaitForShutdown()
 bool AppInit(int argc, char **argv)
 {
 	bool ret = false;
-	g_args.ParseParameters(argc, argv);
 
 	try {
+		if (!g_args.ParseParameters(argc, argv))
+			return false;
+
+		g_path.UpdateDataDir();
+		fs::path path = g_path.GetDataDir();
+		if (!fs::is_directory(path)) {
+			fprintf(stderr, "Error: Specified data directory \"%s\" does not exist.\n", path.c_str());
+			return false;
+		}
 		if (!AppInitBasicSetup())
-			exit(EXIT_FAILURE);
+			return false;
 		if (!AppInitParameterInteraction())
-			exit(EXIT_FAILURE);
+			return false;
 		ret = AppInitMain();
 	}
 	catch (std::exception& e) {
@@ -50,5 +60,6 @@ bool AppInit(int argc, char **argv)
 
 int main(int argc, char **argv)
 {
+	SetupEnvironment();
 	return (AppInit(argc, argv) ? EXIT_SUCCESS : EXIT_FAILURE);
 }
