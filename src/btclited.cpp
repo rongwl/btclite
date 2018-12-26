@@ -34,6 +34,9 @@ bool AppInit(int argc, char **argv)
 			fprintf(stderr, "Error: Specified data directory \"%s\" does not exist.\n", path.c_str());
 			return false;
 		}
+		
+		g_args.ReadConfigFile(g_args.GetArg(BTCLITED_OPTION_CONF, BTCLITE_CONFIG_FILE));
+		
 		if (!AppInitBasicSetup())
 			return false;
 		if (!AppInitParameterInteraction())

@@ -60,6 +60,7 @@ void PrintUsage()
 	fprintf(stdout, "  --debug=<category>    Output debugging information(default: 0).\n");
 	fprintf(stdout, "                        <category> can be 1(output all debugging information),\n");
 	fprintf(stdout, "                        mempool, net.\n");
+	fprintf(stdout, "  --conf=<file>         Specify configuration file (default: %s)\n", BTCLITE_CONFIG_FILE);
                   //"                                                                                "
 	
 	exit(EXIT_FAILURE);

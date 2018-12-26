@@ -5,8 +5,9 @@
 #include "tinyformat.h"
 
 #include <atomic>
-#include <exception>
 #include <cstdlib>
+#include <exception>
+#include <fstream>
 #include <map>
 #include <set>
 #include <thread>
@@ -24,6 +25,9 @@ namespace fs = std::experimental::filesystem;
 #define BTCLITED_OPTION_HELP    "help"
 #define BTCLITED_OPTION_DATADIR "datadir"
 #define BTCLITED_OPTION_DEBUG   "debug"
+#define BTCLITED_OPTION_CONF    "conf"
+
+#define BTCLITE_CONFIG_FILE     "btclite.conf"
 
 extern bool output_debug;
 extern std::atomic<uint32_t> g_log_categories;
@@ -67,6 +71,7 @@ LogPrintStr(tfm::format(__VA_ARGS__)); \
 class ArgsManager {
 public:
 	bool ParseParameters(int, char* const*);
+	void ReadConfigFile(const std::string&) const;
 	std::string GetArg(const std::string&, const std::string&) const;
 	std::vector<std::string> GetArgs(const std::string&) const;
 	bool IsArgSet(const std::string&) const;

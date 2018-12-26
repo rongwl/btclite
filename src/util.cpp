@@ -76,6 +76,7 @@ bool ArgsManager::ParseParameters(int argc, char* const argv[])
 		{ BTCLITED_OPTION_HELP,    no_argument,       NULL, 'h' },
 		{ BTCLITED_OPTION_DATADIR, required_argument, NULL,  0  },
 		{ BTCLITED_OPTION_DEBUG,   required_argument, NULL,  0  },
+		{ BTCLITED_OPTION_CONF,    required_argument, NULL,  0  },
 		{ 0,                       0,                 0,     0  }
 	};
 	int c, option_index;
@@ -109,6 +110,35 @@ bool ArgsManager::ParseParameters(int argc, char* const argv[])
 	}
 	
 	return true;
+}
+
+void ArgsManager::ReadConfigFile(const std::string& file_path) const
+{
+	fs::path path = g_path.GetConfigFile(file_path);
+	std::ifstream ifs(path);
+	if (!ifs.good()) {
+		LogPrintf("Get config file: %s failed.\n", path.c_str());
+		return;
+	}
+	
+	LOCK(cs_args_);
+	std::string line;
+	while (std::getline(ifs, line)) {
+		line.erase(std::remove_if(line.begin(), line.end(), 
+								 [](unsigned char x){return std::isspace(x);}),
+				  line.end());
+		if (line[0] == '#' || line.empty())
+			continue;
+		auto pos = line.find("=");
+		if (pos != std::string::npos) {
+			std::string str = line.substr(0, pos);
+			if (!map_args_.count(str) && str != BTCLITED_OPTION_CONF) {
+				// Don't overwrite existing settings so command line settings override bitcoin.conf
+				std::string str_val = line.substr(pos+1);
+				//fprintf(stdout, "%s=%s\n", str.c_str(), str_val.c_str());
+			}
+		}
+	}
 }
 
 std::string ArgsManager::GetArg(const std::string& arg, const std::string& arg_default) const
