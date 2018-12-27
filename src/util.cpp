@@ -59,7 +59,7 @@ bool ArgsManager::CheckOptions(int argc, char* const argv[])
 {
 	for (int i = 1; i < argc; i++) {
 		std::string str(argv[i]);
-		if (str.length() <= 2 || str.compare(0, 2, "--")) {
+		if (str.length() > 2 && str.compare(0, 2, "--")) {
 			fprintf(stdout, "%s: invalid option '%s'\n", argv[0], str.c_str());
 			PrintUsage();
 			return false;
@@ -119,10 +119,8 @@ void ArgsManager::ReadConfigFile(const std::string& file_path) const
 {
 	fs::path path = g_path.GetConfigFile(file_path);
 	std::ifstream ifs(path);
-	if (!ifs.good()) {
-		LogPrint(LogLevel::WARNING, "Get config file: %s failed.\n", path.c_str());
+	if (!ifs.good()) 
 		return;
-	}
 	
 	LOCK(cs_args_);
 	std::string line;
@@ -138,7 +136,6 @@ void ArgsManager::ReadConfigFile(const std::string& file_path) const
 			if (!map_args_.count(str) && str != BTCLITED_OPTION_CONF) {
 				// Don't overwrite existing settings so command line settings override bitcoin.conf
 				std::string str_val = line.substr(pos+1);
-				LogPrint(LogLevel::DEBUG, "Parase option from config file: %s=%s\n", str.c_str(), str_val.c_str());
 			}
 		}
 	}
