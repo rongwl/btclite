@@ -66,22 +66,22 @@ struct LockData {
 
 static void potential_deadlock_detected(const std::pair<void*, void*>& mismatch, const LockStack& s1, const LockStack& s2)
 {
-	LogPrintf("POTENTIAL DEADLOCK DETECTED\n");
-    LogPrintf("Previous lock order was:\n");
+	LogPrint(LogLevel::CRIT, "POTENTIAL DEADLOCK DETECTED\n");
+    LogPrint(LogLevel::CRIT, "Previous lock order was:\n");
 	for (auto it : s1) {
 		if (it.first == mismatch.first)
-			LogPrintf(" (1)");
+			LogPrint(LogLevel::CRIT, " (1)");
 		else if (it.first == mismatch.second)
-			LogPrintf(" (2)");
-		LogPrintf(" %s\n", it.second.ToString());
+			LogPrint(LogLevel::CRIT, " (2)");
+		LogPrint(LogLevel::CRIT, " %s\n", it.second.ToString());
 	}
-	LogPrintf("Current lock order is:\n");
+	LogPrint(LogLevel::CRIT, "Current lock order is:\n");
 	for (auto it : s2) {
 		if (it.first == mismatch.first)
-			LogPrintf(" (1)");
+			LogPrint(LogLevel::CRIT, " (1)");
 		else if (it.first == mismatch.second)
-			LogPrintf(" (2)");
-		LogPrintf(" %s\n", it.second.ToString());
+			LogPrint(LogLevel::CRIT, " (2)");
+		LogPrint(LogLevel::CRIT, " %s\n", it.second.ToString());
 	}
 	
 	assert(false);

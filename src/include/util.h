@@ -22,15 +22,17 @@ namespace fs = std::experimental::filesystem;
 #endif
 
 
-#define BTCLITED_OPTION_HELP    "help"
-#define BTCLITED_OPTION_DATADIR "datadir"
-#define BTCLITED_OPTION_DEBUG   "debug"
-#define BTCLITED_OPTION_CONF    "conf"
+#define BTCLITED_OPTION_HELP     "help"
+#define BTCLITED_OPTION_DATADIR  "datadir"
+#define BTCLITED_OPTION_DEBUG    "debug"
+#define BTCLITED_OPTION_CONF     "conf"
+#define BTCLITED_OPTION_LOGLEVEL "loglevel"
 
 #define BTCLITE_CONFIG_FILE     "btclite.conf"
 
 extern bool output_debug;
 extern std::atomic<uint32_t> g_log_categories;
+extern std::atomic<uint8_t> g_log_level;
 
 void SetupEnvironment();
 
@@ -49,17 +51,33 @@ enum Flag : uint32_t {
 };
 }
 
+namespace LogLevel {
+enum Flag : uint8_t {
+	CRIT,    // A critical condition
+	ERROR,   // An error has occurred
+	WARNING, // A warning
+	NOTICE,  // Normal message to take note of
+	INFO,    // Some information
+	DEBUG,   // Debug information related to the program
+};
+}
+
 /** Return true if log accepts specified category */
 static inline bool LogAcceptCategory(uint32_t category)
 {
     return (g_log_categories.load(std::memory_order_relaxed) & category) != 0;
 }
 
+static inline bool IsNeedPrint(uint8_t level)
+{
+	return (level <= g_log_level.load(std::memory_order_relaxed));
+}
+
 /** Send a string to the log output */
 int LogPrintStr(const std::string &str);
 
-#define LogPrint(category, ...) do { \
-    if (LogAcceptCategory((category))) { \
+#define LogPrint(level, ...) do { \
+    if (IsNeedPrint((level))) { \
 	LogPrintStr(tfm::format(__VA_ARGS__)); \
 } \
 } while(0)

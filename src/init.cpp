@@ -25,9 +25,9 @@ void Interrupt()
 
 void Shutdown()
 {
-	LogPrintf("%s: In progress...\n", __func__);
+	LogPrint(LogLevel::NOTICE, "%s: In progress...\n", __func__);
 	
-	LogPrintf("%s: done\n", __func__);
+	LogPrint(LogLevel::NOTICE, "%s: done\n", __func__);
 }
 
 static void new_handle_terminate()
@@ -61,6 +61,14 @@ void PrintUsage()
 	fprintf(stdout, "                        <category> can be 1(output all debugging information),\n");
 	fprintf(stdout, "                        mempool, net.\n");
 	fprintf(stdout, "  --conf=<file>         Specify configuration file (default: %s)\n", BTCLITE_CONFIG_FILE);
+	fprintf(stdout, "  --loglevel=<level>    Specify the type of message being printed(default: 3).\n");
+	fprintf(stdout, "                        <level> can be:\n");
+	fprintf(stdout, "                            0(A critical condition),\n");
+	fprintf(stdout, "                            1(An error has occurred),\n");
+	fprintf(stdout, "                            2(A warning),\n");
+	fprintf(stdout, "                            3(Normal message to take note of),\n");
+	fprintf(stdout, "                            4(Some information),\n");
+	fprintf(stdout, "                            5(Debug information related to the program).\n");
                   //"                                                                                "
 	
 	exit(EXIT_FAILURE);
@@ -76,12 +84,21 @@ bool AppInitParameterInteraction()
 			for (auto category : arg_values) {
 				auto it = g_map_category.find(category);
 				if (it == g_map_category.end()) {
-					fprintf(stderr, "Unsupported logging category: %s\n", category.c_str());
+					LogPrint(LogLevel::ERROR, "Unsupported logging category: %s\n", category.c_str());
 					return false;
 				}
 				g_log_categories |= it->second;
 			}
 		}
+	}
+	if (g_args.IsArgSet(BTCLITED_OPTION_LOGLEVEL)) {
+		const std::string arg_val = g_args.GetArg(BTCLITED_OPTION_LOGLEVEL, "3");
+		if ( arg_val.length() != 1 && std::atoi(arg_val.c_str()) > LogLevel::DEBUG) {
+			LogPrint(LogLevel::ERROR, "Unsupported log level: %s\n", arg_val.c_str());
+			return false;
+		}
+		g_log_level = std::atoi(arg_val.c_str());
+		LogPrint(LogLevel::DEBUG, "set log level: %u\n", g_log_level.load(std::memory_order_relaxed));
 	}
 
 	return true;

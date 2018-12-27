@@ -31,7 +31,7 @@ bool AppInit(int argc, char **argv)
 		g_path.UpdateDataDir();
 		fs::path path = g_path.GetDataDir();
 		if (!fs::is_directory(path)) {
-			fprintf(stderr, "Error: Specified data directory \"%s\" does not exist.\n", path.c_str());
+			LogPrint(LogLevel::ERROR, "Error: Specified data directory \"%s\" does not exist.\n", path.c_str());
 			return false;
 		}
 		

@@ -17,6 +17,7 @@ bool print_to_console = true;
 bool print_to_file = false;
 
 std::atomic<uint32_t> g_log_categories(0);
+std::atomic<uint8_t> g_log_level(LogLevel::NOTICE); 
 
 /**
  * started_newline is a state variable held by the calling context that will
@@ -73,11 +74,12 @@ bool ArgsManager::ParseParameters(int argc, char* const argv[])
 		return false;
 	
 	const static struct option options[] {
-		{ BTCLITED_OPTION_HELP,    no_argument,       NULL, 'h' },
-		{ BTCLITED_OPTION_DATADIR, required_argument, NULL,  0  },
-		{ BTCLITED_OPTION_DEBUG,   required_argument, NULL,  0  },
-		{ BTCLITED_OPTION_CONF,    required_argument, NULL,  0  },
-		{ 0,                       0,                 0,     0  }
+		{ BTCLITED_OPTION_HELP,     no_argument,        NULL, 'h' },
+		{ BTCLITED_OPTION_DATADIR,  required_argument,  NULL,  0  },
+		{ BTCLITED_OPTION_DEBUG,    required_argument,  NULL,  0  },
+		{ BTCLITED_OPTION_CONF,     required_argument,  NULL,  0  },
+		{ BTCLITED_OPTION_LOGLEVEL, required_argument,  NULL,  0  },
+		{ 0,                        0,                  0,     0  }
 	};
 	int c, option_index;
 	
@@ -96,6 +98,7 @@ bool ArgsManager::ParseParameters(int argc, char* const argv[])
 					PrintUsage();
 					return false;
 				}
+				//LogPrint(LogLevel::DEBUG, "Parase option from command line: %s=%s\n", str.c_str(), str_val.c_str());
 				map_args_[str] = str_val;
 				map_multi_args_[str].push_back(str_val);
 				break;
@@ -117,7 +120,7 @@ void ArgsManager::ReadConfigFile(const std::string& file_path) const
 	fs::path path = g_path.GetConfigFile(file_path);
 	std::ifstream ifs(path);
 	if (!ifs.good()) {
-		LogPrintf("Get config file: %s failed.\n", path.c_str());
+		LogPrint(LogLevel::WARNING, "Get config file: %s failed.\n", path.c_str());
 		return;
 	}
 	
@@ -135,7 +138,7 @@ void ArgsManager::ReadConfigFile(const std::string& file_path) const
 			if (!map_args_.count(str) && str != BTCLITED_OPTION_CONF) {
 				// Don't overwrite existing settings so command line settings override bitcoin.conf
 				std::string str_val = line.substr(pos+1);
-				//fprintf(stdout, "%s=%s\n", str.c_str(), str_val.c_str());
+				LogPrint(LogLevel::DEBUG, "Parase option from config file: %s=%s\n", str.c_str(), str_val.c_str());
 			}
 		}
 	}
@@ -186,7 +189,8 @@ void PathManager::UpdateDataDir()
 	if (g_args.IsArgSet(BTCLITED_OPTION_DATADIR)) {
 		path_ = fs::absolute(g_args.GetArg(BTCLITED_OPTION_DATADIR, ""));
 		if (!fs::is_directory(path_)) {
-			LogPrintf("Specified data directory \"%s\" does not exist. Use default data directory.\n", path_.c_str());
+			LogPrint(LogLevel::WARNING, "Specified data directory \"%s\" does not exist. Use default data directory.\n",
+					 path_.c_str());
 			path_ = GetDefaultDataDir();
 		}
 	}
