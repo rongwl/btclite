@@ -16,6 +16,7 @@ bin_PROGRAMS = btclited
 BTCLITE_HEADER_FILES = \
 					   $(BTCLITE_INCLUDES_PATH)/init.h \
 					   $(BTCLITE_INCLUDES_PATH)/clientversion.h \
+					   $(BTCLITE_INCLUDES_PATH)/net.h \
 					   $(BTCLITE_INCLUDES_PATH)/serialize.h \
 					   $(BTCLITE_INCLUDES_PATH)/sync.h \
 					   $(BTCLITE_INCLUDES_PATH)/tinyformat.h \

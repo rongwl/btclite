@@ -27,8 +27,13 @@ namespace fs = std::experimental::filesystem;
 #define BTCLITED_OPTION_DEBUG    "debug"
 #define BTCLITED_OPTION_CONF     "conf"
 #define BTCLITED_OPTION_LOGLEVEL "loglevel"
+#define BTCLITED_OPTION_CONNECT  "connect"
+#define BTCLITED_OPTION_LISTEN   "listen"
+#define BTCLITED_OPTION_DISCOVER "discover"
+#define BTCLITED_OPTION_DNSSEED  "dnsseed"
 
-#define BTCLITE_CONFIG_FILE     "btclite.conf"
+#define DEFAULT_CONFIG_FILE     "btclite.conf"
+#define DEFAULT_LOG_LEVEL       "3"
 
 extern bool output_debug;
 extern std::atomic<uint32_t> g_log_categories;
@@ -92,6 +97,7 @@ public:
 	void ReadConfigFile(const std::string&) const;
 	std::string GetArg(const std::string&, const std::string&) const;
 	std::vector<std::string> GetArgs(const std::string&) const;
+	void SetArg(const std::string&, const std::string&);
 	bool IsArgSet(const std::string&) const;
 private:
 	mutable CCriticalSection cs_args_;

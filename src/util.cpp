@@ -59,7 +59,8 @@ bool ArgsManager::CheckOptions(int argc, char* const argv[])
 {
 	for (int i = 1; i < argc; i++) {
 		std::string str(argv[i]);
-		if (str.length() > 2 && str.compare(0, 2, "--")) {
+		if ((str.length() > 2 && str.compare(0, 2, "--")) ||
+		    !str.compare("--")) {
 			fprintf(stdout, "%s: invalid option '%s'\n", argv[0], str.c_str());
 			PrintUsage();
 			return false;
@@ -79,6 +80,10 @@ bool ArgsManager::ParseParameters(int argc, char* const argv[])
 		{ BTCLITED_OPTION_DEBUG,    required_argument,  NULL,  0  },
 		{ BTCLITED_OPTION_CONF,     required_argument,  NULL,  0  },
 		{ BTCLITED_OPTION_LOGLEVEL, required_argument,  NULL,  0  },
+		{ BTCLITED_OPTION_CONNECT,  required_argument,  NULL,  0  },
+	    { BTCLITED_OPTION_LISTEN,   required_argument,  NULL,  0  },
+		{ BTCLITED_OPTION_DISCOVER, required_argument,  NULL,  0, },
+		{ BTCLITED_OPTION_DNSSEED,  required_argument,  NULL,  0, },
 		{ 0,                        0,                  0,     0  }
 	};
 	int c, option_index;
@@ -119,8 +124,11 @@ void ArgsManager::ReadConfigFile(const std::string& file_path) const
 {
 	fs::path path = g_path.GetConfigFile(file_path);
 	std::ifstream ifs(path);
-	if (!ifs.good()) 
-		return;
+	if (!ifs.good()) {
+		if (path == g_path.GetDataDir() / DEFAULT_CONFIG_FILE)
+			std::ofstream file(path); // create default config file if it does not exist
+		return; 
+	}
 	
 	LOCK(cs_args_);
 	std::string line;
@@ -157,6 +165,13 @@ std::vector<std::string> ArgsManager::GetArgs(const std::string& arg) const
 	if (it != map_multi_args_.end())
 		return it->second;
 	return {};
+}
+
+void ArgsManager::SetArg(const std::string& arg, const std::string& arg_val)
+{
+	LOCK(cs_args_);
+	map_args_[arg] = arg_val;
+	map_multi_args_[arg] = {arg_val};
 }
 
 bool ArgsManager::IsArgSet(const std::string& arg) const

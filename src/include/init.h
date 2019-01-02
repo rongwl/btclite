@@ -7,8 +7,9 @@
 
 void Interrupt();
 void Shutdown();
-bool get_shutdown_requested();
+bool get_g_shutdown_requested();
 void PrintUsage();
+bool AppInitParameter(int, char* const*);
 bool AppInitParameterInteraction();
 bool AppInitBasicSetup();
 bool AppInitMain();
