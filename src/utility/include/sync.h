@@ -73,12 +73,12 @@ public:
 	}
 };
 
-typedef CMutexLock<CCriticalSection> CCriticalBlock;
+using CriticalBlock = CMutexLock<CCriticalSection>;
 
 #define PASTE(x, y) x ## y
 #define PASTE2(x, y) PASTE(x, y)
 
-#define LOCK(cs) CCriticalBlock PASTE2(criticalblock, __COUNTER__)(cs, #cs, __FILE__, __LINE__)
-#define TRY_LOCK(cs, name) CCriticalBlock name(cs, #cs, __FILE__, __LINE__, true)
+#define LOCK(cs) CriticalBlock PASTE2(criticalblock, __COUNTER__)(cs, #cs, __FILE__, __LINE__)
+#define TRY_LOCK(cs, name) CriticalBlock name(cs, #cs, __FILE__, __LINE__, true)
 
 #endif // BTCLITE_SYNC_H

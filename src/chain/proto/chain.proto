@@ -1,0 +1,12 @@
+syntax = "proto2";
+
+package chain;
+
+message BlockHeader {
+	required int32 version = 1;
+	required bytes prev_block_hash = 2;
+	required bytes merkle_root_hash = 3;
+	required uint32 time = 4;
+	required uint32 nBits = 5;
+	required uint32 nonce = 6;
+}

@@ -1,6 +1,7 @@
 #ifndef BTCLITE_BLOCK_H
 #define BTCLITE_BLOCK_H
 
+#include "serialize.h"
 #include "uint256.h"
 
 /** Nodes collect new transactions into a block, hash them into a hash tree,
@@ -19,27 +20,56 @@ public:
 	
 	void SetNull()
 	{
-		version = 0;
-		prev_block_hash.SetNull();
-		merkle_root_hash.SetNull();
-		time = 0;
-		nBits = 0;
-		nonce = 0;
+		version_ = 0;
+		prev_block_hash_.SetNull();
+		merkle_root_hash_.SetNull();
+		time_ = 0;
+		nBits_ = 0;
+		nonce_ = 0;
 	}
 	
 	bool IsNull() const
     {
-        return (nBits == 0);
+        return (nBits_ == 0);
     }
 	
+	template <typename SType>
+	void Serialize(SType&) const;
+	template <typename SType>
+	void UnSerialize(SType&);
 	uint256 GetHash() const;
+	
 private:
-	int32_t version;
-	uint256 prev_block_hash;
-	uint256 merkle_root_hash;
-	uint32_t time;
-	uint32_t nBits;
-	uint32_t nonce;
+	int32_t version_;
+	uint256 prev_block_hash_;
+	uint256 merkle_root_hash_;
+	uint32_t time_;
+	uint32_t nBits_;
+	uint32_t nonce_;
 };
+
+template <typename SType>
+void BlockHeader::Serialize(SType& os) const
+{
+	Serializer<SType> serial(os);
+	serial.SerialWrite(version_);
+	serial.SerialWrite(prev_block_hash_);
+	serial.SerialWrite(merkle_root_hash_);
+	serial.SerialWrite(time_);
+	serial.SerialWrite(nBits_);
+	serial.SerialWrite(nonce_);
+}
+
+template <typename SType>
+void BlockHeader::UnSerialize(SType& is)
+{
+	Serializer<SType> serial(is);
+	serial.SerialRead(version_);
+	serial.SerialRead(prev_block_hash_);
+	serial.SerialRead(merkle_root_hash_);
+	serial.SerialRead(time_);
+	serial.SerialRead(nBits_);
+	serial.SerialRead(nonce_);
+}
 
 #endif // BTCLITE_BLOCK_H

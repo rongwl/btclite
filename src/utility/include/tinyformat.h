@@ -568,8 +568,7 @@ class FormatList
 };
 
 /// Reference to type-opaque format list for passing to vformat()
-typedef const FormatList& FormatListRef;
-
+using FormatListRef = const FormatList&;
 
 namespace detail {
 

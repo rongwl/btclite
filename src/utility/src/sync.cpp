@@ -42,9 +42,9 @@ private:
 	bool is_try_;
 };
 
-typedef std::vector<std::pair<void*, CLockLocation> > LockStack;
-typedef std::map<std::pair<void*, void*>, LockStack> LockOrders;
-typedef std::set<std::pair<void*, void*> > InvLockOrders;
+using LockStack = std::vector<std::pair<void*, CLockLocation> >;
+using LockOrders = std::map<std::pair<void*, void*>, LockStack>;
+using InvLockOrders = std::set<std::pair<void*, void*> >;
 
 static thread_local LockStack g_lock_stack;
 

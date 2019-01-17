@@ -4,23 +4,26 @@ EXTRA_LIBRARIES =
 BTCLITE_CONFIG_INCLUDES = -I$(builddir)/config
 BTCLITE_MAIN_INCLUDES = -I$(srcdir)/main/include
 BTCLITE_CHAIN_INCLUDES = -I$(srcdir)/chain/include
+BTCLITE_CHAIN_PROTO_INCLUDES = -I$(srcdir)/chain/proto
 BTCLITE_CONSENSUS_INCLUDES = -I$(srcdir)/consensus/include
 BTCLITE_NET_INCLUDES = -I$(srcdir)/net/include
 BTCLITE_UTIL_INCLUDES = -I$(srcdir)/utility/include
 
 BTCLITE_INCLUDES = $(BTCLITE_MAIN_INCLUDES) \
 				   $(BTCLITE_CHAIN_INCLUDES) \
+				   $(BTCLITE_CHAIN_PROTO_INCLUDES) \
 				   $(BTCLITE_CONSENSUS_INCLUDES) \
 				   $(BTCLITE_NET_INCLUDES) \
 				   $(BTCLITE_UTIL_INCLUDES)
 
 
 STDCPP_FILESYSTEM_LIBS = -lstdc++fs
+LIBBTCLITE_CHAIN = chain/src/libbtclite_chain.a
 LIBBTCLITE_CONSENSUS = consensus/src/libbtclite_consensus.a
 LIBBTCLITE_UTIL = utility/src/libbtclite_util.a
 
 EXTRA_LIBRARIES += \
-				   $(LIBBTCLITE_COMMON) \
+				   $(LIBBTCLITE_CHAIN) \
 				   $(LIBBTCLITE_CONSENSUS) \
 				   $(LIBBTCLITE_UTIL)
 
@@ -32,20 +35,30 @@ BTCLITE_HEADER_FILES = \
 					   main/include/clientversion.h \
 					   main/include/init.h \
 					   net/include/net.h \
-					   consensus/includ/uint256.h \
-					   utility/includ/serialize.h \
-					   utility/includ/sync.h \
-					   utility/includ/tinyformat.h \
-					   utility/includ/util.h \
-					   utility/includ/utilstrencodings.h \
-					   utility/includ/utiltime.h
+					   consensus/include/uint256.h \
+					   utility/include/Endian.h \
+					   utility/include/serialize.h \
+					   utility/include/sync.h \
+					   utility/include/tinyformat.h \
+					   utility/include/util.h \
+					   utility/include/utilstrencodings.h \
+					   utility/include/utiltime.h
+
+
+chain_src_libbtclite_chain_a_CPPFLAGS = $(AM_CXXFLAGS) \
+										$(BTCLITE_CHAIN_INCLUDES) \
+										$(BTCLITE_CONSENSUS_INCLUDES) \
+										$(BTCLITE_UTIL_INCLUDES) 
+chain_src_libbtclite_chain_a_SOURCES = chain/src/block.cpp
 
 
 consensus_src_libbtclite_consensus_a_CPPFLAGS = $(AM_CXXFLAGS) \
 												$(BTCLITE_CONSENSUS_INCLUDES) \
-												$(BTCLITE_UTIL_INCLUDES)
+												$(BTCLITE_UTIL_INCLUDES) \
+												$(BTCLITE_CHAIN_PROTO_INCLUDES)
 consensus_src_libbtclite_consensus_a_SOURCES = consensus/src/uint256.cpp \
 											   utility/src/utilstrencodings.cpp
+
 
 utility_src_libbtclite_util_a_CPPFLAGS = $(AM_CXXFLAGS) \
 										 $(BTCLITE_UTIL_INCLUDES) \
@@ -60,13 +73,20 @@ btclited_CPPFLAGS = $(AM_CXXFLAGS) \
 					$(BTCLITE_INCLUDES)
 btclited_SOURCES = main/src/btclited.cpp \
 				   main/src/init.cpp \
-				   main/src/validation.cpp \
+				   main/src/validation.cpp 
 				   $(BTCLITE_HEADER_FILES)
 btclited_LDADD = \
-				 $(LIBBTCLITE_COMMON) \
+				 $(LIBBTCLITE_CHAIN) \
 				 $(LIBBTCLITE_CONSENSUS) \
 				 $(LIBBTCLITE_UTIL)
 btclited_LDADD += $(PTHREAD_LIBS) \
-				  $(STDCPP_FILESYSTEM_LIBS)
+				  $(STDCPP_FILESYSTEM_LIBS) \
+				  $(PROTOBUF_LIBS)
 
-MOSTLYCLEANFILES = utility/src/*.a consensus/src/*.a
+#chain/proto/%.pb.cc chain/proto/%.pb.h: chain/proto/%.proto
+#	$(PROTOC) --proto_path=chain/proto --cpp_out=chain/proto $^
+
+
+MOSTLYCLEANFILES = utility/src/*.a \
+				   consensus/src/*.a \
+				   chain/src/*.a 

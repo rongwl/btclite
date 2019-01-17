@@ -27,6 +27,11 @@ AC_PROG_INSTALL
 dnl Require C++17 compiler (no GNU extensions)
 AX_CXX_COMPILE_STDCXX([17], [noext], [mandatory], [nodefault])
 
+dnl Require protobuf
+PKG_CHECK_MODULES(PROTOBUF, protobuf >= 2.4.0)
+AC_CHECK_PROG([PROTOC], [protoc], [protoc])
+AS_IF([test "x${PROTOC}" == "x"],
+		[AC_MSG_ERROR([ProtoBuf compiler "protoc" not found.])])
 
  # Initialize libtool.
 LT_INIT([pic-only])
@@ -73,6 +78,7 @@ AX_PTHREAD
 #BOOST_LIBS="$BOOST_LDFLAGS $BOOST_SYSTEM_LIB $BOOST_THREAD_LIB"
 #AC_SUBST(BOOST_LIBS)
 
-AC_CONFIG_FILES([Makefile src/Makefile])
+AC_CONFIG_FILES([Makefile
+	   			src/Makefile])
 
 AC_OUTPUT
