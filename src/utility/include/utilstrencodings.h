@@ -21,7 +21,7 @@ std::string HexStr(const T itbegin, const T itend, bool fSpaces=false)
         if(fSpaces && it != itbegin)
             rv.push_back(' ');
 		std::stringstream ss;
-		ss << std::setw(2) << std::setfill('0') << std::hex << std::to_integer<int>(*it);
+		ss << std::setw(2) << std::setfill('0') << std::hex << *it;
 		rv += ss.str();
     }
 
