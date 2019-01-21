@@ -54,13 +54,13 @@ public:
 	template <typename T>
 	void SerialWrite(const T& obj)
 	{
-		Serialize(stream_, obj);
+		Serialize(obj);
 	}
 	
 	template <typename T>
 	void SerialRead(T& obj)
 	{
-		Unserialize(stream_, obj);
+		Unserialize(obj);
 	}
 	
 private:
@@ -68,11 +68,29 @@ private:
 	
 	void Serialize(const double&); // for double type
 	void Serialize(const float& in); // for float type
-	template <typename T> void Serialize(const T&); // for integral type and other class
+	template <typename T>
+	std::enable_if_t<std::is_integral<T>::value> Serialize(const T& in) // for integral type
+	{
+		SerWriteData(in);
+	}
+	template <typename T>
+	std::enable_if_t<std::is_class<T>::value> Serialize(const T& obj) // default to calling member function 
+	{
+		obj.Serialize(stream_);
+	}
 	
 	void UnSerialize(double*); // for double type
 	void UnSerialize(float*); // for float type
-	template <typename T> void Unserialize(T*); // for integral type and other class
+	template <typename T>
+	std::enable_if_t<std::is_integral<T>::value> UnSerialize(T *out) // for integral type
+	{
+		SerReadData(out);
+	}
+	template <typename T>
+	std::enable_if_t<std::is_class<T>::value> UnSerialize(T *obj) // default to calling member function
+	{
+		obj->UnSerialize(stream_);
+	}
 	
 	/* Lowest-level serialization and conversion. */
 	template <typename T> void SerWriteData(const T&);
@@ -89,16 +107,6 @@ template <typename SType>
 void Serializer<SType>::Serialize(const float& in)
 {
 	SerWriteData(FloatToBinary(in));
-}
-
-template <typename SType>
-template <typename T>
-void Serializer<SType>::Serialize(const T& obj)
-{
-	if (std::is_integral<T>::value)
-		SerWriteData(obj);
-	else // default to calling member function
-		obj.Serialize(stream_);
 }
 
 template <typename SType>
@@ -119,21 +127,11 @@ void Serializer<SType>::UnSerialize(float *out)
 
 template <typename SType>
 template <typename T>
-void Serializer<SType>::Unserialize(T *obj)
-{
-	if (std::is_integral<T>::value)
-		SerReadData(obj);
-	else // default to calling member function
-		obj->Unserialize(stream_);
-}
-
-template <typename SType>
-template <typename T>
 void Serializer<SType>::SerWriteData(const T& obj)
 {
 	Bytes<sizeof(T)> data;
 	ToLittleEndian(obj, &data);
-	stream_.write(reinterpret_cast<char*>(&data[0]), sizeof data);
+	stream_.write(reinterpret_cast<const char*>(&data[0]), sizeof data);
 }
 
 template <typename SType>

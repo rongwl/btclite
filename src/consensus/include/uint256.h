@@ -49,6 +49,17 @@ public:
                (*(it+7) << 56);
     }
 	
+	template <typename SType>
+	void Serialize(SType& s) const
+	{
+		s.write(reinterpret_cast<const char*>(&this->front()), this->size());
+	}
+	template <typename SType>
+	void UnSerialize(SType& s)
+	{
+		s.read(reinterpret_cast<char*>(&this->front()), this->size());
+	}
+	
 	std::string GetHex() const;
     void SetHex(const std::string& str);
 protected:

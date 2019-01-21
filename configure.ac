@@ -33,6 +33,9 @@ AC_CHECK_PROG([PROTOC], [protoc], [protoc])
 AS_IF([test "x${PROTOC}" == "x"],
 		[AC_MSG_ERROR([ProtoBuf compiler "protoc" not found.])])
 
+dnl Require botan
+PKG_CHECK_MODULES(BOTAN, botan-2 >= 2.4.0)
+
  # Initialize libtool.
 LT_INIT([pic-only])
 

@@ -46,6 +46,7 @@ BTCLITE_HEADER_FILES = \
 
 
 chain_src_libbtclite_chain_a_CPPFLAGS = $(AM_CXXFLAGS) \
+										$(BOTAN_CFLAGS) \
 										$(BTCLITE_CHAIN_INCLUDES) \
 										$(BTCLITE_CONSENSUS_INCLUDES) \
 										$(BTCLITE_UTIL_INCLUDES) 

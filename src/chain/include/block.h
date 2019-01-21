@@ -37,7 +37,7 @@ public:
 	void Serialize(SType&) const;
 	template <typename SType>
 	void UnSerialize(SType&);
-	uint256 GetHash() const;
+	void GetHash(uint256*) const;
 	
 private:
 	int32_t version_;
@@ -52,7 +52,7 @@ template <typename SType>
 void BlockHeader::Serialize(SType& os) const
 {
 	Serializer<SType> serial(os);
-	serial.SerialWrite(version_);
+	serial.SerialWrite(static_cast<uint32_t>(version_));
 	serial.SerialWrite(prev_block_hash_);
 	serial.SerialWrite(merkle_root_hash_);
 	serial.SerialWrite(time_);

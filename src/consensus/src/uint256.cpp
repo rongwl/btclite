@@ -7,7 +7,7 @@
 template <unsigned int BITS>
 std::string BaseBlob<BITS>::GetHex() const
 {
-	return HexStr(this->rbegin(), this->rend());
+	return HexEncode(this->rbegin(), this->rend());
 }
 
 template <unsigned int BITS>
