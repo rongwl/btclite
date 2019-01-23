@@ -1,8 +1,7 @@
 #ifndef BTCLITE_BLOCK_H
 #define BTCLITE_BLOCK_H
 
-#include "serialize.h"
-#include "uint256.h"
+#include "transaction.h"
 
 /** Nodes collect new transactions into a block, hash them into a hash tree,
  * and scan through nonce values to make the block's hash satisfy proof-of-work
@@ -37,12 +36,12 @@ public:
 	void Serialize(SType&) const;
 	template <typename SType>
 	void UnSerialize(SType&);
-	void GetHash(uint256*) const;
+	void GetHash(Hash256*) const;
 	
 private:
 	int32_t version_;
-	uint256 prev_block_hash_;
-	uint256 merkle_root_hash_;
+	Hash256 prev_block_hash_;
+	Hash256 merkle_root_hash_;
 	uint32_t time_;
 	uint32_t nBits_;
 	uint32_t nonce_;

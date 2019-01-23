@@ -1,5 +1,5 @@
-#ifndef BTCLITE_UINT256_H
-#define BTCLITE_UINT256_H
+#ifndef BTCLITE_Hash256_H
+#define BTCLITE_Hash256_H
 
 #include <cstddef>
 #include <cstdint>
@@ -28,7 +28,12 @@ public:
 	
 	void SetNull()
 	{
-		std::memset(this, 0, WIDTH);
+		std::memset(&this->front(), 0, WIDTH);
+	}
+	
+	int Compare(const BaseBlob& b) const
+	{
+		return std::memcmp(&this->front(), &b.front(), WIDTH);
 	}
 		
     std::string ToString() const
@@ -66,9 +71,28 @@ protected:
 	static constexpr int WIDTH = BITS / 8;
 };
 
-class uint256 : public BaseBlob<256> {
+template <unsigned int BITS>
+class Uint : public BaseBlob<BITS> {
 public:
-	uint256() {}
+	Uint() {}
+	
+	friend bool operator==(const Uint& a, const Uint& b)
+	{
+		return (a.Compare(b) == 0);
+	}
+	friend bool operator!=(const Uint& a, const Uint& b)
+	{
+		return !(a == b);
+	}
+	friend bool operator<(const Uint& a, const Uint& b)
+	{
+		return (a.Compare(b) < 0);
+	}
+	friend bool operator>(const Uint& a, const Uint& b)
+	{
+		return (a.Compare(b) > 0);
+	}
 };
+using Hash256 = Uint<256>;
 
-#endif // BTCLITE_UINT256_H
+#endif // BTCLITE_Hash256_H

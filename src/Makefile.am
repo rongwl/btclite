@@ -32,10 +32,11 @@ bin_PROGRAMS = btclited
 BTCLITE_HEADER_FILES = \
 					   chain/include/block.h \
 					   chain/include/chainparams.h \
+					   chain/include/transaction.h \
 					   main/include/clientversion.h \
 					   main/include/init.h \
 					   net/include/net.h \
-					   consensus/include/uint256.h \
+					   consensus/include/hash.h \
 					   utility/include/Endian.h \
 					   utility/include/serialize.h \
 					   utility/include/sync.h \
@@ -57,7 +58,7 @@ consensus_src_libbtclite_consensus_a_CPPFLAGS = $(AM_CXXFLAGS) \
 												$(BTCLITE_CONSENSUS_INCLUDES) \
 												$(BTCLITE_UTIL_INCLUDES) \
 												$(BTCLITE_CHAIN_PROTO_INCLUDES)
-consensus_src_libbtclite_consensus_a_SOURCES = consensus/src/uint256.cpp \
+consensus_src_libbtclite_consensus_a_SOURCES = consensus/src/hash.cpp \
 											   utility/src/utilstrencodings.cpp
 
 

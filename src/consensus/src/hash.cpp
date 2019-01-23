@@ -1,7 +1,7 @@
 #include <algorithm>
 #include <iterator>
 
-#include "uint256.h"
+#include "hash.h"
 #include "utilstrencodings.h"
 
 template <unsigned int BITS>
