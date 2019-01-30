@@ -9,15 +9,15 @@
 #include <vector>
 
 
-template<typename T>
-std::string HexEncode(const T itbegin, const T itend, bool fSpaces=false)
+template<typename Iterator>
+std::string HexEncode(Iterator begin, Iterator end, bool fSpaces=false)
 {
     std::string rv;
 
-    rv.reserve((itend-itbegin)*3);
-    for(T it = itbegin; it < itend; ++it)
+    rv.reserve((end-begin)*3);
+    for(Iterator it = begin; it < end; ++it)
     {
-        if(fSpaces && it != itbegin)
+        if(fSpaces && it != begin)
             rv.push_back(' ');
 		std::stringstream ss;
 		ss << std::setw(2) << std::setfill('0') << std::hex << *it;

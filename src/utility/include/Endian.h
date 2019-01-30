@@ -1,12 +1,10 @@
 #ifndef BTCLITE_ENDIAN_H
 #define BTCLITE_ENDIAN_H
 
-#include <array>
 #include <cstddef>
 #include "Assert.h"
+#include "blob.h"
 
-template <std::size_t size>
-using Bytes = std::array<uint8_t, size>;
 
 template <typename T>
 void ToBigEndian(T in, Bytes<sizeof(T)> *out)
@@ -30,23 +28,23 @@ void ToLittleEndian(T in, Bytes<sizeof(T)> *out)
 	}
 }
 
-template <typename T>
-void FromBigEndian(const Bytes<sizeof(T)>& in, T *out)
+template <typename T, typename Iterator>
+void FromBigEndian(Iterator begin, Iterator end, T *out)
 {
 	ASSERT_UNSIGNED(T);
 	ASSERT_NULL(out);
-	for (auto it = in.begin(); it != in.end(); ++it) {
-		*out = (*out << 8) | static_cast<unsigned int>(*it);
-	}
+	while (begin != end)
+		*out = (*out << 8) | static_cast<T>(*begin++);
 }
 
-template <typename T>
-void FromLittleEndian(const Bytes<sizeof(T)>& in, T *out)
+template <typename T, typename Iterator>
+void FromLittleEndian(Iterator begin, Iterator end, T *out)
 {
 	ASSERT_UNSIGNED(T);
 	ASSERT_NULL(out);
-	for (auto it = in.rbegin(); it != in.rend(); ++it)
-		*out = (*out << 8) | static_cast<unsigned int>(*it);
+	std::size_t i = 0;
+	while (i < sizeof(T) && begin != end) 
+		*out |= static_cast<T>(*begin++) << (8 * i++);
 }
 
 #endif // BTCLITE_ENDIAN_H

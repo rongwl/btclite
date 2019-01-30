@@ -7,6 +7,7 @@ BTCLITE_CHAIN_INCLUDES = -I$(srcdir)/chain/include
 BTCLITE_CHAIN_PROTO_INCLUDES = -I$(srcdir)/chain/proto
 BTCLITE_CONSENSUS_INCLUDES = -I$(srcdir)/consensus/include
 BTCLITE_NET_INCLUDES = -I$(srcdir)/net/include
+BTCLITE_TRANSACTION_INCLUDES = -I$(srcdir)/transaction/include
 BTCLITE_UTIL_INCLUDES = -I$(srcdir)/utility/include
 
 BTCLITE_INCLUDES = $(BTCLITE_MAIN_INCLUDES) \
@@ -14,6 +15,7 @@ BTCLITE_INCLUDES = $(BTCLITE_MAIN_INCLUDES) \
 				   $(BTCLITE_CHAIN_PROTO_INCLUDES) \
 				   $(BTCLITE_CONSENSUS_INCLUDES) \
 				   $(BTCLITE_NET_INCLUDES) \
+				   $(BTCLITE_TRANSACTION_INCLUDES) \
 				   $(BTCLITE_UTIL_INCLUDES)
 
 
@@ -32,12 +34,15 @@ bin_PROGRAMS = btclited
 BTCLITE_HEADER_FILES = \
 					   chain/include/block.h \
 					   chain/include/chainparams.h \
-					   chain/include/transaction.h \
 					   main/include/clientversion.h \
 					   main/include/init.h \
 					   net/include/net.h \
 					   consensus/include/hash.h \
+					   transaction/include/script.h \
+					   transaction/include/transaction.h \
+					   utility/include/blob.h \
 					   utility/include/Endian.h \
+					   utility/include/arithmetic.h \
 					   utility/include/serialize.h \
 					   utility/include/sync.h \
 					   utility/include/tinyformat.h \
@@ -50,16 +55,17 @@ chain_src_libbtclite_chain_a_CPPFLAGS = $(AM_CXXFLAGS) \
 										$(BOTAN_CFLAGS) \
 										$(BTCLITE_CHAIN_INCLUDES) \
 										$(BTCLITE_CONSENSUS_INCLUDES) \
+										$(BTCLITE_TRANSACTION_INCLUDES) \
 										$(BTCLITE_UTIL_INCLUDES) 
-chain_src_libbtclite_chain_a_SOURCES = chain/src/block.cpp
+chain_src_libbtclite_chain_a_SOURCES = chain/src/block.cpp \
+									   chain/src/chainparams.cpp
 
 
 consensus_src_libbtclite_consensus_a_CPPFLAGS = $(AM_CXXFLAGS) \
 												$(BTCLITE_CONSENSUS_INCLUDES) \
 												$(BTCLITE_UTIL_INCLUDES) \
 												$(BTCLITE_CHAIN_PROTO_INCLUDES)
-consensus_src_libbtclite_consensus_a_SOURCES = consensus/src/hash.cpp \
-											   utility/src/utilstrencodings.cpp
+consensus_src_libbtclite_consensus_a_SOURCES = utility/src/utilstrencodings.cpp
 
 
 utility_src_libbtclite_util_a_CPPFLAGS = $(AM_CXXFLAGS) \

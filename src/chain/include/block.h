@@ -17,6 +17,7 @@ public:
 		SetNull();
 	}
 	
+	//-------------------------------------------------------------------------
 	void SetNull()
 	{
 		version_ = 0;
@@ -25,17 +26,19 @@ public:
 		time_ = 0;
 		nBits_ = 0;
 		nonce_ = 0;
-	}
-	
+	}	
 	bool IsNull() const
     {
         return (nBits_ == 0);
     }
 	
+	//-------------------------------------------------------------------------
 	template <typename SType>
 	void Serialize(SType&) const;
 	template <typename SType>
 	void UnSerialize(SType&);
+	
+	//-------------------------------------------------------------------------
 	void GetHash(Hash256*) const;
 	
 private:
@@ -63,12 +66,12 @@ template <typename SType>
 void BlockHeader::UnSerialize(SType& is)
 {
 	Serializer<SType> serial(is);
-	serial.SerialRead(version_);
-	serial.SerialRead(prev_block_hash_);
-	serial.SerialRead(merkle_root_hash_);
-	serial.SerialRead(time_);
-	serial.SerialRead(nBits_);
-	serial.SerialRead(nonce_);
+	serial.SerialRead(&version_);
+	serial.SerialRead(&prev_block_hash_);
+	serial.SerialRead(&merkle_root_hash_);
+	serial.SerialRead(&time_);
+	serial.SerialRead(&nBits_);
+	serial.SerialRead(&nonce_);
 }
 
 #endif // BTCLITE_BLOCK_H

@@ -3,7 +3,7 @@
 #include "sync.h"
 #include "util.h"
 #include "utiltime.h"
-#include <iostream>
+
 
 ArgsManager g_args;
 PathManager g_path;
