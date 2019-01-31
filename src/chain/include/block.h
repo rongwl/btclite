@@ -39,7 +39,11 @@ public:
 	void UnSerialize(SType&);
 	
 	//-------------------------------------------------------------------------
-	void GetHash(Hash256*) const;
+	const Hash256& Hash();
+	const Hash256& HashCache() const
+	{
+		return hash_;
+	}
 	
 private:
 	int32_t version_;
@@ -48,6 +52,8 @@ private:
 	uint32_t time_;
 	uint32_t nBits_;
 	uint32_t nonce_;
+	
+	Hash256 hash_;
 };
 
 template <typename SType>

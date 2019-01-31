@@ -21,12 +21,12 @@ BTCLITE_INCLUDES = $(BTCLITE_MAIN_INCLUDES) \
 
 STDCPP_FILESYSTEM_LIBS = -lstdc++fs
 LIBBTCLITE_CHAIN = chain/src/libbtclite_chain.a
-LIBBTCLITE_CONSENSUS = consensus/src/libbtclite_consensus.a
+LIBBTCLITE_TRANSACTION = transaction/src/libbtclite_transaction.a
 LIBBTCLITE_UTIL = utility/src/libbtclite_util.a
 
 EXTRA_LIBRARIES += \
 				   $(LIBBTCLITE_CHAIN) \
-				   $(LIBBTCLITE_CONSENSUS) \
+				   $(LIBBTCLITE_TRANSACTION) \
 				   $(LIBBTCLITE_UTIL)
 
 bin_PROGRAMS = btclited
@@ -44,6 +44,7 @@ BTCLITE_HEADER_FILES = \
 					   utility/include/Endian.h \
 					   utility/include/arithmetic.h \
 					   utility/include/serialize.h \
+					   utility/include/constants.h \
 					   utility/include/sync.h \
 					   utility/include/tinyformat.h \
 					   utility/include/util.h \
@@ -61,11 +62,14 @@ chain_src_libbtclite_chain_a_SOURCES = chain/src/block.cpp \
 									   chain/src/chainparams.cpp
 
 
-consensus_src_libbtclite_consensus_a_CPPFLAGS = $(AM_CXXFLAGS) \
-												$(BTCLITE_CONSENSUS_INCLUDES) \
-												$(BTCLITE_UTIL_INCLUDES) \
-												$(BTCLITE_CHAIN_PROTO_INCLUDES)
-consensus_src_libbtclite_consensus_a_SOURCES = utility/src/utilstrencodings.cpp
+transaction_src_libbtclite_transaction_a_CPPFLAGS = $(AM_CXXFLAGS) \
+													$(BOTAN_CFLAGS) \
+													$(BTCLITE_TRANSACTION_INCLUDES) \
+													$(BTCLITE_CONSENSUS_INCLUDES) \
+													$(BTCLITE_UTIL_INCLUDES) \
+													$(BTCLITE_CHAIN_PROTO_INCLUDES)
+transaction_src_libbtclite_transaction_a_SOURCES = transaction/src/script.cpp \
+												   transaction/src/transaction.cpp
 
 
 utility_src_libbtclite_util_a_CPPFLAGS = $(AM_CXXFLAGS) \
@@ -85,7 +89,7 @@ btclited_SOURCES = main/src/btclited.cpp \
 				   $(BTCLITE_HEADER_FILES)
 btclited_LDADD = \
 				 $(LIBBTCLITE_CHAIN) \
-				 $(LIBBTCLITE_CONSENSUS) \
+				 $(LIBBTCLITE_TRANSACTION) \
 				 $(LIBBTCLITE_UTIL)
 btclited_LDADD += $(PTHREAD_LIBS) \
 				  $(STDCPP_FILESYSTEM_LIBS) \
@@ -96,5 +100,5 @@ btclited_LDADD += $(PTHREAD_LIBS) \
 
 
 MOSTLYCLEANFILES = utility/src/*.a \
-				   consensus/src/*.a \
+				   transaction/src/*.a \
 				   chain/src/*.a 
