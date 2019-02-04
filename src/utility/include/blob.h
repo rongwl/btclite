@@ -48,10 +48,10 @@ public:
 	
 	std::string ToString() const
 	{
-		return GetHex();
+		return Hex();
 	}
 
-    uint64_t GetUint64(int pos) const
+    uint64_t Uint64(int pos) const
     {
         auto it = this->begin() + pos * 8;
         return *(it) | 
@@ -64,7 +64,7 @@ public:
                (*(it+7) << 56);
     }
 	
-	std::string GetHex() const
+	std::string Hex() const
 	{
 		return HexEncode(this->rbegin(), this->rend());
 	}

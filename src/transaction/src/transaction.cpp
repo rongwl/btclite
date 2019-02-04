@@ -64,7 +64,7 @@ uint64_t Transaction::OutputsAmount() const
 	return amount;
 }
 
-std::size_t Transaction::Size(bool serialized) const
+std::size_t Transaction::Size(bool serialized = false) const
 {
     const auto ins = [serialized](std::size_t size, const TxIn& input)
     {

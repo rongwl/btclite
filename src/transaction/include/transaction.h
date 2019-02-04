@@ -13,6 +13,12 @@ public:
 		: index_(UINT32_MAX) {}
 	OutPoint(const Hash256& hash, uint32_t index)
 		: hash_(hash), index_(index) {}
+	OutPoint(Hash256&& hash, uint32_t index)
+		: hash_(std::move(hash)), index_(index) {}
+	OutPoint(const OutPoint& op)
+		: hash_(op.hash_), index_(op.index_) {}
+	OutPoint(OutPoint&& op)
+		: hash_(std::move(op.hash_)), index_(op.index_) {}
 	
 	//-------------------------------------------------------------------------
 	void SetNull()
@@ -50,6 +56,18 @@ public:
 	{
 		return (a > b || (a == b && a.index_ > b.index_));
 	}
+	OutPoint& operator=(const OutPoint& b)
+	{
+		hash_ = b.hash_;
+		index_ = b.index_;
+		return *this;
+	}
+	OutPoint& operator=(OutPoint&& b)
+	{
+		hash_ = std::move(b.hash_);
+		index_ = b.index_;
+		return *this;
+	}
 	
 	//-------------------------------------------------------------------------
 	template <typename SType>
@@ -67,6 +85,11 @@ public:
 		serial.SerialRead(&index_);
 	}
 	
+	//-------------------------------------------------------------------------
+	const Hash256& prevhash()
+	{
+		return hash_;
+	}
 private:
 	Hash256 hash_;
 	uint32_t index_;
@@ -85,10 +108,14 @@ public:
 	//-------------------------------------------------------------------------
 	TxIn()
 		: sequence_no_(default_sequence_no) {}
-	TxIn(const OutPoint& prevout, const Script& script_sig=Script(), uint32_t sequence_no=default_sequence_no)
+	TxIn(const OutPoint& prevout, const Script& script_sig, uint32_t sequence_no=default_sequence_no)
 		: prevout_(prevout), script_sig_(script_sig), sequence_no_(sequence_no) {}
-	TxIn(const Hash256& hash, uint32_t index, const Script& script_sig=Script(), uint32_t sequence_no=default_sequence_no)
-		: prevout_(hash, index), script_sig_(script_sig), sequence_no_(sequence_no) {}
+	TxIn(OutPoint&& prevout, Script&& script_sig, uint32_t sequence_no=default_sequence_no)
+		: prevout_(std::move(prevout)), script_sig_(std::move(script_sig)), sequence_no_(sequence_no) {}
+	TxIn(const TxIn& input)
+		: prevout_(input.prevout_), script_sig_(input.script_sig_), sequence_no_(input.sequence_no_) {}
+	TxIn(TxIn&& input)
+		: prevout_(std::move(input.prevout_)), script_sig_(std::move(input.script_sig_)), sequence_no_(input.sequence_no_) {}
 	
 	//-------------------------------------------------------------------------
 	template <typename SType>
@@ -119,10 +146,24 @@ public:
 	{
 		return !(*this == b);
 	}
+	TxIn& operator=(const TxIn& b)
+	{
+		prevout_ = b.prevout_;
+		script_sig_ = b.script_sig_;
+		sequence_no_ = b.sequence_no_;
+		return *this;
+	}
+	TxIn& operator=(TxIn&& b)
+	{
+		prevout_ = std::move(b.prevout_);
+		script_sig_ = std::move(b.script_sig_);
+		sequence_no_ = b.sequence_no_;
+		return *this;
+	}
 	
 	//-------------------------------------------------------------------------
 	std::string ToString() const;
-	std::size_t Size(bool serialized) const
+	std::size_t Size(bool serialized = false) const
 	{
 		return prevout_.Size() + script_sig_.Size(serialized) + sizeof(sequence_no_);
 	}
@@ -131,6 +172,36 @@ public:
 	const OutPoint& prevout() const
 	{
 		return prevout_;
+	}
+	void set_prevout(const OutPoint& prevout)
+	{
+		prevout_ = prevout;
+	}
+	void set_prevout(const OutPoint&& prevout)
+	{
+		prevout_ = std::move(prevout);
+	}
+	
+	const Script& script_sig() const
+	{
+		return script_sig_;
+	}
+	void set_scriptSig(const Script& script)
+	{
+		script_sig_ = script;
+	}
+	void set_scriptSig(const Script&& script)
+	{
+		script_sig_ = std::move(script);
+	}
+	
+	uint32_t sequence_no() const
+	{
+		return sequence_no_;
+	}
+	void set_sequenceNo(uint32_t sequence)
+	{
+		sequence_no_ = sequence;
 	}
 	
 private:
@@ -149,8 +220,14 @@ public:
 	{
 		script_pub_key_.clear();
 	}
-	TxOut(const uint64_t& value, const Script& script)
+	TxOut(uint64_t value, const Script& script)
 		: value_(value), script_pub_key_(script) {}
+	TxOut(uint64_t value, Script&& script)
+		: value_(value), script_pub_key_(std::move(script)) {}
+	TxOut(const TxOut& output)
+		: value_(output.value_), script_pub_key_(output.script_pub_key_) {}
+	TxOut(TxOut&& output)
+		: value_(output.value_), script_pub_key_(std::move(output.script_pub_key_)) {}
 	
 	//-------------------------------------------------------------------------
 	void SetNull()
@@ -168,7 +245,7 @@ public:
 						 value_ / satoshi_per_bitcoin, value_ % satoshi_per_bitcoin, 
 						 HexEncode(script_pub_key_.begin(), script_pub_key_.end()).substr(0, 30));
 	}
-	std::size_t Size(bool serialized) const
+	std::size_t Size(bool serialized = false) const
 	{
 		return script_pub_key_.Size(serialized) + sizeof(value_);
 	}
@@ -199,6 +276,18 @@ public:
 	{
 		return !(*this == b);
 	}
+	TxOut& operator=(const TxOut& b)
+	{
+		value_ = b.value_;
+		script_pub_key_ = b.script_pub_key_;
+		return *this;
+	}
+	TxOut& operator=(TxOut&& b)
+	{
+		value_ = b.value_;
+		script_pub_key_ = std::move(b.script_pub_key_);
+		return *this;
+	}
 	
 	//-------------------------------------------------------------------------
 	uint64_t value() const
@@ -220,6 +309,13 @@ public:
 	Transaction(uint32_t version, const std::vector<TxIn>& inputs,
 				const std::vector<TxOut>& outputs, uint32_t lock_time)
 		: version_(version), inputs_(inputs), outputs_(outputs), lock_time_(lock_time)
+	{
+		Hash();
+	}
+	Transaction(uint32_t version, std::vector<TxIn>&& inputs,
+				std::vector<TxOut>&& outputs, uint32_t lock_time)
+		: version_(version), inputs_(std::move(inputs)),
+		  outputs_(std::move(outputs)), lock_time_(lock_time)
 	{
 		Hash();
 	}
@@ -248,6 +344,22 @@ public:
 	{
 		return !(*this == b);
 	}
+	Transaction& operator=(const Transaction& b)
+	{
+		version_ = b.version_;
+		inputs_ = b.inputs_;
+		outputs_ = b.outputs_;
+		lock_time_ = b.lock_time_;
+		return *this;
+	}
+	Transaction& operator=(Transaction&& b)
+	{
+		version_ = b.version_;
+		inputs_ = std::move(b.inputs_);
+		outputs_ = std::move(b.outputs_);
+		lock_time_ = std::move(b.lock_time_);
+		return *this;
+	}
 	
 	//-------------------------------------------------------------------------
 	const Hash256& HashCache() const
@@ -265,9 +377,54 @@ public:
 	{
 		return (inputs_.size() == 1 && inputs_[0].prevout().IsNull());
 	}
-	std::size_t Size(bool serialized) const;
+	std::size_t Size(bool) const;
 	uint64_t OutputsAmount() const;
 	std::string ToString() const;
+	
+	//-------------------------------------------------------------------------
+	uint32_t version() const
+	{
+		return version_;
+	}
+	void set_version(uint32_t v)
+	{
+		version_ = v;
+	}
+	
+	const std::vector<TxIn>& inputs() const
+	{
+		return inputs_;
+	}
+	void set_inputs(const std::vector<TxIn>& inputs)
+	{
+		inputs_ = inputs;
+	}
+	void set_inputs(std::vector<TxIn>&& inputs)
+	{
+		inputs_ = std::move(inputs);
+	}
+	
+	const std::vector<TxOut>& outputs() const
+	{
+		return outputs_;
+	}
+	void set_outputs(const std::vector<TxOut>& outputs)
+	{
+		outputs_ = outputs;
+	}
+	void set_outputs(std::vector<TxOut>&& outputs)
+	{
+		outputs_ = std::move(outputs);
+	}
+	
+	uint32_t lock_time() const
+	{
+		return lock_time_;
+	}
+	void set_lockTime(uint32_t t)
+	{
+		lock_time_ = t;
+	}
 	
 private:
 	uint32_t version_;

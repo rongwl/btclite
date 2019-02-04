@@ -72,51 +72,84 @@ private:
 	SType& stream_;
 	
 	//-------------------------------------------------------------------------
-	void Serialize(const double& in) // for double type
+	// for double type
+	void Serialize(const double& in) 
 	{
 		SerWriteData(DoubleToBinary(in));
 	}
-	void Serialize(const float& in) // for float type
+	
+	// for float type
+	void Serialize(const float& in)
 	{
 		SerWriteData(FloatToBinary(in));
 	}
-	template <typename T> void Serialize(const std::vector<T>& v) // for vector
+	
+	// for arithmetic type vector
+	template <typename T>
+	std::enable_if_t<std::is_arithmetic<T>::value> Serialize(const std::vector<T>& v)
 	{
 		SerWriteVarInt(v.size());
 		if (!v.empty())
 			stream_.write(reinterpret_cast<const char*>(v.data()), v.size()*sizeof(T));
 	}
+	
+	// for class type vector
 	template <typename T>
-	std::enable_if_t<std::is_integral<T>::value> Serialize(const T& in) // for integral type
+	std::enable_if_t<std::is_class<T>::value> Serialize(const std::vector<T>& v)
+	{
+		SerWriteVarInt(v.size());
+		for (auto it = v.begin(); it != v.end(); it++)
+			Serialize(*it);
+	}
+	
+	// for integral type
+	template <typename T>
+	std::enable_if_t<std::is_integral<T>::value> Serialize(const T& in) 
 	{
 		SerWriteData(in);
 	}
+	
+	// default to calling member function 
 	template <typename T>
-	std::enable_if_t<std::is_class<T>::value> Serialize(const T& obj) // default to calling member function 
+	std::enable_if_t<std::is_class<T>::value> Serialize(const T& obj) 
 	{
 		obj.Serialize(stream_);
 	}
 	
-	void UnSerialize(double *out) // for double type
+	// for double type
+	void UnSerialize(double *out) 
 	{
 		uint64_t i;
 		SerReadData(&i);
 		*out = BinaryToDouble(i);		
 	}
-	void UnSerialize(float *out) // for float type
+	
+	// for float type
+	void UnSerialize(float *out) 
 	{
 		uint32_t i;
 		SerReadData(&i);
 		*out = BinaryToFloat(i);
-	}	
-	template <typename T> void UnSerialize(std::vector<T>*); // for vector
+	}
+	
+	// for arithmetic type vector
+	template <typename T> 
+	std::enable_if_t<std::is_arithmetic<T>::value> UnSerialize(std::vector<T>*); 
+	
+	// for class type vector
+	template <typename T> 
+	std::enable_if_t<std::is_class<T>::value> UnSerialize(std::vector<T>*); 
+	
+	// for integral type
 	template <typename T>
-	std::enable_if_t<std::is_integral<T>::value> UnSerialize(T *out) // for integral type
+	std::enable_if_t<std::is_integral<T>::value> UnSerialize(T *out) 
 	{
 		SerReadData(out);
 	}
+	
+	// default to calling member function
 	template <typename T>
-	std::enable_if_t<std::is_class<T>::value> UnSerialize(T *obj) // default to calling member function
+	std::enable_if_t<std::is_class<T>::value> UnSerialize(T *obj) 
 	{
 		obj->UnSerialize(stream_);
 	}
@@ -134,56 +167,69 @@ private:
 
 template <typename SType>
 template <typename T>
-void Serializer<SType>::UnSerialize(std::vector<T> *out)
+std::enable_if_t<std::is_arithmetic<T>::value> Serializer<SType>::UnSerialize(std::vector<T> *out)
 {
 	// Limit size per read so bogus size value won't cause out of memory
-	uint64_t size = SerReadVarInt();
+	uint64_t count = SerReadVarInt();
+	if (count*sizeof(T) > max_block_size)
+		throw std::ios_base::failure("vector size larger than max block size");
 	out->clear();
-	uint64_t i;
-	while (i < size) {
-		uint32_t blk = std::min(size-i, static_cast<uint64_t>(1 + 4999999 / sizeof(T)));
-		out->reserve(i+blk);
-		stream_.read(reinterpret_cast<char*>(&out->data()), blk*sizeof(T));
-		i += blk;
+	out->resize(count);
+	stream_.read(reinterpret_cast<char*>(&out->data()), count*sizeof(T));
+}
+
+template <typename SType>
+template <typename T> 
+std::enable_if_t<std::is_class<T>::value> Serializer<SType>::UnSerialize(std::vector<T> *out)
+{
+	uint64_t count = SerReadVarInt();
+	std::size_t size = 0;	
+	out->clear();
+	out->resize(count);
+	for (uint64_t i = 0; i < count; i++) {
+		UnSerialize(&(out->at(i)));
+		size += out->at(i).Size(true);
+		if (size > max_block_size)
+			throw std::ios_base::failure("vector size larger than max block size");
 	}
 }
 
 template <typename SType>
-void Serializer<SType>::SerWriteVarInt(const uint64_t nSize)
+void Serializer<SType>::SerWriteVarInt(const uint64_t count)
 {
-	if (nSize < varint_16bits) {
-		SerWriteData(static_cast<uint8_t>(nSize));
+	if (count < varint_16bits) {
+		SerWriteData(static_cast<uint8_t>(count));
 	}
-	else if (nSize <= UINT16_MAX) {
+	else if (count <= UINT16_MAX) {
 		SerWriteData(varint_16bits);
-		SerWriteData(static_cast<uint16_t>(nSize));
+		SerWriteData(static_cast<uint16_t>(count));
 	}
-	else if (nSize <= UINT32_MAX) {
+	else if (count <= UINT32_MAX) {
 		SerWriteData(varint_32bits);
-		SerWriteData(static_cast<uint32_t>(nSize));
+		SerWriteData(static_cast<uint32_t>(count));
 	}
 	else {
 		SerWriteData(varint_64bits);
-		SerWriteData(nSize);
+		SerWriteData(count);
 	}
 }
 
 template <typename SType>
 uint64_t Serializer<SType>::SerReadVarInt()
 {
-	uint8_t size;
+	uint8_t count;
 	uint64_t varint;
 	
-	SerReadData(&size);
-	if (size < varint_16bits) {
-		varint = size;
+	SerReadData(&count);
+	if (count < varint_16bits) {
+		varint = count;
 	}
-	else if (size == varint_16bits) {
+	else if (count == varint_16bits) {
 		SerReadData(reinterpret_cast<uint16_t*>(&varint));
 		if (varint < varint_16bits)
 			throw std::ios_base::failure("non-canonical SerReadVarInt()");
 	}
-	else if (size == varint_32bits) {
+	else if (count == varint_32bits) {
 		SerReadData(reinterpret_cast<uint32_t*>(&varint));
 		if (varint <= UINT16_MAX)
 			throw std::ios_base::failure("non-canonical SerReadVarInt()");

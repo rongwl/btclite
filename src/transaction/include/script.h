@@ -247,9 +247,19 @@ public:
 	{
 		return !(*this == b);
 	}
+	Script& operator=(const Script& b)
+	{
+		data_ = b.data_;
+		return *this;
+	}
+	Script& operator=(Script&& b)
+	{
+		data_ = std::move(b.data_);
+		return *this;
+	}
 	
 	//-------------------------------------------------------------------------
-	std::size_t Size(bool serialized) const
+	std::size_t Size(bool serialized = false) const
 	{
 		std::size_t result = data_.size();
 		if (serialized)

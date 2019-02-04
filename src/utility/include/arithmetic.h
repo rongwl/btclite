@@ -9,7 +9,10 @@
 template <uint32_t nBITS>
 class Uint : public Blob<nBITS> {
 public:
-	Uint() {}
+	Uint()
+	{
+		this->SetNull();
+	}
 	
 	// Operation
 	//-------------------------------------------------------------------------
