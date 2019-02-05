@@ -185,11 +185,11 @@ public:
 class Script {
 public:
 	Script() {}
-	Script(std::vector<uint8_t>&& v)
+	Script(std::vector<uint8_t>&& v) noexcept
 		: data_(std::move(v)) {}
 	Script(const std::vector<uint8_t>& v)
 		: data_(v) {}
-	Script(Script&& s)
+	Script(Script&& s) noexcept
 		: data_(std::move(s.data_)) {}
 	Script(const Script& s)
 		: data_(s.data_) {}
@@ -252,9 +252,10 @@ public:
 		data_ = b.data_;
 		return *this;
 	}
-	Script& operator=(Script&& b)
+	Script& operator=(Script&& b) noexcept
 	{
-		data_ = std::move(b.data_);
+		if (this != &b)
+			data_ = std::move(b.data_);
 		return *this;
 	}
 	

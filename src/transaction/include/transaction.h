@@ -13,11 +13,11 @@ public:
 		: index_(UINT32_MAX) {}
 	OutPoint(const Hash256& hash, uint32_t index)
 		: hash_(hash), index_(index) {}
-	OutPoint(Hash256&& hash, uint32_t index)
+	OutPoint(Hash256&& hash, uint32_t index) noexcept
 		: hash_(std::move(hash)), index_(index) {}
 	OutPoint(const OutPoint& op)
 		: hash_(op.hash_), index_(op.index_) {}
-	OutPoint(OutPoint&& op)
+	OutPoint(OutPoint&& op) noexcept
 		: hash_(std::move(op.hash_)), index_(op.index_) {}
 	
 	//-------------------------------------------------------------------------
@@ -62,10 +62,12 @@ public:
 		index_ = b.index_;
 		return *this;
 	}
-	OutPoint& operator=(OutPoint&& b)
+	OutPoint& operator=(OutPoint&& b) noexcept
 	{
-		hash_ = std::move(b.hash_);
-		index_ = b.index_;
+		if (this != &b) {
+			hash_ = std::move(b.hash_);
+			index_ = b.index_;
+		}
 		return *this;
 	}
 	
@@ -110,11 +112,11 @@ public:
 		: sequence_no_(default_sequence_no) {}
 	TxIn(const OutPoint& prevout, const Script& script_sig, uint32_t sequence_no=default_sequence_no)
 		: prevout_(prevout), script_sig_(script_sig), sequence_no_(sequence_no) {}
-	TxIn(OutPoint&& prevout, Script&& script_sig, uint32_t sequence_no=default_sequence_no)
+	TxIn(OutPoint&& prevout, Script&& script_sig, uint32_t sequence_no=default_sequence_no) noexcept
 		: prevout_(std::move(prevout)), script_sig_(std::move(script_sig)), sequence_no_(sequence_no) {}
 	TxIn(const TxIn& input)
 		: prevout_(input.prevout_), script_sig_(input.script_sig_), sequence_no_(input.sequence_no_) {}
-	TxIn(TxIn&& input)
+	TxIn(TxIn&& input) noexcept
 		: prevout_(std::move(input.prevout_)), script_sig_(std::move(input.script_sig_)), sequence_no_(input.sequence_no_) {}
 	
 	//-------------------------------------------------------------------------
@@ -153,11 +155,13 @@ public:
 		sequence_no_ = b.sequence_no_;
 		return *this;
 	}
-	TxIn& operator=(TxIn&& b)
+	TxIn& operator=(TxIn&& b) noexcept
 	{
-		prevout_ = std::move(b.prevout_);
-		script_sig_ = std::move(b.script_sig_);
-		sequence_no_ = b.sequence_no_;
+		if (this != &b) {
+			prevout_ = std::move(b.prevout_);
+			script_sig_ = std::move(b.script_sig_);
+			sequence_no_ = b.sequence_no_;
+		}
 		return *this;
 	}
 	
@@ -222,11 +226,11 @@ public:
 	}
 	TxOut(uint64_t value, const Script& script)
 		: value_(value), script_pub_key_(script) {}
-	TxOut(uint64_t value, Script&& script)
+	TxOut(uint64_t value, Script&& script) noexcept
 		: value_(value), script_pub_key_(std::move(script)) {}
 	TxOut(const TxOut& output)
 		: value_(output.value_), script_pub_key_(output.script_pub_key_) {}
-	TxOut(TxOut&& output)
+	TxOut(TxOut&& output) noexcept
 		: value_(output.value_), script_pub_key_(std::move(output.script_pub_key_)) {}
 	
 	//-------------------------------------------------------------------------
@@ -282,10 +286,12 @@ public:
 		script_pub_key_ = b.script_pub_key_;
 		return *this;
 	}
-	TxOut& operator=(TxOut&& b)
+	TxOut& operator=(TxOut&& b) noexcept
 	{
-		value_ = b.value_;
-		script_pub_key_ = std::move(b.script_pub_key_);
+		if (this != &b) {
+			value_ = b.value_;
+			script_pub_key_ = std::move(b.script_pub_key_);
+		}
 		return *this;
 	}
 	
@@ -313,7 +319,7 @@ public:
 		Hash();
 	}
 	Transaction(uint32_t version, std::vector<TxIn>&& inputs,
-				std::vector<TxOut>&& outputs, uint32_t lock_time)
+				std::vector<TxOut>&& outputs, uint32_t lock_time) noexcept
 		: version_(version), inputs_(std::move(inputs)),
 		  outputs_(std::move(outputs)), lock_time_(lock_time)
 	{
@@ -324,7 +330,7 @@ public:
 	{
 		Hash();
 	}
-	Transaction(Transaction&& t)
+	Transaction(Transaction&& t) noexcept
 		: version_(t.version_), inputs_(std::move(t.inputs_)),
 		  outputs_(std::move(t.outputs_)), lock_time_(t.lock_time_)
 	{
@@ -352,12 +358,14 @@ public:
 		lock_time_ = b.lock_time_;
 		return *this;
 	}
-	Transaction& operator=(Transaction&& b)
+	Transaction& operator=(Transaction&& b) noexcept
 	{
-		version_ = b.version_;
-		inputs_ = std::move(b.inputs_);
-		outputs_ = std::move(b.outputs_);
-		lock_time_ = std::move(b.lock_time_);
+		if (this != &b) {
+			version_ = b.version_;
+			inputs_ = std::move(b.inputs_);
+			outputs_ = std::move(b.outputs_);
+			lock_time_ = std::move(b.lock_time_);
+		}
 		return *this;
 	}
 	

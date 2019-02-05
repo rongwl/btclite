@@ -21,11 +21,13 @@ BTCLITE_INCLUDES = $(BTCLITE_MAIN_INCLUDES) \
 
 STDCPP_FILESYSTEM_LIBS = -lstdc++fs
 LIBBTCLITE_CHAIN = chain/src/libbtclite_chain.a
+LIBBTCLITE_CONSENSUS = consensus/src/libbtclite_consensus.a
 LIBBTCLITE_TRANSACTION = transaction/src/libbtclite_transaction.a
 LIBBTCLITE_UTIL = utility/src/libbtclite_util.a
 
 EXTRA_LIBRARIES += \
 				   $(LIBBTCLITE_CHAIN) \
+				   $(LIBBTCLITE_CONSENSUS) \
 				   $(LIBBTCLITE_TRANSACTION) \
 				   $(LIBBTCLITE_UTIL)
 
@@ -62,6 +64,14 @@ chain_src_libbtclite_chain_a_SOURCES = chain/src/block.cpp \
 									   chain/src/chainparams.cpp
 
 
+consensus_src_libbtclite_consensus_a_CPPFLAGS = $(AM_CXXFLAGS) \
+											$(BOTAN_CFLAGS) \
+											$(BTCLITE_CONSENSUS_INCLUDES) \
+											$(BTCLITE_UTIL_INCLUDES)
+consensus_src_libbtclite_consensus_a_SOURCES = consensus/src/hash.cpp
+
+
+
 transaction_src_libbtclite_transaction_a_CPPFLAGS = $(AM_CXXFLAGS) \
 													$(BOTAN_CFLAGS) \
 													$(BTCLITE_TRANSACTION_INCLUDES) \
@@ -89,6 +99,7 @@ btclited_SOURCES = main/src/btclited.cpp \
 				   $(BTCLITE_HEADER_FILES)
 btclited_LDADD = \
 				 $(LIBBTCLITE_CHAIN) \
+				 $(LIBBTCLITE_CONSENSUS) \
 				 $(LIBBTCLITE_TRANSACTION) \
 				 $(LIBBTCLITE_UTIL)
 btclited_LDADD += $(PTHREAD_LIBS) \
@@ -101,4 +112,5 @@ btclited_LDADD += $(PTHREAD_LIBS) \
 
 MOSTLYCLEANFILES = utility/src/*.a \
 				   transaction/src/*.a \
-				   chain/src/*.a 
+				   chain/src/*.a \
+				   consensus/src/*.a

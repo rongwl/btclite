@@ -1,4 +1,3 @@
-#include <botan/hash.h>
 #include <memory>
 #include <sstream>
 
@@ -7,11 +6,8 @@
 const Hash256& BlockHeader::Hash()
 {
 	std::stringstream ss;
-	std::unique_ptr<Botan::HashFunction> hash_func(Botan::HashFunction::create("SHA-256"));
 	Serialize(ss);
-	hash_func->update(ss.str());
-	hash_.SetNull();
-	hash_func->final(reinterpret_cast<uint8_t*>(&hash_));
+	DoubleSha256(ss.str(), &hash_);
 	
 	return hash_;
 }
