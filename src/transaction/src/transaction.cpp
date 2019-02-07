@@ -39,17 +39,28 @@ void Transaction::UnSerialize(SType& is)
 	serial.SerialRead(&lock_time_);
 }
 
-const Hash256& Transaction::Hash()
+Transaction& Transaction::operator=(const Transaction& b)
 {
-	std::stringstream ss;
-	std::unique_ptr<Botan::HashFunction> hash_func(Botan::HashFunction::create("SHA-256"));
+	version_ = b.version_;
+	inputs_ = b.inputs_;
+	outputs_ = b.outputs_;
+	lock_time_ = b.lock_time_;
+	hash_cache_.SetNull();
 	
-	Serialize(ss);
-	hash_func->update(ss.str());
-	hash_.SetNull();
-	hash_func->final(reinterpret_cast<uint8_t*>(&hash_));
+	return *this;
+}
+
+Transaction& Transaction::operator=(Transaction&& b) noexcept
+{
+	if (this != &b) {
+		version_ = b.version_;
+		inputs_ = std::move(b.inputs_);
+		outputs_ = std::move(b.outputs_);
+		lock_time_ = std::move(b.lock_time_);
+		hash_cache_.SetNull();
+	}
 	
-	return hash_;
+	return *this;
 }
 
 uint64_t Transaction::OutputsAmount() const
@@ -86,7 +97,7 @@ std::string Transaction::ToString() const
 {
     std::string str;
     str += strprintf("Transaction(hash=%s, ver=%d, inputs.size=%u, outputs.size=%u, lock_time=%u)\n",
-					 HashCache().ToString().substr(0,10), version_, inputs_.size(), outputs_.size(), lock_time_);
+					 Hash().ToString().substr(0,10), version_, inputs_.size(), outputs_.size(), lock_time_);
     for (const auto& tx_in : inputs_)
         str += "    " + tx_in.ToString() + "\n";
     /*for (const auto& tx_in : inputs_)
@@ -97,3 +108,13 @@ std::string Transaction::ToString() const
     return str;
 }
 
+void Transaction::UpdateHash() const
+{
+	std::stringstream ss;
+	std::unique_ptr<Botan::HashFunction> hash_func(Botan::HashFunction::create("SHA-256"));
+	
+	Serialize(ss);
+	hash_func->update(ss.str());
+	hash_cache_.SetNull();
+	hash_func->final(reinterpret_cast<uint8_t*>(&hash_cache_));
+}

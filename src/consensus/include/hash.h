@@ -2,6 +2,7 @@
 #define BTCLITE_HASH_H
 
 #include <botan/hash.h>
+#include <botan/hex.h>
 
 #include "arithmetic.h"
 

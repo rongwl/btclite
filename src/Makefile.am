@@ -16,7 +16,7 @@ BTCLITE_INCLUDES = $(BTCLITE_MAIN_INCLUDES) \
 				   $(BTCLITE_CONSENSUS_INCLUDES) \
 				   $(BTCLITE_NET_INCLUDES) \
 				   $(BTCLITE_TRANSACTION_INCLUDES) \
-				   $(BTCLITE_UTIL_INCLUDES)
+				   $(BTCLITE_UTIL_INCLUDES) 
 
 
 STDCPP_FILESYSTEM_LIBS = -lstdc++fs
@@ -92,6 +92,7 @@ utility_src_libbtclite_util_a_SOURCES = utility/src/sync.cpp \
 
 
 btclited_CPPFLAGS = $(AM_CXXFLAGS) \
+					$(BOTAN_CFLAGS) \
 					$(BTCLITE_INCLUDES)
 btclited_SOURCES = main/src/btclited.cpp \
 				   main/src/init.cpp \
@@ -104,7 +105,8 @@ btclited_LDADD = \
 				 $(LIBBTCLITE_UTIL)
 btclited_LDADD += $(PTHREAD_LIBS) \
 				  $(STDCPP_FILESYSTEM_LIBS) \
-				  $(PROTOBUF_LIBS)
+				  $(PROTOBUF_LIBS) \
+				  $(BOTAN_LIBS)
 
 #chain/proto/%.pb.cc chain/proto/%.pb.h: chain/proto/%.proto
 #	$(PROTOC) --proto_path=chain/proto --cpp_out=chain/proto $^

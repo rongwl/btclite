@@ -12,37 +12,37 @@ public:
 	OutPoint()
 		: index_(UINT32_MAX) {}
 	OutPoint(const Hash256& hash, uint32_t index)
-		: hash_(hash), index_(index) {}
+		: prev_hash_(hash), index_(index) {}
 	OutPoint(Hash256&& hash, uint32_t index) noexcept
-		: hash_(std::move(hash)), index_(index) {}
+		: prev_hash_(std::move(hash)), index_(index) {}
 	OutPoint(const OutPoint& op)
-		: hash_(op.hash_), index_(op.index_) {}
+		: prev_hash_(op.prev_hash_), index_(op.index_) {}
 	OutPoint(OutPoint&& op) noexcept
-		: hash_(std::move(op.hash_)), index_(op.index_) {}
+		: prev_hash_(std::move(op.prev_hash_)), index_(op.index_) {}
 	
 	//-------------------------------------------------------------------------
 	void SetNull()
 	{
-		hash_.SetNull();
+		prev_hash_.SetNull();
 		index_ = UINT32_MAX;
 	}
 	bool IsNull() const
 	{
-		return (hash_.IsNull() && index_ == UINT32_MAX);
+		return (prev_hash_.IsNull() && index_ == UINT32_MAX);
 	}
 	std::size_t Size() const
 	{
-		return hash_.size() + sizeof(index_);
+		return prev_hash_.size() + sizeof(index_);
 	}
 	std::string ToString() const
 	{
-		return strprintf("OutPoint(%s, %u)", hash_.ToString().substr(0,10), index_);
+		return strprintf("OutPoint(%s, %u)", prev_hash_.ToString().substr(0,10), index_);
 	}
 	
 	//-------------------------------------------------------------------------
 	friend bool operator==(const OutPoint& a, const OutPoint& b)
 	{
-		return (a.hash_ == b.hash_ && a.index_ == b.index_);
+		return (a.prev_hash_ == b.prev_hash_ && a.index_ == b.index_);
 	}
 	friend bool operator!=(const OutPoint& a, const OutPoint& b)
 	{
@@ -58,14 +58,14 @@ public:
 	}
 	OutPoint& operator=(const OutPoint& b)
 	{
-		hash_ = b.hash_;
+		prev_hash_ = b.prev_hash_;
 		index_ = b.index_;
 		return *this;
 	}
 	OutPoint& operator=(OutPoint&& b) noexcept
 	{
 		if (this != &b) {
-			hash_ = std::move(b.hash_);
+			prev_hash_ = std::move(b.prev_hash_);
 			index_ = b.index_;
 		}
 		return *this;
@@ -76,24 +76,33 @@ public:
 	void Serialize(SType& os) const
 	{
 		Serializer<SType> serial(os);
-		serial.SerialWrite(hash_);
+		serial.SerialWrite(prev_hash_);
 		serial.SerialWrite(index_);
 	}
 	template <typename SType>
 	void UnSerialize(SType& is)
 	{
 		Serializer<SType> serial(is);
-		serial.SerialRead(&hash_);
+		serial.SerialRead(&prev_hash_);
 		serial.SerialRead(&index_);
 	}
 	
 	//-------------------------------------------------------------------------
-	const Hash256& prevhash()
+	const Hash256& prev_hash()
 	{
-		return hash_;
+		return prev_hash_;
 	}
+	void set_prevHash(const Hash256& hash)
+	{
+		prev_hash_ = hash;
+	}
+	void set_prevHash(Hash256&& hash)
+	{
+		prev_hash_ = std::move(hash);
+	}
+	
 private:
-	Hash256 hash_;
+	Hash256 prev_hash_;
 	uint32_t index_;
 };
 
@@ -300,6 +309,23 @@ public:
 	{
 		return value_;
 	}
+	void set_value(uint64_t value)
+	{
+		value_ = value;
+	}
+	
+	const Script& script_pub_key() const
+	{
+		return script_pub_key_;
+	}
+	void set_scriptPubKey(const Script& script)
+	{
+		script_pub_key_ = script;
+	}
+	void set_scriptPubKey(Script&& script)
+	{
+		script_pub_key_ = std::move(script);
+	}
 	
 private:
 	uint64_t value_;
@@ -311,31 +337,20 @@ private:
 class Transaction {
 public:
 	Transaction()
-		: version_(default_version), inputs_(), outputs_(), lock_time_(0), hash_() {}
+		: version_(default_version), inputs_(), outputs_(), lock_time_(0), hash_cache_() {}
 	Transaction(uint32_t version, const std::vector<TxIn>& inputs,
 				const std::vector<TxOut>& outputs, uint32_t lock_time)
-		: version_(version), inputs_(inputs), outputs_(outputs), lock_time_(lock_time)
-	{
-		Hash();
-	}
+		: version_(version), inputs_(inputs), outputs_(outputs), lock_time_(lock_time), hash_cache_() {}
 	Transaction(uint32_t version, std::vector<TxIn>&& inputs,
 				std::vector<TxOut>&& outputs, uint32_t lock_time) noexcept
 		: version_(version), inputs_(std::move(inputs)),
-		  outputs_(std::move(outputs)), lock_time_(lock_time)
-	{
-		Hash();
-	}
+		  outputs_(std::move(outputs)), lock_time_(lock_time), hash_cache_() {}
 	Transaction(const Transaction& t)
-		: version_(t.version_), inputs_(t.inputs_), outputs_(t.outputs_), lock_time_(t.lock_time_) 
-	{
-		Hash();
-	}
+		: version_(t.version_), inputs_(t.inputs_), outputs_(t.outputs_),
+		  lock_time_(t.lock_time_), hash_cache_(t.Hash()) {}
 	Transaction(Transaction&& t) noexcept
-		: version_(t.version_), inputs_(std::move(t.inputs_)),
-		  outputs_(std::move(t.outputs_)), lock_time_(t.lock_time_)
-	{
-		Hash();
-	}
+		: version_(t.version_), inputs_(std::move(t.inputs_)), outputs_(std::move(t.outputs_)),
+		  lock_time_(t.lock_time_), hash_cache_(std::move(t.Hash())) {}
 	
 	//-------------------------------------------------------------------------
 	template <typename SType> void Serialize(SType&) const;
@@ -344,37 +359,22 @@ public:
 	//-------------------------------------------------------------------------
 	bool operator==(const Transaction& b) const
 	{
-		return hash_ == b.hash_;
+		return this->Hash() == b.Hash();
 	}
 	bool operator!=(const Transaction& b) const
 	{
 		return !(*this == b);
 	}
-	Transaction& operator=(const Transaction& b)
-	{
-		version_ = b.version_;
-		inputs_ = b.inputs_;
-		outputs_ = b.outputs_;
-		lock_time_ = b.lock_time_;
-		return *this;
-	}
-	Transaction& operator=(Transaction&& b) noexcept
-	{
-		if (this != &b) {
-			version_ = b.version_;
-			inputs_ = std::move(b.inputs_);
-			outputs_ = std::move(b.outputs_);
-			lock_time_ = std::move(b.lock_time_);
-		}
-		return *this;
-	}
+	Transaction& operator=(const Transaction& b);
+	Transaction& operator=(Transaction&& b) noexcept;
 	
 	//-------------------------------------------------------------------------
-	const Hash256& HashCache() const
+	const Hash256& Hash() const
 	{
-		return hash_;
+		if (hash_cache_.IsNull())
+			UpdateHash();
+		return hash_cache_;
 	}
-	const Hash256& Hash();
 	
 	//-------------------------------------------------------------------------
 	bool IsNull() const
@@ -397,6 +397,7 @@ public:
 	void set_version(uint32_t v)
 	{
 		version_ = v;
+		hash_cache_.SetNull();
 	}
 	
 	const std::vector<TxIn>& inputs() const
@@ -406,10 +407,12 @@ public:
 	void set_inputs(const std::vector<TxIn>& inputs)
 	{
 		inputs_ = inputs;
+		hash_cache_.SetNull();
 	}
 	void set_inputs(std::vector<TxIn>&& inputs)
 	{
 		inputs_ = std::move(inputs);
+		hash_cache_.SetNull();
 	}
 	
 	const std::vector<TxOut>& outputs() const
@@ -419,10 +422,12 @@ public:
 	void set_outputs(const std::vector<TxOut>& outputs)
 	{
 		outputs_ = outputs;
+		hash_cache_.SetNull();
 	}
 	void set_outputs(std::vector<TxOut>&& outputs)
 	{
 		outputs_ = std::move(outputs);
+		hash_cache_.SetNull();
 	}
 	
 	uint32_t lock_time() const
@@ -432,6 +437,7 @@ public:
 	void set_lockTime(uint32_t t)
 	{
 		lock_time_ = t;
+		hash_cache_.SetNull();
 	}
 	
 private:
@@ -440,10 +446,12 @@ private:
 	std::vector<TxOut> outputs_;
 	uint32_t lock_time_;
 	
-	Hash256 hash_;
+	mutable Hash256 hash_cache_;
 	
 	// Default transaction version.
     static constexpr uint32_t default_version = 2;
+	
+	void UpdateHash() const;
 };
 
 #endif // BTCLITE_TRANSACTION_H

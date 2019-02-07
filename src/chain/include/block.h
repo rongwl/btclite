@@ -20,25 +20,16 @@ public:
 			    uint32_t time, uint32_t nBits, uint32_t nonce)
 		: version_(version), 
 		  prev_block_hash_(prev_block_hash), merkle_root_hash_(merkle_root_hash),
-		  time_(time), nBits_(nBits), nonce_(nonce)
-	{
-		Hash();
-	}
+		  time_(time), nBits_(nBits), nonce_(nonce), hash_cache_(Hash256()) {}
 	BlockHeader(const BlockHeader& h)
 		: version_(h.version_), 
 		  prev_block_hash_(h.prev_block_hash_), merkle_root_hash_(h.merkle_root_hash_),
-		  time_(h.time_), nBits_(h.nBits_), nonce_(h.nonce_)
-	{
-		Hash();
-	}
-	BlockHeader(BlockHeader&& h)
+		  time_(h.time_), nBits_(h.nBits_), nonce_(h.nonce_), hash_cache_(Hash256()) {}
+	BlockHeader(BlockHeader&& h) noexcept
 		: version_(h.version_),
 		  prev_block_hash_(std::move(h.prev_block_hash_)),
 		  merkle_root_hash_(std::move(h.merkle_root_hash_)),
-		  time_(h.time_), nBits_(h.nBits_), nonce_(h.nonce_)
-	{
-		Hash();
-	}
+		  time_(h.time_), nBits_(h.nBits_), nonce_(h.nonce_), hash_cache_(Hash256()) {}
 	
 	//-------------------------------------------------------------------------
 	void SetNull()
@@ -49,7 +40,7 @@ public:
 		time_ = 0;
 		nBits_ = 0;
 		nonce_ = 0;
-		hash_.SetNull();
+		hash_cache_.SetNull();
 	}	
 	bool IsNull() const
     {
@@ -61,11 +52,11 @@ public:
 	template <typename SType> void UnSerialize(SType&);
 	
 	//-------------------------------------------------------------------------
-	const Hash256& Hash();
-	const Hash256& HashCache() const
-	{
-		return hash_;
-	}
+	const Hash256& Hash() const;
+	
+	//-------------------------------------------------------------------------
+	BlockHeader& operator=(const BlockHeader& b);
+	BlockHeader& operator=(BlockHeader&& b) noexcept;
 	
 	//-------------------------------------------------------------------------
 	int32_t version() const
@@ -75,6 +66,7 @@ public:
 	void set_version(int32_t v)
 	{
 		version_ = v;
+		hash_cache_.SetNull();
 	}
 	
 	const Hash256& hashPrevBlock() const
@@ -84,23 +76,28 @@ public:
 	void set_hashPrevBlock(const Hash256& hash)
 	{
 		prev_block_hash_ = hash;
+		hash_cache_.SetNull();
 	}
 	void set_hashPrevBlock(Hash256&& hash)
 	{
 		prev_block_hash_ = std::move(hash);
+		hash_cache_.SetNull();
 	}
 	
 	const Hash256& hashMerkleRoot() const
 	{
 		return merkle_root_hash_;
+		hash_cache_.SetNull();
 	}
 	void set_hashMerkleRoot(const Hash256& hash)
 	{
 		merkle_root_hash_ = hash;
+		hash_cache_.SetNull();
 	}
 	void set_hashMerkleRoot(Hash256&& hash)
 	{
 		merkle_root_hash_ = std::move(hash);
+		hash_cache_.SetNull();
 	}
 	
 	uint32_t time() const
@@ -110,6 +107,7 @@ public:
 	void set_time(uint32_t t)
 	{
 		time_ = t;
+		hash_cache_.SetNull();
 	}
 	
 	uint32_t bits() const
@@ -119,6 +117,7 @@ public:
 	void set_bits(uint32_t b)
 	{
 		nBits_ = b;
+		hash_cache_.SetNull();
 	}
 	
 	uint32_t nonce() const
@@ -128,6 +127,7 @@ public:
 	void set_nonce(uint32_t n)
 	{
 		nonce_ = n;
+		hash_cache_.SetNull();
 	}
 	
 private:
@@ -138,7 +138,7 @@ private:
 	uint32_t nBits_;
 	uint32_t nonce_;
 	
-	Hash256 hash_;
+	mutable Hash256 hash_cache_;
 };
 
 template <typename SType>
@@ -171,13 +171,17 @@ public:
 	{
 		SetNull();
 	}
+	Block(const std::vector<Transaction>& transactions)
+		: header_(BlockHeader()), transactions_(transactions) {}
+	Block(std::vector<Transaction>&& transactions) noexcept
+		: header_(BlockHeader()), transactions_(std::move(transactions)) {}
 	Block(const BlockHeader& header, const std::vector<Transaction>& transactions)
 		: header_(header), transactions_(transactions) {}
-	Block(BlockHeader&& header, std::vector<Transaction>&& transactions)
+	Block(BlockHeader&& header, std::vector<Transaction>&& transactions) noexcept
 		: header_(std::move(header)), transactions_(std::move(transactions)) {}
 	Block(const Block& b)
 		: header_(b.header_), transactions_(b.transactions_) {}
-	Block(Block&& b)
+	Block(Block&& b) noexcept
 		: header_(std::move(b.header_)), transactions_(std::move(b.transactions_)) {}
 	
 	//-------------------------------------------------------------------------
@@ -187,6 +191,7 @@ public:
 		transactions_.clear();
 	}
 	std::string ToString() const;
+	Hash256 ComputeMerkleRoot() const;
 	
 	//-------------------------------------------------------------------------
 	template <typename SType>
@@ -205,10 +210,32 @@ public:
 	}
 
 	//-------------------------------------------------------------------------
-	const BlockHeader& header()
+	const BlockHeader& header() const
 	{
 		return header_;
 	}
+	void set_header(const BlockHeader& header)
+	{
+		header_ = header;
+	}
+	void set_header(BlockHeader&& header)
+	{
+		header_ = std::move(header);
+	}
+	
+	const std::vector<Transaction>& transactions() const
+	{
+		return transactions_;
+	}
+	void set_transactions(const std::vector<Transaction>& transactions)
+	{
+		transactions_ = transactions;
+	}
+	void set_transactions(std::vector<Transaction>&& transactions)
+	{
+		transactions_ = std::move(transactions);
+	}
+	
 private:
 	BlockHeader header_;
 	std::vector<Transaction> transactions_;

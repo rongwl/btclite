@@ -11,7 +11,7 @@
 template <std::size_t size>
 using Bytes = std::array<uint8_t, size>;
 
-/** Template base class for fixed-sized opaque blobs. */
+/** Template base class for fixed-sized opaque blobs. (Little endian) */
 template <uint32_t nBITS>
 class Blob : public Bytes<nBITS/8>{
 public:
@@ -68,7 +68,11 @@ public:
 	{
 		return HexEncode(this->rbegin(), this->rend());
 	}
-    void SetHex(const std::string& str);
+    void SetHex(const std::string& str)
+	{
+		SetNull();
+		HexDecode(str, this->begin(), this->end());
+	}
 	
 protected:
 	Blob()
@@ -78,7 +82,7 @@ protected:
 
 	static constexpr int WIDTH = nBITS / 8;
 };
-
+/*
 template <unsigned int BITS>
 void Blob<BITS>::SetHex(const std::string& psz)
 {
@@ -97,5 +101,5 @@ void Blob<BITS>::SetHex(const std::string& psz)
 		*it = std::stoi(hi) << 4 | std::stoi(low);
 	}
 }
-
+*/
 #endif // BTCLITE_BLOB_H

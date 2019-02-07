@@ -3,7 +3,7 @@
 #include "sync.h"
 #include "util.h"
 #include "utiltime.h"
-
+#include "hash.h"
 
 ArgsManager g_args;
 PathManager g_path;
@@ -39,7 +39,10 @@ bool AppInit(int argc, char **argv)
 	catch (...) {
 	
 	}
-
+	std::vector<uint8_t> v = { 'h', 'e', 'l', 'l', 'o' };
+	Hash256 hash;
+	DoubleSha256(v, &hash);
+	std::cout << hash.Hex() << std::endl;
 	if (!ret) {
 		Interrupt();
 	}
