@@ -4,7 +4,7 @@
 #include "util.h"
 #include "utiltime.h"
 #include "hash.h"
-
+#include "block.h"
 ArgsManager g_args;
 PathManager g_path;
 
@@ -27,6 +27,8 @@ bool AppInit(int argc, char **argv)
 	try {
 		if (!AppInitParameter(argc, argv))
 			return false;
+		if (!AppInitLogging(argc, argv))
+			return false;
 		if (!AppInitBasicSetup())
 			return false;
 		if (!AppInitParameterInteraction())
@@ -39,10 +41,10 @@ bool AppInit(int argc, char **argv)
 	catch (...) {
 	
 	}
-	std::vector<uint8_t> v = { 'h', 'e', 'l', 'l', 'o' };
-	Hash256 hash;
-	DoubleSha256(v, &hash);
-	std::cout << hash.Hex() << std::endl;
+
+	Block genesis = CreateGenesisBlock(1231006505, 2083236893, 0x1d00ffff, 1, 50*satoshi_per_bitcoin);
+	std::cout << genesis.ToString() << std::endl;
+
 	if (!ret) {
 		Interrupt();
 	}

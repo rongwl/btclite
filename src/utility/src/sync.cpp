@@ -66,22 +66,22 @@ struct LockData {
 
 static void potential_deadlock_detected(const std::pair<void*, void*>& mismatch, const LockStack& s1, const LockStack& s2)
 {
-	LogPrint(LogLevel::CRIT, "POTENTIAL DEADLOCK DETECTED\n");
-    LogPrint(LogLevel::CRIT, "Previous lock order was:\n");
+	BTCLOG(LOGLEVEL_ERROR) << "POTENTIAL DEADLOCK DETECTED";
+    BTCLOG(LOGLEVEL_ERROR) << "Previous lock order was:";
 	for (auto it : s1) {
 		if (it.first == mismatch.first)
-			LogPrint(LogLevel::CRIT, " (1)");
+			BTCLOG(LOGLEVEL_ERROR) << " (1)";
 		else if (it.first == mismatch.second)
-			LogPrint(LogLevel::CRIT, " (2)");
-		LogPrint(LogLevel::CRIT, " %s\n", it.second.ToString());
+			BTCLOG(LOGLEVEL_ERROR) << " (2)";
+		BTCLOG(LOGLEVEL_ERROR) << " " << it.second.ToString();
 	}
-	LogPrint(LogLevel::CRIT, "Current lock order is:\n");
+	BTCLOG(LOGLEVEL_ERROR) << "Current lock order is:";
 	for (auto it : s2) {
 		if (it.first == mismatch.first)
-			LogPrint(LogLevel::CRIT, " (1)");
+			BTCLOG(LOGLEVEL_ERROR) << " (1)";
 		else if (it.first == mismatch.second)
-			LogPrint(LogLevel::CRIT, " (2)");
-		LogPrint(LogLevel::CRIT, " %s\n", it.second.ToString());
+			BTCLOG(LOGLEVEL_ERROR) << " (2)";
+		BTCLOG(LOGLEVEL_ERROR) << " " << it.second.ToString();
 	}
 	
 	assert(false);

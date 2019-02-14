@@ -1,6 +1,7 @@
 #ifndef BTCLITE_UTILSTRENCODINGS_H
 #define BTCLITE_UTILSTRENCODINGS_H
 
+#include <algorithm>
 #include <cstddef>
 #include <iostream>
 #include <iomanip>
@@ -10,14 +11,14 @@
 
 
 template <typename Iterator>
-std::string HexEncode(Iterator begin, Iterator end, bool fSpaces=false)
+std::string HexEncode(Iterator rbegin, Iterator rend, bool fSpaces=false)
 {
     std::string rv;
 
-    rv.reserve((end-begin)*3);
-    for(Iterator it = begin; it < end; ++it)
+    rv.reserve((rend-rbegin)*3);
+    for(Iterator it = rbegin; it < rend; ++it)
     {
-        if(fSpaces && it != begin)
+        if(fSpaces && it != rbegin)
             rv.push_back(' ');
 		std::stringstream ss;
 		ss << std::setw(2) << std::setfill('0') << std::hex << static_cast<int>(*it);
@@ -38,12 +39,29 @@ void HexDecode(const std::string& in, Iterator begin, Iterator end)
 	auto last = std::find_if_not(first, in.end(), isxdigit);
 	std::string substr(first, last);
 	
-	for (auto it = begin, rit = substr.rbegin(); it != end && rit < substr.rend(); ++it, rit += 2) {
-		std::string low(rit, rit+1), hi(rit+1, rit+2);
-		*it = std::stoi(hi) << 4 | std::stoi(low);
+	auto rit = substr.rbegin();
+	Iterator it = begin;
+	while (it != end && rit != substr.rend()) {
+		*it = std::stoi(std::string(rit, rit+1), 0, 16);
+		if (++rit != substr.rend()) {
+			*it |= (std::stoi(std::string(rit, rit+1), 0, 16) << 4);
+			rit++;
+		}
+		it++;
 	}
 }
 
-void HexDecode(const std::string& in, std::vector<uint8_t> *);
+void HexDecode(const std::string&, std::vector<uint8_t>*);
+
+template <typename Iterator>
+void ReverseEndian(Iterator begin, Iterator end)
+{	
+	end--;
+	while (begin < end) {
+		std::swap(*begin, *end);
+		begin++;
+		end--;
+	}
+}
 
 #endif // BTCLITE_UTILSTRENCODINGS_H

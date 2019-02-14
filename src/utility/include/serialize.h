@@ -7,6 +7,7 @@
 
 #include "constants.h"
 #include "Endian.h"
+#include "hash.h"
 
 inline uint64_t DoubleToBinary(double d)
 {
@@ -83,22 +84,22 @@ private:
 	{
 		SerWriteData(FloatToBinary(in));
 	}
-	
+
 	// for arithmetic type vector
 	template <typename T>
-	std::enable_if_t<std::is_arithmetic<T>::value> Serialize(const std::vector<T>& v)
+	std::enable_if_t<std::is_arithmetic<T>::value> Serialize(const std::vector<T>& in)
 	{
-		SerWriteVarInt(v.size());
-		if (!v.empty())
-			stream_.write(reinterpret_cast<const char*>(v.data()), v.size()*sizeof(T));
+		SerWriteVarInt(in.size());
+		if (!in.empty())
+			stream_.write(reinterpret_cast<const char*>(in.data()), in.size()*sizeof(T));
 	}
 	
 	// for class type vector
 	template <typename T>
-	std::enable_if_t<std::is_class<T>::value> Serialize(const std::vector<T>& v)
+	std::enable_if_t<std::is_class<T>::value> Serialize(const std::vector<T>& in)
 	{
-		SerWriteVarInt(v.size());
-		for (auto it = v.begin(); it != v.end(); it++)
+		SerWriteVarInt(in.size());
+		for (auto it = in.begin(); it != in.end(); it++)
 			Serialize(*it);
 	}
 	

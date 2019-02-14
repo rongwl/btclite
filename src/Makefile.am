@@ -35,10 +35,11 @@ bin_PROGRAMS = btclited
 
 BTCLITE_HEADER_FILES = \
 					   chain/include/block.h \
-					   chain/include/chainparams.h \
+					   chain/include/params.h \
 					   main/include/clientversion.h \
 					   main/include/init.h \
 					   net/include/net.h \
+					   consensus/include/params.h \
 					   consensus/include/hash.h \
 					   transaction/include/script.h \
 					   transaction/include/transaction.h \
@@ -56,16 +57,18 @@ BTCLITE_HEADER_FILES = \
 
 chain_src_libbtclite_chain_a_CPPFLAGS = $(AM_CXXFLAGS) \
 										$(BOTAN_CFLAGS) \
+										$(GLOG_CFLAGS) \
 										$(BTCLITE_CHAIN_INCLUDES) \
 										$(BTCLITE_CONSENSUS_INCLUDES) \
 										$(BTCLITE_TRANSACTION_INCLUDES) \
 										$(BTCLITE_UTIL_INCLUDES) 
 chain_src_libbtclite_chain_a_SOURCES = chain/src/block.cpp \
-									   chain/src/chainparams.cpp
+									   chain/src/params.cpp
 
 
 consensus_src_libbtclite_consensus_a_CPPFLAGS = $(AM_CXXFLAGS) \
 											$(BOTAN_CFLAGS) \
+											$(GLOG_CFLAGS) \
 											$(BTCLITE_CONSENSUS_INCLUDES) \
 											$(BTCLITE_UTIL_INCLUDES)
 consensus_src_libbtclite_consensus_a_SOURCES = consensus/src/hash.cpp
@@ -74,6 +77,7 @@ consensus_src_libbtclite_consensus_a_SOURCES = consensus/src/hash.cpp
 
 transaction_src_libbtclite_transaction_a_CPPFLAGS = $(AM_CXXFLAGS) \
 													$(BOTAN_CFLAGS) \
+													$(GLOG_CFLAGS) \
 													$(BTCLITE_TRANSACTION_INCLUDES) \
 													$(BTCLITE_CONSENSUS_INCLUDES) \
 													$(BTCLITE_UTIL_INCLUDES) \
@@ -83,7 +87,10 @@ transaction_src_libbtclite_transaction_a_SOURCES = transaction/src/script.cpp \
 
 
 utility_src_libbtclite_util_a_CPPFLAGS = $(AM_CXXFLAGS) \
+										 $(GLOG_CFLAGS) \
+										 $(BOTAN_CFLAGS) \
 										 $(BTCLITE_UTIL_INCLUDES) \
+										 $(BTCLITE_CONSENSUS_INCLUDES) \
 										 $(BTCLITE_MAIN_INCLUDES)
 utility_src_libbtclite_util_a_SOURCES = utility/src/sync.cpp \
 										utility/src/util.cpp \
@@ -93,6 +100,7 @@ utility_src_libbtclite_util_a_SOURCES = utility/src/sync.cpp \
 
 btclited_CPPFLAGS = $(AM_CXXFLAGS) \
 					$(BOTAN_CFLAGS) \
+					$(GLOG_CFLAGS) \
 					$(BTCLITE_INCLUDES)
 btclited_SOURCES = main/src/btclited.cpp \
 				   main/src/init.cpp \
@@ -106,7 +114,8 @@ btclited_LDADD = \
 btclited_LDADD += $(PTHREAD_LIBS) \
 				  $(STDCPP_FILESYSTEM_LIBS) \
 				  $(PROTOBUF_LIBS) \
-				  $(BOTAN_LIBS)
+				  $(BOTAN_LIBS) \
+				  $(GLOG_LIBS)
 
 #chain/proto/%.pb.cc chain/proto/%.pb.h: chain/proto/%.proto
 #	$(PROTOC) --proto_path=chain/proto --cpp_out=chain/proto $^

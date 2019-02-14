@@ -13,6 +13,8 @@
 #include <thread>
 #include <vector>
 
+#include <glog/logging.h>
+
 #if __GNUC__ >= 8
 #include <filesystem>
 namespace fs = std::filesystem;
@@ -36,13 +38,12 @@ namespace fs = std::experimental::filesystem;
 #define DEFAULT_LOG_LEVEL       "3"
 
 extern bool output_debug;
-extern std::atomic<uint32_t> g_log_categories;
+extern std::atomic<uint32_t> g_log_module;
 extern std::atomic<uint8_t> g_log_level;
-
 void SetupEnvironment();
 
-namespace LogFlags {
-enum Flag : uint32_t {
+namespace LogModule {
+enum Flag : uint16_t {
 	NONE        = 0,
 	NET         = (1 <<  0),
 	MEMPOOL     = (1 <<  1),
@@ -52,25 +53,47 @@ enum Flag : uint32_t {
 	PRUNE       = (1 <<  5),
 	LIBEVENT    = (1 <<  6),
 	COINDB      = (1 <<  7),
-	ALL         = ~(uint32_t)0,
+	ALL         = UINT16_MAX,
+};
+}
+/*
+namespace LogLevel {
+enum Flag : uint8_t {
+	FATAL,   // A fatal condition
+	ERROR,   // An error has occurred
+	WARNING, // A warning
+	INFO,    // Normal message
+	DEBUG,   // Debug information
+	VERBOSE, // Verbose information
+	MAX,
+};
+}
+*/
+#define LOGLEVEL_FATAL   0
+#define LOGLEVEL_ERROR   1
+#define LOGLEVEL_WARNING 2
+#define LOGLEVEL_INFO    3
+#define LOGLEVEL_DEBUG   4
+#define LOGLEVEL_VERBOSE 5
+#define LOGLEVEL_MAX     6
+
+namespace GlogLevel {
+enum Flag : uint8_t {
+	FATAL = 3,
+	ERROR = 2,
+	WARNING = 1,
+	VERBOSE0 = 4,
+	VERBOSE1 = 5,
+	VERBOSE2 = 6,
 };
 }
 
-namespace LogLevel {
-enum Flag : uint8_t {
-	CRIT,    // A critical condition
-	ERROR,   // An error has occurred
-	WARNING, // A warning
-	NOTICE,  // Normal message to take note of
-	INFO,    // Some information
-	DEBUG,   // Debug information related to the program
-};
-}
+extern const std::array<uint8_t, LOGLEVEL_MAX> g_map_loglevel;
 
 /** Return true if log accepts specified category */
 static inline bool LogAcceptCategory(uint32_t category)
 {
-    return (g_log_categories.load(std::memory_order_relaxed) & category) != 0;
+    return (g_log_module.load(std::memory_order_relaxed) & category) != 0;
 }
 
 static inline bool IsNeedPrint(uint8_t level)
@@ -78,9 +101,33 @@ static inline bool IsNeedPrint(uint8_t level)
 	return (level <= g_log_level.load(std::memory_order_relaxed));
 }
 
+#define LOG_LOGLEVEL_FATAL   LOG(FATAL)
+#define LOG_LOGLEVEL_ERROR   LOG(ERROR)
+#define LOG_LOGLEVEL_WARNING LOG(WARNING)
+#define LOG_LOGLEVEL_INFO    VLOG(g_map_loglevel[LOGLEVEL_INFO])
+#define LOG_LOGLEVEL_DEBUG   VLOG(g_map_loglevel[LOGLEVEL_DEBUG])
+#define LOG_LOGLEVEL_VERBOSE VLOG(g_map_loglevel[LOGLEVEL_VERBOSE])
+
+#define LOG_LOGLEVEL_FATAL_MOD(module) \
+	LOG_IF(FATAL, module & g_log_module.load(std::memory_order_relaxed))
+#define LOG_LOGLEVEL_ERROR_MOD(module) \
+	LOG_IF(ERROR, module & g_log_module.load(std::memory_order_relaxed))
+#define LOG_LOGLEVEL_WARNING_MOD(module) \
+	LOG_IF(WARNING, module & g_log_module.load(std::memory_order_relaxed))
+#define LOG_LOGLEVEL_INFO_MOD(module) \
+	VLOG_IF(g_map_loglevel[LOGLEVEL_INFO], module & g_log_module.load(std::memory_order_relaxed))
+#define LOG_LOGLEVEL_DEBUG_MOD(module) \
+	VLOG_IF(g_map_loglevel[LOGLEVEL_DEBUG], module & g_log_module.load(std::memory_order_relaxed))
+#define LOG_LOGLEVEL_VERBOSE_MOD(module) \
+	VLOG_IF(g_map_loglevel[LOGLEVEL_VERBOSE], module & g_log_module.load(std::memory_order_relaxed))
+
+
+#define BTCLOG(level) LOG_##level
+#define BTCLOG_MOD(level, module) LOG_##level##_MOD(module)
+
 /** Send a string to the log output */
 int LogPrintStr(const std::string &str);
-
+/*
 #define LogPrint(level, ...) do { \
     if (IsNeedPrint((level))) { \
 	LogPrintStr(tfm::format(__VA_ARGS__)); \
@@ -90,7 +137,7 @@ int LogPrintStr(const std::string &str);
 #define LogPrintf(...) do { \
 LogPrintStr(tfm::format(__VA_ARGS__)); \
 } while(0)
-
+*/
 class ArgsManager {
 public:
 	bool ParseParameters(int, char* const*);

@@ -10,9 +10,13 @@ void HexDecode(const std::string& in, std::vector<uint8_t> *out)
 	auto last = std::find_if_not(first, in.end(), isxdigit);
 	std::string substr(first, last);
 	
-	for (auto rit = substr.rbegin(); rit < substr.rend(); rit += 2) {
-		std::string low(rit, rit+1), hi(rit+1, rit+2);
-		out->push_back(std::stoi(hi) << 4 | std::stoi(low));
+	auto rit = substr.rbegin();
+	while (rit != substr.rend()) {
+		out->push_back(std::stoi(std::string(rit, rit+1), 0, 16));
+		if (++rit != substr.rend()) {
+			out->back() |= (std::stoi(std::string(rit, rit+1), 0, 16) << 4);
+			rit++;
+		}
 	}
 }
 

@@ -12,6 +12,8 @@ void PrintUsage();
 bool AppInitParameter(int, char* const*);
 bool AppInitParameterInteraction();
 bool AppInitBasicSetup();
+bool AppInitLogging(int, char* const*);
 bool AppInitMain();
+
 
 #endif // BTCLITE_INIT_H

@@ -2,7 +2,6 @@
 #define BTCLITE_BLOB_H
 
 #include <array>
-#include <algorithm>
 #include <cstring>
 #include <iterator>
 
@@ -102,4 +101,32 @@ void Blob<BITS>::SetHex(const std::string& psz)
 	}
 }
 */
+
+// modified from boost.iostreams example
+// boost.org/doc/libs/1_55_0/libs/iostreams/doc/tutorial/container_source.html
+template <typename Container, typename SinkType, typename CharType>
+class ContainerSink {
+public:
+    typedef CharType char_type;
+
+    ContainerSink(Container& container)
+      : container_(container)
+    {
+        static_assert(sizeof(SinkType) == sizeof(CharType), "invalid size");
+    }
+
+    std::streamsize write(const char_type* buffer, std::streamsize size)
+    {
+        const auto safe_sink = reinterpret_cast<const SinkType*>(buffer);
+        container_.insert(container_.end(), safe_sink, safe_sink + size);
+        return size;
+    }
+
+private:
+    Container& container_;
+};
+
+template <typename Container>
+using ByteSink = ContainerSink<Container, uint8_t, char>;
+
 #endif // BTCLITE_BLOB_H

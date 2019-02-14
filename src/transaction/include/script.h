@@ -237,6 +237,14 @@ public:
 	{
 		return data_.end();
 	}
+	std::vector<uint8_t>::const_reverse_iterator rbegin() const
+	{
+		return data_.rbegin();
+	}
+	std::vector<uint8_t>::const_reverse_iterator rend() const
+	{
+		return data_.rend();
+	}
 	
 	//-------------------------------------------------------------------------
 	bool operator==(const Script& b) const

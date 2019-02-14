@@ -16,8 +16,8 @@ bool output_debug = false;
 bool print_to_console = true;
 bool print_to_file = false;
 
-std::atomic<uint32_t> g_log_categories(0);
-std::atomic<uint8_t> g_log_level(LogLevel::NOTICE); 
+std::atomic<uint32_t> g_log_module(0);
+std::atomic<uint8_t> g_log_level(LOGLEVEL_INFO); 
 
 /**
  * started_newline is a state variable held by the calling context that will
@@ -103,7 +103,7 @@ bool ArgsManager::ParseParameters(int argc, char* const argv[])
 					PrintUsage();
 					return false;
 				}
-				//LogPrint(LogLevel::DEBUG, "Parase option from command line: %s=%s\n", str.c_str(), str_val.c_str());
+
 				map_args_[str] = str_val;
 				map_multi_args_[str].push_back(str_val);
 				break;
@@ -201,8 +201,8 @@ void PathManager::UpdateDataDir()
 	if (g_args.IsArgSet(BTCLITED_OPTION_DATADIR)) {
 		path_ = fs::absolute(g_args.GetArg(BTCLITED_OPTION_DATADIR, ""));
 		if (!fs::is_directory(path_)) {
-			LogPrint(LogLevel::WARNING, "Specified data directory \"%s\" does not exist. Use default data directory.\n",
-					 path_.c_str());
+			BTCLOG(LOGLEVEL_WARNING) << "Specified data directory \"" << path_.c_str()
+									 << "\" does not exist. Use default data directory.";
 			path_ = GetDefaultDataDir();
 		}
 	}

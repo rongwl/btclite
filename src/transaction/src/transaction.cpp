@@ -108,13 +108,15 @@ std::string Transaction::ToString() const
     return str;
 }
 
-void Transaction::UpdateHash() const
+const Hash256& Transaction::Hash() const
 {
-	std::stringstream ss;
-	std::unique_ptr<Botan::HashFunction> hash_func(Botan::HashFunction::create("SHA-256"));
-	
-	Serialize(ss);
-	hash_func->update(ss.str());
-	hash_cache_.SetNull();
-	hash_func->final(reinterpret_cast<uint8_t*>(&hash_cache_));
+	if (hash_cache_.IsNull()) {
+		std::vector<uint8_t> v;
+		ByteSink<std::vector<uint8_t> > byte_sink(v);
+		Serialize(byte_sink);
+		DoubleSha256(v, &hash_cache_);
+		// Botan hash output is big endian, Hash256 is little endian
+		ReverseEndian(hash_cache_.begin(), hash_cache_.end());
+	}
+	return hash_cache_;
 }

@@ -36,6 +36,9 @@ AS_IF([test "x${PROTOC}" == "x"],
 dnl Require botan
 PKG_CHECK_MODULES(BOTAN, botan-2 >= 2.4.0)
 
+dnl Require glog
+PKG_CHECK_MODULES(GLOG, libglog >= 0.3.5)
+
  # Initialize libtool.
 LT_INIT([pic-only])
 

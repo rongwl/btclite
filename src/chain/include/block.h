@@ -3,6 +3,7 @@
 
 #include "transaction.h"
 
+
 /** Nodes collect new transactions into a block, hash them into a hash tree,
  * and scan through nonce values to make the block's hash satisfy proof-of-work
  * requirements.  When they solve the proof-of-work, they broadcast the block
@@ -20,16 +21,25 @@ public:
 			    uint32_t time, uint32_t nBits, uint32_t nonce)
 		: version_(version), 
 		  prev_block_hash_(prev_block_hash), merkle_root_hash_(merkle_root_hash),
-		  time_(time), nBits_(nBits), nonce_(nonce), hash_cache_(Hash256()) {}
+		  time_(time), nBits_(nBits), nonce_(nonce)
+	{
+		Hash();
+	}
 	BlockHeader(const BlockHeader& h)
 		: version_(h.version_), 
 		  prev_block_hash_(h.prev_block_hash_), merkle_root_hash_(h.merkle_root_hash_),
-		  time_(h.time_), nBits_(h.nBits_), nonce_(h.nonce_), hash_cache_(Hash256()) {}
+		  time_(h.time_), nBits_(h.nBits_), nonce_(h.nonce_)
+	{
+		Hash();
+	}
 	BlockHeader(BlockHeader&& h) noexcept
 		: version_(h.version_),
 		  prev_block_hash_(std::move(h.prev_block_hash_)),
 		  merkle_root_hash_(std::move(h.merkle_root_hash_)),
-		  time_(h.time_), nBits_(h.nBits_), nonce_(h.nonce_), hash_cache_(Hash256()) {}
+		  time_(h.time_), nBits_(h.nBits_), nonce_(h.nonce_)
+	{
+		Hash();
+	}
 	
 	//-------------------------------------------------------------------------
 	void SetNull()
@@ -240,5 +250,8 @@ private:
 	BlockHeader header_;
 	std::vector<Transaction> transactions_;
 };
+
+Block CreateGenesisBlock(const std::string&, const Script&, uint32_t, uint32_t, uint32_t, int32_t, uint64_t);
+Block CreateGenesisBlock(uint32_t, uint32_t, uint32_t, int32_t, uint64_t);
 
 #endif // BTCLITE_BLOCK_H

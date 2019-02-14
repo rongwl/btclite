@@ -6,17 +6,25 @@
 
 std::atomic<bool> g_shutdown_requested(false);
 
-const std::map<std::string, LogFlags::Flag> g_map_category = {
-	{"0",        LogFlags::NONE},
-	{"net",      LogFlags::NET},
-	{"mempool",  LogFlags::MEMPOOL},
-	{"http",     LogFlags::HTTP},
-	{"db",       LogFlags::DB},
-	{"rpc",      LogFlags::RPC},
-	{"prune",    LogFlags::PRUNE},
-	{"libevent", LogFlags::LIBEVENT},
-	{"coindb",   LogFlags::COINDB},
-	{"1",        LogFlags::ALL}
+const std::map<std::string, LogModule::Flag> g_map_module = {
+	{"0",        LogModule::NONE},
+	{"net",      LogModule::NET},
+	{"mempool",  LogModule::MEMPOOL},
+	{"http",     LogModule::HTTP},
+	{"db",       LogModule::DB},
+	{"rpc",      LogModule::RPC},
+	{"prune",    LogModule::PRUNE},
+	{"libevent", LogModule::LIBEVENT},
+	{"coindb",   LogModule::COINDB},
+	{"1",        LogModule::ALL}
+};
+const std::array<uint8_t, LOGLEVEL_MAX> g_map_loglevel = {
+	GlogLevel::FATAL,    // LOGLEVEL_FATAL map into GlogLevel::FATAL
+	GlogLevel::ERROR,    // LOGLEVEL_ERROR map into GlogLevel::ERROR
+	GlogLevel::WARNING,  // LOGLEVEL_WARNING map into GlogLevel::WARNING
+	GlogLevel::VERBOSE0, // LOGLEVEL_INFO map into GlogLevel::VERBOSE0
+	GlogLevel::VERBOSE1, // LOGLEVEL_DEBUG map into GlogLevel::VERBOSE1
+	GlogLevel::VERBOSE2  // LOGLEVEL_VERBOSE map into GlogLevel::VERBOSE2
 };
 
 void Interrupt()
@@ -26,19 +34,17 @@ void Interrupt()
 
 void Shutdown()
 {
-	LogPrint(LogLevel::NOTICE, "%s: In progress...\n", __func__);
+	BTCLOG(LOGLEVEL_INFO) << __func__ << ": progress...";
 	
-	LogPrint(LogLevel::NOTICE, "%s: done\n", __func__);
+	BTCLOG(LOGLEVEL_INFO) << __func__ << ": done";
 }
 
 static void new_handle_terminate()
 {
 	// Rather than throwing std::bad-alloc if allocation fails, terminate
     // immediately to (try to) avoid chain corruption.
-    // Since LogPrintf may itself allocate memory, set the handler directly
-    // to terminate first.
 	std::set_new_handler(std::terminate);
-	LogPrint(LogLevel::CRIT, "Critical error: out of memory. Terminating.\n");
+	BTCLOG(LOGLEVEL_ERROR) << "Critical error: out of memory. Terminating.";
 	
 	// The log was successful, terminate now.
 	std::terminate();
@@ -59,18 +65,18 @@ void PrintUsage()
 	fprintf(stdout, "Common Options:\n");
 	fprintf(stdout, "  -h or -?,  --help     print this help message and exit\n");
 	fprintf(stdout, "  --datadir=<dir>       specify data directory.\n");
-	fprintf(stdout, "  --debug=<category>    output debugging information(default: 0)\n");
-	fprintf(stdout, "                        <category> can be 1(output all debugging information),\n");
+	fprintf(stdout, "  --debug=<module>      output debugging information(default: 0)\n");
+	fprintf(stdout, "                        <module> can be 1(output all debugging information),\n");
 	fprintf(stdout, "                        mempool, net\n");
 	fprintf(stdout, "  --conf=<file>         specify configuration file (default: %s)\n", DEFAULT_CONFIG_FILE);
 	fprintf(stdout, "  --loglevel=<level>    specify the type of message being printed(default: %s)\n", DEFAULT_LOG_LEVEL);
 	fprintf(stdout, "                        <level> can be:\n");
-	fprintf(stdout, "                            0(A critical condition),\n");
+	fprintf(stdout, "                            0(A fatal condition),\n");
 	fprintf(stdout, "                            1(An error has occurred),\n");
 	fprintf(stdout, "                            2(A warning),\n");
-	fprintf(stdout, "                            3(Normal message to take note of),\n");
-	fprintf(stdout, "                            4(Some information),\n");
-	fprintf(stdout, "                            5(Debug information related to the program)\n");
+	fprintf(stdout, "                            3(Normal message),\n");
+	fprintf(stdout, "                            4(Debug information),\n");
+	fprintf(stdout, "                            5(Verbose information\n");
 	fprintf(stdout, "\nConnection Options:\n");
 	fprintf(stdout, "  --connect=<ip>        connect only to the specified node(s); -connect=0 \n");
 	fprintf(stdout, "                        disables automatic connections\n");
@@ -91,11 +97,21 @@ bool AppInitParameter(int argc, char* const argv[])
 	fs::path path = g_path.GetDataDir();
 	fs::create_directories(path);
 	if (!fs::is_directory(path)) {
-		LogPrint(LogLevel::ERROR, "Error: Specified data directory \"%s\" does not exist.\n", path.c_str());
+		BTCLOG(LOGLEVEL_ERROR) << "Error: Specified data directory \"" << path.c_str() << "\" does not exist.";
 		return false;
 	}
 	
 	g_args.ReadConfigFile(g_args.GetArg(BTCLITED_OPTION_CONF, DEFAULT_CONFIG_FILE));
+	
+	return true;
+}
+
+bool AppInitLogging(int argc, char* const argv[])
+{
+	// Init Google's logging library
+	google::InitGoogleLogging(argv[0]);
+	FLAGS_logtostderr = 1;
+	FLAGS_v = g_map_loglevel[std::stoi(DEFAULT_LOG_LEVEL)];
 	
 	return true;
 }
@@ -105,15 +121,15 @@ bool AppInitParameterInteraction()
 	// --connect
 	if (g_args.IsArgSet(BTCLITED_OPTION_CONNECT)) {
 		g_args.SetArg(BTCLITED_OPTION_LISTEN, "0");
-		LogPrint(LogLevel::NOTICE, "set --connect=1 -> set --listen=0\n");
+		BTCLOG(LOGLEVEL_DEBUG) << "set --connect=1 -> set --listen=0";
 		g_args.SetArg(BTCLITED_OPTION_DNSSEED, "0");
-		LogPrint(LogLevel::NOTICE, "set --connect=1 -> set --dnsseed=0\n");
+		BTCLOG(LOGLEVEL_DEBUG) << "set --connect=1 -> set --dnsseed=0";
 	}
 	
 	// --listen
 	if (g_args.GetArg(BTCLITED_OPTION_LISTEN, DEFAULT_LISTEN) == "0") {
 		g_args.SetArg(BTCLITED_OPTION_DISCOVER, "0");
-		LogPrint(LogLevel::NOTICE, "set --listen=0 -> set --discover=0\n");
+		BTCLOG(LOGLEVEL_DEBUG) << "set --listen=0 -> set --discover=0";
 	}
 	
 	// --debug
@@ -121,13 +137,13 @@ bool AppInitParameterInteraction()
 		const std::vector<std::string> arg_values = g_args.GetArgs(BTCLITED_OPTION_DEBUG);
 		if (std::none_of(arg_values.begin(), arg_values.end(),
 		[](const std::string& val) { return val == "0"; })) {
-			for (auto category : arg_values) {
-				auto it = g_map_category.find(category);
-				if (it == g_map_category.end()) {
-					LogPrint(LogLevel::ERROR, "Unsupported logging category: %s\n", category.c_str());
+			for (auto module : arg_values) {
+				auto it = g_map_module.find(module);
+				if (it == g_map_module.end()) {
+					BTCLOG(LOGLEVEL_ERROR) << "Unsupported logging module: " << module.c_str();
 					return false;
 				}
-				g_log_categories |= it->second;
+				g_log_module |= it->second;
 			}
 		}
 	}
@@ -135,19 +151,26 @@ bool AppInitParameterInteraction()
 	// --loglevel
 	if (g_args.IsArgSet(BTCLITED_OPTION_LOGLEVEL)) {
 		const std::string arg_val = g_args.GetArg(BTCLITED_OPTION_LOGLEVEL, DEFAULT_LOG_LEVEL);
-		if ( arg_val.length() != 1 && std::atoi(arg_val.c_str()) > LogLevel::DEBUG) {
-			LogPrint(LogLevel::ERROR, "Unsupported log level: %s\n", arg_val.c_str());
+		if ( arg_val.length() != 1 && std::stoi(arg_val.c_str()) >= LOGLEVEL_MAX) {
+			BTCLOG(LOGLEVEL_ERROR) << "Unsupported log level: " << arg_val.c_str();
 			return false;
 		}
-		g_log_level = std::atoi(arg_val.c_str());
-		LogPrint(LogLevel::DEBUG, "set log level: %u\n", g_log_level.load(std::memory_order_relaxed));
+		//g_log_level = std::atoi(arg_val.c_str());
+		uint8_t level = std::stoi(arg_val.c_str());
+		if (level <= LOGLEVEL_WARNING)
+			FLAGS_minloglevel = g_map_loglevel[level];
+		else {
+			FLAGS_minloglevel = 0;
+			FLAGS_v = g_map_loglevel[level];
+		}
+		BTCLOG(LOGLEVEL_VERBOSE) << "set log level: " << level;
 	}
 
 	return true;
 }
 
 bool AppInitBasicSetup()
-{
+{	
 	// Clean shutdown on SIGTERM
 	struct sigaction sa;
 	sa.sa_handler = HandleSIGTERM;

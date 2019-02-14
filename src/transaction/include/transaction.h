@@ -36,7 +36,7 @@ public:
 	}
 	std::string ToString() const
 	{
-		return strprintf("OutPoint(%s, %u)", prev_hash_.ToString().substr(0,10), index_);
+		return strprintf("OutPoint(%s, %u)", prev_hash_.ToString().substr(0, 10), index_);
 	}
 	
 	//-------------------------------------------------------------------------
@@ -88,7 +88,7 @@ public:
 	}
 	
 	//-------------------------------------------------------------------------
-	const Hash256& prev_hash()
+	const Hash256& prev_hash() const
 	{
 		return prev_hash_;
 	}
@@ -99,6 +99,15 @@ public:
 	void set_prevHash(Hash256&& hash)
 	{
 		prev_hash_ = std::move(hash);
+	}
+	
+	uint32_t index() const
+	{
+		return index_;
+	}
+	void set_index(uint32_t index)
+	{
+		index_ = index;
 	}
 	
 private:
@@ -256,7 +265,7 @@ public:
 	{
 		return strprintf("TxOut(value=%d.%08d, scriptPubKey=%s)", 
 						 value_ / satoshi_per_bitcoin, value_ % satoshi_per_bitcoin, 
-						 HexEncode(script_pub_key_.begin(), script_pub_key_.end()).substr(0, 30));
+						 HexEncode(script_pub_key_.begin(), script_pub_key_.end()));
 	}
 	std::size_t Size(bool serialized = false) const
 	{
@@ -340,17 +349,29 @@ public:
 		: version_(default_version), inputs_(), outputs_(), lock_time_(0), hash_cache_() {}
 	Transaction(uint32_t version, const std::vector<TxIn>& inputs,
 				const std::vector<TxOut>& outputs, uint32_t lock_time)
-		: version_(version), inputs_(inputs), outputs_(outputs), lock_time_(lock_time), hash_cache_() {}
+		: version_(version), inputs_(inputs), outputs_(outputs), lock_time_(lock_time)
+	{
+		Hash();
+	}
 	Transaction(uint32_t version, std::vector<TxIn>&& inputs,
 				std::vector<TxOut>&& outputs, uint32_t lock_time) noexcept
 		: version_(version), inputs_(std::move(inputs)),
-		  outputs_(std::move(outputs)), lock_time_(lock_time), hash_cache_() {}
+		  outputs_(std::move(outputs)), lock_time_(lock_time)
+	{
+		Hash();
+	}
 	Transaction(const Transaction& t)
 		: version_(t.version_), inputs_(t.inputs_), outputs_(t.outputs_),
-		  lock_time_(t.lock_time_), hash_cache_(t.Hash()) {}
+		  lock_time_(t.lock_time_)
+	{
+		Hash();
+	}
 	Transaction(Transaction&& t) noexcept
 		: version_(t.version_), inputs_(std::move(t.inputs_)), outputs_(std::move(t.outputs_)),
-		  lock_time_(t.lock_time_), hash_cache_(std::move(t.Hash())) {}
+		  lock_time_(t.lock_time_)
+	{
+		Hash();
+	}
 	
 	//-------------------------------------------------------------------------
 	template <typename SType> void Serialize(SType&) const;
@@ -369,12 +390,7 @@ public:
 	Transaction& operator=(Transaction&& b) noexcept;
 	
 	//-------------------------------------------------------------------------
-	const Hash256& Hash() const
-	{
-		if (hash_cache_.IsNull())
-			UpdateHash();
-		return hash_cache_;
-	}
+	const Hash256& Hash() const;
 	
 	//-------------------------------------------------------------------------
 	bool IsNull() const
@@ -450,8 +466,6 @@ private:
 	
 	// Default transaction version.
     static constexpr uint32_t default_version = 2;
-	
-	void UpdateHash() const;
 };
 
 #endif // BTCLITE_TRANSACTION_H
