@@ -4,7 +4,7 @@
 #include "util.h"
 #include "utiltime.h"
 #include "hash.h"
-#include "block.h"
+//#include "block.h"
 ArgsManager g_args;
 PathManager g_path;
 
@@ -42,8 +42,8 @@ bool AppInit(int argc, char **argv)
 	
 	}
 
-	Block genesis = CreateGenesisBlock(1231006505, 2083236893, 0x1d00ffff, 1, 50*satoshi_per_bitcoin);
-	std::cout << genesis.ToString() << std::endl;
+	/*Block genesis = CreateGenesisBlock(1231006505, 2083236893, 0x1d00ffff, 1, 50*satoshi_per_bitcoin);
+	std::cout << genesis.ToString() << std::endl;*/
 
 	if (!ret) {
 		Interrupt();
