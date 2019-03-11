@@ -3,6 +3,7 @@
 
 #include "hash.h"
 #include "script.h"
+#include "script_witness.h"
 #include "serialize.h"
 #include "tinyformat.h"
 
@@ -11,10 +12,12 @@ class OutPoint {
 public:
 	OutPoint()
 		: index_(UINT32_MAX) {}
+	
 	OutPoint(const Hash256& hash, uint32_t index)
 		: prev_hash_(hash), index_(index) {}
 	OutPoint(Hash256&& hash, uint32_t index) noexcept
 		: prev_hash_(std::move(hash)), index_(index) {}
+	
 	OutPoint(const OutPoint& op)
 		: prev_hash_(op.prev_hash_), index_(op.index_) {}
 	OutPoint(OutPoint&& op) noexcept
@@ -128,14 +131,22 @@ public:
 	//-------------------------------------------------------------------------
 	TxIn()
 		: sequence_no_(default_sequence_no) {}
-	TxIn(const OutPoint& prevout, const Script& script_sig, uint32_t sequence_no=default_sequence_no)
-		: prevout_(prevout), script_sig_(script_sig), sequence_no_(sequence_no) {}
-	TxIn(OutPoint&& prevout, Script&& script_sig, uint32_t sequence_no=default_sequence_no) noexcept
-		: prevout_(std::move(prevout)), script_sig_(std::move(script_sig)), sequence_no_(sequence_no) {}
+	
+	TxIn(const OutPoint& prevout, const Script& script_sig, uint32_t sequence_no=default_sequence_no,
+		 const ScriptWitness& script_witness = ScriptWitness())
+		: prevout_(prevout), script_sig_(script_sig),
+		  sequence_no_(sequence_no), script_witness_(script_witness) {}
+	TxIn(OutPoint&& prevout, Script&& script_sig, uint32_t sequence_no=default_sequence_no,
+		 ScriptWitness&& script_witness = ScriptWitness()) noexcept
+		: prevout_(std::move(prevout)), script_sig_(std::move(script_sig)),
+		  sequence_no_(sequence_no), script_witness_(std::move(script_witness)) {}
+	
 	TxIn(const TxIn& input)
-		: prevout_(input.prevout_), script_sig_(input.script_sig_), sequence_no_(input.sequence_no_) {}
+		: prevout_(input.prevout_), script_sig_(input.script_sig_), 
+		  sequence_no_(input.sequence_no_), script_witness_(input.script_witness_) {}
 	TxIn(TxIn&& input) noexcept
-		: prevout_(std::move(input.prevout_)), script_sig_(std::move(input.script_sig_)), sequence_no_(input.sequence_no_) {}
+		: prevout_(std::move(input.prevout_)), script_sig_(std::move(input.script_sig_)),
+		  sequence_no_(input.sequence_no_), script_witness_(std::move(input.script_witness_)) {}
 	
 	//-------------------------------------------------------------------------
 	template <typename SType>
@@ -189,6 +200,10 @@ public:
 	{
 		return prevout_.Size() + script_sig_.Size(serialized) + sizeof(sequence_no_);
 	}
+	bool HasWitness() const
+	{
+		return false;
+	}
 	
 	//-------------------------------------------------------------------------
 	const OutPoint& prevout() const
@@ -226,10 +241,24 @@ public:
 		sequence_no_ = sequence;
 	}
 	
+	const ScriptWitness& script_witness() const
+	{
+		return script_witness_;
+	}
+	void set_scriptWitness(const ScriptWitness& script_witness)
+	{
+		script_witness_ = script_witness;
+	}
+	void set_scriptWitness(ScriptWitness&& script_witness)
+	{
+		script_witness_ = std::move(script_witness);
+	}
+	
 private:
 	OutPoint prevout_;
 	Script script_sig_;
 	uint32_t sequence_no_;
+	ScriptWitness script_witness_;
 };
 
 /** An output of a transaction.  It contains the public key that the next input
@@ -242,10 +271,12 @@ public:
 	{
 		script_pub_key_.clear();
 	}
+	
 	TxOut(uint64_t value, const Script& script)
 		: value_(value), script_pub_key_(script) {}
 	TxOut(uint64_t value, Script&& script) noexcept
 		: value_(value), script_pub_key_(std::move(script)) {}
+	
 	TxOut(const TxOut& output)
 		: value_(output.value_), script_pub_key_(output.script_pub_key_) {}
 	TxOut(TxOut&& output) noexcept
@@ -374,8 +405,8 @@ public:
 	}
 	
 	//-------------------------------------------------------------------------
-	template <typename SType> void Serialize(SType&) const;
-	template <typename SType> void UnSerialize(SType&);
+	template <typename SType> void Serialize(SType&, bool) const;
+	template <typename SType> void UnSerialize(SType&, bool);
 	
 	//-------------------------------------------------------------------------
 	bool operator==(const Transaction& b) const
@@ -391,6 +422,7 @@ public:
 	
 	//-------------------------------------------------------------------------
 	const Hash256& Hash() const;
+	const Hash256& WitnessHash() const;
 	
 	//-------------------------------------------------------------------------
 	bool IsNull() const
@@ -463,6 +495,7 @@ private:
 	uint32_t lock_time_;
 	
 	mutable Hash256 hash_cache_;
+	mutable Hash256 witness_hash_cache_;
 	
 	// Default transaction version.
     static constexpr uint32_t default_version = 2;

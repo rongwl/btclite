@@ -20,7 +20,7 @@ std::string TxIn::ToString() const
 }
 
 template <typename SType>
-void Transaction::Serialize(SType& os) const
+void Transaction::Serialize(SType& os, bool witness) const
 {
 	Serializer<SType> serial(os);
 	serial.SerialWrite(version_);
@@ -30,7 +30,7 @@ void Transaction::Serialize(SType& os) const
 }
 
 template <typename SType>
-void Transaction::UnSerialize(SType& is)
+void Transaction::UnSerialize(SType& is, bool witness)
 {
 	Serializer<SType> serial(is);
 	serial.SerialRead(&version_);
@@ -113,10 +113,15 @@ const Hash256& Transaction::Hash() const
 	if (hash_cache_.IsNull()) {
 		std::vector<uint8_t> v;
 		ByteSink<std::vector<uint8_t> > byte_sink(v);
-		Serialize(byte_sink);
+		Serialize(byte_sink, false);
 		DoubleSha256(v, &hash_cache_);
 		// Botan hash output is big endian, Hash256 is little endian
 		ReverseEndian(hash_cache_.begin(), hash_cache_.end());
 	}
 	return hash_cache_;
+}
+
+const Hash256& Transaction::WitnessHash() const
+{
+	return witness_hash_cache_;
 }

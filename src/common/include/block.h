@@ -181,14 +181,17 @@ public:
 	{
 		SetNull();
 	}
+	
 	Block(const std::vector<Transaction>& transactions)
 		: header_(BlockHeader()), transactions_(transactions) {}
 	Block(std::vector<Transaction>&& transactions) noexcept
 		: header_(BlockHeader()), transactions_(std::move(transactions)) {}
+	
 	Block(const BlockHeader& header, const std::vector<Transaction>& transactions)
 		: header_(header), transactions_(transactions) {}
 	Block(BlockHeader&& header, std::vector<Transaction>&& transactions) noexcept
 		: header_(std::move(header)), transactions_(std::move(transactions)) {}
+	
 	Block(const Block& b)
 		: header_(b.header_), transactions_(b.transactions_) {}
 	Block(Block&& b) noexcept
