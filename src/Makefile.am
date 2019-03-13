@@ -36,6 +36,7 @@ BTCLITE_HEADER_FILES = \
 					   common/include/script.h \
 					   common/include/script_witness.h \
 					   common/include/transaction.h \
+					   config/environment.h \
 					   main/include/clientversion.h \
 					   main/include/init.h \
 					   net/include/net.h \
