@@ -5,9 +5,11 @@
 #include "tinyformat.h"
 
 #include <atomic>
+#include <csignal>
 #include <cstdlib>
 #include <exception>
 #include <fstream>
+#include <getopt.h>
 #include <map>
 #include <set>
 #include <thread>
@@ -23,24 +25,51 @@ namespace fs = std::filesystem;
 namespace fs = std::experimental::filesystem;
 #endif
 
+#define GLOBAL_OPTION_HELP     "help"
+#define GLOBAL_OPTION_DATADIR  "datadir"
+#define GLOBAL_OPTION_DEBUG    "debug"
+#define GLOBAL_OPTION_CONF     "conf"
+#define GLOBAL_OPTION_LOGLEVEL "loglevel"
 
-#define BTCLITED_OPTION_HELP     "help"
-#define BTCLITED_OPTION_DATADIR  "datadir"
-#define BTCLITED_OPTION_DEBUG    "debug"
-#define BTCLITED_OPTION_CONF     "conf"
-#define BTCLITED_OPTION_LOGLEVEL "loglevel"
-#define BTCLITED_OPTION_CONNECT  "connect"
-#define BTCLITED_OPTION_LISTEN   "listen"
-#define BTCLITED_OPTION_DISCOVER "discover"
-#define BTCLITED_OPTION_DNSSEED  "dnsseed"
-
-#define DEFAULT_CONFIG_FILE     "btclite.conf"
 #define DEFAULT_LOG_LEVEL       "3"
 
 extern bool output_debug;
 extern std::atomic<uint32_t> g_log_module;
 extern std::atomic<uint8_t> g_log_level;
-void SetupEnvironment();
+
+
+class Signal {
+public:
+	Signal(volatile std::sig_atomic_t sig)
+		: signal_(sig)
+	{
+	    std::signal(sig, Handler);
+	}
+	
+	bool IsReceived() const
+	{
+		return (received_signal_ != 0 && received_signal_ == signal_);
+	}
+
+	static volatile std::sig_atomic_t received_signal_;
+
+private:
+	volatile std::sig_atomic_t signal_;
+	
+	static void Handler(int sig)
+	{
+		received_signal_ = sig;
+	}
+};
+
+// mixin class
+template <class BASE>
+class Uncopyable : public BASE {
+public:
+	using BASE::BASE;
+    Uncopyable(const Uncopyable&) = delete;
+    void operator=(const Uncopyable&) = delete;
+};
 
 namespace LogModule {
 enum Flag : uint16_t {
@@ -56,19 +85,7 @@ enum Flag : uint16_t {
 	ALL         = UINT16_MAX,
 };
 }
-/*
-namespace LogLevel {
-enum Flag : uint8_t {
-	FATAL,   // A fatal condition
-	ERROR,   // An error has occurred
-	WARNING, // A warning
-	INFO,    // Normal message
-	DEBUG,   // Debug information
-	VERBOSE, // Verbose information
-	MAX,
-};
-}
-*/
+
 #define LOGLEVEL_FATAL   0
 #define LOGLEVEL_ERROR   1
 #define LOGLEVEL_WARNING 2
@@ -138,35 +155,100 @@ int LogPrintStr(const std::string &str);
 LogPrintStr(tfm::format(__VA_ARGS__)); \
 } while(0)
 */
+
 class ArgsManager {
-public:
-	bool ParseParameters(int, char* const*);
-	void ReadConfigFile(const std::string&) const;
-	std::string GetArg(const std::string&, const std::string&) const;
-	std::vector<std::string> GetArgs(const std::string&) const;
-	void SetArg(const std::string&, const std::string&);
-	bool IsArgSet(const std::string&) const;
-private:
+public:	
+	virtual bool Parse(int argc, char* const argv[]) = 0;
+	virtual void PrintUsage();
+	void ParseFromFile(const std::string& path) const;
+	
+	std::string GetArg(const std::string& arg, const std::string& arg_default) const;
+	std::vector<std::string> GetArgs(const std::string& arg) const;
+	void SetArg(const std::string& arg, const std::string& arg_val);
+	bool IsArgSet(const std::string& arg) const;
+	
+	//-------------------------------------------------------------------------
+	const std::map<std::string, std::string>& MapArgs() const
+	{
+		LOCK(cs_args_);
+		return map_args_;
+	}
+	const std::map<std::string, std::vector<std::string> >& MpaMultiArgs() const
+	{
+		LOCK(cs_args_);
+		return map_multi_args_;
+	}
+	
+protected:	
 	mutable CCriticalSection cs_args_;
 	std::map<std::string, std::string> map_args_;
-	std::map<std::string, std::vector<std::string>> map_multi_args_;
-	
-	bool CheckOptions(int, char* const*);
-};
-extern ArgsManager g_args;
+	std::map<std::string, std::vector<std::string> > map_multi_args_;
 
-class PathManager {
-public:
-	PathManager()
-		: path_(GetDefaultDataDir()) {}
-	fs::path GetDataDir() const;
-	void UpdateDataDir();
-	fs::path GetDefaultDataDir() const;
-	fs::path GetConfigFile(const std::string&) const;
-private:
-	mutable CCriticalSection cs_path_;
-	fs::path path_;
+	bool CheckOptions(int argc, char* const argv[]);
 };
-extern PathManager g_path;
+
+class DataFilesManager {
+public:
+	const fs::path& DataDir() const
+	{
+		LOCK(cs_path_);
+		return data_dir_;
+	}
+	void set_dataDir(const fs::path& path)
+	{
+		LOCK(cs_path_);
+		data_dir_ = path;
+	}
+	
+	fs::path ConfigFile() const
+	{
+		LOCK(cs_path_);
+		return data_dir_ / config_file_;
+	}
+	void set_configFile(const std::string& filename)
+	{
+		LOCK(cs_path_);
+		config_file_ = filename;
+	}
+	
+protected:	
+	DataFilesManager(const std::string& path)
+		: data_dir_(fs::path(path)) {}
+	
+	mutable CCriticalSection cs_path_;
+	fs::path data_dir_;
+	std::string config_file_;
+	
+	//fs::path StrToPath(const std::string& str_path) const;	
+};
+
+class BaseExecutor {
+public:	
+	BaseExecutor(ArgsManager& args, DataFilesManager& data_files)
+		: args_(args), data_files_(data_files), sig_int_(Signal(SIGINT)), sig_term_(Signal(SIGTERM)) {}
+	
+	virtual bool Init() = 0;
+	virtual bool Start() = 0;
+	virtual bool Run() = 0;
+	virtual void Interrupt() = 0;
+	virtual void Stop() = 0;
+	
+	virtual bool BasicSetup();
+	virtual void WaitForSignal();
+	
+protected:	
+	ArgsManager& args_;
+	DataFilesManager& data_files_;
+
+	virtual bool InitParameters();
+private:
+	Signal sig_int_;
+	Signal sig_term_;
+};
+// mixin uncopyable
+using Executor = Uncopyable<BaseExecutor>;
+
+void SetupEnvironment();
+bool InitLogging(int argc, char* const argv[], const ArgsManager& args);
 
 #endif // BTCLITE_UTIL_H

@@ -2,7 +2,6 @@
 #include "config/btclite-config.h"
 #endif
 
-#include "init.h"
 #include "serialize.h"
 #include "sync.h"
 #include "util.h"
@@ -18,6 +17,28 @@ bool print_to_file = false;
 
 std::atomic<uint32_t> g_log_module(0);
 std::atomic<uint8_t> g_log_level(LOGLEVEL_INFO); 
+volatile std::sig_atomic_t Signal::received_signal_ = 0;
+
+const std::map<std::string, LogModule::Flag> g_map_module = {
+	{"0",        LogModule::NONE},
+	{"net",      LogModule::NET},
+	{"mempool",  LogModule::MEMPOOL},
+	{"http",     LogModule::HTTP},
+	{"db",       LogModule::DB},
+	{"rpc",      LogModule::RPC},
+	{"prune",    LogModule::PRUNE},
+	{"libevent", LogModule::LIBEVENT},
+	{"coindb",   LogModule::COINDB},
+	{"1",        LogModule::ALL}
+};
+const std::array<uint8_t, LOGLEVEL_MAX> g_map_loglevel = {
+	GlogLevel::FATAL,    // LOGLEVEL_FATAL map into GlogLevel::FATAL
+	GlogLevel::ERROR,    // LOGLEVEL_ERROR map into GlogLevel::ERROR
+	GlogLevel::WARNING,  // LOGLEVEL_WARNING map into GlogLevel::WARNING
+	GlogLevel::VERBOSE0, // LOGLEVEL_INFO map into GlogLevel::VERBOSE0
+	GlogLevel::VERBOSE1, // LOGLEVEL_DEBUG map into GlogLevel::VERBOSE1
+	GlogLevel::VERBOSE2  // LOGLEVEL_VERBOSE map into GlogLevel::VERBOSE2
+};
 
 /**
  * started_newline is a state variable held by the calling context that will
@@ -54,6 +75,68 @@ int LogPrintStr(const std::string &str)
     return ret;
 }
 
+static void HandleAllocFail()
+{
+	// Rather than throwing std::bad-alloc if allocation fails, terminate
+    // immediately to (try to) avoid chain corruption.
+	std::set_new_handler(std::terminate);
+	BTCLOG(LOGLEVEL_ERROR) << "Critical error: out of memory. Terminating.";
+	
+	// The log was successful, terminate now.
+	std::terminate();
+}
+
+bool InitLogging(int argc, char* const argv[], const ArgsManager& args)
+{
+	// Init Google's logging library
+	google::InitGoogleLogging(argv[0]);
+	FLAGS_logtostderr = 1;
+	
+	// --loglevel
+	if (args.IsArgSet(GLOBAL_OPTION_LOGLEVEL)) {
+		const std::string arg_val = args.GetArg(GLOBAL_OPTION_LOGLEVEL, DEFAULT_LOG_LEVEL);
+		if ( arg_val.length() != 1 && std::stoi(arg_val.c_str()) >= LOGLEVEL_MAX) {
+			BTCLOG(LOGLEVEL_ERROR) << "Unsupported log level: " << arg_val.c_str();
+			return false;
+		}
+
+		uint8_t level = std::stoi(arg_val.c_str());
+		if (level <= LOGLEVEL_WARNING)
+			FLAGS_minloglevel = g_map_loglevel[level];
+		else {
+			FLAGS_minloglevel = 0;
+			FLAGS_v = g_map_loglevel[level];
+		}
+		BTCLOG(LOGLEVEL_VERBOSE) << "set log level: " << +level;
+	}
+	else {
+		FLAGS_v = g_map_loglevel[std::stoi(DEFAULT_LOG_LEVEL)];
+		BTCLOG(LOGLEVEL_INFO) << "default log level: " << DEFAULT_LOG_LEVEL;
+	}
+	
+	return true;
+}
+
+void ArgsManager::PrintUsage()
+{
+	fprintf(stdout, "Usage: btclited [OPTIONS...]\n\n");
+	fprintf(stdout, "Common Options:\n");
+	fprintf(stdout, "  -h or -?,  --help     print this help message and exit\n");
+	fprintf(stdout, "  --debug=<module>      output debugging information(default: 0)\n");
+	fprintf(stdout, "                        <module> can be 1(output all debugging information),\n");
+	fprintf(stdout, "                        mempool, net\n");
+	fprintf(stdout, "  --loglevel=<level>    specify the type of message being printed(default: %s)\n", DEFAULT_LOG_LEVEL);
+	fprintf(stdout, "                        <level> can be:\n");
+	fprintf(stdout, "                            0(A fatal condition),\n");
+	fprintf(stdout, "                            1(An error has occurred),\n");
+	fprintf(stdout, "                            2(A warning),\n");
+	fprintf(stdout, "                            3(Normal message),\n");
+	fprintf(stdout, "                            4(Debug information),\n");
+	fprintf(stdout, "                            5(Verbose information\n");
+	//              "                                                                                "
+
+}
+
 /* Check options that getopt_long() can not print totally */
 bool ArgsManager::CheckOptions(int argc, char* const argv[])
 {
@@ -62,91 +145,10 @@ bool ArgsManager::CheckOptions(int argc, char* const argv[])
 		if ((str.length() > 2 && str.compare(0, 2, "--")) ||
 		    !str.compare("--")) {
 			fprintf(stdout, "%s: invalid option '%s'\n", argv[0], str.c_str());
-			PrintUsage();
 			return false;
 		}
 	}
 	return true;
-}
-
-bool ArgsManager::ParseParameters(int argc, char* const argv[])
-{
-	if (!CheckOptions(argc, argv))
-		return false;
-	
-	const static struct option options[] {
-		{ BTCLITED_OPTION_HELP,     no_argument,        NULL, 'h' },
-		{ BTCLITED_OPTION_DATADIR,  required_argument,  NULL,  0  },
-		{ BTCLITED_OPTION_DEBUG,    required_argument,  NULL,  0  },
-		{ BTCLITED_OPTION_CONF,     required_argument,  NULL,  0  },
-		{ BTCLITED_OPTION_LOGLEVEL, required_argument,  NULL,  0  },
-		{ BTCLITED_OPTION_CONNECT,  required_argument,  NULL,  0  },
-	    { BTCLITED_OPTION_LISTEN,   required_argument,  NULL,  0  },
-		{ BTCLITED_OPTION_DISCOVER, required_argument,  NULL,  0, },
-		{ BTCLITED_OPTION_DNSSEED,  required_argument,  NULL,  0, },
-		{ 0,                        0,                  0,     0  }
-	};
-	int c, option_index;
-	
-	LOCK(cs_args_);
-	map_args_.clear();
-	map_multi_args_.clear();
-	
-	while ((c = getopt_long(argc, argv, "h?", options, &option_index)) != -1) {
-		switch (c) {
-			case 0 : 
-			{
-				std::string str(options[option_index].name);
-				std::string str_val(optarg);
-				if (str_val.empty()) {
-					fprintf(stderr, "%s: option '--%s' requires an argument\n", argv[0], str.c_str());
-					PrintUsage();
-					return false;
-				}
-
-				map_args_[str] = str_val;
-				map_multi_args_[str].push_back(str_val);
-				break;
-			}
-			case 'h' :
-			case '?' :
-				PrintUsage();
-				break;
-			default :
-				break;
-		}
-	}
-	
-	return true;
-}
-
-void ArgsManager::ReadConfigFile(const std::string& file_path) const
-{
-	fs::path path = g_path.GetConfigFile(file_path);
-	std::ifstream ifs(path);
-	if (!ifs.good()) {
-		if (path == g_path.GetDataDir() / DEFAULT_CONFIG_FILE)
-			std::ofstream file(path); // create default config file if it does not exist
-		return; 
-	}
-	
-	LOCK(cs_args_);
-	std::string line;
-	while (std::getline(ifs, line)) {
-		line.erase(std::remove_if(line.begin(), line.end(), 
-								 [](unsigned char x){return std::isspace(x);}),
-				  line.end());
-		if (line[0] == '#' || line.empty())
-			continue;
-		auto pos = line.find("=");
-		if (pos != std::string::npos) {
-			std::string str = line.substr(0, pos);
-			if (!map_args_.count(str) && str != BTCLITED_OPTION_CONF) {
-				// Don't overwrite existing settings so command line settings override bitcoin.conf
-				std::string str_val = line.substr(pos+1);
-			}
-		}
-	}
 }
 
 std::string ArgsManager::GetArg(const std::string& arg, const std::string& arg_default) const
@@ -180,40 +182,67 @@ bool ArgsManager::IsArgSet(const std::string& arg) const
 	return map_args_.count(arg);
 }
 
-fs::path PathManager::GetDefaultDataDir() const
+void ArgsManager::ParseFromFile(const std::string& path) const
 {
-	char *home_path = getenv("HOME");
-	if (home_path == NULL)
-		return fs::path("/") / ".btclite";
-	else
-		return fs::path(home_path) / ".btclite";
-}
-
-fs::path PathManager::GetDataDir() const
-{
-	LOCK(cs_path_);
-	return path_;
-}
-
-void PathManager::UpdateDataDir()
-{
-	LOCK(cs_path_);
-	if (g_args.IsArgSet(BTCLITED_OPTION_DATADIR)) {
-		path_ = fs::absolute(g_args.GetArg(BTCLITED_OPTION_DATADIR, ""));
-		if (!fs::is_directory(path_)) {
-			BTCLOG(LOGLEVEL_WARNING) << "Specified data directory \"" << path_.c_str()
-									 << "\" does not exist. Use default data directory.";
-			path_ = GetDefaultDataDir();
-		}
+	std::ifstream ifs(path);
+	if (!ifs.good()) {
+		return; // No config file is OK
+	}
+	 
+	std::string line;
+	while (std::getline(ifs, line)) {
+	 line.erase(std::remove_if(line.begin(), line.end(), 
+			[](unsigned char x){return std::isspace(x);}),
+		 line.end());
+	 if (line[0] == '#' || line.empty())
+	  continue;
+	 auto pos = line.find("=");
+	 if (pos != std::string::npos) {
+	  std::string str = line.substr(0, pos);
+	  if (!IsArgSet(str) && str != GLOBAL_OPTION_CONF) {
+	   // Don't overwrite existing settings so command line settings override config file
+	   std::string str_val = line.substr(pos+1);
+	  }
+	 }
 	}
 }
 
-fs::path PathManager::GetConfigFile(const std::string& conf_path) const
+bool BaseExecutor::BasicSetup()
+{	
+	// Ignore SIGPIPE, otherwise it will bring the daemon down if the client closes unexpectedly
+    std::signal(SIGPIPE, SIG_IGN);
+	
+	std::set_new_handler(HandleAllocFail);
+	
+	return true;
+}
+
+void BaseExecutor::WaitForSignal()
 {
-	fs::path path(conf_path);
-	if (!path.is_absolute())
-		path = GetDataDir() / path;
-	return path;
+	while (!sig_int_.IsReceived() && !sig_term_.IsReceived()) {
+		std::this_thread::sleep_for(std::chrono::milliseconds(200));
+	}
+}
+
+bool BaseExecutor::InitParameters()
+{
+	// --debug
+	if (args_.IsArgSet(GLOBAL_OPTION_DEBUG)) {
+		const std::vector<std::string> arg_values = args_.GetArgs(GLOBAL_OPTION_DEBUG);
+		if (std::none_of(arg_values.begin(), arg_values.end(),
+		[](const std::string& val) { return val == "0"; })) {
+			for (auto module : arg_values) {
+				auto it = g_map_module.find(module);
+				if (it == g_map_module.end()) {
+					BTCLOG(LOGLEVEL_ERROR) << "Unsupported logging module: " << module.c_str();
+					return false;
+				}
+				g_log_module |= it->second;
+			}
+		}
+	}
+	
+	return true;
 }
 
 void SetupEnvironment()

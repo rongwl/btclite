@@ -221,6 +221,11 @@ public:
 		serial.SerialRead(&header_);
 		serial.SerialRead(&transactions_);
 	}
+	
+	//-------------------------------------------------------------------------
+	// This class is move assignable but NOT copy assignable (performance).
+	Block& operator=(const Block& b) = delete;
+	Block& operator=(Block&& b) noexcept;
 
 	//-------------------------------------------------------------------------
 	const BlockHeader& header() const
@@ -254,7 +259,8 @@ private:
 	std::vector<Transaction> transactions_;
 };
 
-Block CreateGenesisBlock(const std::string&, const Script&, uint32_t, uint32_t, uint32_t, int32_t, uint64_t);
-Block CreateGenesisBlock(uint32_t, uint32_t, uint32_t, int32_t, uint64_t);
+Block CreateGenesisBlock(const std::string& coinbase, const Script& output_script, uint32_t time,
+						 uint32_t nonce, uint32_t bits, int32_t version, uint64_t reward);
+Block CreateGenesisBlock(uint32_t time, uint32_t nonce, uint32_t bits, int32_t version, uint64_t reward);
 
 #endif // BTCLITE_BLOCK_H

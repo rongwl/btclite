@@ -41,7 +41,7 @@ public:
         MAX_BASE58_TYPES
     };
 
-	explicit Params(Environment);
+	explicit Params(Environment env);
 
     const Consensus::Params& Consensus() const
 	{ 
@@ -67,8 +67,6 @@ public:
 	{
 		return chain_tx_data_;
 	}
-	
-    void UpdateVersionBitsParameters(Bip9Deployment::Deployment, int64_t, int64_t);
 	
 private:
     Consensus::Params consensus_;

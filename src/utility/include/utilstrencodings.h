@@ -29,7 +29,7 @@ std::string HexEncode(Iterator rbegin, Iterator rend, bool fSpaces=false)
 }
 
 template <typename Iterator>
-void HexDecode(const std::string& in, Iterator begin, Iterator end)
+void HexDecode(const std::string& in, Iterator begin, Iterator end) // little endian storage
 {
 	auto first = std::find_if_not(in.begin(), in.end(), isspace);
 	if (first == in.end())

@@ -45,6 +45,15 @@ BlockHeader& BlockHeader::operator=(BlockHeader&& b) noexcept
 	return *this;
 }
 
+Block& Block::operator=(Block&& b) noexcept
+{
+	if (this != &b) {
+	
+	}
+	
+	return *this;
+}
+
 std::string Block::ToString() const
 {
     std::stringstream s;

@@ -7,11 +7,11 @@ define(_CLIENT_VERSION_MINOR, 1)
 define(_CLIENT_VERSION_REVISION, 0)
 AC_INIT([Btclite], [_CLIENT_VERSION_MAJOR._CLIENT_VERSION_MINOR._CLIENT_VERSION_REVISION], [https://github.com/rongwl/btclite/issues])
 AC_LANG(C++)
-AC_CONFIG_SRCDIR([src/main/src/validation.cpp])
+AC_CONFIG_SRCDIR([src/fullnode/src/validation.cpp])
 AC_CONFIG_HEADERS([src/config/btclite-config.h])
 AC_CONFIG_MACRO_DIR([m4])
 
-BTCLITE_DAEMON_NAME=btclited
+BTCLITE_FULLNODE_BIN=btc-fullnode
 
 AH_TOP([#ifndef BTCLITE_CONFIG_H])
 AH_TOP([#define BTCLITE_CONFIG_H])
@@ -73,7 +73,7 @@ AC_CHECK_HEADER_STDBOOL
 
 # Checks for library functions.
 
-AC_SUBST(BTCLITE_DAEMON_NAME)
+AC_SUBST(BTCLITE_FULLNODE_BIN)
 
 # require -lpthread
 AX_PTHREAD
