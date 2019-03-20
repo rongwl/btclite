@@ -17,7 +17,7 @@ bool print_to_file = false;
 
 std::atomic<uint32_t> g_log_module(0);
 std::atomic<uint8_t> g_log_level(LOGLEVEL_INFO); 
-volatile std::sig_atomic_t Signal::received_signal_ = 0;
+volatile std::sig_atomic_t SigMonitor::received_signal_ = 0;
 
 const std::map<std::string, LogModule::Flag> g_map_module = {
 	{"0",        LogModule::NONE},
@@ -86,15 +86,15 @@ static void HandleAllocFail()
 	std::terminate();
 }
 
-bool InitLogging(int argc, char* const argv[], const ArgsManager& args)
+bool ArgsManager::InitLogging(const char* argv0)
 {
 	// Init Google's logging library
-	google::InitGoogleLogging(argv[0]);
+	google::InitGoogleLogging(argv0);
 	FLAGS_logtostderr = 1;
 	
 	// --loglevel
-	if (args.IsArgSet(GLOBAL_OPTION_LOGLEVEL)) {
-		const std::string arg_val = args.GetArg(GLOBAL_OPTION_LOGLEVEL, DEFAULT_LOG_LEVEL);
+	if (IsArgSet(GLOBAL_OPTION_LOGLEVEL)) {
+		const std::string arg_val = GetArg(GLOBAL_OPTION_LOGLEVEL, DEFAULT_LOG_LEVEL);
 		if ( arg_val.length() != 1 && std::stoi(arg_val.c_str()) >= LOGLEVEL_MAX) {
 			BTCLOG(LOGLEVEL_ERROR) << "Unsupported log level: " << arg_val.c_str();
 			return false;
@@ -112,6 +112,22 @@ bool InitLogging(int argc, char* const argv[], const ArgsManager& args)
 	else {
 		FLAGS_v = g_map_loglevel[std::stoi(DEFAULT_LOG_LEVEL)];
 		BTCLOG(LOGLEVEL_INFO) << "default log level: " << DEFAULT_LOG_LEVEL;
+	}
+	
+	// --debug
+	if (IsArgSet(GLOBAL_OPTION_DEBUG)) {
+		const std::vector<std::string> arg_values = GetArgs(GLOBAL_OPTION_DEBUG);
+		if (std::none_of(arg_values.begin(), arg_values.end(),
+		[](const std::string& val) { return val == "0"; })) {
+			for (auto module : arg_values) {
+				auto it = g_map_module.find(module);
+				if (it == g_map_module.end()) {
+					BTCLOG(LOGLEVEL_ERROR) << "Unsupported logging module: " << module.c_str();
+					return false;
+				}
+				g_log_module |= it->second;
+			}
+		}
 	}
 	
 	return true;
@@ -135,6 +151,11 @@ void ArgsManager::PrintUsage()
 	fprintf(stdout, "                            5(Verbose information\n");
 	//              "                                                                                "
 
+}
+
+bool ArgsManager::InitParameters()
+{	
+	return true;
 }
 
 /* Check options that getopt_long() can not print totally */
@@ -222,27 +243,6 @@ void BaseExecutor::WaitForSignal()
 	while (!sig_int_.IsReceived() && !sig_term_.IsReceived()) {
 		std::this_thread::sleep_for(std::chrono::milliseconds(200));
 	}
-}
-
-bool BaseExecutor::InitParameters()
-{
-	// --debug
-	if (args_.IsArgSet(GLOBAL_OPTION_DEBUG)) {
-		const std::vector<std::string> arg_values = args_.GetArgs(GLOBAL_OPTION_DEBUG);
-		if (std::none_of(arg_values.begin(), arg_values.end(),
-		[](const std::string& val) { return val == "0"; })) {
-			for (auto module : arg_values) {
-				auto it = g_map_module.find(module);
-				if (it == g_map_module.end()) {
-					BTCLOG(LOGLEVEL_ERROR) << "Unsupported logging module: " << module.c_str();
-					return false;
-				}
-				g_log_module |= it->second;
-			}
-		}
-	}
-	
-	return true;
 }
 
 void SetupEnvironment()

@@ -1,5 +1,16 @@
 #include "executor.h"
 
+bool FullNodeArgs::Init(int argc, char* const argv[])
+{
+	if (!Parse(argc, argv))
+		return false;
+	if (!InitLogging(argv[0]))
+		return false;
+	if (!InitParameters())
+		return false;
+	
+	return true;
+}
 
 bool FullNodeArgs::Parse(int argc, char* const argv[])
 {
@@ -69,6 +80,28 @@ void FullNodeArgs::PrintUsage()
 
 }
 
+bool FullNodeArgs::InitParameters()
+{
+	if (!ArgsManager::InitParameters())
+		return false;
+	
+	// --connect
+	if (IsArgSet(FULLNODE_OPTION_CONNECT)) {
+		SetArg(FULLNODE_OPTION_LISTEN, "0");
+		BTCLOG(LOGLEVEL_DEBUG) << "set --connect=1 -> set --listen=0";
+		SetArg(FULLNODE_OPTION_DNSSEED, "0");
+		BTCLOG(LOGLEVEL_DEBUG) << "set --connect=1 -> set --dnsseed=0";
+	}
+	
+	// --listen
+	if (GetArg(FULLNODE_OPTION_LISTEN, DEFAULT_LISTEN) == "0") {
+		SetArg(FULLNODE_OPTION_DISCOVER, "0");
+		BTCLOG(LOGLEVEL_DEBUG) << "set --listen=0 -> set --discover=0";
+	}
+
+	return true;
+}
+
 FullNodeDataFiles::FullNodeDataFiles(const std::string& path) : DataFilesManager(path)
 {
 	LOCK(cs_path_);
@@ -96,9 +129,6 @@ bool FullNodeMain::Init()
 		return false;
 
 	if (!BasicSetup())
-		return false;
-
-	if (!InitParameters())
 		return false;
 
 	return true;
@@ -141,30 +171,6 @@ bool FullNodeMain::InitConfigFile()
 	data_files_.set_configFile(args_.GetArg(GLOBAL_OPTION_CONF, DEFAULT_CONFIG_FILE));
 	args_.ParseFromFile(data_files_.ConfigFile().c_str());
 	
-	return true;
-}
-
-bool FullNodeMain::InitParameters()
-{
-	if (!BaseExecutor::InitParameters())
-		return false;
-	
-	// --connect
-	if (args_.IsArgSet(FULLNODE_OPTION_CONNECT)) {
-		args_.SetArg(FULLNODE_OPTION_LISTEN, "0");
-		BTCLOG(LOGLEVEL_DEBUG) << "set --connect=1 -> set --listen=0";
-		args_.SetArg(FULLNODE_OPTION_DNSSEED, "0");
-		BTCLOG(LOGLEVEL_DEBUG) << "set --connect=1 -> set --dnsseed=0";
-	}
-	
-	// --listen
-	if (args_.GetArg(FULLNODE_OPTION_LISTEN, DEFAULT_LISTEN) == "0") {
-		args_.SetArg(FULLNODE_OPTION_DISCOVER, "0");
-		BTCLOG(LOGLEVEL_DEBUG) << "set --listen=0 -> set --discover=0";
-	}
-	
-
-
 	return true;
 }
 

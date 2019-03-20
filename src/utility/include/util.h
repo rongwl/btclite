@@ -38,9 +38,9 @@ extern std::atomic<uint32_t> g_log_module;
 extern std::atomic<uint8_t> g_log_level;
 
 
-class Signal {
+class SigMonitor {
 public:
-	Signal(volatile std::sig_atomic_t sig)
+	SigMonitor(volatile std::sig_atomic_t sig)
 		: signal_(sig)
 	{
 	    std::signal(sig, Handler);
@@ -158,8 +158,7 @@ LogPrintStr(tfm::format(__VA_ARGS__)); \
 
 class ArgsManager {
 public:	
-	virtual bool Parse(int argc, char* const argv[]) = 0;
-	virtual void PrintUsage();
+	virtual bool Init(int argc, char * const argv[]) = 0;
 	void ParseFromFile(const std::string& path) const;
 	
 	std::string GetArg(const std::string& arg, const std::string& arg_default) const;
@@ -184,6 +183,10 @@ protected:
 	std::map<std::string, std::string> map_args_;
 	std::map<std::string, std::vector<std::string> > map_multi_args_;
 
+	virtual bool Parse(int argc, char* const argv[]) = 0;
+	virtual void PrintUsage();
+	virtual bool InitParameters();
+	bool InitLogging(const char *argv0);
 	bool CheckOptions(int argc, char* const argv[]);
 };
 
@@ -225,7 +228,7 @@ protected:
 class BaseExecutor {
 public:	
 	BaseExecutor(ArgsManager& args, DataFilesManager& data_files)
-		: args_(args), data_files_(data_files), sig_int_(Signal(SIGINT)), sig_term_(Signal(SIGTERM)) {}
+		: args_(args), data_files_(data_files), sig_int_(SigMonitor(SIGINT)), sig_term_(SigMonitor(SIGTERM)) {}
 	
 	virtual bool Init() = 0;
 	virtual bool Start() = 0;
@@ -240,15 +243,13 @@ protected:
 	ArgsManager& args_;
 	DataFilesManager& data_files_;
 
-	virtual bool InitParameters();
 private:
-	Signal sig_int_;
-	Signal sig_term_;
+	SigMonitor sig_int_;
+	SigMonitor sig_term_;
 };
 // mixin uncopyable
 using Executor = Uncopyable<BaseExecutor>;
 
 void SetupEnvironment();
-bool InitLogging(int argc, char* const argv[], const ArgsManager& args);
 
 #endif // BTCLITE_UTIL_H

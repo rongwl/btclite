@@ -19,9 +19,12 @@
 
 class FullNodeArgs : public ArgsManager {
 public:
+	bool Init(int argc, char* const argv[]);
+	
+private:
 	bool Parse(int argc, char* const argv[]);
 	void PrintUsage();
-
+	bool InitParameters();
 };
 
 class FullNodeDataFiles : public DataFilesManager {
@@ -42,7 +45,6 @@ public:
 private:
 	bool CheckDataPath();
 	bool InitConfigFile();
-	bool InitParameters();
 };
 
 
