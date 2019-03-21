@@ -121,9 +121,9 @@ static inline bool IsNeedPrint(uint8_t level)
 #define LOG_LOGLEVEL_FATAL   LOG(FATAL)
 #define LOG_LOGLEVEL_ERROR   LOG(ERROR)
 #define LOG_LOGLEVEL_WARNING LOG(WARNING)
-#define LOG_LOGLEVEL_INFO    VLOG(g_map_loglevel[LOGLEVEL_INFO])
-#define LOG_LOGLEVEL_DEBUG   VLOG(g_map_loglevel[LOGLEVEL_DEBUG])
-#define LOG_LOGLEVEL_VERBOSE VLOG(g_map_loglevel[LOGLEVEL_VERBOSE])
+#define LOG_LOGLEVEL_INFO    VLOG(GlogLevel::VERBOSE0)
+#define LOG_LOGLEVEL_DEBUG   VLOG(GlogLevel::VERBOSE1)
+#define LOG_LOGLEVEL_VERBOSE VLOG(GlogLevel::VERBOSE2)
 
 #define LOG_LOGLEVEL_FATAL_MOD(module) \
 	LOG_IF(FATAL, module & g_log_module.load(std::memory_order_relaxed))
@@ -132,11 +132,11 @@ static inline bool IsNeedPrint(uint8_t level)
 #define LOG_LOGLEVEL_WARNING_MOD(module) \
 	LOG_IF(WARNING, module & g_log_module.load(std::memory_order_relaxed))
 #define LOG_LOGLEVEL_INFO_MOD(module) \
-	VLOG_IF(g_map_loglevel[LOGLEVEL_INFO], module & g_log_module.load(std::memory_order_relaxed))
+	VLOG_IF(GlogLevel::VERBOSE0, module & g_log_module.load(std::memory_order_relaxed))
 #define LOG_LOGLEVEL_DEBUG_MOD(module) \
-	VLOG_IF(g_map_loglevel[LOGLEVEL_DEBUG], module & g_log_module.load(std::memory_order_relaxed))
+	VLOG_IF(GlogLevel::VERBOSE1, module & g_log_module.load(std::memory_order_relaxed))
 #define LOG_LOGLEVEL_VERBOSE_MOD(module) \
-	VLOG_IF(g_map_loglevel[LOGLEVEL_VERBOSE], module & g_log_module.load(std::memory_order_relaxed))
+	VLOG_IF(GlogLevel::VERBOSE2, module & g_log_module.load(std::memory_order_relaxed))
 
 
 #define BTCLOG(level) LOG_##level
@@ -158,77 +158,68 @@ LogPrintStr(tfm::format(__VA_ARGS__)); \
 
 class ArgsManager {
 public:	
-	virtual bool Init(int argc, char * const argv[]) = 0;
-	void ParseFromFile(const std::string& path) const;
-	
+	virtual bool Init(int argc, const char * const argv[]) = 0;
+	virtual bool InitParameters();
+
+	//-------------------------------------------------------------------------
 	std::string GetArg(const std::string& arg, const std::string& arg_default) const;
 	std::vector<std::string> GetArgs(const std::string& arg) const;
 	void SetArg(const std::string& arg, const std::string& arg_val);
+	void SetArgs(const std::string& arg, const std::string& arg_val);
 	bool IsArgSet(const std::string& arg) const;
 	
-	//-------------------------------------------------------------------------
-	const std::map<std::string, std::string>& MapArgs() const
+	void SetNull()
 	{
 		LOCK(cs_args_);
-		return map_args_;
-	}
-	const std::map<std::string, std::vector<std::string> >& MpaMultiArgs() const
-	{
-		LOCK(cs_args_);
-		return map_multi_args_;
+		map_args_.clear();
+		map_multi_args_.clear();
 	}
 	
+	bool ParseFromFile(const std::string& path) const;
+	
 protected:	
+	virtual bool Parse(int argc, const char* const argv[]) = 0;
+	virtual void PrintUsage();
+	bool CheckOptions(int argc, const char* const argv[]);
+	
+private:
 	mutable CCriticalSection cs_args_;
 	std::map<std::string, std::string> map_args_;
 	std::map<std::string, std::vector<std::string> > map_multi_args_;
-
-	virtual bool Parse(int argc, char* const argv[]) = 0;
-	virtual void PrintUsage();
-	virtual bool InitParameters();
-	bool InitLogging(const char *argv0);
-	bool CheckOptions(int argc, char* const argv[]);
 };
 
 class DataFilesManager {
 public:
-	const fs::path& DataDir() const
+	DataFilesManager(const fs::path& data_dir, const std::string& config_file)
+		: data_dir_(data_dir), config_file_(config_file) {}
+	
+	virtual bool Init(const std::string& path, const std::string& config_file) = 0;
+
+	//-------------------------------------------------------------------------
+	const fs::path& data_dir() const
 	{
 		LOCK(cs_path_);
 		return data_dir_;
 	}
-	void set_dataDir(const fs::path& path)
-	{
-		LOCK(cs_path_);
-		data_dir_ = path;
-	}
+	void set_dataDir(const fs::path& path);
 	
-	fs::path ConfigFile() const
+	fs::path config_file() const
 	{
 		LOCK(cs_path_);
 		return data_dir_ / config_file_;
 	}
-	void set_configFile(const std::string& filename)
-	{
-		LOCK(cs_path_);
-		config_file_ = filename;
-	}
+	void set_configFile(const std::string& filename);
 	
-protected:	
-	DataFilesManager(const std::string& path)
-		: data_dir_(fs::path(path)) {}
-	
+private:	
 	mutable CCriticalSection cs_path_;
 	fs::path data_dir_;
-	std::string config_file_;
-	
-	//fs::path StrToPath(const std::string& str_path) const;	
+	std::string config_file_;	
 };
 
 class BaseExecutor {
 public:	
-	BaseExecutor(ArgsManager& args, DataFilesManager& data_files)
-		: args_(args), data_files_(data_files), sig_int_(SigMonitor(SIGINT)), sig_term_(SigMonitor(SIGTERM)) {}
+	BaseExecutor(int argc, const char* const argv[])
+		: argc_(argc), argv_(argv), sig_int_(SigMonitor(SIGINT)), sig_term_(SigMonitor(SIGTERM)) {}
 	
 	virtual bool Init() = 0;
 	virtual bool Start() = 0;
@@ -238,12 +229,20 @@ public:
 	
 	virtual bool BasicSetup();
 	virtual void WaitForSignal();
-	
-protected:	
-	ArgsManager& args_;
-	DataFilesManager& data_files_;
+
+	//-------------------------------------------------------------------------
+	int argc() const
+	{
+		return argc_;
+	}
+	const char* const* argv() const
+	{
+		return argv_;
+	}
 
 private:
+	int argc_;
+	const char* const* argv_;
 	SigMonitor sig_int_;
 	SigMonitor sig_term_;
 };

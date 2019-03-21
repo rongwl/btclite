@@ -75,6 +75,15 @@ int LogPrintStr(const std::string &str)
     return ret;
 }
 
+void InitLogging(char *argv0)
+{
+	// Init Google's logging library
+	google::InitGoogleLogging(argv0);
+	FLAGS_logtostderr = 1;
+	FLAGS_v = g_map_loglevel[std::stoi(DEFAULT_LOG_LEVEL)];
+	BTCLOG(LOGLEVEL_INFO) << "default log level: " << DEFAULT_LOG_LEVEL;
+}
+
 static void HandleAllocFail()
 {
 	// Rather than throwing std::bad-alloc if allocation fails, terminate
@@ -86,12 +95,28 @@ static void HandleAllocFail()
 	std::terminate();
 }
 
-bool ArgsManager::InitLogging(const char* argv0)
+void ArgsManager::PrintUsage()
 {
-	// Init Google's logging library
-	google::InitGoogleLogging(argv0);
-	FLAGS_logtostderr = 1;
-	
+	fprintf(stdout, "Usage: btclited [OPTIONS...]\n\n");
+	fprintf(stdout, "Common Options:\n");
+	fprintf(stdout, "  -h or -?,  --help     print this help message and exit\n");
+	fprintf(stdout, "  --debug=<module>      output debugging information(default: 0)\n");
+	fprintf(stdout, "                        <module> can be 1(output all debugging information),\n");
+	fprintf(stdout, "                        mempool, net\n");
+	fprintf(stdout, "  --loglevel=<level>    specify the type of message being printed(default: %s)\n", DEFAULT_LOG_LEVEL);
+	fprintf(stdout, "                        <level> can be:\n");
+	fprintf(stdout, "                            0(A fatal condition),\n");
+	fprintf(stdout, "                            1(An error has occurred),\n");
+	fprintf(stdout, "                            2(A warning),\n");
+	fprintf(stdout, "                            3(Normal message),\n");
+	fprintf(stdout, "                            4(Debug information),\n");
+	fprintf(stdout, "                            5(Verbose information\n");
+	//              "                                                                                "
+
+}
+
+bool ArgsManager::InitParameters()
+{	
 	// --loglevel
 	if (IsArgSet(GLOBAL_OPTION_LOGLEVEL)) {
 		const std::string arg_val = GetArg(GLOBAL_OPTION_LOGLEVEL, DEFAULT_LOG_LEVEL);
@@ -133,33 +158,8 @@ bool ArgsManager::InitLogging(const char* argv0)
 	return true;
 }
 
-void ArgsManager::PrintUsage()
-{
-	fprintf(stdout, "Usage: btclited [OPTIONS...]\n\n");
-	fprintf(stdout, "Common Options:\n");
-	fprintf(stdout, "  -h or -?,  --help     print this help message and exit\n");
-	fprintf(stdout, "  --debug=<module>      output debugging information(default: 0)\n");
-	fprintf(stdout, "                        <module> can be 1(output all debugging information),\n");
-	fprintf(stdout, "                        mempool, net\n");
-	fprintf(stdout, "  --loglevel=<level>    specify the type of message being printed(default: %s)\n", DEFAULT_LOG_LEVEL);
-	fprintf(stdout, "                        <level> can be:\n");
-	fprintf(stdout, "                            0(A fatal condition),\n");
-	fprintf(stdout, "                            1(An error has occurred),\n");
-	fprintf(stdout, "                            2(A warning),\n");
-	fprintf(stdout, "                            3(Normal message),\n");
-	fprintf(stdout, "                            4(Debug information),\n");
-	fprintf(stdout, "                            5(Verbose information\n");
-	//              "                                                                                "
-
-}
-
-bool ArgsManager::InitParameters()
-{	
-	return true;
-}
-
 /* Check options that getopt_long() can not print totally */
-bool ArgsManager::CheckOptions(int argc, char* const argv[])
+bool ArgsManager::CheckOptions(int argc, const char* const argv[])
 {
 	for (int i = 1; i < argc; i++) {
 		std::string str(argv[i]);
@@ -197,17 +197,24 @@ void ArgsManager::SetArg(const std::string& arg, const std::string& arg_val)
 	map_multi_args_[arg] = {arg_val};
 }
 
+void ArgsManager::SetArgs(const std::string& arg, const std::string& arg_val)
+{
+	LOCK(cs_args_);
+	map_args_[arg] = arg_val;
+	map_multi_args_[arg].push_back(arg_val);
+}
+
 bool ArgsManager::IsArgSet(const std::string& arg) const
 {
 	LOCK(cs_args_);
 	return map_args_.count(arg);
 }
 
-void ArgsManager::ParseFromFile(const std::string& path) const
+bool ArgsManager::ParseFromFile(const std::string& path) const
 {
 	std::ifstream ifs(path);
 	if (!ifs.good()) {
-		return; // No config file is OK
+		return true; // No config file is OK
 	}
 	 
 	std::string line;
@@ -226,6 +233,31 @@ void ArgsManager::ParseFromFile(const std::string& path) const
 	  }
 	 }
 	}
+	
+	return true;
+}
+
+void DataFilesManager::set_dataDir(const fs::path& path)
+{
+	LOCK(cs_path_);
+	if (!fs::is_directory(path)) {
+		BTCLOG(LOGLEVEL_WARNING) << "Specified data path \"" << path.c_str()
+								 << "\" does not exist.";
+		return;
+	}
+	data_dir_ = path;
+}
+
+void DataFilesManager::set_configFile(const std::string& filename)
+{
+	LOCK(cs_path_);
+	std::ifstream ifs(data_dir_ / filename);
+	if (!ifs.good()) {
+		BTCLOG(LOGLEVEL_WARNING) << "Specified config file \"" << data_dir_.c_str() << "/" << filename
+								 << "\" does not exist.";
+		return;
+	}
+	config_file_ = filename;
 }
 
 bool BaseExecutor::BasicSetup()

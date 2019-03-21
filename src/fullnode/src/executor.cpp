@@ -1,18 +1,14 @@
 #include "executor.h"
 
-bool FullNodeArgs::Init(int argc, char* const argv[])
+bool FullNodeArgs::Init(int argc, const char* const argv[])
 {
 	if (!Parse(argc, argv))
-		return false;
-	if (!InitLogging(argv[0]))
-		return false;
-	if (!InitParameters())
 		return false;
 	
 	return true;
 }
 
-bool FullNodeArgs::Parse(int argc, char* const argv[])
+bool FullNodeArgs::Parse(int argc, const char* const argv[])
 {
 	if (!CheckOptions(argc, argv)) {
 		PrintUsage();
@@ -33,11 +29,9 @@ bool FullNodeArgs::Parse(int argc, char* const argv[])
 	};
 	int c, option_index;
 	
-	LOCK(cs_args_);
-	map_args_.clear();
-	map_multi_args_.clear();
+	SetNull();
 	
-	while ((c = getopt_long(argc, argv, "h?", fullnode_options, &option_index)) != -1) {
+	while ((c = getopt_long(argc, const_cast<char* const*>(argv), "h?", fullnode_options, &option_index)) != -1) {
 		switch (c) {
 			case 0 : 
 			{
@@ -49,8 +43,7 @@ bool FullNodeArgs::Parse(int argc, char* const argv[])
 					return false;
 				}
 
-				map_args_[str] = str_val;
-				map_multi_args_[str].push_back(str_val);
+				SetArgs(str, str_val);
 				break;
 			}
 			case 'h' :
@@ -102,32 +95,53 @@ bool FullNodeArgs::InitParameters()
 	return true;
 }
 
-FullNodeDataFiles::FullNodeDataFiles(const std::string& path) : DataFilesManager(path)
+bool FullNodeDataFiles::Init(const std::string& dir_path, const std::string& config_file)
 {
-	LOCK(cs_path_);
-	
-	if (!fs::is_directory(data_dir_)) {
-		BTCLOG(LOGLEVEL_WARNING) << "Specified data path \"" << data_dir_.c_str()
+	if (!fs::is_directory(dir_path)) {
+		BTCLOG(LOGLEVEL_WARNING) << "Specified data path \"" << data_dir().c_str()
 								 << "\" does not exist. Use default data path.";
-		
-		char *home_path = getenv("HOME");			
-		if (home_path == NULL)
-			data_dir_ = fs::path("/") / DEFAULT_DATA_DIR;
-		else
-			data_dir_ = fs::path(home_path) / DEFAULT_DATA_DIR;
-		
-		fs::create_directories(data_dir_);
-	}	
+		set_dataDir(DefaultDataDirPath());
+		fs::create_directories(data_dir());
+	}
+	else
+		set_dataDir(fs::path(dir_path));
+	
+	std::ifstream ifs(data_dir() / config_file);
+	if (!ifs.good()) {
+		//config_file_ = DEFAULT_CONFIG_FILE;
+		set_configFile(DEFAULT_CONFIG_FILE);
+		std::ofstream file(DataFilesManager::config_file()); // create default config file if it does not exist
+	}
+	else
+		//config_file_ = config_file;
+		set_configFile(config_file);
+	
+	return true;
+}
+
+fs::path FullNodeDataFiles::DefaultDataDirPath()
+{
+	char *home_path = getenv("HOME");			
+	if (home_path == NULL)
+		return fs::path("/") / DEFAULT_DATA_DIR;
+	else
+		return fs::path(home_path) / DEFAULT_DATA_DIR;
 }
 
 bool FullNodeMain::Init()
 {
-	if (!CheckDataPath())
+	if (!args_.Init(argc(), argv()))
+		return false;
+	
+	if (!InitDataFiles())
+		return false;
+	
+	if (!LoadConfigFile())
 		return false;
 
-	if (!InitConfigFile())
+	if (!args_.InitParameters())
 		return false;
-
+	
 	if (!BasicSetup())
 		return false;
 
@@ -156,22 +170,26 @@ void FullNodeMain::Stop()
 	BTCLOG(LOGLEVEL_INFO) << __func__ << ": done";
 }
 
-bool FullNodeMain::CheckDataPath()
+bool FullNodeMain::InitDataFiles()
 {
-	if (!fs::is_directory(data_files_.DataDir())) {
-		BTCLOG(LOGLEVEL_ERROR) << "Error: Specified data directory \"" << data_files_.DataDir().c_str() << "\" does not exist.";
+	std::string path = FullNodeDataFiles::DefaultDataDirPath().c_str();
+	if (args_.IsArgSet(GLOBAL_OPTION_DATADIR))
+		path = args_.GetArg(GLOBAL_OPTION_DATADIR, DEFAULT_DATA_DIR);
+	
+	std::string config_file = args_.GetArg(GLOBAL_OPTION_CONF, DEFAULT_CONFIG_FILE);
+	
+	return data_files_.Init(path, config_file);
+}
+
+bool FullNodeMain::LoadConfigFile()
+{
+	if (!fs::is_directory(data_files_.data_dir())) {
+		BTCLOG(LOGLEVEL_ERROR) << "Error: Specified data directory \"" << data_files_.data_dir().c_str() << "\" does not exist.";
 		return false;
 	}
 	
-	return true;
+	return args_.ParseFromFile(data_files_.config_file().c_str());
 }
 
-bool FullNodeMain::InitConfigFile()
-{
-	data_files_.set_configFile(args_.GetArg(GLOBAL_OPTION_CONF, DEFAULT_CONFIG_FILE));
-	args_.ParseFromFile(data_files_.ConfigFile().c_str());
-	
-	return true;
-}
 
 

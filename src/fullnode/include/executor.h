@@ -19,22 +19,27 @@
 
 class FullNodeArgs : public ArgsManager {
 public:
-	bool Init(int argc, char* const argv[]);
-	
-private:
-	bool Parse(int argc, char* const argv[]);
-	void PrintUsage();
+	bool Init(int argc, const char* const argv[]);
 	bool InitParameters();
+
+private:
+	bool Parse(int argc, const char* const argv[]);
+	void PrintUsage();
 };
 
 class FullNodeDataFiles : public DataFilesManager {
 public:
-	FullNodeDataFiles(const std::string& path);
+	using DataFilesManager::DataFilesManager;
+	
+	bool Init(const std::string& path, const std::string& config_file);
+	static fs::path DefaultDataDirPath();
+	
 };
 
 class FullNodeMain : public Executor {
 public:
-	FullNodeMain(FullNodeArgs& args, FullNodeDataFiles& data_files) : Executor(args, data_files) {}
+	FullNodeMain(int argc, const char* const argv[])
+		: Executor(argc, argv) , data_files_(FullNodeDataFiles::DefaultDataDirPath(), DEFAULT_CONFIG_FILE) {}
 	
 	bool Init();
 	bool Start();
@@ -43,8 +48,11 @@ public:
 	void Stop();
 	
 private:
-	bool CheckDataPath();
-	bool InitConfigFile();
+	FullNodeArgs args_;
+	FullNodeDataFiles data_files_;
+
+	bool InitDataFiles();
+	bool LoadConfigFile();
 };
 
 
