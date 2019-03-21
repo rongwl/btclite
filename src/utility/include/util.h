@@ -1,7 +1,6 @@
 #ifndef BTCLITE_UTIL_H
 #define BTCLITE_UTIL_H
 
-#include "Assert.h"
 #include "logging.h"
 #include "sync.h"
 
@@ -98,7 +97,7 @@ private:
 class DataFilesManager {
 public:
 	DataFilesManager(const fs::path& data_dir, const std::string& config_file)
-		: data_dir_(data_dir), config_file_(config_file) {}
+		: data_dir_(data_dir), config_file_(data_dir_ / config_file) {}
 	
 	virtual bool Init(const std::string& path, const std::string& config_file) = 0;
 
@@ -110,17 +109,17 @@ public:
 	}
 	void set_dataDir(const fs::path& path);
 	
-	fs::path config_file() const
+	const fs::path& config_file() const
 	{
 		LOCK(cs_path_);
-		return data_dir_ / config_file_;
+		return config_file_;
 	}
 	void set_configFile(const std::string& filename);
 	
 private:	
 	mutable CCriticalSection cs_path_;
 	fs::path data_dir_;
-	std::string config_file_;	
+	fs::path config_file_;	
 };
 
 class BaseExecutor {

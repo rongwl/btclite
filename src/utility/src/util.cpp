@@ -167,7 +167,7 @@ void DataFilesManager::set_dataDir(const fs::path& path)
 {
 	LOCK(cs_path_);
 	if (!fs::is_directory(path)) {
-		BTCLOG(LOGLEVEL_WARNING) << "Specified data path \"" << path.c_str()
+		BTCLOG(LOGLEVEL_WARNING) << "Set data path \"" << path.c_str()
 								 << "\" does not exist.";
 		return;
 	}
