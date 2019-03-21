@@ -56,18 +56,21 @@ Block& Block::operator=(Block&& b) noexcept
 
 std::string Block::ToString() const
 {
-    std::stringstream s;
-    s << strprintf("Block(hash=%s, ver=0x%08x, hashPrevBlock=%s, hashMerkleRoot=%s, nTime=%u, nBits=%08x, nNonce=%u, tx.size=%u)\n",
-				   header_.Hash().ToString().substr(0,10), header_.version(),
-				   header_.hashPrevBlock().ToString().substr(0,10),
-				   header_.hashMerkleRoot().ToString().substr(0,10),
-				   header_.time(), header_.bits(), header_.nonce(),
-				   transactions_.size());
+    std::stringstream ss;
+	ss << "Block(hash=" << header_.Hash().ToString().substr(0,10) << ", "
+	   << "ver=" << "0x" << std::hex << std::setw(8) << std::setfill('0') << header_.version() << ", "
+	   << "hashPrevBlock=" << header_.hashPrevBlock().ToString().substr(0,10) << ", "
+	   << "hashMerkleRoot=" << header_.hashMerkleRoot().ToString().substr(0,10) << ", "
+	   << "nTime=" << std::dec << header_.time() << ", "
+	   << "nBits=" << std::hex << std::setw(8) << std::setfill('0') << header_.bits() << ", "
+	   << "nNonce=" << std::dec << header_.nonce() << ", "
+	   << "tx.size=" << transactions_.size() << ")\n";
+
     for (const auto& tx : transactions_) {
-        s << "  " << tx.ToString() << "\n";
+        ss << "  " << tx.ToString() << "\n";
     }
 	
-    return s.str();
+    return ss.str();
 }
 
 Hash256 Block::ComputeMerkleRoot() const

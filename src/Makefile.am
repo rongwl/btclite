@@ -48,8 +48,9 @@ BTCLITE_HEADER_FILES = \
 					   utility/include/blob.h \
 					   utility/include/Endian.h \
 					   utility/include/arithmetic.h \
-					   utility/include/serialize.h \
 					   utility/include/constants.h \
+					   utility/include/logging.h \
+					   utility/include/serialize.h \
 					   utility/include/sync.h \
 					   utility/include/tinyformat.h \
 					   utility/include/util.h \
@@ -94,6 +95,7 @@ utility_src_libbtclite_util_a_CPPFLAGS = $(AM_CXXFLAGS) \
 										 $(BTCLITE_CRYPTO_INCLUDES) \
 										 $(BTCLITE_FULLNODE_INCLUDES)
 utility_src_libbtclite_util_a_SOURCES = utility/src/sync.cpp \
+										utility/src/logging.cpp \
 										utility/src/util.cpp \
 										utility/src/utiltime.cpp \
 										utility/src/utilstrencodings.cpp 

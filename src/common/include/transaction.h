@@ -5,7 +5,6 @@
 #include "script.h"
 #include "script_witness.h"
 #include "serialize.h"
-#include "tinyformat.h"
 
 /** An outpoint - a combination of a transaction hash and an index n into its vout */
 class OutPoint {
@@ -39,7 +38,9 @@ public:
 	}
 	std::string ToString() const
 	{
-		return strprintf("OutPoint(%s, %u)", prev_hash_.ToString().substr(0, 10), index_);
+		std::stringstream ss;
+		ss << "OutPoint(" << prev_hash_.ToString().substr(0, 10) << ", " << index_ << ")";
+		return ss.str();
 	}
 	
 	//-------------------------------------------------------------------------
@@ -294,9 +295,11 @@ public:
 	}
 	std::string ToString() const
 	{
-		return strprintf("TxOut(value=%d.%08d, scriptPubKey=%s)", 
-						 value_ / satoshi_per_bitcoin, value_ % satoshi_per_bitcoin, 
-						 HexEncode(script_pub_key_.begin(), script_pub_key_.end()));
+		std::stringstream ss;
+		ss << "TxOut(value=" << (value_ / satoshi_per_bitcoin) << "."
+		   << std::setw(8) << std::setfill('0') << (value_ % satoshi_per_bitcoin) << ", "
+		   << "scriptPubKey=" << HexEncode(script_pub_key_.begin(), script_pub_key_.end()) << ")";
+		return ss.str();
 	}
 	std::size_t Size(bool serialized = false) const
 	{

@@ -1,21 +1,19 @@
 #ifndef BTCLITE_UTIL_H
 #define BTCLITE_UTIL_H
 
+#include "Assert.h"
+#include "logging.h"
 #include "sync.h"
-#include "tinyformat.h"
 
-#include <atomic>
 #include <csignal>
 #include <cstdlib>
 #include <exception>
 #include <fstream>
 #include <getopt.h>
-#include <map>
 #include <set>
 #include <thread>
 #include <vector>
 
-#include <glog/logging.h>
 
 #if __GNUC__ >= 8
 #include <filesystem>
@@ -30,12 +28,6 @@ namespace fs = std::experimental::filesystem;
 #define GLOBAL_OPTION_DEBUG    "debug"
 #define GLOBAL_OPTION_CONF     "conf"
 #define GLOBAL_OPTION_LOGLEVEL "loglevel"
-
-#define DEFAULT_LOG_LEVEL       "3"
-
-extern bool output_debug;
-extern std::atomic<uint32_t> g_log_module;
-extern std::atomic<uint8_t> g_log_level;
 
 
 class SigMonitor {
@@ -70,91 +62,6 @@ public:
     Uncopyable(const Uncopyable&) = delete;
     void operator=(const Uncopyable&) = delete;
 };
-
-namespace LogModule {
-enum Flag : uint16_t {
-	NONE        = 0,
-	NET         = (1 <<  0),
-	MEMPOOL     = (1 <<  1),
-	HTTP        = (1 <<  2),
-	DB          = (1 <<  3),
-	RPC         = (1 <<  4),
-	PRUNE       = (1 <<  5),
-	LIBEVENT    = (1 <<  6),
-	COINDB      = (1 <<  7),
-	ALL         = UINT16_MAX,
-};
-}
-
-#define LOGLEVEL_FATAL   0
-#define LOGLEVEL_ERROR   1
-#define LOGLEVEL_WARNING 2
-#define LOGLEVEL_INFO    3
-#define LOGLEVEL_DEBUG   4
-#define LOGLEVEL_VERBOSE 5
-#define LOGLEVEL_MAX     6
-
-namespace GlogLevel {
-enum Flag : uint8_t {
-	FATAL = 3,
-	ERROR = 2,
-	WARNING = 1,
-	VERBOSE0 = 4,
-	VERBOSE1 = 5,
-	VERBOSE2 = 6,
-};
-}
-
-extern const std::array<uint8_t, LOGLEVEL_MAX> g_map_loglevel;
-
-/** Return true if log accepts specified category */
-static inline bool LogAcceptCategory(uint32_t category)
-{
-    return (g_log_module.load(std::memory_order_relaxed) & category) != 0;
-}
-
-static inline bool IsNeedPrint(uint8_t level)
-{
-	return (level <= g_log_level.load(std::memory_order_relaxed));
-}
-
-#define LOG_LOGLEVEL_FATAL   LOG(FATAL)
-#define LOG_LOGLEVEL_ERROR   LOG(ERROR)
-#define LOG_LOGLEVEL_WARNING LOG(WARNING)
-#define LOG_LOGLEVEL_INFO    VLOG(GlogLevel::VERBOSE0)
-#define LOG_LOGLEVEL_DEBUG   VLOG(GlogLevel::VERBOSE1)
-#define LOG_LOGLEVEL_VERBOSE VLOG(GlogLevel::VERBOSE2)
-
-#define LOG_LOGLEVEL_FATAL_MOD(module) \
-	LOG_IF(FATAL, module & g_log_module.load(std::memory_order_relaxed))
-#define LOG_LOGLEVEL_ERROR_MOD(module) \
-	LOG_IF(ERROR, module & g_log_module.load(std::memory_order_relaxed))
-#define LOG_LOGLEVEL_WARNING_MOD(module) \
-	LOG_IF(WARNING, module & g_log_module.load(std::memory_order_relaxed))
-#define LOG_LOGLEVEL_INFO_MOD(module) \
-	VLOG_IF(GlogLevel::VERBOSE0, module & g_log_module.load(std::memory_order_relaxed))
-#define LOG_LOGLEVEL_DEBUG_MOD(module) \
-	VLOG_IF(GlogLevel::VERBOSE1, module & g_log_module.load(std::memory_order_relaxed))
-#define LOG_LOGLEVEL_VERBOSE_MOD(module) \
-	VLOG_IF(GlogLevel::VERBOSE2, module & g_log_module.load(std::memory_order_relaxed))
-
-
-#define BTCLOG(level) LOG_##level
-#define BTCLOG_MOD(level, module) LOG_##level##_MOD(module)
-
-/** Send a string to the log output */
-int LogPrintStr(const std::string &str);
-/*
-#define LogPrint(level, ...) do { \
-    if (IsNeedPrint((level))) { \
-	LogPrintStr(tfm::format(__VA_ARGS__)); \
-} \
-} while(0)
-
-#define LogPrintf(...) do { \
-LogPrintStr(tfm::format(__VA_ARGS__)); \
-} while(0)
-*/
 
 class ArgsManager {
 public:	

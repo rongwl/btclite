@@ -5,18 +5,17 @@
 
 std::string TxIn::ToString() const
 {
-    std::string str;
-    str += "TxIn(";
-    str += prevout_.ToString();
-    if (prevout_.IsNull())
-        str += strprintf(", coinbase %s", HexEncode(script_sig_.begin(), script_sig_.end()));
-    else
-        str += strprintf(", scriptSig=%s", HexEncode(script_sig_.begin(), script_sig_.end()).substr(0, 24));
-    if (sequence_no_ != default_sequence_no)
-        str += strprintf(", sequence_no=%u", sequence_no_);
-    str += ")";
+	std::stringstream ss;
+	ss << "TxIn(" << prevout_.ToString() << ", ";
+	if (prevout_.IsNull())
+		ss << "coinbase=" << HexEncode(script_sig_.begin(), script_sig_.end());
+	else
+		ss << "scriptSig=" << HexEncode(script_sig_.begin(), script_sig_.end()).substr(0, 24);
+	if (sequence_no_ != default_sequence_no)
+		ss << ", sequence_no=" << sequence_no_;
+	ss << ")";
 	
-    return str;
+	return ss.str();
 }
 
 template <typename SType>
@@ -95,17 +94,20 @@ std::size_t Transaction::Size(bool serialized = false) const
 
 std::string Transaction::ToString() const
 {
-    std::string str;
-    str += strprintf("Transaction(hash=%s, ver=%d, inputs.size=%u, outputs.size=%u, lock_time=%u)\n",
-					 Hash().ToString().substr(0,10), version_, inputs_.size(), outputs_.size(), lock_time_);
-    for (const auto& tx_in : inputs_)
-        str += "    " + tx_in.ToString() + "\n";
-    /*for (const auto& tx_in : inputs_)
-        str += "    " + tx_in.scriptWitness.ToString() + "\n";*/
-    for (const auto& tx_out : outputs_)
-        str += "    " + tx_out.ToString() + "\n";
+	std::stringstream ss;
+	ss << "Transaction(hash=" << Hash().ToString().substr(0,10) << ", "
+	   << "ver=" << version_ << ", "
+	   << "inputs.size=" << inputs_.size() << ", "
+	   << "outputs.size=" << outputs_.size() << ", "
+	   << "lock_time=" << lock_time_ << ")\n";
+	for (const auto& tx_in : inputs_)
+		ss << "    " << tx_in.ToString() << "\n";
+	/*for (const auto& tx_in : inputs_)
+        ss << "    " << tx_in.scriptWitness.ToString() << "\n";*/
+	for (const auto& tx_out : outputs_)
+        ss << "    " << tx_out.ToString() << "\n";
 	
-    return str;
+	return ss.str();
 }
 
 const Hash256& Transaction::Hash() const

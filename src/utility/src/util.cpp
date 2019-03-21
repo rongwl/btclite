@@ -11,78 +11,9 @@
 #include <locale>
 #include <stdarg.h>
 
-bool output_debug = false;
-bool print_to_console = true;
-bool print_to_file = false;
 
-std::atomic<uint32_t> g_log_module(0);
-std::atomic<uint8_t> g_log_level(LOGLEVEL_INFO); 
 volatile std::sig_atomic_t SigMonitor::received_signal_ = 0;
 
-const std::map<std::string, LogModule::Flag> g_map_module = {
-	{"0",        LogModule::NONE},
-	{"net",      LogModule::NET},
-	{"mempool",  LogModule::MEMPOOL},
-	{"http",     LogModule::HTTP},
-	{"db",       LogModule::DB},
-	{"rpc",      LogModule::RPC},
-	{"prune",    LogModule::PRUNE},
-	{"libevent", LogModule::LIBEVENT},
-	{"coindb",   LogModule::COINDB},
-	{"1",        LogModule::ALL}
-};
-const std::array<uint8_t, LOGLEVEL_MAX> g_map_loglevel = {
-	GlogLevel::FATAL,    // LOGLEVEL_FATAL map into GlogLevel::FATAL
-	GlogLevel::ERROR,    // LOGLEVEL_ERROR map into GlogLevel::ERROR
-	GlogLevel::WARNING,  // LOGLEVEL_WARNING map into GlogLevel::WARNING
-	GlogLevel::VERBOSE0, // LOGLEVEL_INFO map into GlogLevel::VERBOSE0
-	GlogLevel::VERBOSE1, // LOGLEVEL_DEBUG map into GlogLevel::VERBOSE1
-	GlogLevel::VERBOSE2  // LOGLEVEL_VERBOSE map into GlogLevel::VERBOSE2
-};
-
-/**
- * started_newline is a state variable held by the calling context that will
- * suppress printing of the timestamp when multiple calls are made that don't
- * end in a newline. Initialize it to true, and hold it, in the calling context.
- */
-static std::string LogTimestampStr(const std::string &str, std::atomic_bool *started_newline)
-{
-    std::string str_stamped;
-
-    if (*started_newline)
-        str_stamped = DateTimeStrFormat() + " " + str;
-    else
-        str_stamped = str;
-
-    if (!str.empty() && str[str.size()-1] == '\n')
-        *started_newline = true;
-    else
-        *started_newline = false;
-
-    return str_stamped;
-}
-
-int LogPrintStr(const std::string &str)
-{
-    int ret = 0; // Returns total number of characters written
-    static std::atomic_bool started_newline(true);
-
-    std::string str_time_stamped = LogTimestampStr(str, &started_newline);
-
-    ret = std::fwrite(str_time_stamped.data(), 1, str_time_stamped.size(), stdout);
-    fflush(stdout);
-    
-    return ret;
-}
-
-void InitLogging(char *argv0)
-{
-	// Init Google's logging library
-	google::InitGoogleLogging(argv0);
-	FLAGS_logtostderr = 1;
-	FLAGS_v = g_map_loglevel[std::stoi(DEFAULT_LOG_LEVEL)];
-	BTCLOG(LOGLEVEL_INFO) << "default log level: " << DEFAULT_LOG_LEVEL;
-}
 
 static void HandleAllocFail()
 {
@@ -126,18 +57,18 @@ bool ArgsManager::InitParameters()
 		}
 
 		uint8_t level = std::stoi(arg_val.c_str());
-		if (level <= LOGLEVEL_WARNING)
-			FLAGS_minloglevel = g_map_loglevel[level];
-		else {
-			FLAGS_minloglevel = 0;
-			FLAGS_v = g_map_loglevel[level];
+		if (level <= LOGLEVEL_WARNING) {
+			BTCLOG(LOGLEVEL_INFO) << "set log level: " << +level;
+			FLAGS_minloglevel = Logging::MapIntoGloglevel(level);
 		}
-		BTCLOG(LOGLEVEL_VERBOSE) << "set log level: " << +level;
+		else {
+			BTCLOG(LOGLEVEL_INFO) << "set log level: " << +level;
+			FLAGS_minloglevel = 0;
+			FLAGS_v = Logging::MapIntoGloglevel(level);
+		}
 	}
-	else {
-		FLAGS_v = g_map_loglevel[std::stoi(DEFAULT_LOG_LEVEL)];
+	else
 		BTCLOG(LOGLEVEL_INFO) << "default log level: " << DEFAULT_LOG_LEVEL;
-	}
 	
 	// --debug
 	if (IsArgSet(GLOBAL_OPTION_DEBUG)) {
@@ -145,12 +76,7 @@ bool ArgsManager::InitParameters()
 		if (std::none_of(arg_values.begin(), arg_values.end(),
 		[](const std::string& val) { return val == "0"; })) {
 			for (auto module : arg_values) {
-				auto it = g_map_module.find(module);
-				if (it == g_map_module.end()) {
-					BTCLOG(LOGLEVEL_ERROR) << "Unsupported logging module: " << module.c_str();
-					return false;
-				}
-				g_log_module |= it->second;
+				Logging::set_logModule(Logging::MapIntoModule(module));
 			}
 		}
 	}
