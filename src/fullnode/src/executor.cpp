@@ -60,7 +60,7 @@ bool FullNodeArgs::Parse(int argc, const char* const argv[])
 
 void FullNodeArgs::PrintUsage()
 {
-	ArgsManager::PrintUsage();
+	Args::PrintUsage();
 	fprintf(stdout, "  --datadir=<dir>       specify data directory.\n");
 	fprintf(stdout, "  --conf=<file>         specify configuration file (default: %s)\n", DEFAULT_CONFIG_FILE);
 	fprintf(stdout, "\nConnection Options:\n");
@@ -75,7 +75,7 @@ void FullNodeArgs::PrintUsage()
 
 bool FullNodeArgs::InitParameters()
 {
-	if (!ArgsManager::InitParameters())
+	if (!Args::InitParameters())
 		return false;
 	
 	// --connect
@@ -108,7 +108,7 @@ bool FullNodeDataFiles::Init(const std::string& dir_path, const std::string& con
 	
 	std::ifstream ifs(data_dir() / config_file);
 	if (!ifs.good()) 
-		std::ofstream file(DataFilesManager::config_file()); // create default config file if it does not exist
+		std::ofstream file(DataFiles::config_file()); // create default config file if it does not exist
 	else
 		set_configFile(config_file);
 	

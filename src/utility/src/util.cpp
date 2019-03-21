@@ -26,7 +26,7 @@ static void HandleAllocFail()
 	std::terminate();
 }
 
-void ArgsManager::PrintUsage()
+void Args::PrintUsage()
 {
 	fprintf(stdout, "Usage: btclited [OPTIONS...]\n\n");
 	fprintf(stdout, "Common Options:\n");
@@ -46,7 +46,7 @@ void ArgsManager::PrintUsage()
 
 }
 
-bool ArgsManager::InitParameters()
+bool Args::InitParameters()
 {	
 	// --loglevel
 	if (IsArgSet(GLOBAL_OPTION_LOGLEVEL)) {
@@ -85,7 +85,7 @@ bool ArgsManager::InitParameters()
 }
 
 /* Check options that getopt_long() can not print totally */
-bool ArgsManager::CheckOptions(int argc, const char* const argv[])
+bool Args::CheckOptions(int argc, const char* const argv[])
 {
 	for (int i = 1; i < argc; i++) {
 		std::string str(argv[i]);
@@ -98,7 +98,7 @@ bool ArgsManager::CheckOptions(int argc, const char* const argv[])
 	return true;
 }
 
-std::string ArgsManager::GetArg(const std::string& arg, const std::string& arg_default) const
+std::string Args::GetArg(const std::string& arg, const std::string& arg_default) const
 {
 	LOCK(cs_args_);
 	auto it = map_args_.find(arg);
@@ -107,7 +107,7 @@ std::string ArgsManager::GetArg(const std::string& arg, const std::string& arg_d
 	return arg_default;
 }
 
-std::vector<std::string> ArgsManager::GetArgs(const std::string& arg) const
+std::vector<std::string> Args::GetArgs(const std::string& arg) const
 {
 	LOCK(cs_args_);
 	auto it = map_multi_args_.find(arg);
@@ -116,27 +116,27 @@ std::vector<std::string> ArgsManager::GetArgs(const std::string& arg) const
 	return {};
 }
 
-void ArgsManager::SetArg(const std::string& arg, const std::string& arg_val)
+void Args::SetArg(const std::string& arg, const std::string& arg_val)
 {
 	LOCK(cs_args_);
 	map_args_[arg] = arg_val;
 	map_multi_args_[arg] = {arg_val};
 }
 
-void ArgsManager::SetArgs(const std::string& arg, const std::string& arg_val)
+void Args::SetArgs(const std::string& arg, const std::string& arg_val)
 {
 	LOCK(cs_args_);
 	map_args_[arg] = arg_val;
 	map_multi_args_[arg].push_back(arg_val);
 }
 
-bool ArgsManager::IsArgSet(const std::string& arg) const
+bool Args::IsArgSet(const std::string& arg) const
 {
 	LOCK(cs_args_);
 	return map_args_.count(arg);
 }
 
-bool ArgsManager::ParseFromFile(const std::string& path) const
+bool Args::ParseFromFile(const std::string& path) const
 {
 	std::ifstream ifs(path);
 	if (!ifs.good()) {
@@ -163,7 +163,7 @@ bool ArgsManager::ParseFromFile(const std::string& path) const
 	return true;
 }
 
-void DataFilesManager::set_dataDir(const fs::path& path)
+void DataFiles::set_dataDir(const fs::path& path)
 {
 	LOCK(cs_path_);
 	if (!fs::is_directory(path)) {
@@ -174,7 +174,7 @@ void DataFilesManager::set_dataDir(const fs::path& path)
 	data_dir_ = path;
 }
 
-void DataFilesManager::set_configFile(const std::string& filename)
+void DataFiles::set_configFile(const std::string& filename)
 {
 	LOCK(cs_path_);
 	std::ifstream ifs(data_dir_ / filename);

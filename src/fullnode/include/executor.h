@@ -17,7 +17,7 @@
 #define DEFAULT_DNSSEED   "1"
 
 
-class FullNodeArgs : public ArgsManager {
+class FullNodeArgs : public Args {
 public:
 	bool Init(int argc, const char* const argv[]);
 	bool InitParameters();
@@ -27,9 +27,9 @@ private:
 	void PrintUsage();
 };
 
-class FullNodeDataFiles : public DataFilesManager {
+class FullNodeDataFiles : public DataFiles {
 public:
-	using DataFilesManager::DataFilesManager;
+	using DataFiles::DataFiles;
 	
 	bool Init(const std::string& path, const std::string& config_file);
 	static fs::path DefaultDataDirPath();

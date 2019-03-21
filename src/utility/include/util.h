@@ -62,9 +62,10 @@ public:
     void operator=(const Uncopyable&) = delete;
 };
 
-class ArgsManager {
+class Args {
 public:	
 	virtual bool Init(int argc, const char * const argv[]) = 0;
+	virtual bool Parse(int argc, const char* const argv[]) = 0;
 	virtual bool InitParameters();
 
 	//-------------------------------------------------------------------------
@@ -83,8 +84,7 @@ public:
 	
 	bool ParseFromFile(const std::string& path) const;
 	
-protected:	
-	virtual bool Parse(int argc, const char* const argv[]) = 0;
+protected:
 	virtual void PrintUsage();
 	bool CheckOptions(int argc, const char* const argv[]);
 	
@@ -94,9 +94,9 @@ private:
 	std::map<std::string, std::vector<std::string> > map_multi_args_;
 };
 
-class DataFilesManager {
+class DataFiles {
 public:
-	DataFilesManager(const fs::path& data_dir, const std::string& config_file)
+	DataFiles(const fs::path& data_dir, const std::string& config_file)
 		: data_dir_(data_dir), config_file_(data_dir_ / config_file) {}
 	
 	virtual bool Init(const std::string& path, const std::string& config_file) = 0;
