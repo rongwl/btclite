@@ -10,16 +10,40 @@
 
 #include "Assert.h"
 
+class Logging;
 
-#define DEFAULT_LOG_LEVEL       "3"
+#define DEFAULT_LOG_LEVEL  "3"
 
-#define LOGLEVEL_FATAL   0
-#define LOGLEVEL_ERROR   1
-#define LOGLEVEL_WARNING 2
-#define LOGLEVEL_INFO    3
-#define LOGLEVEL_DEBUG   4
-#define LOGLEVEL_VERBOSE 5
-#define LOGLEVEL_MAX     6
+#define LOGLEVEL_FATAL    0
+#define LOGLEVEL_ERROR    1
+#define LOGLEVEL_WARNING  2
+#define LOGLEVEL_INFO     3
+#define LOGLEVEL_DEBUG    4
+#define LOGLEVEL_VERBOSE  5
+#define LOGLEVEL_MAX      6
+
+#define LOG_LOGLEVEL_FATAL   LOG(FATAL)
+#define LOG_LOGLEVEL_ERROR   LOG(ERROR)
+#define LOG_LOGLEVEL_WARNING LOG(WARNING)
+#define LOG_LOGLEVEL_INFO    VLOG(Logging::VERBOSE0)
+#define LOG_LOGLEVEL_DEBUG   VLOG(Logging::VERBOSE1)
+#define LOG_LOGLEVEL_VERBOSE VLOG(Logging::VERBOSE2)
+
+#define LOG_LOGLEVEL_FATAL_MOD(module) \
+LOG_IF(FATAL, module & Logging::log_module())
+#define LOG_LOGLEVEL_ERROR_MOD(module) \
+LOG_IF(ERROR, module & Logging::log_module())
+#define LOG_LOGLEVEL_WARNING_MOD(module) \
+LOG_IF(WARNING, module & Logging::log_module())
+#define LOG_LOGLEVEL_INFO_MOD(module) \
+VLOG_IF(Logging::VERBOSE0, module & Logging::log_module())
+#define LOG_LOGLEVEL_DEBUG_MOD(module) \
+VLOG_IF(Logging::VERBOSE1, module & Logging::log_module())
+#define LOG_LOGLEVEL_VERBOSE_MOD(module) \
+VLOG_IF(Logging::VERBOSE2, module & Logging::log_module())
+
+#define BTCLOG(level) LOG_##level
+#define BTCLOG_MOD(level, module) LOG_##level##_MOD(module)
 
 
 class Logging {
@@ -78,28 +102,5 @@ private:
 	static const std::map<std::string, Module> map_module_;
 };
 
-#define LOG_LOGLEVEL_FATAL   LOG(FATAL)
-#define LOG_LOGLEVEL_ERROR   LOG(ERROR)
-#define LOG_LOGLEVEL_WARNING LOG(WARNING)
-#define LOG_LOGLEVEL_INFO    VLOG(Logging::VERBOSE0)
-#define LOG_LOGLEVEL_DEBUG   VLOG(Logging::VERBOSE1)
-#define LOG_LOGLEVEL_VERBOSE VLOG(Logging::VERBOSE2)
-
-#define LOG_LOGLEVEL_FATAL_MOD(module) \
-LOG_IF(FATAL, module & Logging::log_module())
-#define LOG_LOGLEVEL_ERROR_MOD(module) \
-LOG_IF(ERROR, module & Logging::log_module())
-#define LOG_LOGLEVEL_WARNING_MOD(module) \
-LOG_IF(WARNING, module & Logging::log_module())
-#define LOG_LOGLEVEL_INFO_MOD(module) \
-VLOG_IF(Logging::VERBOSE0, module & Logging::log_module())
-#define LOG_LOGLEVEL_DEBUG_MOD(module) \
-VLOG_IF(Logging::VERBOSE1, module & Logging::log_module())
-#define LOG_LOGLEVEL_VERBOSE_MOD(module) \
-VLOG_IF(Logging::VERBOSE2, module & Logging::log_module())
-
-
-#define BTCLOG(level) LOG_##level
-#define BTCLOG_MOD(level, module) LOG_##level##_MOD(module)
 
 #endif // BTCLITE_LOGGING_H

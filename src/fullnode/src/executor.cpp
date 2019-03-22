@@ -107,8 +107,11 @@ bool FullNodeDataFiles::Init(const std::string& dir_path, const std::string& con
 		set_dataDir(fs::path(dir_path));
 	
 	std::ifstream ifs(data_dir() / config_file);
-	if (!ifs.good()) 
+	if (!ifs.good()) {
+		BTCLOG(LOGLEVEL_WARNING) << "Specified config file \"" << data_dir().c_str() << "/" << config_file
+								 << "\" does not exist. Use default config file.";
 		std::ofstream file(DataFiles::config_file()); // create default config file if it does not exist
+	}
 	else
 		set_configFile(config_file);
 	
@@ -173,8 +176,13 @@ bool FullNodeMain::InitDataFiles()
 		path = args_.GetArg(GLOBAL_OPTION_DATADIR, DEFAULT_DATA_DIR);
 	
 	std::string config_file = args_.GetArg(GLOBAL_OPTION_CONF, DEFAULT_CONFIG_FILE);
+	if (!data_files_.Init(path, config_file))
+		return false;
 	
-	return data_files_.Init(path, config_file);
+	if (!data_files_.LockDataDir())
+		return false;
+	
+	return true;
 }
 
 bool FullNodeMain::LoadConfigFile()

@@ -100,6 +100,7 @@ public:
 		: data_dir_(data_dir), config_file_(data_dir_ / config_file) {}
 	
 	virtual bool Init(const std::string& path, const std::string& config_file) = 0;
+	bool LockDataDir();
 
 	//-------------------------------------------------------------------------
 	const fs::path& data_dir() const

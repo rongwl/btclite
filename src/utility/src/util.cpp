@@ -163,6 +163,11 @@ bool Args::ParseFromFile(const std::string& path) const
 	return true;
 }
 
+bool DataFiles::LockDataDir()
+{
+	return true;
+}
+
 void DataFiles::set_dataDir(const fs::path& path)
 {
 	LOCK(cs_path_);
