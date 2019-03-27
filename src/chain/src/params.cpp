@@ -1,4 +1,4 @@
-#include "consensus/include/params.h"
+#include "chain/include/params.h"
 
 void Bip9Params::UpdateVersionBitsParameters(Bip9Deployment::Deployment d, int64_t start_time, int64_t timeout)
 {
@@ -56,4 +56,10 @@ void Consensus::Params::CreateGenesisBlock(uint32_t time, uint32_t nonce, uint32
 	output_script.Push(Opcode::OP_CHECKSIG);
 
     CreateGenesisBlock(coinbase, output_script, time, nonce, bits, version, reward);
+}
+
+Chain::Params::Params(Environment env)
+	: consensus_(Consensus::Params(env))
+{
+
 }
