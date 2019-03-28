@@ -195,16 +195,16 @@ public:
 		: data_(s.data_) {}
 	
 	//-------------------------------------------------------------------------
-	template <typename SType>
-	void Serialize(SType& os) const
+	template <typename Stream>
+	void Serialize(Stream& os) const
 	{
-		Serializer<SType> serial(os);
+		Serializer<Stream> serial(os);
 		serial.SerialWrite(data_);
 	}
-	template <typename SType>
-	void UnSerialize(SType& is)
+	template <typename Stream>
+	void UnSerialize(Stream& is)
 	{
-		Serializer<SType> serial(is);
+		Serializer<Stream> serial(is);
 		serial.SerialRead(&data_);
 	}
 	

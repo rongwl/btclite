@@ -76,17 +76,17 @@ public:
 	}
 	
 	//-------------------------------------------------------------------------
-	template <typename SType>
-	void Serialize(SType& os) const
+	template <typename Stream>
+	void Serialize(Stream& os) const
 	{
-		Serializer<SType> serial(os);
+		Serializer<Stream> serial(os);
 		serial.SerialWrite(prev_hash_);
 		serial.SerialWrite(index_);
 	}
-	template <typename SType>
-	void UnSerialize(SType& is)
+	template <typename Stream>
+	void UnSerialize(Stream& is)
 	{
-		Serializer<SType> serial(is);
+		Serializer<Stream> serial(is);
 		serial.SerialRead(&prev_hash_);
 		serial.SerialRead(&index_);
 	}
@@ -150,18 +150,18 @@ public:
 		  sequence_no_(input.sequence_no_), script_witness_(std::move(input.script_witness_)) {}
 	
 	//-------------------------------------------------------------------------
-	template <typename SType>
-	void Serialize(SType& os) const
+	template <typename Stream>
+	void Serialize(Stream& os) const
 	{
-		Serializer<SType> serial(os);
+		Serializer<Stream> serial(os);
 		serial.SerialWrite(prevout_);
 		serial.SerialWrite(script_sig_);
 		serial.SerialWrite(sequence_no_);
 	}
-	template <typename SType>
-	void UnSerialize(SType& is)
+	template <typename Stream>
+	void UnSerialize(Stream& is)
 	{
-		Serializer<SType> serial(is);
+		Serializer<Stream> serial(is);
 		serial.SerialRead(&prevout_);
 		serial.SerialRead(&script_sig_);
 		serial.SerialRead(&sequence_no_);
@@ -307,17 +307,17 @@ public:
 	}
 	
 	//-------------------------------------------------------------------------
-	template <typename SType>
-	void Serialize(SType& os) const
+	template <typename Stream>
+	void Serialize(Stream& os) const
 	{
-		Serializer<SType> serial(os);
+		Serializer<Stream> serial(os);
 		serial.SerialWrite(value_);
 		serial.SerialWrite(script_pub_key_);
 	}
-	template <typename SType>
-	void UnSerialize(SType& is)
+	template <typename Stream>
+	void UnSerialize(Stream& is)
 	{
-		Serializer<SType> serial(is);
+		Serializer<Stream> serial(is);
 		serial.SerialRead(&value_);
 		serial.SerialRead(&script_pub_key_);
 	}
@@ -408,8 +408,8 @@ public:
 	}
 	
 	//-------------------------------------------------------------------------
-	template <typename SType> void Serialize(SType&, bool) const;
-	template <typename SType> void UnSerialize(SType&, bool);
+	template <typename Stream> void Serialize(Stream& os, bool) const;
+	template <typename Stream> void UnSerialize(Stream& is, bool);
 	
 	//-------------------------------------------------------------------------
 	bool operator==(const Transaction& b) const

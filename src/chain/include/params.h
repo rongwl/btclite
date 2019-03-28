@@ -82,7 +82,7 @@ namespace Consensus {
 */
 class Params {
 public:
-	explicit Params(Environment env);
+	void Init(NetworkEnv env);
 	
 	const Block& GenesisBlock() const
 	{
@@ -110,7 +110,7 @@ private:
 	void CreateGenesisBlock(uint32_t time, uint32_t nonce, uint32_t bits, int32_t version, uint64_t reward);
 };
 
-} // namespace consensus
+} // namespace Consensus
 
 
 namespace Chain {
@@ -135,35 +135,43 @@ public:
         MAX_BASE58_TYPES
     };
 
-	explicit Params(Environment env);
+	//-------------------------------------------------------------------------
+	void Init(NetworkEnv env);
 
-    const Consensus::Params& Consensus() const
+	//-------------------------------------------------------------------------
+    const Consensus::Params& consensus() const
 	{ 
 		return consensus_;
 	}
+	
+	uint64_t prune_after_height() const
+	{
+		return prune_after_height_;
+	}
 
-    const std::vector<unsigned char>& Base58Prefix(Base58Type type) const
+    const std::vector<unsigned char>& base58_prefix(Base58Type type) const
 	{
 		return base58_prefixes_[type];
 	}
 	
-    const std::string& Bech32HRP() const
+    const std::string& bech32_hrp() const
 	{
 		return bech32_hrp_;
 	}
 	
-    const CheckPoint& Checkpoints() const
+    const CheckPoint& checkpoints() const
 	{
 		return checkpoints_;
 	}
 	
-    const ChainTxData& TxData() const
+    const ChainTxData& chain_tx_data() const
 	{
 		return chain_tx_data_;
 	}
 	
 private:
     Consensus::Params consensus_;
+	uint64_t prune_after_height_;
     std::vector<unsigned char> base58_prefixes_[MAX_BASE58_TYPES];
     std::string bech32_hrp_;
     CheckPoint checkpoints_;

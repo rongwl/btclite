@@ -58,8 +58,8 @@ public:
     }
 	
 	//-------------------------------------------------------------------------
-	template <typename SType> void Serialize(SType&) const;
-	template <typename SType> void UnSerialize(SType&);
+	template <typename Stream> void Serialize(Stream& os) const;
+	template <typename Stream> void UnSerialize(Stream& is);
 	
 	//-------------------------------------------------------------------------
 	const Hash256& Hash() const;
@@ -151,10 +151,10 @@ private:
 	mutable Hash256 hash_cache_;
 };
 
-template <typename SType>
-void BlockHeader::Serialize(SType& os) const
+template <typename Stream>
+void BlockHeader::Serialize(Stream& os) const
 {
-	Serializer<SType> serial(os);
+	Serializer<Stream> serial(os);
 	serial.SerialWrite(static_cast<uint32_t>(version_));
 	serial.SerialWrite(prev_block_hash_);
 	serial.SerialWrite(merkle_root_hash_);
@@ -163,10 +163,10 @@ void BlockHeader::Serialize(SType& os) const
 	serial.SerialWrite(nonce_);
 }
 
-template <typename SType>
-void BlockHeader::UnSerialize(SType& is)
+template <typename Stream>
+void BlockHeader::UnSerialize(Stream& is)
 {
-	Serializer<SType> serial(is);
+	Serializer<Stream> serial(is);
 	serial.SerialRead(&version_);
 	serial.SerialRead(&prev_block_hash_);
 	serial.SerialRead(&merkle_root_hash_);
@@ -207,17 +207,17 @@ public:
 	Hash256 ComputeMerkleRoot() const;
 	
 	//-------------------------------------------------------------------------
-	template <typename SType>
-	void Serialize(SType& os) const
+	template <typename Stream>
+	void Serialize(Stream& os) const
 	{
-		Serializer<SType> serial(os);
+		Serializer<Stream> serial(os);
 		serial.SerialWrite(header_);
 		serial.SerialWrite(transactions_);
 	}
-	template <typename SType>
-	void UnSerialize(SType& is)
+	template <typename Stream>
+	void UnSerialize(Stream& is)
 	{
-		Serializer<SType> serial(is);
+		Serializer<Stream> serial(is);
 		serial.SerialRead(&header_);
 		serial.SerialRead(&transactions_);
 	}

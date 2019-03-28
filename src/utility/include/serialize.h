@@ -1,8 +1,10 @@
 #ifndef BTCLITE_SERIALIZE_H
 #define BTCLITE_SERIALIZE_H
 
+#include <array>
 #include <algorithm>
 #include <cstdint>
+#include <cstring>
 #include <map>
 
 #include "constants.h"
@@ -50,10 +52,10 @@ inline float BinaryToFloat(uint32_t i)
 }
 
 
-template <typename SType>
+template <typename Stream>
 class Serializer {
 public:
-	Serializer(SType& s)
+	Serializer(Stream& s)
 		: stream_(s) {}
 	
 	// interface for serialize
@@ -70,7 +72,7 @@ public:
 	}
 	
 private:
-	SType& stream_;
+	Stream& stream_;
 	
 	//-------------------------------------------------------------------------
 	// for double type
@@ -84,7 +86,14 @@ private:
 	{
 		SerWriteData(FloatToBinary(in));
 	}
-
+	
+	//for char type array
+	template <std::size_t N>
+	void Serialize(const std::array<char, N>& in)
+	{
+		stream_.write(reinterpret_cast<const char*>(in.data()), N);
+	}
+	
 	// for arithmetic type vector
 	template <typename T>
 	std::enable_if_t<std::is_arithmetic<T>::value> Serialize(const std::vector<T>& in)
@@ -133,6 +142,13 @@ private:
 		*out = BinaryToFloat(i);
 	}
 	
+	// for char type array
+	template <std::size_t N>
+	void UnSerialize(std::array<char, N> *out)
+	{
+		stream_.read(reinterpret_cast<char*>(out->data()), N);
+	}
+	
 	// for arithmetic type vector
 	template <typename T> 
 	std::enable_if_t<std::is_arithmetic<T>::value> UnSerialize(std::vector<T>*); 
@@ -166,9 +182,9 @@ private:
 	template <typename T> void SerReadData(T*);		
 };
 
-template <typename SType>
+template <typename Stream>
 template <typename T>
-std::enable_if_t<std::is_arithmetic<T>::value> Serializer<SType>::UnSerialize(std::vector<T> *out)
+std::enable_if_t<std::is_arithmetic<T>::value> Serializer<Stream>::UnSerialize(std::vector<T> *out)
 {
 	// Limit size per read so bogus size value won't cause out of memory
 	uint64_t count = SerReadVarInt();
@@ -176,12 +192,12 @@ std::enable_if_t<std::is_arithmetic<T>::value> Serializer<SType>::UnSerialize(st
 		throw std::ios_base::failure("vector size larger than max block size");
 	out->clear();
 	out->resize(count);
-	stream_.read(reinterpret_cast<char*>(&out->data()), count*sizeof(T));
+	stream_.read(reinterpret_cast<char*>(out->data()), count*sizeof(T));
 }
 
-template <typename SType>
+template <typename Stream>
 template <typename T> 
-std::enable_if_t<std::is_class<T>::value> Serializer<SType>::UnSerialize(std::vector<T> *out)
+std::enable_if_t<std::is_class<T>::value> Serializer<Stream>::UnSerialize(std::vector<T> *out)
 {
 	uint64_t count = SerReadVarInt();
 	std::size_t size = 0;	
@@ -195,8 +211,8 @@ std::enable_if_t<std::is_class<T>::value> Serializer<SType>::UnSerialize(std::ve
 	}
 }
 
-template <typename SType>
-void Serializer<SType>::SerWriteVarInt(const uint64_t count)
+template <typename Stream>
+void Serializer<Stream>::SerWriteVarInt(const uint64_t count)
 {
 	if (count < varint_16bits) {
 		SerWriteData(static_cast<uint8_t>(count));
@@ -215,8 +231,8 @@ void Serializer<SType>::SerWriteVarInt(const uint64_t count)
 	}
 }
 
-template <typename SType>
-uint64_t Serializer<SType>::SerReadVarInt()
+template <typename Stream>
+uint64_t Serializer<Stream>::SerReadVarInt()
 {
 	uint8_t count;
 	uint64_t varint;
@@ -246,18 +262,18 @@ uint64_t Serializer<SType>::SerReadVarInt()
 	return varint;
 }
 
-template <typename SType>
+template <typename Stream>
 template <typename T>
-void Serializer<SType>::SerWriteData(const T& obj)
+void Serializer<Stream>::SerWriteData(const T& obj)
 {
 	Bytes<sizeof(T)> data;
 	ToLittleEndian(obj, &data);
 	stream_.write(reinterpret_cast<const char*>(&data[0]), sizeof data);
 }
 
-template <typename SType>
+template <typename Stream>
 template <typename T>
-void Serializer<SType>::SerReadData(T *obj)
+void Serializer<Stream>::SerReadData(T *obj)
 {
 	Bytes<sizeof(T)> data;
 	stream_.read(reinterpret_cast<char*>(&data[0]), sizeof data);

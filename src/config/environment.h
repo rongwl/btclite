@@ -3,9 +3,10 @@
 
 #include <cstdint>
 
-// For params initialization in other module.
-enum class Environment : uint8_t
+// Network environment for params initialization in other module.
+enum class NetworkEnv : uint8_t
 {
+	none,
     mainnet,
     testnet,
     regtest

@@ -18,20 +18,20 @@ std::string TxIn::ToString() const
 	return ss.str();
 }
 
-template <typename SType>
-void Transaction::Serialize(SType& os, bool witness) const
+template <typename Stream>
+void Transaction::Serialize(Stream& os, bool witness) const
 {
-	Serializer<SType> serial(os);
+	Serializer<Stream> serial(os);
 	serial.SerialWrite(version_);
 	serial.SerialWrite(inputs_);
 	serial.SerialWrite(outputs_);
 	serial.SerialWrite(lock_time_);
 }
 
-template <typename SType>
-void Transaction::UnSerialize(SType& is, bool witness)
+template <typename Stream>
+void Transaction::UnSerialize(Stream& is, bool witness)
 {
-	Serializer<SType> serial(is);
+	Serializer<Stream> serial(is);
 	serial.SerialRead(&version_);
 	serial.SerialRead(&inputs_);
 	serial.SerialRead(&outputs_);

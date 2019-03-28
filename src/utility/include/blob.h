@@ -28,13 +28,13 @@ public:
 	}
 	
 	//-------------------------------------------------------------------------
-	template <typename SType>
-	void Serialize(SType& s) const
+	template <typename Stream>
+	void Serialize(Stream& s) const
 	{
 		s.write(reinterpret_cast<const char*>(&this->front()), this->size());
 	}
-	template <typename SType>
-	void UnSerialize(SType& s)
+	template <typename Stream>
+	void UnSerialize(Stream& s)
 	{
 		s.read(reinterpret_cast<char*>(&this->front()), this->size());
 	}
