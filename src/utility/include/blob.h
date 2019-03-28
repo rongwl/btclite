@@ -81,26 +81,7 @@ protected:
 
 	static constexpr int WIDTH = nBITS / 8;
 };
-/*
-template <unsigned int BITS>
-void Blob<BITS>::SetHex(const std::string& psz)
-{
-	SetNull();
 
-	auto first = std::find_if_not(psz.begin(), psz.end(), isspace);
-	if (first == psz.end())
-		first = psz.begin();
-	if (*first == '0' && std::tolower(*(first+1)) == 'x')
-		first += 2;
-	auto last = std::find_if_not(first, psz.end(), isxdigit);
-	std::string substr(first, last);
-	
-	for (auto it = this->begin(), rit = substr.rbegin(); rit < substr.rend(); ++it, rit += 2) {
-		std::string low(rit, rit+1), hi(rit+1, rit+2);
-		*it = std::stoi(hi) << 4 | std::stoi(low);
-	}
-}
-*/
 
 // modified from boost.iostreams example
 // boost.org/doc/libs/1_55_0/libs/iostreams/doc/tutorial/container_source.html
