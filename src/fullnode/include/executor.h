@@ -2,7 +2,7 @@
 #define BTCLITE_FULLNODE_EXECUTOR_H
 
 #include "fullnode/include/config.h"
-
+#include "p2p.h"
 
 class FullNodeMain : public Executor {
 public:
@@ -18,7 +18,8 @@ public:
 private:
 	FullNodeArgs args_;
 	FullNodeDataFiles data_files_;
-	Fullnode::Configuration configuration_;
+	Chain::Params chain_params_;
+	P2P network_;
 
 	bool InitDataFiles();
 	bool LoadConfigFile();

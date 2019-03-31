@@ -41,6 +41,7 @@ BTCLITE_HEADER_FILES = \
 					   config/environment.h \
 					   fullnode/include/clientversion.h \
 					   fullnode/include/config.h \
+					   network/include/p2p.h \
 					   network/include/params.h \
 					   network/include/net.h \
 					   crypto/include/hash.h \
@@ -53,8 +54,9 @@ BTCLITE_HEADER_FILES = \
 					   utility/include/sync.h \
 					   utility/include/tinyformat.h \
 					   utility/include/util.h \
-					   utility/include/utilstrencodings.h \
-					   utility/include/utiltime.h
+					   utility/include/string_encoding.h \
+					   utility/include/utiltime.h \
+					   utility/include/thread_interrupt.h
 
 
 
@@ -78,7 +80,8 @@ utility_src_libbtclite_util_a_SOURCES = utility/src/sync.cpp \
 										utility/src/logging.cpp \
 										utility/src/util.cpp \
 										utility/src/utiltime.cpp \
-										utility/src/utilstrencodings.cpp 
+										utility/src/string_encoding.cpp \
+									    utility/src/thread_interrupt.cpp	
 
 
 chain_src_libbtclite_chain_a_CPPFLAGS = $(AM_CXXFLAGS) \ 
@@ -101,6 +104,7 @@ network_src_libbtclite_network_a_CPPFLAGS = $(AM_CXXFLAGS) \
 											$(BTCLITE_NETWORK_INCLUDES) \
 											$(BTCLITE_UTIL_INCLUDES)
 network_src_libbtclite_network_a_SOURCES = network/src/params.cpp \ 
+                                           network/src/p2p.cpp \
                                            network/src/net.cpp
 
 

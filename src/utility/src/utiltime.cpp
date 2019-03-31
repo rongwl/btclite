@@ -2,7 +2,7 @@
 #include "config/btclite-config.h"
 #endif
 
-#include "utilstrencodings.h"
+#include "string_encoding.h"
 #include "utiltime.h"
 
 #include <iomanip>

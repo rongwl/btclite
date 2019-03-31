@@ -1,4 +1,4 @@
-#include "utilstrencodings.h"
+#include "string_encoding.h"
 
 void HexDecode(const std::string& in, std::vector<uint8_t> *out)
 {

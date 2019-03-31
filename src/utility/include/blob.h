@@ -5,7 +5,7 @@
 #include <cstring>
 #include <iterator>
 
-#include "utilstrencodings.h"
+#include "string_encoding.h"
 
 template <std::size_t size>
 using Bytes = std::array<uint8_t, size>;
