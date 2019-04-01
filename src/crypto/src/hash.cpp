@@ -39,4 +39,22 @@ void DoubleSha256(const std::string &in, Hash256 *out)
 	std::reverse(out->begin(), out->end()); // from big endian to little endian
 }
 
+SipHasher& SipHasher::Update(uint64_t in)
+{
+	mac->set_key(key);
+	
+	return *this;
+}
+
+SipHasher& SipHasher::Update(const uint8_t *in, size_t length)
+{
+	mac->set_key(key);
+	
+	return *this;
+}
+
+uint64_t SipHasher::Final()
+{
+	return 0;
+}
 

@@ -3,6 +3,7 @@
 
 #include <thread>
 
+#include "hash.h"
 #include "network/include/params.h"
 #include "thread_interrupt.h"
 
@@ -21,6 +22,7 @@ public:
 	
 private:
 	Network::Params network_params_;
+	SipHasher siphasher_;
 	
 	ThreadInterrupt interrupt_;
 	std::thread thread_dns_address_seed_;

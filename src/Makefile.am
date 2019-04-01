@@ -50,6 +50,7 @@ BTCLITE_HEADER_FILES = \
 					   utility/include/arithmetic.h \
 					   utility/include/constants.h \
 					   utility/include/logging.h \
+					   utility/include/random.h \
 					   utility/include/serialize.h \
 					   utility/include/sync.h \
 					   utility/include/tinyformat.h \
@@ -76,7 +77,8 @@ utility_src_libbtclite_util_a_CPPFLAGS = $(AM_CXXFLAGS) \
 										 $(BTCLITE_UTIL_INCLUDES) \
 										 $(BTCLITE_CRYPTO_INCLUDES) \
 										 $(BTCLITE_FULLNODE_INCLUDES)
-utility_src_libbtclite_util_a_SOURCES = utility/src/sync.cpp \
+utility_src_libbtclite_util_a_SOURCES = utility/src/random.cpp \
+										utility/src/sync.cpp \
 										utility/src/logging.cpp \
 										utility/src/util.cpp \
 										utility/src/utiltime.cpp \
