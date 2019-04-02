@@ -1,14 +1,14 @@
-#include "logging.h"
+#include "utility/include/logging.h"
 
 std::atomic<uint32_t> Logging::log_module_ = 0;
 
-const std::array<uint8_t, LOGLEVEL_MAX> Logging::map_loglevel_ = {
-	Logging::FATAL,    // LOGLEVEL_FATAL map into Logging::FATAL
-	Logging::ERROR,    // LOGLEVEL_ERROR map into Logging::ERROR
-	Logging::WARNING,  // LOGLEVEL_WARNING map into Logging::WARNING
-	Logging::VERBOSE0, // LOGLEVEL_INFO map into Logging::VERBOSE0
-	Logging::VERBOSE1, // LOGLEVEL_DEBUG map into Logging::VERBOSE1
-	Logging::VERBOSE2  // LOGLEVEL_VERBOSE map into Logging::VERBOSE2
+const std::array<uint8_t, LOG_LEVEL_MAX> Logging::map_loglevel_ = {
+	Logging::FATAL,    // LOG_LEVEL_FATAL map into Logging::FATAL
+	Logging::ERROR,    // LOG_LEVEL_ERROR map into Logging::ERROR
+	Logging::WARNING,  // LOG_LEVEL_WARNING map into Logging::WARNING
+	Logging::VERBOSE0, // LOG_LEVEL_INFO map into Logging::VERBOSE0
+	Logging::VERBOSE1, // LOG_LEVEL_DEBUG map into Logging::VERBOSE1
+	Logging::VERBOSE2  // LOG_LEVEL_VERBOSE map into Logging::VERBOSE2
 };
 
 const std::map<std::string, Logging::Module> Logging::map_module_ = {

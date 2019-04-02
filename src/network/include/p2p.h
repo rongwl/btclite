@@ -5,6 +5,7 @@
 
 #include "hash.h"
 #include "protocol.h"
+#include "net.h"
 #include "network/include/params.h"
 #include "thread.h"
 
@@ -23,6 +24,7 @@ public:
 	
 private:
 	Network::Params network_params_;
+	LocalNetInfo local_network_info_;
 	
 	ThreadInterrupt interrupt_;
 	std::thread thread_dns_address_seed_;

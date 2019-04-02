@@ -1,7 +1,7 @@
 #ifndef BTCLITE_UTIL_H
 #define BTCLITE_UTIL_H
 
-#include "logging.h"
+#include "utility/include/logging.h"
 #include "sync.h"
 
 #include <csignal>

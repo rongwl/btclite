@@ -28,7 +28,7 @@ int main(int argc, char **argv)
 	
 	//Block genesis = CreateGenesisBlock(1231006505, 2083236893, 0x1d00ffff, 1, 50*satoshi_per_bitcoin);
 	//std::cout << genesis.ToString() << std::endl;
-	//BTCLOG_MOD(LOGLEVEL_INFO, Logging::NET) << "test";
+	//BTCLOG_MOD(LOG_LEVEL_INFO, Logging::NET) << "test";
 	
 	if (ret) {
 		fullnode.WaitForSignal();	

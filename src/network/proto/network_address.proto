@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package network_address;
+package proto_netaddr;
 
 message Ipv6 {
     fixed64 addr6_lo = 1;

@@ -38,9 +38,9 @@ void FullNodeMain::Interrupt()
 
 void FullNodeMain::Stop()
 {
-	BTCLOG(LOGLEVEL_INFO) << __func__ << ": progress...";
+	BTCLOG(LOG_LEVEL_INFO) << __func__ << ": progress...";
 	
-	BTCLOG(LOGLEVEL_INFO) << __func__ << ": done";
+	BTCLOG(LOG_LEVEL_INFO) << __func__ << ": done";
 }
 
 bool FullNodeMain::InitDataFiles()
@@ -62,7 +62,7 @@ bool FullNodeMain::InitDataFiles()
 bool FullNodeMain::LoadConfigFile()
 {
 	if (!fs::is_directory(data_files_.data_dir())) {
-		BTCLOG(LOGLEVEL_ERROR) << "Error: Specified data directory \"" << data_files_.data_dir().c_str() << "\" does not exist.";
+		BTCLOG(LOG_LEVEL_ERROR) << "Error: Specified data directory \"" << data_files_.data_dir().c_str() << "\" does not exist.";
 		return false;
 	}
 	

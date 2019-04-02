@@ -20,7 +20,7 @@ static void HandleAllocFail()
 	// Rather than throwing std::bad-alloc if allocation fails, terminate
     // immediately to (try to) avoid chain corruption.
 	std::set_new_handler(std::terminate);
-	BTCLOG(LOGLEVEL_ERROR) << "Critical error: out of memory. Terminating.";
+	BTCLOG(LOG_LEVEL_ERROR) << "Critical error: out of memory. Terminating.";
 	
 	// The log was successful, terminate now.
 	std::terminate();
@@ -51,24 +51,24 @@ bool Args::InitParameters()
 	// --loglevel
 	if (IsArgSet(GLOBAL_OPTION_LOGLEVEL)) {
 		const std::string arg_val = GetArg(GLOBAL_OPTION_LOGLEVEL, DEFAULT_LOG_LEVEL);
-		if ( arg_val.length() != 1 && std::stoi(arg_val.c_str()) >= LOGLEVEL_MAX) {
-			BTCLOG(LOGLEVEL_ERROR) << "Unsupported log level: " << arg_val.c_str();
+		if ( arg_val.length() != 1 && std::stoi(arg_val.c_str()) >= LOG_LEVEL_MAX) {
+			BTCLOG(LOG_LEVEL_ERROR) << "Unsupported log level: " << arg_val.c_str();
 			return false;
 		}
 
 		uint8_t level = std::stoi(arg_val.c_str());
-		if (level <= LOGLEVEL_WARNING) {
-			BTCLOG(LOGLEVEL_INFO) << "set log level: " << +level;
+		if (level <= LOG_LEVEL_WARNING) {
+			BTCLOG(LOG_LEVEL_INFO) << "set log level: " << +level;
 			FLAGS_minloglevel = Logging::MapIntoGloglevel(level);
 		}
 		else {
-			BTCLOG(LOGLEVEL_INFO) << "set log level: " << +level;
+			BTCLOG(LOG_LEVEL_INFO) << "set log level: " << +level;
 			FLAGS_minloglevel = 0;
 			FLAGS_v = Logging::MapIntoGloglevel(level);
 		}
 	}
 	else
-		BTCLOG(LOGLEVEL_INFO) << "default log level: " << DEFAULT_LOG_LEVEL;
+		BTCLOG(LOG_LEVEL_INFO) << "default log level: " << DEFAULT_LOG_LEVEL;
 	
 	// --debug
 	if (IsArgSet(GLOBAL_OPTION_DEBUG)) {
@@ -172,7 +172,7 @@ void DataFiles::set_dataDir(const fs::path& path)
 {
 	LOCK(cs_path_);
 	if (!fs::is_directory(path)) {
-		BTCLOG(LOGLEVEL_WARNING) << "Set data path \"" << path.c_str()
+		BTCLOG(LOG_LEVEL_WARNING) << "Set data path \"" << path.c_str()
 								 << "\" does not exist.";
 		return;
 	}
@@ -184,7 +184,7 @@ void DataFiles::set_configFile(const std::string& filename)
 	LOCK(cs_path_);
 	std::ifstream ifs(data_dir_ / filename);
 	if (!ifs.good()) {
-		BTCLOG(LOGLEVEL_WARNING) << "Specified config file \"" << data_dir_.c_str() << "/" << filename
+		BTCLOG(LOG_LEVEL_WARNING) << "Specified config file \"" << data_dir_.c_str() << "/" << filename
 								 << "\" does not exist.";
 		return;
 	}
