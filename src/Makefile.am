@@ -7,6 +7,7 @@ BTCLITE_CHAIN_INCLUDES = -I$(srcdir)/chain/include
 BTCLITE_CHAIN_PROTO_INCLUDES = -I$(srcdir)/chain/proto
 BTCLITE_CRYPTO_INCLUDES = -I$(srcdir)/crypto/include
 BTCLITE_NETWORK_INCLUDES = -I$(srcdir)/network/include
+BTCLITE_NETWORK_PROTO_INCLUDES = -I$(srcdir)/network/proto
 BTCLITE_UTIL_INCLUDES = -I$(srcdir)/utility/include
 
 
@@ -43,6 +44,7 @@ BTCLITE_HEADER_FILES = \
 					   fullnode/include/config.h \
 					   network/include/p2p.h \
 					   network/include/params.h \
+					   network/include/protocol.h \
 					   network/include/net.h \
 					   crypto/include/hash.h \
 					   utility/include/blob.h \
@@ -53,11 +55,11 @@ BTCLITE_HEADER_FILES = \
 					   utility/include/random.h \
 					   utility/include/serialize.h \
 					   utility/include/sync.h \
+					   utility/include/thread.h \
 					   utility/include/tinyformat.h \
 					   utility/include/util.h \
 					   utility/include/string_encoding.h \
-					   utility/include/utiltime.h \
-					   utility/include/thread_interrupt.h
+					   utility/include/utiltime.h 
 
 
 
@@ -83,10 +85,10 @@ utility_src_libbtclite_util_a_SOURCES = utility/src/random.cpp \
 										utility/src/util.cpp \
 										utility/src/utiltime.cpp \
 										utility/src/string_encoding.cpp \
-									    utility/src/thread_interrupt.cpp	
+									    utility/src/thread.cpp
 
 
-chain_src_libbtclite_chain_a_CPPFLAGS = $(AM_CXXFLAGS) \ 
+chain_src_libbtclite_chain_a_CPPFLAGS = $(AM_CXXFLAGS) \
                                         $(BOTAN_CFLAGS) \
 										$(GLOG_CFLAGS) \
 										$(BTCLITE_CHAIN_INCLUDES) \
@@ -95,7 +97,7 @@ chain_src_libbtclite_chain_a_CPPFLAGS = $(AM_CXXFLAGS) \
 chain_src_libbtclite_chain_a_SOURCES = chain/src/block.cpp \
 									   chain/src/script.cpp \
 									   chain/src/script_witness.cpp \
-									   chain/src/transaction.cpp \ 
+									   chain/src/transaction.cpp \
                                        chain/src/params.cpp
 
 
@@ -104,9 +106,11 @@ network_src_libbtclite_network_a_CPPFLAGS = $(AM_CXXFLAGS) \
                                             $(GLOG_CFLAGS) \
 											$(BTCLITE_CRYPTO_INCLUDES) \
 											$(BTCLITE_NETWORK_INCLUDES) \
+											$(BTCLITE_NETWORK_PROTO_INCLUDES) \
 											$(BTCLITE_UTIL_INCLUDES)
-network_src_libbtclite_network_a_SOURCES = network/src/params.cpp \ 
+network_src_libbtclite_network_a_SOURCES = network/src/params.cpp \
                                            network/src/p2p.cpp \
+										   network/src/protocol.cpp \
                                            network/src/net.cpp
 
 
@@ -130,8 +134,9 @@ btc_fullnode_LDADD += $(PTHREAD_LIBS) \
 					  $(BOTAN_LIBS) \
 					  $(GLOG_LIBS)
 
-#chain/proto/%.pb.cc chain/proto/%.pb.h: chain/proto/%.proto
-#	$(PROTOC) --proto_path=chain/proto --cpp_out=chain/proto $^
+
+network/proto/%.pb.cc network/proto/%.pb.h: network/proto/%.proto
+	$(PROTOC) --proto_path=network/proto --cpp_out=network/proto $^
 
 
 MOSTLYCLEANFILES = utility/src/*.a \

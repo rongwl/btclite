@@ -4,8 +4,9 @@
 #include <thread>
 
 #include "hash.h"
+#include "protocol.h"
 #include "network/include/params.h"
-#include "thread_interrupt.h"
+#include "thread.h"
 
 class P2P {
 public:
@@ -22,7 +23,6 @@ public:
 	
 private:
 	Network::Params network_params_;
-	SipHasher siphasher_;
 	
 	ThreadInterrupt interrupt_;
 	std::thread thread_dns_address_seed_;

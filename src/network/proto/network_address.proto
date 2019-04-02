@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package network_address;
+
+message Ipv6 {
+    fixed64 addr6_lo = 1;
+    fixed64 addr6_hi = 2;
+}
+
+message Ipaddr {
+	oneof ip {
+		fixed32 v4 = 1;
+		Ipv6 v6 = 2;
+	}
+}
+
+message NetAddr {
+	Ipaddr ip = 1;
+	uint32 port = 2;
+}
