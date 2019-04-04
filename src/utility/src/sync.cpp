@@ -52,7 +52,7 @@ namespace {
 struct LockData {
     // Very ugly hack: as the global constructs and destructors run single
     // threaded, we use this boolean to know whether LockData still exists,
-    // as DeleteLock can get called by global CCriticalSection destructors
+    // as DeleteLock can get called by global CriticalSection destructors
     // after LockData disappears.
     bool available;
     LockData() : available(true) {}

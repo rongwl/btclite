@@ -1,0 +1,64 @@
+syntax = "proto3";
+
+package proto_peers;
+
+import "network_address.proto";
+
+message Peer {
+	proto_netaddr.NetAddr addr = 1;
+	
+	// where knowledge about this address first came from
+	proto_netaddr.NetAddr source = 2; 
+	
+	// connection attempts since last successful attempt
+	uint32 attemps = 3; 
+	
+	// is in tried set?
+	bool tried = 4;
+}
+
+
+/* Stochastic peers manager, merge from bitcoin0.16.3
+ *
+ * Design goals:
+ *  * Keep the peer tables in-memory, and asynchronously dump the entire table to peers.dat.
+ *  * Make sure no (localized) attacker can fill the entire table with his nodes/addresses.
+ *
+ * To that end:
+ *  * Addresses are organized into buckets.
+ *    * Addresses that have not yet been tried go into 1024 "new" buckets.
+ *      * Based on the address range (/16 for IPv4) of the source of information, 64 buckets are selected at random.
+ *      * The actual bucket is chosen from one of these, based on the range in which the address itself is located.
+ *      * One single address can occur in up to 8 different buckets to increase selection chances for addresses that
+ *        are seen frequently. The chance for increasing this multiplicity decreases exponentially.
+ *      * When adding a new address to a full bucket, a randomly chosen entry (with a bias favoring less recently seen
+ *        ones) is removed from it first.
+ *    * Addresses of nodes that are known to be accessible go into 256 "tried" buckets.
+ *      * Each address range selects at random 8 of these buckets.
+ *      * The actual bucket is chosen from one of these, based on the full address.
+ *      * When adding a new good address to a full bucket, a randomly chosen entry (with a bias favoring less recently
+ *        tried ones) is evicted from it, back to the "new" buckets.
+ *    * Bucket selection is based on cryptographic hashing, using a randomly-generated 256-bit key, which should not
+ *      be observable by adversaries.
+ *    * Several indexes are kept for high performance. Defining DEBUG_ADDRMAN will introduce frequent (and expensive)
+ *      consistency checks for the entire data structure.
+ */
+message Peers {
+	// last used Id number
+	uint32 ids = 1;
+	
+	// table with all peers, map id into peer
+	map<uint32, Peer> peers = 2;
+	
+	// number of "tried" entries
+	uint32 tried_num = 3;
+	
+	// list of "tried" buckets
+	repeated sint32 vv_tired = 4;
+	
+	// number of (unique) "new" entries
+	uint32 new_num = 5;
+	
+	// list of "new" buckets
+	repeated sint32 vv_new = 6;
+}

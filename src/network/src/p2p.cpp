@@ -19,3 +19,8 @@ bool P2P::Stop()
 {
 	return true;
 }
+
+void P2P::ThreadDnsSeeds()
+{
+
+}

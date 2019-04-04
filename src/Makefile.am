@@ -45,14 +45,17 @@ BTCLITE_HEADER_FILES = \
 					   fullnode/include/config.h \
 					   network/include/p2p.h \
 					   network/include/params.h \
+					   network/include/peers.h
 					   network/include/protocol.h \
 					   network/include/net.h \
+					   network/include/network_address.h \
 					   crypto/include/hash.h \
 					   utility/include/blob.h \
 					   utility/include/Endian.h \
 					   utility/include/arithmetic.h \
 					   utility/include/constants.h \
 					   utility/include/logging.h \
+					   utility/include/network_address.h \
 					   utility/include/random.h \
 					   utility/include/serialize.h \
 					   utility/include/sync.h \
@@ -63,7 +66,8 @@ BTCLITE_HEADER_FILES = \
 					   utility/include/utiltime.h 
 
 
-dist_noinst_DATA = network/proto/network_address.proto
+dist_noinst_DATA = network/proto/network_address.proto \
+				   network/proto/peers.proto
 
 
 
@@ -113,7 +117,10 @@ network_src_libbtclite_network_a_CPPFLAGS = $(AM_CXXFLAGS) \
 											$(BTCLITE_NETWORK_PROTO_INCLUDES) \
 											$(BTCLITE_UTIL_INCLUDES)
 network_src_libbtclite_network_a_SOURCES = network/proto/network_address.pb.cc \
+										   network/proto/peers.pb.cc \
+										   network/src/network_address.cpp \
                                            network/src/params.cpp \
+										   network/src/peers.cpp \
                                            network/src/p2p.cpp \
 										   network/src/protocol.cpp \
                                            network/src/net.cpp 

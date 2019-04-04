@@ -24,13 +24,17 @@ public:
 	
 private:
 	Network::Params network_params_;
-	LocalNetInfo local_network_info_;
+	LocalNetConfig local_network_config_;
 	
 	ThreadInterrupt interrupt_;
-	std::thread thread_dns_address_seed_;
+	std::thread thread_dns_seeds_;
     std::thread thread_socket_handler_;
     std::thread thread_open_connections_;
     std::thread thread_message_handler_;
+	
+	std::vector<std::string> m_specified_outgoing;
+	
+	void ThreadDnsSeeds();
 };
 
 #endif // BTCLITE_P2P_H

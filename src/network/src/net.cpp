@@ -1,10 +1,10 @@
 #include "net.h"
 
-void LocalNetInfo::LookUpLocalHosts()
+void LocalNetConfig::LookupLocalAddrs()
 {
 }
 
-bool LocalNetInfo::AddLocalHost()
+bool LocalNetConfig::AddLocalAddr()
 {
 	return true;
 }

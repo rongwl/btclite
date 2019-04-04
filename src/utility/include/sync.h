@@ -65,15 +65,15 @@ private:
 	}
 };
 
-class CCriticalSection : public std::recursive_mutex {
+class CriticalSection : public std::recursive_mutex {
 public:
-	~CCriticalSection()
+	~CriticalSection()
 	{
 		DeleteLock((void*)this);
 	}
 };
 
-using CriticalBlock = CMutexLock<CCriticalSection>;
+using CriticalBlock = CMutexLock<CriticalSection>;
 
 #define PASTE(x, y) x ## y
 #define PASTE2(x, y) PASTE(x, y)

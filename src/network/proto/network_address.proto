@@ -17,4 +17,6 @@ message Ipaddr {
 message NetAddr {
 	Ipaddr ip = 1;
 	uint32 port = 2;
+	fixed64 services = 3;
+	uint32 timestamp = 4;
 }

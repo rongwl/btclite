@@ -9,9 +9,9 @@
 #include "protocol.h"
 
 
-class LocalNetInfo {
+class LocalNetConfig {
 public:
-	void LookUpLocalHosts();
+	void LookupLocalAddrs();
 	
 	ServiceFlags local_services() const
 	{
@@ -22,16 +22,16 @@ public:
 		local_services_ = flags;
 	}
 	
-	const std::vector<proto_netaddr::NetAddr>& local_hosts() const
+	const std::vector<proto_netaddr::NetAddr>& local_addrs() const
 	{
-		return local_hosts_;
+		return local_addrs_;
 	}
 	
 private:
 	ServiceFlags local_services_;
-	std::vector<proto_netaddr::NetAddr> local_hosts_;
+	std::vector<proto_netaddr::NetAddr> local_addrs_;
 	
-	bool AddLocalHost();
+	bool AddLocalAddr();
 };
 
 #endif // BTCLITE_NET_H

@@ -89,7 +89,7 @@ protected:
 	bool CheckOptions(int argc, const char* const argv[]);
 	
 private:
-	mutable CCriticalSection cs_args_;
+	mutable CriticalSection cs_args_;
 	std::map<std::string, std::string> map_args_;
 	std::map<std::string, std::vector<std::string> > map_multi_args_;
 };
@@ -118,7 +118,7 @@ public:
 	void set_configFile(const std::string& filename);
 	
 private:	
-	mutable CCriticalSection cs_path_;
+	mutable CriticalSection cs_path_;
 	fs::path data_dir_;
 	fs::path config_file_;	
 };
