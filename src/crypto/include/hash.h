@@ -10,7 +10,7 @@
 
 using Hash256 = Uint<256>;
 
-void DoubleSha256(const uint8_t in[], std::size_t length, Hash256 *out);
+void DoubleSha256(const uint8_t in[], size_t length, Hash256 *out);
 void DoubleSha256(const std::vector<uint8_t> &in, Hash256 *out);
 void DoubleSha256(const std::string &in, Hash256 *out);
 

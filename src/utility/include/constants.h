@@ -3,8 +3,8 @@
 
 #include <cstddef>
 
-constexpr std::size_t max_vardata_size = 0x02000000;
-constexpr std::size_t max_block_size = 1000000;
+constexpr size_t max_vardata_size = 0x02000000;
+constexpr size_t max_block_size = 1000000;
 
 constexpr uint8_t varint_16bits = 0xfd;
 constexpr uint8_t varint_32bits = 0xfe;

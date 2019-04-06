@@ -24,3 +24,13 @@ void P2P::ThreadDnsSeeds()
 {
 
 }
+
+void P2P::ThreadOpenConnections(const std::vector<std::string> connect)
+{
+
+}
+
+void P2P::ThreadSocketHandler()
+{
+
+}

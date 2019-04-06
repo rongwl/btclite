@@ -74,22 +74,22 @@ uint64_t Transaction::OutputsAmount() const
 	return amount;
 }
 
-std::size_t Transaction::Size(bool serialized = false) const
+size_t Transaction::Size(bool serialized = false) const
 {
-    const auto ins = [serialized](std::size_t size, const TxIn& input)
+    const auto ins = [serialized](size_t size, const TxIn& input)
     {
         return size + input.Size(serialized);
     };
-    const auto outs = [serialized](std::size_t size, const TxOut& output)
+    const auto outs = [serialized](size_t size, const TxOut& output)
     {
         return size + output.Size(serialized);
     };
 	
 	return sizeof(version_) + sizeof(lock_time_)
 		   + VarIntSize(inputs_.size())
-		   + std::accumulate(inputs_.begin(), inputs_.end(), std::size_t{0}, ins)
+		   + std::accumulate(inputs_.begin(), inputs_.end(), size_t{0}, ins)
 		   + VarIntSize(outputs_.size())
-		   + std::accumulate(outputs_.begin(), outputs_.end(), std::size_t{0}, outs);
+		   + std::accumulate(outputs_.begin(), outputs_.end(), size_t{0}, outs);
 }
 
 std::string Transaction::ToString() const

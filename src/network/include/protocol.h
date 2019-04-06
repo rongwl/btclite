@@ -50,23 +50,33 @@ enum ServiceFlags : uint64_t {
 
 class MessageHeader {
 public:
-	static constexpr std::size_t COMMAND_SIZE = 12;
+	static constexpr size_t MESSAGE_START_SIZE = 4;
+	static constexpr size_t COMMAND_SIZE = 12;
+	static constexpr size_t CHECKSUM_SIZE = 4;
+	struct RawNetData {
+		char magic_[MESSAGE_START_SIZE];
+		char command_[COMMAND_SIZE];
+		uint32_t payload_length_;
+		uint8_t checksum_[CHECKSUM_SIZE];
+	};
 	using MsgMagic = uint32_t;
 	
+	//-------------------------------------------------------------------------
 	MessageHeader()
 		: magic_(0), command_(), payload_length_(0), checksum_(0) {}
 	
 	explicit MessageHeader(uint32_t magic)
 		: magic_(magic), command_(), payload_length_(0), checksum_(0) {}
-	MessageHeader(uint32_t magic, const std::array<char, COMMAND_SIZE>& command,
-				  uint32_t payload_length, uint32_t checksum)
+	
+	MessageHeader(uint32_t magic, const std::string& command, uint32_t payload_length, uint32_t checksum)
 		: magic_(magic), command_(command), payload_length_(payload_length), checksum_(checksum) {}
-	MessageHeader(uint32_t magic, const std::array<char, COMMAND_SIZE>&& command,
-				  uint32_t payload_length, uint32_t checksum) noexcept
+	
+	MessageHeader(uint32_t magic, const std::string&& command, uint32_t payload_length, uint32_t checksum) noexcept
 		: magic_(magic), command_(std::move(command)), payload_length_(payload_length), checksum_(checksum) {}
 	
     MessageHeader(const MessageHeader& header)
 		: MessageHeader(header.magic_, header.command_, header.payload_length_, header.checksum_) {}
+	
 	MessageHeader(const MessageHeader&& header) noexcept
 		: MessageHeader(header.magic_, std::move(header.command_), header.payload_length_, header.checksum_) {}
 
@@ -102,16 +112,15 @@ public:
 		magic_ = magic;
 	}
 
-    std::string command() const
+    const std::string& command() const
 	{
-		std::size_t size = (std::strlen(command_.data()) < COMMAND_SIZE) ? std::strlen(command_.data()) : COMMAND_SIZE;
-		return std::string(command_.data(), size);
+		return command_;
 	}
-    void set_command(const std::array<char, COMMAND_SIZE>& command)
+    void set_command(const std::string& command)
 	{
 		command_ = command;
 	}
-	void set_command(const std::array<char, COMMAND_SIZE>&& command) noexcept
+	void set_command(const std::string&& command) noexcept
 	{
 		command_ = std::move(command);
 	}
@@ -136,7 +145,7 @@ public:
 	
 private:
 	uint32_t magic_;
-    std::array<char, COMMAND_SIZE> command_;
+    std::string command_;
     uint32_t payload_length_;
     uint32_t checksum_;
 };

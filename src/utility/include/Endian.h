@@ -42,7 +42,7 @@ void FromLittleEndian(Iterator begin, Iterator end, T *out)
 {
 	ASSERT_UNSIGNED(T);
 	ASSERT_NULL(out);
-	std::size_t i = 0;
+	size_t i = 0;
 	while (i < sizeof(T) && begin != end) 
 		*out |= static_cast<T>(*begin++) << (8 * i++);
 }

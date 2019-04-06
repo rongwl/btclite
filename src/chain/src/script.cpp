@@ -1,6 +1,6 @@
 #include "script.h"
 
-std::size_t VarIntSize(std::size_t vec_size)
+size_t VarIntSize(size_t vec_size)
 {
     if (vec_size < varint_16bits)
         return 1;

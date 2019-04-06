@@ -9,7 +9,7 @@
 #include "constants.h"
 #include "serialize.h"
 
-std::size_t VarIntSize(std::size_t);
+size_t VarIntSize(size_t);
 
 enum class Opcode : uint8_t {
 	// push value
@@ -158,7 +158,7 @@ enum class Opcode : uint8_t {
 
 class ScriptInt : public ArithType<int64_t> {
 public:
-	static constexpr std::size_t max_size = 4;
+	static constexpr size_t max_size = 4;
 	
 	explicit ScriptInt(const int64_t& n)
 	{
@@ -268,9 +268,9 @@ public:
 	}
 	
 	//-------------------------------------------------------------------------
-	std::size_t Size(bool serialized = false) const
+	size_t Size(bool serialized = false) const
 	{
-		std::size_t result = data_.size();
+		size_t result = data_.size();
 		if (serialized)
 			result += VarIntSize(result);
 		return result;

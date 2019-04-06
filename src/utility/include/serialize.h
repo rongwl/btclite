@@ -88,7 +88,7 @@ private:
 	}
 	
 	//for char type array
-	template <std::size_t N>
+	template <size_t N>
 	void Serialize(const std::array<char, N>& in)
 	{
 		stream_.write(reinterpret_cast<const char*>(in.data()), N);
@@ -143,7 +143,7 @@ private:
 	}
 	
 	// for char type array
-	template <std::size_t N>
+	template <size_t N>
 	void UnSerialize(std::array<char, N> *out)
 	{
 		stream_.read(reinterpret_cast<char*>(out->data()), N);
@@ -200,7 +200,7 @@ template <typename T>
 std::enable_if_t<std::is_class<T>::value> Serializer<Stream>::UnSerialize(std::vector<T> *out)
 {
 	uint64_t count = SerReadVarInt();
-	std::size_t size = 0;	
+	size_t size = 0;	
 	out->clear();
 	out->resize(count);
 	for (uint64_t i = 0; i < count; i++) {

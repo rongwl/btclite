@@ -25,6 +25,8 @@ public:
 private:
 	Network::Params network_params_;
 	LocalNetConfig local_network_config_;
+	std::vector<OutboundSession> outbound_sessions_;
+	std::vector<InboundSession> inbound_sessions_;
 	
 	ThreadInterrupt interrupt_;
 	std::thread thread_dns_seeds_;
@@ -32,9 +34,11 @@ private:
     std::thread thread_open_connections_;
     std::thread thread_message_handler_;
 	
-	std::vector<std::string> m_specified_outgoing;
+	std::vector<std::string> m_specified_outgoing_;
 	
 	void ThreadDnsSeeds();
+	void ThreadOpenConnections(const std::vector<std::string> connect);
+	void ThreadSocketHandler();
 };
 
 #endif // BTCLITE_P2P_H

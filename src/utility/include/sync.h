@@ -1,6 +1,7 @@
 #ifndef BTCLITE_SYNC_H
 #define BTCLITE_SYNC_H
 
+#include <condition_variable>
 #include <mutex>
 #include <thread>
 
@@ -80,5 +81,105 @@ using CriticalBlock = CMutexLock<CriticalSection>;
 
 #define LOCK(cs) CriticalBlock PASTE2(criticalblock, __COUNTER__)(cs, #cs, __FILE__, __LINE__)
 #define TRY_LOCK(cs, name) CriticalBlock name(cs, #cs, __FILE__, __LINE__, true)
+
+
+class Semaphore
+{
+public:
+    explicit Semaphore(int init) : value(init) {}
+
+    void wait()
+    {
+        std::unique_lock<std::mutex> lock(mutex_);
+        condition_.wait(lock, [&]() { return value >= 1; });
+        value--;
+    }
+
+    bool try_wait()
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        if (value < 1)
+            return false;
+        value--;
+        return true;
+    }
+
+    void post()
+    {
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            value++;
+        }
+        condition_.notify_one();
+    }
+	
+private:
+    std::condition_variable condition_;
+    std::mutex mutex_;
+    int value;
+};
+
+/** RAII-style semaphore lock */
+class SemaphoreGrant
+{
+public:
+	SemaphoreGrant()
+		: sem_(nullptr), have_grant_(false) {}
+
+    explicit SemaphoreGrant(Semaphore& sem, bool fTry = false)
+		: sem_(&sem), have_grant_(false)
+    {
+        if (fTry)
+            TryAcquire();
+        else
+            Acquire();
+    }
+
+    ~SemaphoreGrant()
+    {
+        Release();
+    }
+	
+    void Acquire()
+    {
+        if (have_grant_)
+            return;
+        sem_->wait();
+        have_grant_ = true;
+    }
+
+    void Release()
+    {
+        if (!have_grant_)
+            return;
+        sem_->post();
+        have_grant_ = false;
+    }
+
+    bool TryAcquire()
+    {
+        if (!have_grant_ && sem_->try_wait())
+            have_grant_ = true;
+        return have_grant_;
+    }
+
+    void MoveTo(SemaphoreGrant& grant)
+    {
+        grant.Release();
+        grant.sem_ = sem_;
+        grant.have_grant_ = have_grant_;
+        have_grant_ = false;
+    }
+
+    operator bool() const
+    {
+        return have_grant_;
+    }
+
+private:
+    Semaphore *sem_;
+    bool have_grant_;
+};
+
 
 #endif // BTCLITE_SYNC_H

@@ -7,7 +7,7 @@
 
 #include "string_encoding.h"
 
-template <std::size_t size>
+template <size_t size>
 using Bytes = std::array<uint8_t, size>;
 
 /** Template base class for fixed-sized opaque blobs. (Little endian) */

@@ -32,7 +32,7 @@ public:
 	{
 		return (prev_hash_.IsNull() && index_ == UINT32_MAX);
 	}
-	std::size_t Size() const
+	size_t Size() const
 	{
 		return prev_hash_.size() + sizeof(index_);
 	}
@@ -197,7 +197,7 @@ public:
 	
 	//-------------------------------------------------------------------------
 	std::string ToString() const;
-	std::size_t Size(bool serialized = false) const
+	size_t Size(bool serialized = false) const
 	{
 		return prevout_.Size() + script_sig_.Size(serialized) + sizeof(sequence_no_);
 	}
@@ -301,7 +301,7 @@ public:
 		   << "scriptPubKey=" << HexEncode(script_pub_key_.begin(), script_pub_key_.end()) << ")";
 		return ss.str();
 	}
-	std::size_t Size(bool serialized = false) const
+	size_t Size(bool serialized = false) const
 	{
 		return script_pub_key_.Size(serialized) + sizeof(value_);
 	}
@@ -436,7 +436,7 @@ public:
 	{
 		return (inputs_.size() == 1 && inputs_[0].prevout().IsNull());
 	}
-	std::size_t Size(bool) const;
+	size_t Size(bool) const;
 	uint64_t OutputsAmount() const;
 	std::string ToString() const;
 	
