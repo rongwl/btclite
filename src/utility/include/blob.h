@@ -22,7 +22,7 @@ public:
 		}
 		return true;
     }	
-	void SetNull()
+	void Clear()
 	{
 		std::memset(&this->front(), 0, WIDTH);
 	}
@@ -69,14 +69,14 @@ public:
 	}
     void SetHex(const std::string& str)
 	{
-		SetNull();
+		Clear();
 		HexDecode(str, this->begin(), this->end());
 	}
 	
 protected:
 	Blob()
 	{
-		SetNull();
+		Clear();
 	}
 
 	static constexpr int WIDTH = nBITS / 8;

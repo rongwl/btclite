@@ -39,6 +39,7 @@ private:
 	void ThreadDnsSeeds();
 	void ThreadOpenConnections(const std::vector<std::string> connect);
 	void ThreadSocketHandler();
+	void ThreadMessageHandler();
 };
 
 #endif // BTCLITE_P2P_H

@@ -11,7 +11,7 @@ class Uint : public Blob<nBITS> {
 public:
 	Uint()
 	{
-		this->SetNull();
+		this->Clear();
 	}
 	
 	// Operation

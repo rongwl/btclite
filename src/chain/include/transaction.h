@@ -23,9 +23,9 @@ public:
 		: prev_hash_(std::move(op.prev_hash_)), index_(op.index_) {}
 	
 	//-------------------------------------------------------------------------
-	void SetNull()
+	void Clear()
 	{
-		prev_hash_.SetNull();
+		prev_hash_.Clear();
 		index_ = UINT32_MAX;
 	}
 	bool IsNull() const
@@ -284,7 +284,7 @@ public:
 		: value_(output.value_), script_pub_key_(std::move(output.script_pub_key_)) {}
 	
 	//-------------------------------------------------------------------------
-	void SetNull()
+	void Clear()
 	{
 		value_ = null_value;
 		script_pub_key_.clear();
@@ -448,7 +448,7 @@ public:
 	void set_version(uint32_t v)
 	{
 		version_ = v;
-		hash_cache_.SetNull();
+		hash_cache_.Clear();
 	}
 	
 	const std::vector<TxIn>& inputs() const
@@ -458,12 +458,12 @@ public:
 	void set_inputs(const std::vector<TxIn>& inputs)
 	{
 		inputs_ = inputs;
-		hash_cache_.SetNull();
+		hash_cache_.Clear();
 	}
 	void set_inputs(std::vector<TxIn>&& inputs)
 	{
 		inputs_ = std::move(inputs);
-		hash_cache_.SetNull();
+		hash_cache_.Clear();
 	}
 	
 	const std::vector<TxOut>& outputs() const
@@ -473,12 +473,12 @@ public:
 	void set_outputs(const std::vector<TxOut>& outputs)
 	{
 		outputs_ = outputs;
-		hash_cache_.SetNull();
+		hash_cache_.Clear();
 	}
 	void set_outputs(std::vector<TxOut>&& outputs)
 	{
 		outputs_ = std::move(outputs);
-		hash_cache_.SetNull();
+		hash_cache_.Clear();
 	}
 	
 	uint32_t lock_time() const
@@ -488,7 +488,7 @@ public:
 	void set_lockTime(uint32_t t)
 	{
 		lock_time_ = t;
-		hash_cache_.SetNull();
+		hash_cache_.Clear();
 	}
 	
 private:

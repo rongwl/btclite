@@ -25,7 +25,7 @@ public:
 		return stack_.empty();
 	}
 
-    void SetNull()
+    void Clear()
 	{
 		stack_.clear();
 		stack_.shrink_to_fit();

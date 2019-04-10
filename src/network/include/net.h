@@ -3,14 +3,17 @@
 
 #include <cstring>
 #include <deque>
+#include <functional>
 #include <list>
+#include <memory>
 #include <string>
 #include <utility>
 
 #include "network_address.pb.h"
-#include "protocol.h"
 #include "sync.h"
 #include "util.h"
+
+#include "message_types/version.h"
 
 
 using Socket = int;
@@ -44,9 +47,25 @@ private:
 
 class Message {
 public:
+	Message()
+		: header_(), data_(nullptr) {}
+	
+	explicit Message(const MessageHeader& header)
+		: header_(header)
+	{
+		DataFactory(header.command());
+	}
+	
+	explicit Message(const char *raw_data)
+		: Message(MessageHeader(raw_data)) {}
+	
+	//-------------------------------------------------------------------------
+	void DataFactory(const std::string& command);
+	bool RecvMsgHandle();
+	
 private:
 	MessageHeader header_;
-	void *data;
+	std::shared_ptr<btc_message::BaseMsgType> data_;
 };
 
 
@@ -77,6 +96,7 @@ public:
 // inbound socket connection
 class Acceptor : public BaseSocket {
 public:
+	bool Bind();
 	Socket Accept();
 };
 
@@ -88,6 +108,8 @@ public:
 	
 	void Connect();
 	void Disconnect();
+	size_t Receive();
+	size_t Send();
 	
 	NodeId id() const
 	{

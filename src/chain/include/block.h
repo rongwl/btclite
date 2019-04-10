@@ -15,7 +15,7 @@ class BlockHeader {
 public:
 	BlockHeader()
 	{
-		SetNull();
+		Clear();
 	}
 	BlockHeader(int32_t version, const Hash256& prev_block_hash, const Hash256& merkle_root_hash,
 			    uint32_t time, uint32_t nBits, uint32_t nonce)
@@ -42,15 +42,15 @@ public:
 	}
 	
 	//-------------------------------------------------------------------------
-	void SetNull()
+	void Clear()
 	{
 		version_ = 0;
-		prev_block_hash_.SetNull();
-		merkle_root_hash_.SetNull();
+		prev_block_hash_.Clear();
+		merkle_root_hash_.Clear();
 		time_ = 0;
 		nBits_ = 0;
 		nonce_ = 0;
-		hash_cache_.SetNull();
+		hash_cache_.Clear();
 	}	
 	bool IsNull() const
     {
@@ -76,7 +76,7 @@ public:
 	void set_version(int32_t v)
 	{
 		version_ = v;
-		hash_cache_.SetNull();
+		hash_cache_.Clear();
 	}
 	
 	const Hash256& hashPrevBlock() const
@@ -86,28 +86,28 @@ public:
 	void set_hashPrevBlock(const Hash256& hash)
 	{
 		prev_block_hash_ = hash;
-		hash_cache_.SetNull();
+		hash_cache_.Clear();
 	}
 	void set_hashPrevBlock(Hash256&& hash)
 	{
 		prev_block_hash_ = std::move(hash);
-		hash_cache_.SetNull();
+		hash_cache_.Clear();
 	}
 	
 	const Hash256& hashMerkleRoot() const
 	{
 		return merkle_root_hash_;
-		hash_cache_.SetNull();
+		hash_cache_.Clear();
 	}
 	void set_hashMerkleRoot(const Hash256& hash)
 	{
 		merkle_root_hash_ = hash;
-		hash_cache_.SetNull();
+		hash_cache_.Clear();
 	}
 	void set_hashMerkleRoot(Hash256&& hash)
 	{
 		merkle_root_hash_ = std::move(hash);
-		hash_cache_.SetNull();
+		hash_cache_.Clear();
 	}
 	
 	uint32_t time() const
@@ -117,7 +117,7 @@ public:
 	void set_time(uint32_t t)
 	{
 		time_ = t;
-		hash_cache_.SetNull();
+		hash_cache_.Clear();
 	}
 	
 	uint32_t bits() const
@@ -127,7 +127,7 @@ public:
 	void set_bits(uint32_t b)
 	{
 		nBits_ = b;
-		hash_cache_.SetNull();
+		hash_cache_.Clear();
 	}
 	
 	uint32_t nonce() const
@@ -137,7 +137,7 @@ public:
 	void set_nonce(uint32_t n)
 	{
 		nonce_ = n;
-		hash_cache_.SetNull();
+		hash_cache_.Clear();
 	}
 	
 private:
@@ -179,7 +179,7 @@ class Block {
 public:
 	Block()
 	{
-		SetNull();
+		Clear();
 	}
 	
 	Block(const std::vector<Transaction>& transactions)
@@ -198,9 +198,9 @@ public:
 		: header_(std::move(b.header_)), transactions_(std::move(b.transactions_)) {}
 	
 	//-------------------------------------------------------------------------
-	void SetNull()
+	void Clear()
 	{
-		header_.SetNull();
+		header_.Clear();
 		transactions_.clear();
 	}
 	std::string ToString() const;

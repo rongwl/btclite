@@ -7,9 +7,9 @@
 
 #include "arithmetic.h"
 #include "constants.h"
+#include "protocol.h"
 #include "serialize.h"
 
-size_t VarIntSize(size_t);
 
 enum class Opcode : uint8_t {
 	// push value

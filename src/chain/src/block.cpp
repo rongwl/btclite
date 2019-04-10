@@ -25,7 +25,7 @@ BlockHeader& BlockHeader::operator=(const BlockHeader& b)
 	time_ = b.time_;
 	nBits_ = b.nBits_;
 	nonce_ = b.nonce_;
-	hash_cache_.SetNull();
+	hash_cache_.Clear();
 	
 	return *this;
 }
@@ -39,7 +39,7 @@ BlockHeader& BlockHeader::operator=(BlockHeader&& b) noexcept
 		time_ = b.time_;
 		nBits_ = b.nBits_;
 		nonce_ = b.nonce_;
-		hash_cache_.SetNull();
+		hash_cache_.Clear();
 	}
 	
 	return *this;

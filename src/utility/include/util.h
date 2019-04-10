@@ -75,7 +75,7 @@ public:
 	void SetArgs(const std::string& arg, const std::string& arg_val);
 	bool IsArgSet(const std::string& arg) const;
 	
-	void SetNull()
+	void Clear()
 	{
 		LOCK(cs_args_);
 		map_args_.clear();

@@ -7,11 +7,17 @@ namespace btclite {
 	
 class NetAddr {
 public:
-	NetAddr() {}
+	NetAddr() = default;
+	
 	NetAddr(const proto_netaddr::NetAddr& addr)
 		: addr_(addr) {}
 	NetAddr(proto_netaddr::NetAddr&& addr) noexcept
 		: addr_(std::move(addr)) {}
+	
+	NetAddr(const NetAddr& addr)
+		: addr_(addr.addr_) {}
+	NetAddr(NetAddr&& addr) noexcept
+		: addr_(std::move(addr.addr_)) {}
 	
 	//-------------------------------------------------------------------------
 	bool IsRFC1918() const; // IPv4 private networks (10.0.0.0/8, 192.168.0.0/16, 172.16.0.0/12)
@@ -31,6 +37,7 @@ public:
 	bool IsRoutable() const;
 	bool IsInternal() const;
 	bool IsValid() const;
+	void Clear();
 	
 	//-------------------------------------------------------------------------
 	NetAddr& operator=(const NetAddr& b)

@@ -44,7 +44,7 @@ Transaction& Transaction::operator=(const Transaction& b)
 	inputs_ = b.inputs_;
 	outputs_ = b.outputs_;
 	lock_time_ = b.lock_time_;
-	hash_cache_.SetNull();
+	hash_cache_.Clear();
 	
 	return *this;
 }
@@ -56,7 +56,7 @@ Transaction& Transaction::operator=(Transaction&& b) noexcept
 		inputs_ = std::move(b.inputs_);
 		outputs_ = std::move(b.outputs_);
 		lock_time_ = std::move(b.lock_time_);
-		hash_cache_.SetNull();
+		hash_cache_.Clear();
 	}
 	
 	return *this;

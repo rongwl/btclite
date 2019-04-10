@@ -4,7 +4,11 @@
 #include <array>
 #include <cstdint>
 
+#include "constants.h"
 #include "serialize.h"
+
+
+size_t VarIntSize(size_t vec_size);
 
 
 /* Services flags */
@@ -53,12 +57,13 @@ public:
 	static constexpr size_t MESSAGE_START_SIZE = 4;
 	static constexpr size_t COMMAND_SIZE = 12;
 	static constexpr size_t CHECKSUM_SIZE = 4;
+	
 	struct RawNetData {
 		char magic_[MESSAGE_START_SIZE];
 		char command_[COMMAND_SIZE];
 		uint32_t payload_length_;
 		uint8_t checksum_[CHECKSUM_SIZE];
-	};
+	};	
 	using MsgMagic = uint32_t;
 	
 	//-------------------------------------------------------------------------
@@ -67,6 +72,11 @@ public:
 	
 	explicit MessageHeader(uint32_t magic)
 		: magic_(magic), command_(), payload_length_(0), checksum_(0) {}
+	
+	explicit MessageHeader(const char *raw_data)
+	{
+		GetRawData(raw_data);
+	}
 	
 	MessageHeader(uint32_t magic, const std::string& command, uint32_t payload_length, uint32_t checksum)
 		: magic_(magic), command_(command), payload_length_(payload_length), checksum_(checksum) {}
@@ -97,6 +107,14 @@ public:
 		serial.SerialRead(&command_);
 		serial.SerialRead(&payload_length_);
 		serial.SerialRead(&checksum_);
+	}
+	bool GetRawData(const char *in)
+	{
+	
+	}
+	void SetRawData(char *cout)
+	{
+	
 	}
 	
 	//-------------------------------------------------------------------------
@@ -143,7 +161,7 @@ public:
 		checksum_ = checksum;
 	}
 	
-private:
+private:	
 	uint32_t magic_;
     std::string command_;
     uint32_t payload_length_;

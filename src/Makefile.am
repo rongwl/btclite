@@ -43,6 +43,8 @@ BTCLITE_HEADER_FILES = \
 					   config/environment.h \
 					   fullnode/include/clientversion.h \
 					   fullnode/include/config.h \
+					   network/include/message_types.h \
+					   network/include/message_types/version.h \
 					   network/include/p2p.h \
 					   network/include/params.h \
 					   network/include/peers.h
@@ -101,6 +103,7 @@ chain_src_libbtclite_chain_a_CPPFLAGS = $(AM_CXXFLAGS) \
 										$(GLOG_CFLAGS) \
 										$(BTCLITE_CHAIN_INCLUDES) \
 										$(BTCLITE_CRYPTO_INCLUDES) \
+										$(BTCLITE_NETWORK_INCLUDES) \
 										$(BTCLITE_UTIL_INCLUDES)
 chain_src_libbtclite_chain_a_SOURCES = chain/src/block.cpp \
 									   chain/src/script.cpp \
@@ -118,6 +121,7 @@ network_src_libbtclite_network_a_CPPFLAGS = $(AM_CXXFLAGS) \
 											$(BTCLITE_UTIL_INCLUDES)
 network_src_libbtclite_network_a_SOURCES = network/proto/network_address.pb.cc \
 										   network/proto/peers.pb.cc \
+										   network/src/message_types/version.cpp \
 										   network/src/network_address.cpp \
                                            network/src/params.cpp \
 										   network/src/peers.cpp \

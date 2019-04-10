@@ -34,3 +34,8 @@ void P2P::ThreadSocketHandler()
 {
 
 }
+
+void P2P::ThreadMessageHandler()
+{
+
+}

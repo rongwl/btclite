@@ -30,7 +30,7 @@ bool FullNodeArgs::Parse(int argc, const char* const argv[])
 	};
 	int c, option_index;
 	
-	SetNull();
+	Clear();
 	
 	while ((c = getopt_long(argc, const_cast<char* const*>(argv), "h?", fullnode_options, &option_index)) != -1) {
 		switch (c) {
