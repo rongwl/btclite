@@ -1,13 +1,14 @@
+TESTS = unit_test/test_btclite
 bin_PROGRAMS += unit_test/test_btclite
 #TEST_SRCDIR = unit_test
 #TEST_BINARY = unit_test/test_btclite
 
 
 # test_btclite binary #
-BTCLITE_UNIT_TESTS = unit_test/main.cpp
+TEST_BTCLITE_SOURCES = unit_test/main.cpp
 
 
-unit_test_test_btclite_SOURCES = $(BTCLITE_UNIT_TESTS)
+unit_test_test_btclite_SOURCES = $(TEST_BTCLITE_SOURCES)
 unit_test_test_btclite_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_CFLAGS) $(BTCLITE_INCLUDES)
 unit_test_test_btclite_LDADD = $(LIBBTCLITE_CHAIN) \
 							   $(LIBBTCLITE_CRYPTO) \
