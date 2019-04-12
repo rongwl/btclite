@@ -39,6 +39,9 @@ PKG_CHECK_MODULES(BOTAN, botan-2 >= 2.4.0)
 dnl Require glog
 PKG_CHECK_MODULES(GLOG, libglog >= 0.3.5)
 
+dnl Require googletest
+PKG_CHECK_MODULES(GTEST, gtest >= 1.8.1)
+	
  # Initialize libtool.
 LT_INIT([pic-only])
 
@@ -63,6 +66,23 @@ AC_ARG_ENABLE([check-lockorder],
 if test "x$enable_check_lockorder" = xyes; then
 	CPPFLAGS="$CPPFLAGS -DCHECK_LOCKORDER"
 fi
+
+# Checks unit tests
+AC_ARG_ENABLE(unit-tests,
+		AS_HELP_STRING([--disable-unit-tests],[do not compile unit tests (default is to compile)]),
+		[enable_unit_tests=$enableval],
+		[enable_unit_tests=yes])
+
+AC_MSG_CHECKING([whether to build test_btclite])
+if test x$enable_unit_tests = xyes; then
+    AC_MSG_RESULT([yes])
+    BUILD_UNIT_TEST="yes"
+else
+    AC_MSG_RESULT([no])
+    BUILD_UNIT_TEST=""
+fi
+
+AM_CONDITIONAL([ENABLE_UNIT_TESTS],[test x$BUILD_UNIT_TEST = xyes])
 
 # Checks for libraries.
 

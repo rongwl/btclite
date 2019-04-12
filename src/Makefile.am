@@ -21,12 +21,14 @@ BTCLITE_INCLUDES = $(BTCLITE_FULLNODE_INCLUDES) \
 
 
 STDCPP_FILESYSTEM_LIBS = -lstdc++fs
+LIBBTCLITE_FULLNODE = fullnode/src/libbtclite_fullnode.a
 LIBBTCLITE_CHAIN = chain/src/libbtclite_chain.a
 LIBBTCLITE_CRYPTO = crypto/src/libbtclite_crypto.a
 LIBBTCLITE_NETWORK = network/src/libbtclite_network.a
 LIBBTCLITE_UTIL = utility/src/libbtclite_util.a
 
 EXTRA_LIBRARIES += \
+				   $(LIBBTCLITE_FULLNODE) \
 				   $(LIBBTCLITE_CHAIN) \
 				   $(LIBBTCLITE_CRYPTO) \
 				   $(LIBBTCLITE_NETWORK) \
@@ -130,16 +132,28 @@ network_src_libbtclite_network_a_SOURCES = network/proto/network_address.pb.cc \
                                            network/src/net.cpp 
 
 
+fullnode_src_libbtclite_fullnode_a_CPPFLAGS = $(AM_CXXFLAGS) \
+											  $(BOTAN_CFLAGS) \
+											  $(GLOG_CFLAGS) \
+											  $(BTCLITE_CRYPTO_INCLUDES) \
+											  $(BTCLITE_CHAIN_INCLUDES) \
+											  $(BTCLITE_FULLNODE_INCLUDES) \
+											  $(BTCLITE_NETWORK_INCLUDES) \
+											  $(BTCLITE_NETWORK_PROTO_INCLUDES) \
+											  $(BTCLITE_UTIL_INCLUDES)
+fullnode_src_libbtclite_fullnode_a_SOURCES = fullnode/src/config.cpp \
+											 fullnode/src/executor.cpp \
+											 fullnode/src/validation.cpp
+
+
 btc_fullnode_CPPFLAGS = $(AM_CXXFLAGS) \
 						$(BOTAN_CFLAGS) \
 						$(GLOG_CFLAGS) \
 						$(BTCLITE_INCLUDES)
-btc_fullnode_SOURCES = fullnode/src/main.cpp \
-					   fullnode/src/config.cpp \
-					   fullnode/src/executor.cpp \
-					   fullnode/src/validation.cpp \
+btc_fullnode_SOURCES = fullnode/src/main.cpp 
 					   $(BTCLITE_HEADER_FILES)
 btc_fullnode_LDADD = \
+					 $(LIBBTCLITE_FULLNODE) \
 					 $(LIBBTCLITE_CHAIN) \
 					 $(LIBBTCLITE_CRYPTO) \
 					 $(LIBBTCLITE_NETWORK) \
@@ -155,7 +169,13 @@ network/proto/%.pb.cc network/proto/%.pb.h: network/proto/%.proto
 	$(PROTOC) --proto_path=network/proto --cpp_out=network/proto $^
 
 
-MOSTLYCLEANFILES = utility/src/*.a \
+if ENABLE_UNIT_TESTS
+include Makefile.test.include
+endif
+
+
+MOSTLYCLEANFILES = fullnode/src/*.a \
+				   utility/src/*.a \
 				   chain/src/*.a \
 				   crypto/src/*.a \
 				   network/src/*.a \
