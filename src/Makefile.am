@@ -117,6 +117,7 @@ chain_src_libbtclite_chain_a_SOURCES = chain/src/block.cpp \
 network_src_libbtclite_network_a_CPPFLAGS = $(AM_CXXFLAGS) \
 											$(BOTAN_CFLAGS) \
                                             $(GLOG_CFLAGS) \
+											$(BTCLITE_CONFIG_INCLUDES) \
 											$(BTCLITE_CRYPTO_INCLUDES) \
 											$(BTCLITE_NETWORK_INCLUDES) \
 											$(BTCLITE_NETWORK_PROTO_INCLUDES) \

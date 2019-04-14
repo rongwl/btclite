@@ -13,8 +13,4 @@ size_t VarIntSize(size_t vec_size)
         return 9;
 }
 
-bool MessageHeader::IsValid(uint32_t magic) const
-{
-	return true;
-}
 

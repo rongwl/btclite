@@ -2,7 +2,7 @@
 #define BTCLITE_NETWORK_PARAMS_H
 
 #include "environment.h"
-#include "protocol.h"
+#include "net.h"
 
 struct Seed {
 	std::string host_;

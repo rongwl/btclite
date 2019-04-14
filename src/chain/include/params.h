@@ -82,6 +82,9 @@ namespace Consensus {
 */
 class Params {
 public:
+	Params()
+		: genesis_(), subsidy_halving_interval_(0), bip9_params_() {}
+	
 	void Init(NetworkEnv env);
 	
 	const Block& GenesisBlock() const
@@ -134,6 +137,10 @@ public:
 
         MAX_BASE58_TYPES
     };
+	
+	Params()
+		: consensus_(), prune_after_height_(0), base58_prefixes_(),
+		  bech32_hrp_(), checkpoints_(), chain_tx_data_() {}
 
 	//-------------------------------------------------------------------------
 	void Init(NetworkEnv env);
