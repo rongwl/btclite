@@ -22,21 +22,21 @@
 
 class FullNodeArgs : public Args {
 public:
-	bool Init(int argc, const char* const argv[]);
-	bool InitParameters();
+    bool Init(int argc, const char* const argv[]);
+    bool InitParameters();
 
 private:
-	bool Parse(int argc, const char* const argv[]);
-	void PrintUsage();
+    bool Parse(int argc, const char* const argv[]);
+    void PrintUsage();
 };
 
 class FullNodeDataFiles : public DataFiles {
 public:
-	using DataFiles::DataFiles;
-	
-	bool Init(const std::string& path, const std::string& config_file);
-	static fs::path DefaultDataDirPath();
-	
+    using DataFiles::DataFiles;
+    
+    bool Init(const std::string& path, const std::string& config_file);
+    static fs::path DefaultDataDirPath();
+    
 };
 
 

@@ -6,7 +6,7 @@
 // Network environment for params initialization in other module.
 enum class NetworkEnv : uint8_t
 {
-	none,
+    none,
     mainnet,
     testnet,
     regtest

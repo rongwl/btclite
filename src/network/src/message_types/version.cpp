@@ -6,29 +6,29 @@ const std::string Version::command = "version";
 
 bool Version::IsValid()
 {
-	return (value_ != 0) ||
-		   (services_ != 0) ||
-		   (timestamp_ != 0) ||
-		   (address_receiver_.IsValid()) ||
-		   (address_from_.IsValid()) ||
-		   (nonce_ != 0) ||
-		   (user_agent_.empty()) ||
-		   (start_height_ != 0) ||
-		   (relay_ != false);
+    return (value_ != 0) ||
+           (services_ != 0) ||
+           (timestamp_ != 0) ||
+           (address_receiver_.IsValid()) ||
+           (address_from_.IsValid()) ||
+           (nonce_ != 0) ||
+           (user_agent_.empty()) ||
+           (start_height_ != 0) ||
+           (relay_ != false);
 }
 
 void Version::Clear()
 {
-	value_ = 0;
-	services_ = 0;
-	timestamp_ = 0;
-	address_receiver_.Clear();
-	address_from_.Clear();
-	nonce_ = 0;
-	user_agent_.clear();
-	user_agent_.shrink_to_fit();
-	start_height_ = 0;
-	relay_ = false;
+    value_ = 0;
+    services_ = 0;
+    timestamp_ = 0;
+    address_receiver_.Clear();
+    address_from_.Clear();
+    nonce_ = 0;
+    user_agent_.clear();
+    user_agent_.shrink_to_fit();
+    start_height_ = 0;
+    relay_ = false;
 }
 
 Version& Version::operator=(const Version& b)
@@ -61,7 +61,7 @@ Version& Version::operator=(Version&& b) noexcept
 
 bool Version::RecvMsgHandle()
 {
-	return true;
+    return true;
 }
 
 void Version::GetRawData(const char *in)

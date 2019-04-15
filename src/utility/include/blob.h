@@ -14,47 +14,47 @@ using Bytes = std::array<uint8_t, size>;
 template <uint32_t nBITS>
 class Blob : public Bytes<nBITS/8>{
 public:
-	bool IsNull() const
+    bool IsNull() const
     {
-		for (auto it : *this) {
-			if (it != 0)
-				return false;
-		}
-		return true;
-    }	
-	void Clear()
-	{
-		std::memset(&this->front(), 0, WIDTH);
-	}
-	
-	//-------------------------------------------------------------------------
-	template <typename Stream>
-	void Serialize(Stream& s) const
-	{
-		s.write(reinterpret_cast<const char*>(&this->front()), this->size());
-	}
-	template <typename Stream>
-	void UnSerialize(Stream& s)
-	{
-		s.read(reinterpret_cast<char*>(&this->front()), this->size());
-	}
-	
-	//-------------------------------------------------------------------------
-	int Compare(const Blob& b) const
-	{
-		return std::memcmp(&this->front(), &b.front(), WIDTH);
-	}
-	
-	std::string ToString() const
-	{
-		return Hex();
-	}
+        for (auto it : *this) {
+            if (it != 0)
+                return false;
+        }
+        return true;
+    }    
+    void Clear()
+    {
+        std::memset(&this->front(), 0, WIDTH);
+    }
+    
+    //-------------------------------------------------------------------------
+    template <typename Stream>
+    void Serialize(Stream& s) const
+    {
+        s.write(reinterpret_cast<const char*>(&this->front()), this->size());
+    }
+    template <typename Stream>
+    void UnSerialize(Stream& s)
+    {
+        s.read(reinterpret_cast<char*>(&this->front()), this->size());
+    }
+    
+    //-------------------------------------------------------------------------
+    int Compare(const Blob& b) const
+    {
+        return std::memcmp(&this->front(), &b.front(), WIDTH);
+    }
+    
+    std::string ToString() const
+    {
+        return Hex();
+    }
 
     uint64_t Uint64(int pos) const
     {
         auto it = this->begin() + pos * 8;
         return *(it) | 
-			   (*(it+1) << 8) | 
+               (*(it+1) << 8) | 
                (*(it+2) << 16) | 
                (*(it+3) << 24) | 
                (*(it+4) << 32) | 
@@ -62,24 +62,24 @@ public:
                (*(it+6) << 48) | 
                (*(it+7) << 56);
     }
-	
-	std::string Hex() const
-	{
-		return HexEncode(this->rbegin(), this->rend());
-	}
+    
+    std::string Hex() const
+    {
+        return HexEncode(this->rbegin(), this->rend());
+    }
     void SetHex(const std::string& str)
-	{
-		Clear();
-		HexDecode(str, this->begin(), this->end());
-	}
-	
+    {
+        Clear();
+        HexDecode(str, this->begin(), this->end());
+    }
+    
 protected:
-	Blob()
-	{
-		Clear();
-	}
+    Blob()
+    {
+        Clear();
+    }
 
-	static constexpr int WIDTH = nBITS / 8;
+    static constexpr int WIDTH = nBITS / 8;
 };
 
 

@@ -11,28 +11,28 @@ void Consensus::Params::Init(NetworkEnv env)
 }
 
 void Consensus::Params::CreateGenesisBlock(const std::string& coinbase, const Script& output_script,
-						 uint32_t time, uint32_t nonce, uint32_t bits, int32_t version,
-						 uint64_t reward)
+                         uint32_t time, uint32_t nonce, uint32_t bits, int32_t version,
+                         uint64_t reward)
 {
-    Script script;	
-	script.Push(0x1d00ffff);
-	script.Push(ScriptInt(4));
-	script.Push(std::vector<uint8_t>(coinbase.begin(), coinbase.end()));
+    Script script;    
+    script.Push(0x1d00ffff);
+    script.Push(ScriptInt(4));
+    script.Push(std::vector<uint8_t>(coinbase.begin(), coinbase.end()));
 
-	std::vector<TxIn> inputs;
-	TxIn input(std::move(OutPoint()), std::move(script));
-	inputs.push_back(std::move(input));
+    std::vector<TxIn> inputs;
+    TxIn input(std::move(OutPoint()), std::move(script));
+    inputs.push_back(std::move(input));
 
-	std::vector<TxOut> outputs;
-	outputs.push_back(TxOut(reward, output_script));
+    std::vector<TxOut> outputs;
+    outputs.push_back(TxOut(reward, output_script));
 
-	std::vector<Transaction> transactions;
-	Transaction tx_new(1, std::move(inputs), std::move(outputs), 0);
-	transactions.push_back(std::move(tx_new));
+    std::vector<Transaction> transactions;
+    Transaction tx_new(1, std::move(inputs), std::move(outputs), 0);
+    transactions.push_back(std::move(tx_new));
 
-	genesis_.set_transactions(std::move(transactions));
-	BlockHeader header(version, Hash256(), genesis_.ComputeMerkleRoot(), time, bits, nonce);	
-	genesis_.set_header(std::move(header));
+    genesis_.set_transactions(std::move(transactions));
+    BlockHeader header(version, Hash256(), genesis_.ComputeMerkleRoot(), time, bits, nonce);    
+    genesis_.set_header(std::move(header));
 }
 
 /**
@@ -49,16 +49,16 @@ void Consensus::Params::CreateGenesisBlock(const std::string& coinbase, const Sc
 void Consensus::Params::CreateGenesisBlock(uint32_t time, uint32_t nonce, uint32_t bits, int32_t version, uint64_t reward)
 {
     const std::string coinbase = "The Times 03/Jan/2009 Chancellor on brink of second bailout for banks";
-	Script output_script;
-	std::vector<uint8_t> v;
-	HexDecode("5F1DF16B2B704C8A578D0BBAF74D385CDE12C11EE50455F3C438EF4C3FBCF649B6DE611FEAE06279A60939E028A8D65C10B73071A6F16719274855FEB0FD8A6704", &v);
-	output_script.Push(v);
-	output_script.Push(Opcode::OP_CHECKSIG);
+    Script output_script;
+    std::vector<uint8_t> v;
+    HexDecode("5F1DF16B2B704C8A578D0BBAF74D385CDE12C11EE50455F3C438EF4C3FBCF649B6DE611FEAE06279A60939E028A8D65C10B73071A6F16719274855FEB0FD8A6704", &v);
+    output_script.Push(v);
+    output_script.Push(Opcode::OP_CHECKSIG);
 
     CreateGenesisBlock(coinbase, output_script, time, nonce, bits, version, reward);
 }
 
 void Chain::Params::Init(NetworkEnv env)
 {
-	consensus_.Init(env);
+    consensus_.Init(env);
 }

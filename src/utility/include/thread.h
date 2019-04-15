@@ -36,34 +36,34 @@ private:
 
 class thread_group {
 public:
-	thread_group() {}
-	~thread_group()
-	{
-		for (auto it = threads.begin(), end = threads.end(); it != end; ++it)
-			delete *it;
-	}
+    thread_group() {}
+    ~thread_group()
+    {
+        for (auto it = threads.begin(), end = threads.end(); it != end; ++it)
+            delete *it;
+    }
 
-	//-------------------------------------------------------------------------
-	bool is_this_thread_in();
-	bool is_thread_in(std::thread* thrd);
+    //-------------------------------------------------------------------------
+    bool is_this_thread_in();
+    bool is_thread_in(std::thread* thrd);
 
-	//-------------------------------------------------------------------------
-	template <typename F>
-	std::thread* create_thread(F threadfunc);
-	void add_thread(std::thread *thrd);
-	void remove_thread(std::thread *thrd);
-	void join_all();
+    //-------------------------------------------------------------------------
+    template <typename F>
+    std::thread* create_thread(F threadfunc);
+    void add_thread(std::thread *thrd);
+    void remove_thread(std::thread *thrd);
+    void join_all();
 
-	//-------------------------------------------------------------------------
-	ssize_t size() const
-	{
-		std::lock_guard<std::mutex> guard(m);
-		return threads.size();
-	}
+    //-------------------------------------------------------------------------
+    ssize_t size() const
+    {
+        std::lock_guard<std::mutex> guard(m);
+        return threads.size();
+    }
 
 private:
-	mutable std::mutex m;
-	std::list<std::thread *> threads;
+    mutable std::mutex m;
+    std::list<std::thread *> threads;
 };
 // mixin uncopyable
 using ThreadGroup = Uncopyable<thread_group>;
@@ -71,10 +71,10 @@ using ThreadGroup = Uncopyable<thread_group>;
 template <typename F>
 std::thread* thread_group::create_thread(F threadfunc)
 {
-	std::lock_guard<std::mutex> guard(m);
-	std::unique_ptr<std::thread> new_thread(new std::thread(threadfunc));
-	threads.push_back(new_thread.get());
-	return new_thread.release();
+    std::lock_guard<std::mutex> guard(m);
+    std::unique_ptr<std::thread> new_thread(new std::thread(threadfunc));
+    threads.push_back(new_thread.get());
+    return new_thread.release();
 }
 
 #endif // BTCLITE_THREAD_INTERRUPT_H

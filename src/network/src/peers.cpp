@@ -3,12 +3,12 @@
 
 bool btclite::Peers::Add(const btclite::NetAddr &addr, const btclite::NetAddr& source, int64_t nTimePenalty)
 {
-	return true;
+    return true;
 }
 
 bool btclite::Peers::Add(const std::vector<btclite::NetAddr> &vAddr, const btclite::NetAddr& source, int64_t nTimePenalty)
 {
-	return true;
+    return true;
 }
 
 void btclite::Peers::Clear()
@@ -28,17 +28,17 @@ void btclite::Peers::Attempt(const btclite::NetAddr &addr, bool fCountFailure, i
 
 btclite::NetAddr btclite::Peers::Select(bool newOnly)
 {
-	btclite::NetAddr();
+    btclite::NetAddr();
 }
 
 btclite::NetAddr* btclite::Peers::Find(const btclite::NetAddr& addr, int *pnId)
 {
-	return nullptr;
+    return nullptr;
 }
 
 btclite::NetAddr* btclite::Peers::Create(const btclite::NetAddr &addr, const btclite::NetAddr &addrSource, int *pnId)
 {
-	return nullptr;
+    return nullptr;
 }
 
 void btclite::Peers::MakeTried(btclite::NetAddr& info, int nId)
@@ -63,7 +63,7 @@ void btclite::Peers::Good_(const btclite::NetAddr &addr, int64_t nTime)
 
 bool btclite::Peers::Add_(const btclite::NetAddr &addr, const btclite::NetAddr& source, int64_t nTimePenalty)
 {
-	return true;
+    return true;
 }
 
 void btclite::Peers::Attempt_(const btclite::NetAddr &addr, bool fCountFailure, int64_t nTime)
@@ -73,5 +73,5 @@ void btclite::Peers::Attempt_(const btclite::NetAddr &addr, bool fCountFailure, 
 
 btclite::NetAddr btclite::Peers::Select_(bool newOnly)
 {
-	return btclite::NetAddr();
+    return btclite::NetAddr();
 }

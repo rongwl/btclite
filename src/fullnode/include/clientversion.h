@@ -9,5 +9,5 @@
 #define PACKAGE_STRING "Btclite"
 
 #endif // HAVE_CONFIG_H
-	
+    
 #endif // BTCLITE_CLIENTVERSION_H

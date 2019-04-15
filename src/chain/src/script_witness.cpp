@@ -2,5 +2,5 @@
 
 std::string ScriptWitness::ToString() const
 {
-	return "";
+    return "";
 }

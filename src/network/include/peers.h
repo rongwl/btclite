@@ -9,36 +9,36 @@ namespace btclite {
 
 class Peers {
 public:
-	Peers()
-	{}
-	~Peers()
-	{}
-	
-	//-------------------------------------------------------------------------
-	// Add a single address.
+    Peers()
+    {}
+    ~Peers()
+    {}
+    
+    //-------------------------------------------------------------------------
+    // Add a single address.
     bool Add(const btclite::NetAddr &addr, const btclite::NetAddr& source, int64_t nTimePenalty = 0);
-	
-	//! Add multiple addresses.
+    
+    //! Add multiple addresses.
     bool Add(const std::vector<btclite::NetAddr> &vAddr, const btclite::NetAddr& source, int64_t nTimePenalty = 0);
-	
-	void Clear();
-	
-	//-------------------------------------------------------------------------
-	// Mark an entry as accessible.
+    
+    void Clear();
+    
+    //-------------------------------------------------------------------------
+    // Mark an entry as accessible.
     void Good(const btclite::NetAddr &addr, int64_t nTime);
-	
-	// Mark an entry as connection attempted to.
+    
+    // Mark an entry as connection attempted to.
     void Attempt(const btclite::NetAddr &addr, bool fCountFailure, int64_t nTime);
-	
-	// Choose an address to connect to.
+    
+    // Choose an address to connect to.
     btclite::NetAddr Select(bool newOnly = false);
-	
+    
 private:
-	// critical section to protect the inner data structures
+    // critical section to protect the inner data structures
     mutable CriticalSection cs_;
-	proto_peers::Peers peers_;
-	
-	//! Find an entry.
+    proto_peers::Peers peers_;
+    
+    //! Find an entry.
     btclite::NetAddr* Find(const btclite::NetAddr& addr, int *pnId = nullptr);
 
     // find an entry, creating it if necessary.

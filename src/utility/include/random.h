@@ -5,7 +5,7 @@
 
 class Random {
 public:
-	static uint64_t Get(uint64_t max);
+    static uint64_t Get(uint64_t max);
 };
 
 #endif // BTCLITE_RANDOM_H

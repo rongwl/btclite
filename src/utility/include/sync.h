@@ -18,60 +18,60 @@ void static inline DeleteLock(void*) {}
 template <typename Mutex>
 class CMutexLock {
 public:
-	CMutexLock(Mutex& mutex, const char *psz_name, const char *psz_file, int line, bool try_lock = false)
-		: lock(mutex, std::defer_lock)
-	{
-		if (try_lock) 
-			TryEnter(psz_name, psz_file, line);
-		else
-			Enter(psz_name, psz_file, line);
-	}
+    CMutexLock(Mutex& mutex, const char *psz_name, const char *psz_file, int line, bool try_lock = false)
+        : lock(mutex, std::defer_lock)
+    {
+        if (try_lock) 
+            TryEnter(psz_name, psz_file, line);
+        else
+            Enter(psz_name, psz_file, line);
+    }
 
-	CMutexLock(Mutex *pmutex, const char *psz_name, const char *psz_file, int line, bool try_lock = false)
-	{
-		if (!pmutex)
-			return;
-		lock = std::unique_lock<Mutex>(*pmutex, std::defer_lock);
-		if (try_lock)
-			TryEnter(psz_name, psz_file, line);
-		else
-			Enter(psz_name, psz_file, line);
-	}
+    CMutexLock(Mutex *pmutex, const char *psz_name, const char *psz_file, int line, bool try_lock = false)
+    {
+        if (!pmutex)
+            return;
+        lock = std::unique_lock<Mutex>(*pmutex, std::defer_lock);
+        if (try_lock)
+            TryEnter(psz_name, psz_file, line);
+        else
+            Enter(psz_name, psz_file, line);
+    }
 
-	~CMutexLock() 
-	{
-		if (lock.owns_lock())
-			LeaveCritical();
-	}
+    ~CMutexLock() 
+    {
+        if (lock.owns_lock())
+            LeaveCritical();
+    }
 
-	operator bool()
-	{
-		return lock.owns_lock();
-	}
+    operator bool()
+    {
+        return lock.owns_lock();
+    }
 private:
-	std::unique_lock<Mutex> lock;
+    std::unique_lock<Mutex> lock;
 
-	void Enter(const char *psz_name, const char *psz_file, int line)
-	{
-		EnterCritical(psz_name, psz_file, line, (void*)lock.mutex());
-		lock.lock();
-	}
-	bool TryEnter(const char *psz_name, const char *psz_file, int line)
-	{
-		EnterCritical(psz_name, psz_file, line, (void*)lock.mutex(), true);
-		lock.try_lock();
-		if (!lock.owns_lock())
-			LeaveCritical();
-		return lock.owns_lock();
-	}
+    void Enter(const char *psz_name, const char *psz_file, int line)
+    {
+        EnterCritical(psz_name, psz_file, line, (void*)lock.mutex());
+        lock.lock();
+    }
+    bool TryEnter(const char *psz_name, const char *psz_file, int line)
+    {
+        EnterCritical(psz_name, psz_file, line, (void*)lock.mutex(), true);
+        lock.try_lock();
+        if (!lock.owns_lock())
+            LeaveCritical();
+        return lock.owns_lock();
+    }
 };
 
 class CriticalSection : public std::recursive_mutex {
 public:
-	~CriticalSection()
-	{
-		DeleteLock((void*)this);
-	}
+    ~CriticalSection()
+    {
+        DeleteLock((void*)this);
+    }
 };
 
 using CriticalBlock = CMutexLock<CriticalSection>;
@@ -112,7 +112,7 @@ public:
         }
         condition_.notify_one();
     }
-	
+    
 private:
     std::condition_variable condition_;
     std::mutex mutex_;
@@ -123,11 +123,11 @@ private:
 class SemaphoreGrant
 {
 public:
-	SemaphoreGrant()
-		: sem_(nullptr), have_grant_(false) {}
+    SemaphoreGrant()
+        : sem_(nullptr), have_grant_(false) {}
 
     explicit SemaphoreGrant(Semaphore& sem, bool fTry = false)
-		: sem_(&sem), have_grant_(false)
+        : sem_(&sem), have_grant_(false)
     {
         if (fTry)
             TryAcquire();
@@ -139,7 +139,7 @@ public:
     {
         Release();
     }
-	
+    
     void Acquire()
     {
         if (have_grant_)
