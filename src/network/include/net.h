@@ -75,13 +75,13 @@ public:
     MessageHeader(uint32_t magic, const std::string& command, uint32_t payload_length, uint32_t checksum)
         : magic_(magic), command_(command), payload_length_(payload_length), checksum_(checksum) {}
     
-    MessageHeader(uint32_t magic, const std::string&& command, uint32_t payload_length, uint32_t checksum) noexcept
+    MessageHeader(uint32_t magic, std::string&& command, uint32_t payload_length, uint32_t checksum) noexcept
         : magic_(magic), command_(std::move(command)), payload_length_(payload_length), checksum_(checksum) {}
     
     MessageHeader(const MessageHeader& header)
         : MessageHeader(header.magic_, header.command_, header.payload_length_, header.checksum_) {}
     
-    MessageHeader(const MessageHeader&& header) noexcept
+    MessageHeader(MessageHeader&& header) noexcept
         : MessageHeader(header.magic_, std::move(header.command_), header.payload_length_, header.checksum_) {}
 
     
@@ -113,6 +113,20 @@ public:
     
     //-------------------------------------------------------------------------
     bool IsValid(NetworkEnv env) const;
+    
+    //-------------------------------------------------------------------------
+    bool operator==(const MessageHeader& b) const
+    {
+        return (magic_ == b.magic_) &&
+               (command_ == b.command_) &&
+               (payload_length_ == b.payload_length_) &&
+               (checksum_ == b.checksum_);
+    }
+    
+    bool operator!=(const MessageHeader& b) const
+    {
+        return !(*this == b);
+    }
     
     //-------------------------------------------------------------------------
     uint32_t magic() const

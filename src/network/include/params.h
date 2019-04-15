@@ -6,7 +6,7 @@
 
 struct Seed {
     std::string host_;
-    uint16_t prot_;
+    uint16_t port_;
 };
 
 struct Seed6 {

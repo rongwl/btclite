@@ -5,11 +5,16 @@ bin_PROGRAMS += unit_test/test_btclite
 
 
 # test_btclite binary #
-TEST_BTCLITE_SOURCES = unit_test/main.cpp
+TEST_BTCLITE_SOURCES = unit_test/main.cpp \
+                       unit_test/network/net.cpp
 
 
 unit_test_test_btclite_SOURCES = $(TEST_BTCLITE_SOURCES)
-unit_test_test_btclite_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_CFLAGS) $(BTCLITE_INCLUDES)
+unit_test_test_btclite_CPPFLAGS = $(AM_CPPFLAGS) \
+                                  $(GTEST_CFLAGS) \
+                                  $(GLOG_CFLAGS) \
+                                  $(BOTAN_CFLAGS) \
+                                  $(BTCLITE_INCLUDES)
 unit_test_test_btclite_LDADD = $(LIBBTCLITE_CHAIN) \
                                $(LIBBTCLITE_CRYPTO) \
                                $(LIBBTCLITE_FULLNODE) \
@@ -19,6 +24,7 @@ unit_test_test_btclite_LDADD += $(GTEST_LIBS) \
                                 $(PTHREAD_LIBS) \
                                 $(STDCPP_FILESYSTEM_LIBS) \
                                 $(PROTOBUF_LIBS) \
-                                $(BOTAN_LIBS)
+                                $(BOTAN_LIBS) \
+                                $(GLOG_LIBS)
 
 
