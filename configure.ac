@@ -31,7 +31,7 @@ dnl Require protobuf
 PKG_CHECK_MODULES(PROTOBUF, protobuf >= 2.4.0)
 AC_CHECK_PROG([PROTOC], [protoc], [protoc])
 AS_IF([test "x${PROTOC}" == "x"],
-		[AC_MSG_ERROR([ProtoBuf compiler "protoc" not found.])])
+        [AC_MSG_ERROR([ProtoBuf compiler "protoc" not found.])])
 
 dnl Require botan
 PKG_CHECK_MODULES(BOTAN, botan-2 >= 2.4.0)
@@ -41,37 +41,37 @@ PKG_CHECK_MODULES(GLOG, libglog >= 0.3.5)
 
 dnl Require googletest
 PKG_CHECK_MODULES(GTEST, gtest >= 1.8.1)
-	
+    
  # Initialize libtool.
 LT_INIT([pic-only])
 
 # Enable debug
 AC_ARG_ENABLE([debug],
-	[AS_HELP_STRING([--enable-debug],
+    [AS_HELP_STRING([--enable-debug],
                     [use debug compiler flags and macros (default is no)])],
-	[enable_debug=$enableval],
-	[enable_debug=no])
+    [enable_debug=$enableval],
+    [enable_debug=no])
 
 if test "x$enable_debug" = xyes; then
-	CXXFLAGS="$CXXFLAGS -g3 -O0"
+    CXXFLAGS="$CXXFLAGS -g3 -O0"
 fi
 
 # Checks lockorder
 AC_ARG_ENABLE([check-lockorder],
 [AS_HELP_STRING([--enable-check-lockorder],
-				[use checking lockorder macro (default is yes)])],
+                [use checking lockorder macro (default is yes)])],
 [enable_check_lockorder=$enableval],
 [enable_check_lockorder=yes])
 
 if test "x$enable_check_lockorder" = xyes; then
-	CPPFLAGS="$CPPFLAGS -DCHECK_LOCKORDER"
+    CPPFLAGS="$CPPFLAGS -DCHECK_LOCKORDER"
 fi
 
 # Checks unit tests
 AC_ARG_ENABLE(unit-tests,
-		AS_HELP_STRING([--disable-unit-tests],[do not compile unit tests (default is to compile)]),
-		[enable_unit_tests=$enableval],
-		[enable_unit_tests=yes])
+        AS_HELP_STRING([--disable-unit-tests],[do not compile unit tests (default is to compile)]),
+        [enable_unit_tests=$enableval],
+        [enable_unit_tests=yes])
 
 AC_MSG_CHECKING([whether to build test_btclite])
 if test x$enable_unit_tests = xyes; then
@@ -105,6 +105,6 @@ AX_PTHREAD
 #AC_SUBST(BOOST_LIBS)
 
 AC_CONFIG_FILES([Makefile
-	   			src/Makefile])
+                src/Makefile])
 
 AC_OUTPUT

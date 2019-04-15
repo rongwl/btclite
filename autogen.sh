@@ -7,7 +7,7 @@ cd "$srcdir"
 
 if which glibtoolize 2>/dev/null
 then
-	glibtoolize && autoreconf --install --force --warnings=all
+    glibtoolize && autoreconf --install --force --warnings=all
 else
-	libtoolize && autoreconf --install --force --warnings=all
+    libtoolize && autoreconf --install --force --warnings=all
 fi
