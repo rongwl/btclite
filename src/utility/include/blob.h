@@ -10,10 +10,25 @@
 template <size_t size>
 using Bytes = std::array<uint8_t, size>;
 
-/** Template base class for fixed-sized opaque blobs. (Little endian) */
+/** Template class for fixed-sized opaque blobs. (Little endian) */
 template <uint32_t nBITS>
-class Blob : public Bytes<nBITS/8>{
+class Blob : public Bytes<nBITS/8> {
 public:
+    static constexpr int WIDTH = nBITS / 8;
+    
+    Blob()
+    {
+        Clear();
+    }
+    
+    Blob(std::initializer_list<uint8_t> init)
+    {   
+        Clear();
+        for (auto it1 = this->begin(), it2 = init.begin(); it1 != this->end() && it2 != init.end(); it1++, it2++)
+            *it1 = *it2;
+    }
+
+    //-------------------------------------------------------------------------
     bool IsNull() const
     {
         for (auto it : *this) {
@@ -21,7 +36,8 @@ public:
                 return false;
         }
         return true;
-    }    
+    }
+    
     void Clear()
     {
         std::memset(&this->front(), 0, WIDTH);
@@ -33,18 +49,14 @@ public:
     {
         s.write(reinterpret_cast<const char*>(&this->front()), this->size());
     }
+    
     template <typename Stream>
     void UnSerialize(Stream& s)
     {
         s.read(reinterpret_cast<char*>(&this->front()), this->size());
     }
     
-    //-------------------------------------------------------------------------
-    int Compare(const Blob& b) const
-    {
-        return std::memcmp(&this->front(), &b.front(), WIDTH);
-    }
-    
+    //-------------------------------------------------------------------------    
     std::string ToString() const
     {
         return Hex();
@@ -72,14 +84,6 @@ public:
         Clear();
         HexDecode(str, this->begin(), this->end());
     }
-    
-protected:
-    Blob()
-    {
-        Clear();
-    }
-
-    static constexpr int WIDTH = nBITS / 8;
 };
 
 

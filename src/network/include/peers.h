@@ -9,6 +9,17 @@ namespace btclite {
 
 class Peers {
 public:
+    // Add a single address.
+    bool Add(const btclite::NetAddr &addr, const btclite::NetAddr& source, int64_t nTimePenalty = 0);
+
+private:
+    // critical section to protect the inner data structures
+    mutable CriticalSection cs_;
+    proto_peers::Peers peers_;
+};
+/*
+class Peers {
+public:
     Peers()
     {}
     ~Peers()
@@ -66,7 +77,7 @@ private:
     // Select an address to connect to, if newOnly is set to true, only the new table is selected from.
     btclite::NetAddr Select_(bool newOnly);
 };
-
-}
+*/
+} //namespace btclite
 
 #endif // BTCLITE_PEERS_H

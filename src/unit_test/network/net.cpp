@@ -6,7 +6,7 @@
 #include "constants.h"
 #include "net.h"
 
-TEST(TestMessageHeader, TestGetSet)
+TEST(MessageHeaderTest, Methord_GetSet)
 {
     MessageHeader header;
     header.set_magic(main_magic);
@@ -23,7 +23,7 @@ TEST(TestMessageHeader, TestGetSet)
     EXPECT_EQ("foo", header.command());
 }
 
-TEST(TestMessageHeader, TestIsValid)
+TEST(MessageHeaderTest, Methord_IsValid)
 {
     MessageHeader header;
     std::vector<NetworkEnv> env_vec = { NetworkEnv::mainnet, NetworkEnv::testnet, NetworkEnv::regtest };
@@ -57,7 +57,7 @@ TEST(TestMessageHeader, TestIsValid)
     EXPECT_FALSE(header.IsValid(NetworkEnv::mainnet));
 }
 
-TEST(TestMessageHeader, TestConstructor1)
+TEST(MessageHeaderTest, Constructor1)
 {
     MessageHeader header;
     std::vector<NetworkEnv> env_vec = { NetworkEnv::mainnet, NetworkEnv::testnet, NetworkEnv::regtest };
@@ -66,7 +66,7 @@ TEST(TestMessageHeader, TestConstructor1)
         EXPECT_FALSE(header.IsValid(env));
 }
 
-TEST(TestMessageHeader, TestConstructor2)
+TEST(MessageHeaderTest, TestConstructor2)
 {
     MessageHeader header(main_magic);
     EXPECT_FALSE(header.IsValid(NetworkEnv::mainnet));
@@ -87,7 +87,7 @@ TEST(TestMessageHeader, TestConstructor3)
     EXPECT_EQ("foo", header2.command());
 }
 
-TEST(TestMessageHeader, TestConstructor4)
+TEST(MessageHeaderTest, TestConstructor4)
 {
     const MessageHeader header1(main_magic, btc_message::Version::command, max_message_size, 0x12345678);
     MessageHeader header2(header1);
@@ -99,7 +99,7 @@ TEST(TestMessageHeader, TestConstructor4)
     EXPECT_TRUE(header1 == header2);
 }
 
-TEST(TestMessageHeader, TestConstructor5)
+TEST(MessageHeaderTest, TestConstructor5)
 {
     MessageHeader header1(main_magic, btc_message::Version::command, max_message_size, 0x12345678);
     MessageHeader header2(std::move(header1));
@@ -110,7 +110,7 @@ TEST(TestMessageHeader, TestConstructor5)
     EXPECT_EQ(0x12345678, header2.checksum());
 }
 
-TEST(TestMessageHeader, TestCompare)
+TEST(MessageHeaderTest, Operator_equal)
 {
     MessageHeader header1(main_magic, btc_message::Version::command, max_message_size, 0x12345678);
     MessageHeader header2(header1);
@@ -133,5 +133,5 @@ TEST(TestMessageHeader, TestCompare)
 }
 
 
-TEST(TestMessage, TestConstructor1)
+TEST(MessageTest, Constructor1)
 {}

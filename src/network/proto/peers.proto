@@ -14,10 +14,13 @@ message Peer {
 	uint32 attemps = 3; 
 	
 	// is in tried set?
-	bool tried = 4;
+	//bool tried = 4;
 }
 
-
+message Peers {
+    repeated Peer new_peers = 1;
+    repeated Peer tried_peers = 2;
+}
 /* Stochastic peers manager, merge from bitcoin0.16.3
  *
  * Design goals:
@@ -43,6 +46,7 @@ message Peer {
  *    * Several indexes are kept for high performance. Defining DEBUG_ADDRMAN will introduce frequent (and expensive)
  *      consistency checks for the entire data structure.
  */
+/*
 message Peers {
 	// last used Id number
 	uint32 ids = 1;
@@ -62,3 +66,4 @@ message Peers {
 	// list of "new" buckets
 	repeated sint32 vv_new = 6;
 }
+*/

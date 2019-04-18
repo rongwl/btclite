@@ -10,7 +10,7 @@
 class OutPoint {
 public:
     OutPoint()
-        : index_(UINT32_MAX) {}
+        : index_(std::numeric_limits<uint32_t>::max()) {}
     
     OutPoint(const Hash256& hash, uint32_t index)
         : prev_hash_(hash), index_(index) {}
@@ -26,11 +26,11 @@ public:
     void Clear()
     {
         prev_hash_.Clear();
-        index_ = UINT32_MAX;
+        index_ = std::numeric_limits<uint32_t>::max();
     }
     bool IsNull() const
     {
-        return (prev_hash_.IsNull() && index_ == UINT32_MAX);
+        return (prev_hash_.IsNull() && index_ == std::numeric_limits<uint32_t>::max());
     }
     size_t Size() const
     {
@@ -374,7 +374,7 @@ private:
     uint64_t value_;
     Script script_pub_key_;
 
-    static constexpr uint64_t null_value = UINT64_MAX;
+    static constexpr uint64_t null_value = std::numeric_limits<uint64_t>::max();
 };
 
 class Transaction {

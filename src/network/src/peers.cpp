@@ -1,6 +1,6 @@
 #include "peers.h"
 
-
+/*
 bool btclite::Peers::Add(const btclite::NetAddr &addr, const btclite::NetAddr& source, int64_t nTimePenalty)
 {
     return true;
@@ -75,3 +75,4 @@ btclite::NetAddr btclite::Peers::Select_(bool newOnly)
 {
     return btclite::NetAddr();
 }
+*/

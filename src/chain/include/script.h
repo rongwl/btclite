@@ -169,10 +169,10 @@ public:
     //-------------------------------------------------------------------------
     int IntValue() const
     {
-        if (value() > INT32_MAX)
-            return INT32_MAX;
-        if (value() < INT32_MIN)
-            return INT32_MIN;
+        if (value() > std::numeric_limits<int32_t>::max())
+            return std::numeric_limits<int32_t>::max();
+        if (value() < std::numeric_limits<int32_t>::min())
+            return std::numeric_limits<int32_t>::min();
         return value();
     }
     std::vector<uint8_t> BytesValue() const

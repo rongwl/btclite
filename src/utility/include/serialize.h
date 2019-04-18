@@ -217,11 +217,11 @@ void Serializer<Stream>::SerWriteVarInt(const uint64_t count)
     if (count < varint_16bits) {
         SerWriteData(static_cast<uint8_t>(count));
     }
-    else if (count <= UINT16_MAX) {
+    else if (count <= std::numeric_limits<uint16_t>::max()) {
         SerWriteData(varint_16bits);
         SerWriteData(static_cast<uint16_t>(count));
     }
-    else if (count <= UINT32_MAX) {
+    else if (count <= std::numeric_limits<uint32_t>::max()) {
         SerWriteData(varint_32bits);
         SerWriteData(static_cast<uint32_t>(count));
     }
@@ -248,12 +248,12 @@ uint64_t Serializer<Stream>::SerReadVarInt()
     }
     else if (count == varint_32bits) {
         SerReadData(reinterpret_cast<uint32_t*>(&varint));
-        if (varint <= UINT16_MAX)
+        if (varint <= std::numeric_limits<uint16_t>::max())
             throw std::ios_base::failure("non-canonical SerReadVarInt()");
     }
     else {
         SerReadData(&varint);
-        if (varint <= UINT32_MAX)
+        if (varint <= std::numeric_limits<uint32_t>::max())
             throw std::ios_base::failure("non-canonical SerReadVarInt()");
     }
     if (varint > max_vardata_size)

@@ -6,33 +6,18 @@
 #include "Assert.h"
 #include "blob.h"
 
-template <uint32_t nBITS>
-class Uint : public Blob<nBITS> {
+
+class Uint128 : public Blob<128> {
 public:
-    Uint()
-    {
-        this->Clear();
-    }
-    
-    // Operation
-    //-------------------------------------------------------------------------
-    friend bool operator==(const Uint& a, const Uint& b)
-    {
-        return (a.Compare(b) == 0);
-    }
-    friend bool operator!=(const Uint& a, const Uint& b)
-    {
-        return !(a == b);
-    }
-    friend bool operator<(const Uint& a, const Uint& b)
-    {
-        return (a.Compare(b) < 0);
-    }
-    friend bool operator>(const Uint& a, const Uint& b)
-    {
-        return (a.Compare(b) > 0);
-    }
+    using Blob<128>::Blob;
+
+    Uint128(uint64_t low, uint64_t high) 
+    { 
+        std::memcpy(&this->front(), &low, sizeof(uint64_t));
+        std::memcpy(this->data()+sizeof(uint64_t), &high, sizeof(uint64_t));
+    }   
 };
+
 
 template <typename T>
 class ArithType {

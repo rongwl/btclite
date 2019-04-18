@@ -1,30 +1,59 @@
-TESTS = unit_test/test_btclite
-bin_PROGRAMS += unit_test/test_btclite
+TESTS = unit_test/test_network \
+        unit_test/test_crypto \
+        unit_test/test_util
+bin_PROGRAMS +=  unit_test/test_network \
+                 unit_test/test_crypto \
+                 unit_test/test_util
 #TEST_SRCDIR = unit_test
 #TEST_BINARY = unit_test/test_btclite
 
 
-# test_btclite binary #
-TEST_BTCLITE_SOURCES = unit_test/main.cpp \
-                       unit_test/network/net.cpp
+# test_network binary #
+unit_test_test_network_SOURCES = unit_test/network/test_network.cpp \
+                                 unit_test/network/net.cpp \
+                                 unit_test/network/params.cpp
 
-
-unit_test_test_btclite_SOURCES = $(TEST_BTCLITE_SOURCES)
-unit_test_test_btclite_CPPFLAGS = $(AM_CPPFLAGS) \
+unit_test_test_network_CPPFLAGS = $(AM_CPPFLAGS) \
                                   $(GTEST_CFLAGS) \
                                   $(GLOG_CFLAGS) \
                                   $(BOTAN_CFLAGS) \
                                   $(BTCLITE_INCLUDES)
-unit_test_test_btclite_LDADD = $(LIBBTCLITE_CHAIN) \
+unit_test_test_network_LDADD = $(LIBBTCLITE_CHAIN) \
                                $(LIBBTCLITE_CRYPTO) \
                                $(LIBBTCLITE_FULLNODE) \
                                $(LIBBTCLITE_NETWORK) \
                                $(LIBBTCLITE_UTIL)
-unit_test_test_btclite_LDADD += $(GTEST_LIBS) \
+unit_test_test_network_LDADD += $(GTEST_LIBS) \
                                 $(PTHREAD_LIBS) \
-                                $(STDCPP_FILESYSTEM_LIBS) \
                                 $(PROTOBUF_LIBS) \
                                 $(BOTAN_LIBS) \
                                 $(GLOG_LIBS)
 
 
+# test_crypto binary #
+unit_test_test_crypto_SOURCES = unit_test/crypto/test_crypto.cpp \
+                                unit_test/crypto/hash.cpp
+
+unit_test_test_crypto_CPPFLAGS = $(AM_CPPFLAGS) \
+                                 $(GTEST_CFLAGS) \
+                                 $(BOTAN_CFLAGS) \
+                                 $(BTCLITE_INCLUDES)
+unit_test_test_crypto_LDADD = $(LIBBTCLITE_CRYPTO) \
+                              $(LIBBTCLITE_UTIL)
+unit_test_test_crypto_LDADD += $(GTEST_LIBS) \
+                               $(PTHREAD_LIBS) \
+                               $(BOTAN_LIBS)
+
+
+# test_util binary #
+unit_test_test_util_SOURCES = unit_test/utility/test_util.cpp \
+                              unit_test/utility/random.cpp
+
+unit_test_test_util_CPPFLAGS = $(AM_CPPFLAGS) \
+                               $(GTEST_CFLAGS) \
+                               $(BOTAN_CFLAGS) \
+                               $(BTCLITE_INCLUDES)
+unit_test_test_util_LDADD = $(LIBBTCLITE_UTIL)
+unit_test_test_util_LDADD += $(GTEST_LIBS) \
+                             $(PTHREAD_LIBS) \
+                             $(BOTAN_LIBS)

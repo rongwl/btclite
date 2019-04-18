@@ -7,18 +7,23 @@
 struct Seed {
     std::string host_;
     uint16_t port_;
-};
-
-struct Seed6 {
-    uint8_t addr_[16];
-    uint16_t port_;
+    
+    bool operator==(const Seed& b) const
+    {
+        return (host_ == b.host_ && port_ == b.port_);
+    }
+    
+    bool operator!=(const Seed& b) const
+    {
+        return !(*this == b);
+    }
 };
 
 namespace Network {
 
 class Params {
 public:
-    void Init(NetworkEnv env);
+    bool Init(NetworkEnv env);
     
     //-------------------------------------------------------------------------
     MessageHeader::MsgMagic msg_magic()
@@ -36,16 +41,10 @@ public:
         return seeds_;
     }
     
-    const std::vector<Seed6>& seeds6() const
-    {
-        return seeds6_;
-    }
-    
 private:
     MessageHeader::MsgMagic msg_magic_;
     uint16_t default_port_;
     std::vector<Seed> seeds_;
-    std::vector<Seed6> seeds6_;
 };
 
 } // namespace Network

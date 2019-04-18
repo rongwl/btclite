@@ -58,7 +58,7 @@ public:
         PRUNE       = (1 <<  5),
         LIBEVENT    = (1 <<  6),
         COINDB      = (1 <<  7),
-        ALL         = UINT16_MAX,
+        ALL         = std::numeric_limits<uint16_t>::max(),
     };
     
     enum Gloglevel : uint8_t {

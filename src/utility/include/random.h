@@ -3,9 +3,14 @@
 
 #include <cstdint>
 
+#include "arithmetic.h"
+#include "hash.h"
+
+
 class Random {
 public:
     static uint64_t Get(uint64_t max);
 };
+
 
 #endif // BTCLITE_RANDOM_H

@@ -41,20 +41,32 @@ void DoubleSha256(const std::string &in, Hash256 *out)
 
 SipHasher& SipHasher::Update(uint64_t in)
 {
-    mac->set_key(key);
+    if (!is_set_key_) {
+        mac_->set_key(key_);
+        is_set_key_ = true;
+    }
+    mac_->update(reinterpret_cast<const uint8_t*>(&in), sizeof(uint64_t));
     
     return *this;
 }
 
 SipHasher& SipHasher::Update(const uint8_t *in, size_t length)
 {
-    mac->set_key(key);
+    if (!is_set_key_) {
+        mac_->set_key(key_);
+        is_set_key_ = true;
+    }
+    mac_->update(in, length);
     
     return *this;
 }
 
 uint64_t SipHasher::Final()
 {
-    return 0;
+    uint64_t ret;
+    mac_->final(reinterpret_cast<uint8_t *>(&ret));
+    is_set_key_ = false;
+    
+    return ret;
 }
 
