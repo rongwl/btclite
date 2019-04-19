@@ -1,8 +1,9 @@
+#include <botan/system_rng.h>
 #include <random>
 
 #include "random.h"
 
-uint64_t Random::Get(uint64_t max)
+uint64_t Random::GetUint64(uint64_t max)
 {
     if (max == 0)
         return 0;
@@ -12,4 +13,101 @@ uint64_t Random::Get(uint64_t max)
     std::uniform_int_distribution<uint64_t> dis(0, max); 
     
     return dis(rng);
+}
+
+Hash256 Random::GetHash256() 
+{
+    Botan::System_RNG rng;
+    Hash256 hash;
+    rng.randomize(hash.data(), hash.size());
+    
+    return hash;
+}
+
+FastRandomContext::FastRandomContext(bool deterministic)
+    : rng_(), requires_seed_(!deterministic), bytebuf_size_(0), bitbuf_size_(0)
+{
+    if (!deterministic) {
+        return;
+    }
+    Hash256 seed;
+    rng_.add_entropy(seed.data(), seed.size());
+}
+
+uint64_t FastRandomContext::RandBits(int bits) {
+    if (bits == 0) {
+        return 0;
+    } else if (bits > 32) {
+        return Rand64() >> (64 - bits);
+    } else {
+        if (bitbuf_size_ < bits)
+            FillBitBuffer();
+        uint64_t ret = bitbuf_ & (~(uint64_t)0 >> (64 - bits));
+        bitbuf_ >>= bits;
+        bitbuf_size_ -= bits;
+
+        return ret;
+    }
+}
+
+uint64_t FastRandomContext::RandRange(uint64_t range)
+{
+    --range;
+    int bits = CountBits(range);
+
+    while (true) {
+        uint64_t ret = RandBits(bits);
+        if (ret <= range)
+            return ret;
+    }
+}
+
+void FastRandomContext::RandomSeed()
+{
+    Hash256 seed = Random::GetHash256();
+    rng_.add_entropy(seed.data(), seed.size());
+    requires_seed_ = false;
+}
+
+std::vector<unsigned char> FastRandomContext::RandBytes(size_t len)
+{
+    std::vector<unsigned char> ret(len);
+    if (len > 0) {
+        rng_.randomize(ret.data(), len);
+    }
+    
+    return ret;
+}
+
+Hash256 FastRandomContext::Rand256()
+{
+    if (bytebuf_size_ < 32) {
+        FillByteBuffer();
+    }
+    Hash256 ret;
+    memcpy(ret.begin(), bytebuf_ + 64 - bytebuf_size_, 32);
+    bytebuf_size_ -= 32;
+    
+    return ret;
+}
+
+void FastRandomContext::FillByteBuffer()
+{
+    if (requires_seed_) {
+        RandomSeed();
+    }
+
+    rng_.randomize(bytebuf_, sizeof(bytebuf_));
+    bytebuf_size_ = sizeof(bytebuf_);
+}
+
+uint64_t FastRandomContext::CountBits(uint64_t x)
+{
+    int ret = 0;
+    while (x) {
+        x >>= 1;
+        ++ret;
+    }
+    
+    return ret;
 }

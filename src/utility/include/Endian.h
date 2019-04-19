@@ -29,12 +29,36 @@ void ToLittleEndian(T in, Bytes<sizeof(T)> *out)
 }
 
 template <typename T, typename Iterator>
+T FromBigEndian(Iterator begin)
+{
+    ASSERT_UNSIGNED(T);    
+    T out = 0;
+    auto end = begin + sizeof(T);
+    while (begin != end)
+        out = (out << 8) | static_cast<T>(*begin++);
+    
+    return out;
+}
+
+template <typename T, typename Iterator>
 void FromBigEndian(Iterator begin, Iterator end, T *out)
 {
     ASSERT_UNSIGNED(T);
     ASSERT_NULL(out);
     while (begin != end)
         *out = (*out << 8) | static_cast<T>(*begin++);
+}
+
+template <typename T, typename Iterator>
+T FromLittleEndian(Iterator begin)
+{
+    ASSERT_UNSIGNED(T);    
+    T out = 0;
+    size_t i = 0;
+    while (i < sizeof(T)) 
+        out |= static_cast<T>(*begin++) << (8 * i++);
+    
+    return out;
 }
 
 template <typename T, typename Iterator>

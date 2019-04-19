@@ -133,13 +133,13 @@ bool Script::Pop(std::vector<uint8_t>::const_iterator& pc, const Opcode& in, std
     else if (in == Opcode::OP_PUSHDATA2) {
         if (pc + 2 > data_.end())
             return false;
-        FromLittleEndian(pc, pc+2, &size);
+        size = FromLittleEndian<uint16_t>(pc);
         pc += 2;
     }
     else if (in == Opcode::OP_PUSHDATA4) {
         if (pc + 4 > data_.end())
             return false;
-        FromLittleEndian(pc, pc+4, &size);
+        size = FromLittleEndian<uint32_t>(pc);
         pc += 4;
     }
     

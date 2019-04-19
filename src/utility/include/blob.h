@@ -13,9 +13,7 @@ using Bytes = std::array<uint8_t, size>;
 /** Template class for fixed-sized opaque blobs. (Little endian) */
 template <uint32_t nBITS>
 class Blob : public Bytes<nBITS/8> {
-public:
-    static constexpr int WIDTH = nBITS / 8;
-    
+public:    
     Blob()
     {
         Clear();
@@ -40,7 +38,12 @@ public:
     
     void Clear()
     {
-        std::memset(&this->front(), 0, WIDTH);
+        std::memset(&this->front(), 0, width_);
+    }
+    
+    size_t size() const
+    {
+        return width_;
     }
     
     //-------------------------------------------------------------------------
@@ -84,6 +87,9 @@ public:
         Clear();
         HexDecode(str, this->begin(), this->end());
     }
+
+private:
+    uint32_t width_ = nBITS / 8;
 };
 
 
