@@ -13,9 +13,20 @@ public:
 
     Uint128(uint64_t low, uint64_t high) 
     { 
-        std::memcpy(&this->front(), &low, sizeof(uint64_t));
+        std::memcpy(this->data(), &low, sizeof(uint64_t));
         std::memcpy(this->data()+sizeof(uint64_t), &high, sizeof(uint64_t));
     }   
+};
+
+class Uint256 : public Blob<256> {
+public:
+    using Blob<256>::Blob;
+    
+    Uint256(const Uint128& low, const Uint128& high)
+    {
+        std::memcpy(this->data(), low.data(), low.size());
+        std::memcpy(this->data()+low.size(), high.data(), high.size());
+    }
 };
 
 

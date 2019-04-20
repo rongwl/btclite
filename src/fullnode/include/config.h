@@ -21,11 +21,13 @@
 
 
 class FullNodeArgs : public Args {
-public:
+public:    
     bool Init(int argc, const char* const argv[]);
     bool InitParameters();
 
 private:
+    const std::string bin_name_ = "btc-fullnode";
+    
     bool Parse(int argc, const char* const argv[]);
     void PrintUsage();
 };

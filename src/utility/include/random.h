@@ -12,7 +12,7 @@
 class Random {
 public:
     static uint64_t GetUint64(uint64_t max);
-    static Hash256 GetHash256();
+    static Uint256 GetUint256();
 };
 
 /* 
@@ -26,7 +26,7 @@ public:
     explicit FastRandomContext(bool deterministic = false);
 
     /** Initialize with explicit seed (only for testing) */
-    explicit FastRandomContext(const Hash256& seed)
+    explicit FastRandomContext(const Uint256& seed)
         :  rng_(Botan::secure_vector<uint8_t>(seed.begin(), seed.end())), requires_seed_(false), bytebuf_size_(0), bitbuf_size_(0) {}
 
     //-------------------------------------------------------------------------
@@ -56,7 +56,7 @@ public:
     }
 
     /** generate a random uint256. */
-    Hash256 Rand256();
+    Uint256 Rand256();
 
     /** Generate a random boolean. */
     bool RandBool()

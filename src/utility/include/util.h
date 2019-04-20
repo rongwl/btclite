@@ -27,6 +27,8 @@ namespace fs = std::experimental::filesystem;
 #define GLOBAL_OPTION_DEBUG    "debug"
 #define GLOBAL_OPTION_CONF     "conf"
 #define GLOBAL_OPTION_LOGLEVEL "loglevel"
+#define GLOBAL_OPTION_TESTNET  "testnet"
+#define GLOBAL_OPTION_REGTEST  "regtest"
 
 
 class SigMonitor {
@@ -63,7 +65,9 @@ public:
 };
 
 class Args {
-public:    
+public:
+    using InvalidException = std::runtime_error;
+    
     virtual bool Init(int argc, const char * const argv[]) = 0;
     virtual bool Parse(int argc, const char* const argv[]) = 0;
     virtual bool InitParameters();

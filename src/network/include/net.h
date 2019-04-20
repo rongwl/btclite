@@ -22,6 +22,9 @@ using Socket = int;
     
 class LocalNetConfig {
 public:
+    LocalNetConfig()
+        : local_services_(NODE_NONE), local_addrs_() {}
+    
     void LookupLocalAddrs();
     
     ServiceFlags local_services() const

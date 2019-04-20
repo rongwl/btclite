@@ -3,18 +3,18 @@
 
 bool FullNodeMain::Init()
 {
-    if (!args_.Init(argc(), argv()))
+    if (!args_.Init(argc(), argv())) 
         return false;
-    
+
     if (!InitDataFiles())
         return false;
-    
+
     if (!LoadConfigFile())
         return false;
 
     if (!args_.InitParameters())
         return false;
-    
+
     if (!BasicSetup())
         return false;
 
@@ -69,5 +69,18 @@ bool FullNodeMain::LoadConfigFile()
     return args_.ParseFromFile(data_files_.config_file().c_str());
 }
 
+bool FullNodeMain::InitNetwork()
+{
+    NetworkEnv env;
+    
+    if (args_.IsArgSet(GLOBAL_OPTION_TESTNET))
+        env = NetworkEnv::testnet;
+    else if (args_.IsArgSet(GLOBAL_OPTION_REGTEST))
+        env = NetworkEnv::regtest;
+    else
+        env = NetworkEnv::mainnet;
+        
+    return network_.Init(env);
+}
 
 

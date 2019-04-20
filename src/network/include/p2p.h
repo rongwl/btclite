@@ -10,7 +10,7 @@
 #include "thread.h"
 
 class P2P {
-public:
+public:    
     bool Init(NetworkEnv env);
     bool Start();
     bool Interrupt();

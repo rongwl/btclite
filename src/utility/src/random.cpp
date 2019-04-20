@@ -15,10 +15,10 @@ uint64_t Random::GetUint64(uint64_t max)
     return dis(rng);
 }
 
-Hash256 Random::GetHash256() 
+Uint256 Random::GetUint256() 
 {
     Botan::System_RNG rng;
-    Hash256 hash;
+    Uint256 hash;
     rng.randomize(hash.data(), hash.size());
     
     return hash;
@@ -30,7 +30,7 @@ FastRandomContext::FastRandomContext(bool deterministic)
     if (!deterministic) {
         return;
     }
-    Hash256 seed;
+    Uint256 seed;
     rng_.add_entropy(seed.data(), seed.size());
 }
 
@@ -64,7 +64,7 @@ uint64_t FastRandomContext::RandRange(uint64_t range)
 
 void FastRandomContext::RandomSeed()
 {
-    Hash256 seed = Random::GetHash256();
+    Uint256 seed = Random::GetUint256();
     rng_.add_entropy(seed.data(), seed.size());
     requires_seed_ = false;
 }
@@ -79,12 +79,12 @@ std::vector<unsigned char> FastRandomContext::RandBytes(size_t len)
     return ret;
 }
 
-Hash256 FastRandomContext::Rand256()
+Uint256 FastRandomContext::Rand256()
 {
     if (bytebuf_size_ < 32) {
         FillByteBuffer();
     }
-    Hash256 ret;
+    Uint256 ret;
     memcpy(ret.begin(), bytebuf_ + 64 - bytebuf_size_, 32);
     bytebuf_size_ -= 32;
     

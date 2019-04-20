@@ -2,11 +2,24 @@
 
 #include "random.h"
 
-TEST(RandomTest, MethordGet)
+TEST(RandomTest, MethordGetUint64)
 {
     EXPECT_EQ(Random::GetUint64(0), 0);
-    uint64_t rand = Random::GetUint64(10);
-    EXPECT_TRUE(rand >= 0 && rand <= 10);
+    for (int i = 0; i < 1000; i++) {
+        uint64_t rand = Random::GetUint64(10);
+        EXPECT_LE(rand, 10);
+    }
+}
+
+TEST(RandomTest, MethordGetUint256)
+{
+    Uint256 new_num, old_num;
+    old_num = Random::GetUint256();
+    for (int i = 0; i < 1000; i++) {
+        new_num = Random::GetUint256();
+        EXPECT_NE(old_num, new_num);
+        old_num = new_num;
+    }
 }
 
 TEST(FastRandomContextTest, Rand)

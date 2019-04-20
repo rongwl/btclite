@@ -28,7 +28,6 @@ static void HandleAllocFail()
 
 void Args::PrintUsage()
 {
-    fprintf(stdout, "Usage: btclited [OPTIONS...]\n\n");
     fprintf(stdout, "Common Options:\n");
     fprintf(stdout, "  -h or -?,  --help     print this help message and exit\n");
     fprintf(stdout, "  --debug=<module>      output debugging information(default: 0)\n");
@@ -42,33 +41,22 @@ void Args::PrintUsage()
     fprintf(stdout, "                            3(Normal message),\n");
     fprintf(stdout, "                            4(Debug information),\n");
     fprintf(stdout, "                            5(Verbose information\n");
+    fprintf(stdout, "\n");
+    fprintf(stdout, "Chain selection options:\n");
+    fprintf(stdout, "  --testnet             Use the test chain\n");
+    fprintf(stdout, "  --regtest             Enter regression test mode, which uses a special chain\n");
+    fprintf(stdout, "                        in which blocks can be solved instantly. This is intended\n");
+    fprintf(stdout, "                        for regression testing tools and app development.\n");
+    
     //              "                                                                                "
 
 }
 
 bool Args::InitParameters()
-{    
-    // --loglevel
-    if (IsArgSet(GLOBAL_OPTION_LOGLEVEL)) {
-        const std::string arg_val = GetArg(GLOBAL_OPTION_LOGLEVEL, DEFAULT_LOG_LEVEL);
-        if ( arg_val.length() != 1 && std::stoi(arg_val.c_str()) >= LOG_LEVEL_MAX) {
-            BTCLOG(LOG_LEVEL_ERROR) << "Unsupported log level: " << arg_val.c_str();
-            return false;
-        }
-
-        uint8_t level = std::stoi(arg_val.c_str());
-        if (level <= LOG_LEVEL_WARNING) {
-            BTCLOG(LOG_LEVEL_INFO) << "set log level: " << +level;
-            FLAGS_minloglevel = Logging::MapIntoGloglevel(level);
-        }
-        else {
-            BTCLOG(LOG_LEVEL_INFO) << "set log level: " << +level;
-            FLAGS_minloglevel = 0;
-            FLAGS_v = Logging::MapIntoGloglevel(level);
-        }
-    }
-    else
-        BTCLOG(LOG_LEVEL_INFO) << "default log level: " << DEFAULT_LOG_LEVEL;
+{   
+    // --testnet and --regtest
+    if (IsArgSet(GLOBAL_OPTION_TESTNET) && IsArgSet(GLOBAL_OPTION_REGTEST)) 
+        throw Args::InvalidException("Invalid combination of --testnet and --regtest.");
     
     // --debug
     if (IsArgSet(GLOBAL_OPTION_DEBUG)) {
@@ -81,6 +69,35 @@ bool Args::InitParameters()
         }
     }
     
+    // --loglevel
+    if (IsArgSet(GLOBAL_OPTION_LOGLEVEL)) {
+        const std::string arg_val = GetArg(GLOBAL_OPTION_LOGLEVEL, DEFAULT_LOG_LEVEL);
+        int level = -1;
+        try {
+            level = std::stoi(arg_val);
+        }
+        catch (const std::exception& e) {
+            throw InvalidException("invalid loglevel");
+        }
+        if (level < 0 || level >= LOG_LEVEL_MAX) {
+            throw InvalidException("invalid loglevel");
+            return false;
+        }
+
+        //uint8_t level = std::stoi(arg_val);
+        if (level <= LOG_LEVEL_WARNING) {
+            BTCLOG(LOG_LEVEL_INFO) << "set log level: " << level;
+            FLAGS_minloglevel = Logging::MapIntoGloglevel(level);
+        }
+        else {
+            BTCLOG(LOG_LEVEL_INFO) << "set log level: " << level;
+            FLAGS_minloglevel = 0;
+            FLAGS_v = Logging::MapIntoGloglevel(level);
+        }
+    }
+    else
+        BTCLOG(LOG_LEVEL_INFO) << "default log level: " << DEFAULT_LOG_LEVEL;
+
     return true;
 }
 

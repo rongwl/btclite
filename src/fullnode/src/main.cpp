@@ -13,14 +13,18 @@ int main(int argc, char **argv)
     fullnode_logging.Init(argv[0]);
 
     bool ret = false;
-    FullNodeMain fullnode(argc, argv);    
+    FullNodeMain fullnode(argc, argv);
     try {
         ret = fullnode.Init();
         if (ret)
             ret = fullnode.Start();
     }
+    catch (const Args::InvalidException& e) {
+        fprintf(stderr, "Error: %s\n", e.what());
+        return EXIT_FAILURE;
+    }
     catch (const std::exception& e) {
-    
+        fprintf(stderr, "Error: %s\n", e.what());
     }
     catch (...) {
     

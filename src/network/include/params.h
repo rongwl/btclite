@@ -23,6 +23,9 @@ namespace Network {
 
 class Params {
 public:
+    Params()
+        : msg_magic_(0), default_port_(0), seeds_() {}
+
     bool Init(NetworkEnv env);
     
     //-------------------------------------------------------------------------

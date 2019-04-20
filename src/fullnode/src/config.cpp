@@ -5,7 +5,7 @@ bool FullNodeArgs::Init(int argc, const char* const argv[])
 {
     if (!Parse(argc, argv))
         return false;
-    
+
     return true;
 }
 
@@ -22,6 +22,8 @@ bool FullNodeArgs::Parse(int argc, const char* const argv[])
         { GLOBAL_OPTION_LOGLEVEL,   required_argument,  NULL,  0  },
         { GLOBAL_OPTION_DATADIR,    required_argument,  NULL,  0  },
         { GLOBAL_OPTION_CONF,       required_argument,  NULL,  0  },
+        { GLOBAL_OPTION_TESTNET,    no_argument,        NULL,  0  },
+        { GLOBAL_OPTION_REGTEST,    no_argument,        NULL,  0  },
         { FULLNODE_OPTION_CONNECT,  required_argument,  NULL,  0  },
         { FULLNODE_OPTION_LISTEN,   required_argument,  NULL,  0  },
         { FULLNODE_OPTION_DISCOVER, required_argument,  NULL,  0, },
@@ -29,7 +31,7 @@ bool FullNodeArgs::Parse(int argc, const char* const argv[])
         { 0,                        0,                  0,     0  }
     };
     int c, option_index;
-    
+
     Clear();
     
     while ((c = getopt_long(argc, const_cast<char* const*>(argv), "h?", fullnode_options, &option_index)) != -1) {
@@ -37,11 +39,14 @@ bool FullNodeArgs::Parse(int argc, const char* const argv[])
             case 0 : 
             {
                 std::string str(fullnode_options[option_index].name);
-                std::string str_val(optarg);
-                if (str_val.empty()) {
-                    fprintf(stderr, "%s: option '--%s' requires an argument\n", argv[0], str.c_str());
-                    PrintUsage();
-                    return false;
+                std::string str_val;
+                if (fullnode_options[option_index].has_arg) {
+                    str_val = std::string(optarg);
+                    if (str_val.empty()) {
+                        fprintf(stderr, "%s: option '--%s' requires an argument\n", argv[0], str.c_str());
+                        PrintUsage();
+                        std::exit(EXIT_FAILURE);
+                    }
                 }
 
                 SetArgs(str, str_val);
@@ -50,7 +55,7 @@ bool FullNodeArgs::Parse(int argc, const char* const argv[])
             case 'h' :
             case '?' :
                 PrintUsage(); 
-                return false;
+                std::exit(EXIT_FAILURE);
             default :
                 break;
         }
@@ -61,6 +66,7 @@ bool FullNodeArgs::Parse(int argc, const char* const argv[])
 
 void FullNodeArgs::PrintUsage()
 {
+    fprintf(stdout, "Usage: %s [OPTIONS...]\n\n", bin_name_.c_str());
     Args::PrintUsage();
     fprintf(stdout, "  --datadir=<dir>       specify data directory.\n");
     fprintf(stdout, "  --conf=<file>         specify configuration file (default: %s)\n", DEFAULT_CONFIG_FILE);
