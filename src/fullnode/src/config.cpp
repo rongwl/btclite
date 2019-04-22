@@ -64,7 +64,7 @@ bool FullNodeArgs::Parse(int argc, const char* const argv[])
     return true;
 }
 
-void FullNodeArgs::PrintUsage()
+void FullNodeArgs::PrintUsage() const
 {
     fprintf(stdout, "Usage: %s [OPTIONS...]\n\n", bin_name_.c_str());
     Args::PrintUsage();

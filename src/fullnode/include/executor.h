@@ -9,12 +9,19 @@ public:
     FullNodeMain(int argc, const char* const argv[])
         : Executor(argc, argv) , data_files_(FullNodeDataFiles::DefaultDataDirPath(), DEFAULT_CONFIG_FILE),
           chain_params_(), network_() {}
-    
+
+    //-------------------------------------------------------------------------
     bool Init();
     bool Start();
     bool Run();
     void Interrupt();
     void Stop();
+    
+    //-------------------------------------------------------------------------
+    const FullNodeArgs& args() const
+    {
+        return args_;
+    }
     
 private:
     FullNodeArgs args_;

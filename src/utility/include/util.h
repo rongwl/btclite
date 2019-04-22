@@ -89,7 +89,7 @@ public:
     bool ParseFromFile(const std::string& path) const;
     
 protected:
-    virtual void PrintUsage();
+    virtual void PrintUsage() const;
     bool CheckOptions(int argc, const char* const argv[]);
     
 private:

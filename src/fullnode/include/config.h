@@ -24,12 +24,12 @@ class FullNodeArgs : public Args {
 public:    
     bool Init(int argc, const char* const argv[]);
     bool InitParameters();
+    void PrintUsage() const;
 
 private:
     const std::string bin_name_ = "btc-fullnode";
     
     bool Parse(int argc, const char* const argv[]);
-    void PrintUsage();
 };
 
 class FullNodeDataFiles : public DataFiles {

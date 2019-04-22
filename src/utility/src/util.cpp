@@ -26,7 +26,7 @@ static void HandleAllocFail()
     std::terminate();
 }
 
-void Args::PrintUsage()
+void Args::PrintUsage() const
 {
     fprintf(stdout, "Common Options:\n");
     fprintf(stdout, "  -h or -?,  --help     print this help message and exit\n");

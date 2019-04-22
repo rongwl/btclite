@@ -21,7 +21,8 @@ int main(int argc, char **argv)
     }
     catch (const Args::InvalidException& e) {
         fprintf(stderr, "Error: %s\n", e.what());
-        return EXIT_FAILURE;
+        fullnode.args().PrintUsage();
+        exit(EXIT_FAILURE);
     }
     catch (const std::exception& e) {
         fprintf(stderr, "Error: %s\n", e.what());
