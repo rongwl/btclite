@@ -2,6 +2,7 @@
 #include "config/btclite-config.h"
 #endif
 
+#include "error.h"
 #include "serialize.h"
 #include "sync.h"
 #include "util.h"
@@ -56,7 +57,7 @@ bool Args::InitParameters()
 {   
     // --testnet and --regtest
     if (IsArgSet(GLOBAL_OPTION_TESTNET) && IsArgSet(GLOBAL_OPTION_REGTEST)) 
-        throw Args::InvalidException("Invalid combination of --testnet and --regtest.");
+        throw Exception(ErrorCode::invalid_option, "invalid combination of --testnet and --regtest");
     
     // --debug
     if (IsArgSet(GLOBAL_OPTION_DEBUG)) {
@@ -64,7 +65,10 @@ bool Args::InitParameters()
         if (std::none_of(arg_values.begin(), arg_values.end(),
         [](const std::string& val) { return val == "0"; })) {
             for (auto module : arg_values) {
-                Logging::set_logModule(Logging::MapIntoModule(module));
+                Logging::Module m = Logging::MapIntoModule(module);
+                if (m == Logging::NONE)
+                    throw Exception(ErrorCode::invalid_argument, "invalid module '" + module + "'");
+                Logging::set_logModule(m);
             }
         }
     }
@@ -77,14 +81,12 @@ bool Args::InitParameters()
             level = std::stoi(arg_val);
         }
         catch (const std::exception& e) {
-            throw InvalidException("invalid loglevel");
+            throw Exception(ErrorCode::invalid_argument, "invalid loglevel '" + arg_val + "'");
         }
         if (level < 0 || level >= LOG_LEVEL_MAX) {
-            throw InvalidException("invalid loglevel");
-            return false;
+            throw Exception(ErrorCode::invalid_argument, "invalid loglevel '" + arg_val + "'");
         }
 
-        //uint8_t level = std::stoi(arg_val);
         if (level <= LOG_LEVEL_WARNING) {
             BTCLOG(LOG_LEVEL_INFO) << "set log level: " << level;
             FLAGS_minloglevel = Logging::MapIntoGloglevel(level);
@@ -97,22 +99,20 @@ bool Args::InitParameters()
     }
     else
         BTCLOG(LOG_LEVEL_INFO) << "default log level: " << DEFAULT_LOG_LEVEL;
-
+    
     return true;
 }
 
 /* Check options that getopt_long() can not print totally */
-bool Args::CheckOptions(int argc, const char* const argv[])
+void Args::CheckOptions(int argc, const char* const argv[])
 {
     for (int i = 1; i < argc; i++) {
         std::string str(argv[i]);
         if ((str.length() > 2 && str.compare(0, 2, "--")) ||
             !str.compare("--")) {
-            fprintf(stdout, "%s: invalid option '%s'\n", argv[0], str.c_str());
-            return false;
+            throw Exception(ErrorCode::invalid_option, "invalid option '" + str + "'");
         }
     }
-    return true;
 }
 
 std::string Args::GetArg(const std::string& arg, const std::string& arg_default) const

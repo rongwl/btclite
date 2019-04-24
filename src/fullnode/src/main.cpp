@@ -1,4 +1,5 @@
 #include "clientversion.h"
+#include "error.h"
 #include "executor.h"
 #include "sync.h"
 #include "util.h"
@@ -19,10 +20,10 @@ int main(int argc, char **argv)
         if (ret)
             ret = fullnode.Start();
     }
-    catch (const Args::InvalidException& e) {
-        fprintf(stderr, "Error: %s\n", e.what());
+    catch (const Exception& e) {
+        fprintf(stderr, "%s: %s\n", argv[0], e.what());
         fullnode.args().PrintUsage();
-        exit(EXIT_FAILURE);
+        exit(e.code().value());
     }
     catch (const std::exception& e) {
         fprintf(stderr, "Error: %s\n", e.what());

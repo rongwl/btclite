@@ -1,11 +1,32 @@
-TESTS = unit_test/test_network \
+TESTS = unit_test/test_fullnode \
+        unit_test/test_network \
         unit_test/test_crypto \
         unit_test/test_util
-bin_PROGRAMS +=  unit_test/test_network \
+bin_PROGRAMS +=  unit_test/test_fullnode \
+                 unit_test/test_network \
                  unit_test/test_crypto \
                  unit_test/test_util
 #TEST_SRCDIR = unit_test
 #TEST_BINARY = unit_test/test_btclite
+
+
+# test_fullnode binary #
+unit_test_test_fullnode_SOURCES = unit_test/fullnode/test_fullnode.cpp \
+                                  unit_test/fullnode/config.cpp
+
+unit_test_test_fullnode_CPPFLAGS = $(AM_CPPFLAGS) \
+                                   $(GTEST_CFLAGS) \
+                                   $(GLOG_CFLAGS) \
+                                   $(BOTAN_CFLAGS) \
+                                   $(BTCLITE_INCLUDES)
+unit_test_test_fullnode_LDADD = \
+                                $(LIBBTCLITE_FULLNODE) \
+                                $(LIBBTCLITE_NETWORK) \
+                                $(LIBBTCLITE_UTIL)
+unit_test_test_fullnode_LDADD += $(GTEST_LIBS) \
+                                 $(GLOG_LIBS) \
+                                 $(PTHREAD_LIBS) \
+                                 $(STDCPP_FILESYSTEM_LIBS) 
 
 
 # test_network binary #

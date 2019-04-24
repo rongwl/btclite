@@ -65,11 +65,9 @@ public:
 };
 
 class Args {
-public:
-    using InvalidException = std::runtime_error;
-    
+public:    
     virtual bool Init(int argc, const char * const argv[]) = 0;
-    virtual bool Parse(int argc, const char* const argv[]) = 0;
+    virtual void Parse(int argc, const char* const argv[]) = 0;
     virtual bool InitParameters();
 
     //-------------------------------------------------------------------------
@@ -90,7 +88,7 @@ public:
     
 protected:
     virtual void PrintUsage() const;
-    bool CheckOptions(int argc, const char* const argv[]);
+    void CheckOptions(int argc, const char* const argv[]);
     
 private:
     mutable CriticalSection cs_args_;

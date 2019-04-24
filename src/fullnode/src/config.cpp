@@ -1,20 +1,17 @@
 #include "fullnode/include/config.h"
+#include "error.h"
 
 
 bool FullNodeArgs::Init(int argc, const char* const argv[])
 {
-    if (!Parse(argc, argv))
-        return false;
-
+    Parse(argc, argv);
+    
     return true;
 }
 
-bool FullNodeArgs::Parse(int argc, const char* const argv[])
+void FullNodeArgs::Parse(int argc, const char* const argv[])
 {
-    if (!CheckOptions(argc, argv)) {
-        PrintUsage();
-        return false;
-    }
+    CheckOptions(argc, argv);
 
     const static struct option fullnode_options[] {
         { GLOBAL_OPTION_HELP,       no_argument,        NULL, 'h' },
@@ -33,7 +30,7 @@ bool FullNodeArgs::Parse(int argc, const char* const argv[])
     int c, option_index;
 
     Clear();
-    
+
     while ((c = getopt_long(argc, const_cast<char* const*>(argv), "h?", fullnode_options, &option_index)) != -1) {
         switch (c) {
             case 0 : 
@@ -43,9 +40,7 @@ bool FullNodeArgs::Parse(int argc, const char* const argv[])
                 if (fullnode_options[option_index].has_arg) {
                     str_val = std::string(optarg);
                     if (str_val.empty()) {
-                        fprintf(stderr, "%s: option '--%s' requires an argument\n", argv[0], str.c_str());
-                        PrintUsage();
-                        std::exit(EXIT_FAILURE);
+                        throw Exception(ErrorCode::invalid_option, "option '--" + str + "' requires an argument");
                     }
                 }
 
@@ -55,13 +50,11 @@ bool FullNodeArgs::Parse(int argc, const char* const argv[])
             case 'h' :
             case '?' :
                 PrintUsage(); 
-                std::exit(EXIT_FAILURE);
+                std::exit(ErrorCode::show_help);
             default :
                 break;
         }
     }
-    
-    return true;
 }
 
 void FullNodeArgs::PrintUsage() const
@@ -98,7 +91,7 @@ bool FullNodeArgs::InitParameters()
         SetArg(FULLNODE_OPTION_DISCOVER, "0");
         BTCLOG(LOG_LEVEL_DEBUG) << "set --listen=0 -> set --discover=0";
     }
-
+    
     return true;
 }
 

@@ -56,6 +56,7 @@ BTCLITE_HEADER_FILES = \
                        crypto/include/hash.h \
                        utility/include/blob.h \
                        utility/include/Endian.h \
+                       utility/include/error.h \
                        utility/include/arithmetic.h \
                        utility/include/constants.h \
                        utility/include/logging.h \
@@ -91,7 +92,8 @@ utility_src_libbtclite_util_a_CPPFLAGS = $(AM_CXXFLAGS) \
                                          $(BTCLITE_CRYPTO_INCLUDES) \
                                          $(BTCLITE_NETWORK_PROTO_INCLUDES) \
                                          $(BTCLITE_FULLNODE_INCLUDES)
-utility_src_libbtclite_util_a_SOURCES = utility/src/random.cpp \
+utility_src_libbtclite_util_a_SOURCES = utility/src/error.cpp \
+                                        utility/src/random.cpp \
                                         utility/src/sync.cpp \
                                         utility/src/logging.cpp \
                                         utility/src/util.cpp \

@@ -90,7 +90,7 @@ public:
     {
         auto it = map_module_.find(str);
         if (it == map_module_.end()) {
-            LOG(ERROR) << "Unsupported logging module: " << str;
+            //LOG(ERROR) << "Unsupported logging module: " << str;
             return Logging::NONE;
         }
         return it->second;

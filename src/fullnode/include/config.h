@@ -29,7 +29,7 @@ public:
 private:
     const std::string bin_name_ = "btc-fullnode";
     
-    bool Parse(int argc, const char* const argv[]);
+    void Parse(int argc, const char* const argv[]);
 };
 
 class FullNodeDataFiles : public DataFiles {
