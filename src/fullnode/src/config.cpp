@@ -27,7 +27,7 @@ void FullNodeArgs::Parse(int argc, const char* const argv[])
         { FULLNODE_OPTION_DNSSEED,  required_argument,  NULL,  0, },
         { 0,                        0,                  0,     0  }
     };
-    int c, option_index;
+    int c, option_index = 0;
 
     Clear();
 
@@ -54,6 +54,7 @@ void FullNodeArgs::Parse(int argc, const char* const argv[])
             default :
                 break;
         }
+        option_index = 0;
     }
 }
 

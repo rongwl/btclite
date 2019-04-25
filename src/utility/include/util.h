@@ -66,7 +66,7 @@ public:
 
 class Args {
 public:    
-    virtual bool Init(int argc, const char * const argv[]) = 0;
+    virtual bool Init(int argc, const char* const argv[]) = 0;
     virtual void Parse(int argc, const char* const argv[]) = 0;
     virtual bool InitParameters();
 
@@ -144,14 +144,14 @@ public:
     {
         return argc_;
     }
-    const char* const* argv() const
+    const char* const *argv() const
     {
         return argv_;
     }
 
 private:
     int argc_;
-    const char* const* argv_;
+    const char* const *argv_;
     SigMonitor sig_int_;
     SigMonitor sig_term_;
 };

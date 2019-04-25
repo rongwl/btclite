@@ -68,7 +68,9 @@ unit_test_test_crypto_LDADD += $(GTEST_LIBS) \
 
 # test_util binary #
 unit_test_test_util_SOURCES = unit_test/utility/test_util.cpp \
-                              unit_test/utility/random_tests.cpp
+                              unit_test/utility/random_tests.cpp \
+                              unit_test/utility/util_tests.cpp \
+                              unit_test/utility/util_tests.h
 
 unit_test_test_util_CPPFLAGS = $(AM_CPPFLAGS) \
                                $(GTEST_CFLAGS) \
@@ -76,5 +78,7 @@ unit_test_test_util_CPPFLAGS = $(AM_CPPFLAGS) \
                                $(BTCLITE_INCLUDES)
 unit_test_test_util_LDADD = $(LIBBTCLITE_UTIL)
 unit_test_test_util_LDADD += $(GTEST_LIBS) \
+                             $(GLOG_LIBS) \
                              $(PTHREAD_LIBS) \
-                             $(BOTAN_LIBS)
+                             $(BOTAN_LIBS) \
+                             $(STDCPP_FILESYSTEM_LIBS)
