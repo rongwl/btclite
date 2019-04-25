@@ -12,7 +12,7 @@ bin_PROGRAMS +=  unit_test/test_fullnode \
 
 # test_fullnode binary #
 unit_test_test_fullnode_SOURCES = unit_test/fullnode/test_fullnode.cpp \
-                                  unit_test/fullnode/config.cpp
+                                  unit_test/fullnode/config_tests.cpp
 
 unit_test_test_fullnode_CPPFLAGS = $(AM_CPPFLAGS) \
                                    $(GTEST_CFLAGS) \
@@ -31,8 +31,8 @@ unit_test_test_fullnode_LDADD += $(GTEST_LIBS) \
 
 # test_network binary #
 unit_test_test_network_SOURCES = unit_test/network/test_network.cpp \
-                                 unit_test/network/net.cpp \
-                                 unit_test/network/params.cpp
+                                 unit_test/network/net_tests.cpp \
+                                 unit_test/network/params_tests.cpp
 
 unit_test_test_network_CPPFLAGS = $(AM_CPPFLAGS) \
                                   $(GTEST_CFLAGS) \
@@ -53,7 +53,7 @@ unit_test_test_network_LDADD += $(GTEST_LIBS) \
 
 # test_crypto binary #
 unit_test_test_crypto_SOURCES = unit_test/crypto/test_crypto.cpp \
-                                unit_test/crypto/hash.cpp
+                                unit_test/crypto/hash_tests.cpp
 
 unit_test_test_crypto_CPPFLAGS = $(AM_CPPFLAGS) \
                                  $(GTEST_CFLAGS) \
@@ -68,7 +68,7 @@ unit_test_test_crypto_LDADD += $(GTEST_LIBS) \
 
 # test_util binary #
 unit_test_test_util_SOURCES = unit_test/utility/test_util.cpp \
-                              unit_test/utility/random.cpp
+                              unit_test/utility/random_tests.cpp
 
 unit_test_test_util_CPPFLAGS = $(AM_CPPFLAGS) \
                                $(GTEST_CFLAGS) \
