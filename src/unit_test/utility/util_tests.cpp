@@ -23,3 +23,27 @@ TEST(ArgsTest, MethordSetArgs)
     EXPECT_TRUE(args.IsArgSet("test"));
     EXPECT_EQ(args.GetArgs("test"), vs);
 }
+
+TEST(DataFilesTest, Constructor)
+{
+    TestDataFiles data_files(fs::path("/foo"), "bar.conf");
+    EXPECT_EQ(data_files.data_dir(), fs::path("/foo"));
+    EXPECT_EQ(data_files.config_file(), fs::path("/foo") / "bar.conf");
+}
+
+TEST(DataFilesTest, MethordGetSet)
+{
+    TestDataFiles data_files;
+    data_files.set_data_dir(fs::path("/tmp"));
+    EXPECT_EQ(data_files.data_dir(), fs::path("/tmp"));
+    
+    std::ofstream file(fs::path("/tmp") / "foo.conf");
+    data_files.set_config_file("foo.conf");
+    EXPECT_EQ(data_files.config_file(), fs::path("/tmp") / "foo.conf");
+    
+    data_files.set_data_dir(fs::path("/123"));
+    EXPECT_EQ(data_files.data_dir(), fs::path("/tmp"));
+    
+    data_files.set_config_file("bar.conf");
+    EXPECT_EQ(data_files.config_file(), fs::path("/tmp") / "foo.conf");
+}

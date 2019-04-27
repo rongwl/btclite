@@ -7,8 +7,7 @@
 class FullNodeMain : public Executor {
 public:
     FullNodeMain(int argc, const char* const argv[])
-        : Executor(argc, argv) , data_files_(FullNodeDataFiles::DefaultDataDirPath(), DEFAULT_CONFIG_FILE),
-          chain_params_(), network_() {}
+        : Executor(argc, argv) , data_files_(), chain_params_(), network_() {}
 
     //-------------------------------------------------------------------------
     bool Init();

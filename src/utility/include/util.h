@@ -98,6 +98,8 @@ private:
 
 class DataFiles {
 public:
+    DataFiles()
+        : data_dir_(), config_file_() {}
     DataFiles(const fs::path& data_dir, const std::string& config_file)
         : data_dir_(data_dir), config_file_(data_dir_ / config_file) {}
     
@@ -110,14 +112,14 @@ public:
         LOCK(cs_path_);
         return data_dir_;
     }
-    void set_dataDir(const fs::path& path);
+    void set_data_dir(const fs::path& path);
     
     const fs::path& config_file() const
     {
         LOCK(cs_path_);
         return config_file_;
     }
-    void set_configFile(const std::string& filename);
+    void set_config_file(const std::string& filename);
     
 private:    
     mutable CriticalSection cs_path_;

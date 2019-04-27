@@ -185,7 +185,7 @@ bool DataFiles::LockDataDir()
     return true;
 }
 
-void DataFiles::set_dataDir(const fs::path& path)
+void DataFiles::set_data_dir(const fs::path& path)
 {
     LOCK(cs_path_);
     if (!fs::is_directory(path)) {
@@ -196,7 +196,7 @@ void DataFiles::set_dataDir(const fs::path& path)
     data_dir_ = path;
 }
 
-void DataFiles::set_configFile(const std::string& filename)
+void DataFiles::set_config_file(const std::string& filename)
 {
     LOCK(cs_path_);
     std::ifstream ifs(data_dir_ / filename);
@@ -205,7 +205,7 @@ void DataFiles::set_configFile(const std::string& filename)
                                  << "\" does not exist.";
         return;
     }
-    config_file_ = filename;
+    config_file_ = (data_dir_ / filename);
 }
 
 bool BaseExecutor::BasicSetup()

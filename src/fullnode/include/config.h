@@ -34,9 +34,11 @@ private:
 
 class FullNodeDataFiles : public DataFiles {
 public:
-    using DataFiles::DataFiles;
+    FullNodeDataFiles()
+        : DataFiles(DefaultDataDirPath(), DEFAULT_CONFIG_FILE) {}
     
-    bool Init(const std::string& path, const std::string& config_file);
+    bool Init(const std::string& path = DefaultDataDirPath(),
+              const std::string& config_file = DEFAULT_CONFIG_FILE);
     static fs::path DefaultDataDirPath();
     
 };
