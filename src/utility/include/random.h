@@ -27,7 +27,8 @@ public:
 
     /** Initialize with explicit seed (only for testing) */
     explicit FastRandomContext(const Uint256& seed)
-        :  rng_(Botan::secure_vector<uint8_t>(seed.begin(), seed.end())), requires_seed_(false), bytebuf_size_(0), bitbuf_size_(0) {}
+        :  rng_(Botan::secure_vector<uint8_t>(seed.begin(), seed.end())), 
+           requires_seed_(false), bytebuf_size_(0), bitbuf_size_(0) {}
 
     //-------------------------------------------------------------------------
     /** Generate a random (bits)-bit integer. */

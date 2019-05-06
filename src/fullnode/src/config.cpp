@@ -1,3 +1,5 @@
+#include <arpa/inet.h>
+
 #include "fullnode/include/config.h"
 #include "error.h"
 
@@ -49,12 +51,57 @@ void FullNodeArgs::Parse(int argc, const char* const argv[])
             }
             case 'h' :
             case '?' :
-                PrintUsage(); 
-                std::exit(ErrorCode::show_help);
+                throw Exception(ErrorCode::show_help, "");
+                break;
             default :
                 break;
         }
         option_index = 0;
+    }
+    
+    CheckArguments();
+}
+
+void FullNodeArgs::CheckArguments() const
+{
+    Args::CheckArguments();
+    
+    // --connect
+    if (IsArgSet(FULLNODE_OPTION_CONNECT)) {
+        const std::vector<std::string> arg_values = GetArgs(FULLNODE_OPTION_CONNECT);
+        auto is_invalid_ip =  [](const std::string& val)
+                              {
+                                  struct sockaddr_in sa;
+                                  int result = inet_pton(AF_INET, val.c_str(), &(sa.sin_addr));
+                                  return result == 0;
+                              };
+        auto result = std::find_if(arg_values.begin(), arg_values.end(), is_invalid_ip);
+        if (result != arg_values.end())
+            throw Exception(ErrorCode::invalid_argument, "invalid ip '" + *result + "'");
+    }
+    
+    // --listen
+    if (IsArgSet(FULLNODE_OPTION_LISTEN))
+    {
+        std::string val = GetArg(FULLNODE_OPTION_LISTEN, DEFAULT_LISTEN);
+        if (val != "1" && val != "0")
+            throw Exception(ErrorCode::invalid_argument, "invalid argument '" + val + "'");
+    }
+
+    // --discover
+    if (IsArgSet(FULLNODE_OPTION_DISCOVER))
+    {
+        std::string val = GetArg(FULLNODE_OPTION_DISCOVER, DEFAULT_DISCOVER);
+        if (val != "1" && val != "0")
+            throw Exception(ErrorCode::invalid_argument, "invalid argument '" + val + "'");
+    }
+    
+    // --dnsseed
+    if (IsArgSet(FULLNODE_OPTION_DNSSEED))
+    {
+        std::string val = GetArg(FULLNODE_OPTION_DNSSEED, DEFAULT_DNSSEED);
+        if (val != "1" && val != "0")
+            throw Exception(ErrorCode::invalid_argument, "invalid argument '" + val + "'");
     }
 }
 

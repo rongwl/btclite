@@ -1,11 +1,11 @@
-TESTS = unit_test/test_fullnode \
-        unit_test/test_network \
+TESTS = unit_test/test_util \
         unit_test/test_crypto \
-        unit_test/test_util
-bin_PROGRAMS +=  unit_test/test_fullnode \
-                 unit_test/test_network \
-                 unit_test/test_crypto \
-                 unit_test/test_util
+        unit_test/test_network \
+        unit_test/test_fullnode
+bin_PROGRAMS += unit_test/test_util \
+                unit_test/test_crypto \
+                unit_test/test_network \
+                unit_test/test_fullnode 
 #TEST_SRCDIR = unit_test
 #TEST_BINARY = unit_test/test_btclite
 
@@ -32,6 +32,7 @@ unit_test_test_fullnode_LDADD += $(GTEST_LIBS) \
 # test_network binary #
 unit_test_test_network_SOURCES = unit_test/network/test_network.cpp \
                                  unit_test/network/net_tests.cpp \
+                                 unit_test/network/network_address_tests.cpp \
                                  unit_test/network/params_tests.cpp
 
 unit_test_test_network_CPPFLAGS = $(AM_CPPFLAGS) \

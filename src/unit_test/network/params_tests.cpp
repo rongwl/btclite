@@ -8,7 +8,7 @@
 TEST(NetworkParamsTest, Methord_Init)
 {
     Network::Params network_params;
-    EXPECT_TRUE(network_params.Init(NetworkEnv::mainnet));
+    EXPECT_TRUE(network_params.Init(BaseEnv::mainnet));
     EXPECT_EQ(main_magic, network_params.msg_magic());
     EXPECT_EQ(8333, network_params.default_port());
     
@@ -23,5 +23,5 @@ TEST(NetworkParamsTest, Methord_Init)
     EXPECT_EQ(vec, network_params.seeds());
     
     Network::Params network_params2;
-    EXPECT_FALSE(network_params.Init(NetworkEnv::none));
+    EXPECT_FALSE(network_params.Init(BaseEnv::none));
 }

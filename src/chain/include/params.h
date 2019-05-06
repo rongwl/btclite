@@ -85,7 +85,7 @@ public:
     Params()
         : genesis_(), subsidy_halving_interval_(0), bip9_params_() {}
     
-    void Init(NetworkEnv env);
+    void Init(BaseEnv env);
     
     const Block& GenesisBlock() const
     {
@@ -143,7 +143,7 @@ public:
           bech32_hrp_(), checkpoints_(), chain_tx_data_() {}
 
     //-------------------------------------------------------------------------
-    void Init(NetworkEnv env);
+    void Init(BaseEnv env);
 
     //-------------------------------------------------------------------------
     const Consensus::Params& consensus() const

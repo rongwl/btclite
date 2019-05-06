@@ -71,14 +71,14 @@ bool FullNodeMain::LoadConfigFile()
 
 bool FullNodeMain::InitNetwork()
 {
-    NetworkEnv env;
+    BaseEnv env;
     
     if (args_.IsArgSet(GLOBAL_OPTION_TESTNET))
-        env = NetworkEnv::testnet;
+        env = BaseEnv::testnet;
     else if (args_.IsArgSet(GLOBAL_OPTION_REGTEST))
-        env = NetworkEnv::regtest;
+        env = BaseEnv::regtest;
     else
-        env = NetworkEnv::mainnet;
+        env = BaseEnv::mainnet;
         
     return network_.Init(env);
 }

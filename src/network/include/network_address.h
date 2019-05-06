@@ -7,7 +7,12 @@ namespace btclite {
     
 class NetAddr {
 public:
-    NetAddr() = default;
+    NetAddr()
+        : addr_()
+    {
+        for (int i = 0; i < 4; i++)
+            addr_.add_ip(0);
+    }
     
     NetAddr(const proto_netaddr::NetAddr& addr)
         : addr_(addr) {}
@@ -20,6 +25,8 @@ public:
         : addr_(std::move(addr.addr_)) {}
     
     //-------------------------------------------------------------------------
+    bool IsIpv4() const;
+    bool IsIpv6() const;
     bool IsRFC1918() const; // IPv4 private networks (10.0.0.0/8, 192.168.0.0/16, 172.16.0.0/12)
     bool IsRFC2544() const; // IPv4 inter-network communications (192.18.0.0/15)
     bool IsRFC6598() const; // IPv4 ISP-level NAT (100.64.0.0/10)
@@ -37,7 +44,16 @@ public:
     bool IsRoutable() const;
     bool IsInternal() const;
     bool IsValid() const;
+    
+    //-------------------------------------------------------------------------
     void Clear();
+    uint8_t GetByte(int n) const;
+    void SetByte(int n, uint8_t value);
+    void SetNByte(const uint8_t *src, size_t n);
+    uint32_t GetIpv4() const;
+    void SetIpv4(uint32_t ip);
+    int GetIpv6(uint8_t *out) const;
+    void SetIpv6(const uint8_t *src);
     
     //-------------------------------------------------------------------------
     NetAddr& operator=(const NetAddr& b)
@@ -45,14 +61,52 @@ public:
         addr_ = b.addr_;
         return *this;
     }
+    
     NetAddr& operator=(NetAddr&& b) noexcept
     {
         addr_ = std::move(b.addr_);
         return *this;
     }
     
+    bool operator==(const NetAddr& b) const
+    {
+        return (this->addr_.timestamp() == b.addr().timestamp() &&
+                this->addr_.services() == b.addr().services() &&
+                this->addr_.ip(0) == b.addr().ip(0) &&
+                this->addr_.ip(1) == b.addr().ip(1) &&
+                this->addr_.ip(2) == b.addr().ip(2) &&
+                this->addr_.ip(3) == b.addr().ip(3) &&
+                this->addr_.port() == b.addr().port());
+    }
+    
+    bool operator!=(const NetAddr& b) const
+    {
+        return !(*this == b);
+    }
+    
+    //-------------------------------------------------------------------------
+    const proto_netaddr::NetAddr& addr() const
+    {
+        return addr_;
+    }
+    
+    void set_addr(const proto_netaddr::NetAddr& addr)
+    {
+        addr_ = addr;
+    }
+    
+    void set_addr(proto_netaddr::NetAddr&& addr) noexcept
+    {
+        addr_ = std::move(addr);
+    }
+    
 private:
     proto_netaddr::NetAddr addr_;
+    
+#define ASSERT_SIZE() assert(addr_.ip().size() == 4)
+#define ASSERT_RANGE(N) assert(N >= 0 && N <= 15)
+#define ASSERT_VALID_BYTE(N) ASSERT_SIZE(); \
+                             ASSERT_RANGE(N)
 };
 
 }

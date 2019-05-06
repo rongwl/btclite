@@ -26,7 +26,7 @@ TEST(MessageHeaderTest, Methord_GetSet)
 TEST(MessageHeaderTest, Methord_IsValid)
 {
     MessageHeader header;
-    std::vector<NetworkEnv> env_vec = { NetworkEnv::mainnet, NetworkEnv::testnet, NetworkEnv::regtest };
+    std::vector<BaseEnv> env_vec = { BaseEnv::mainnet, BaseEnv::testnet, BaseEnv::regtest };
     std::vector<uint32_t> magic_vec = { main_magic, testnet_magic, regtest_magic };
     std::vector<std::string> command_vec = { btc_message::Version::command };
     
@@ -44,23 +44,23 @@ TEST(MessageHeaderTest, Methord_IsValid)
     }
     for (int i = 1; i < magic_vec.size(); i++) {
         header.set_magic(magic_vec[i]);
-        EXPECT_FALSE(header.IsValid(NetworkEnv::mainnet));
+        EXPECT_FALSE(header.IsValid(BaseEnv::mainnet));
     }
     
     header.set_magic(main_magic);
     header.set_command("foo");
-    EXPECT_FALSE(header.IsValid(NetworkEnv::mainnet));
+    EXPECT_FALSE(header.IsValid(BaseEnv::mainnet));
     
     header.set_magic(main_magic);
     header.set_command(btc_message::Version::command);
     header.set_payload_length(max_message_size+1);
-    EXPECT_FALSE(header.IsValid(NetworkEnv::mainnet));
+    EXPECT_FALSE(header.IsValid(BaseEnv::mainnet));
 }
 
 TEST(MessageHeaderTest, Constructor1)
 {
     MessageHeader header;
-    std::vector<NetworkEnv> env_vec = { NetworkEnv::mainnet, NetworkEnv::testnet, NetworkEnv::regtest };
+    std::vector<BaseEnv> env_vec = { BaseEnv::mainnet, BaseEnv::testnet, BaseEnv::regtest };
     
     for (auto env : env_vec)
         EXPECT_FALSE(header.IsValid(env));
@@ -69,21 +69,21 @@ TEST(MessageHeaderTest, Constructor1)
 TEST(MessageHeaderTest, TestConstructor2)
 {
     MessageHeader header(main_magic);
-    EXPECT_FALSE(header.IsValid(NetworkEnv::mainnet));
+    EXPECT_FALSE(header.IsValid(BaseEnv::mainnet));
     EXPECT_EQ(main_magic, header.magic());
 }
 
 TEST(TestMessageHeader, TestConstructor3)
 {
     MessageHeader header1(main_magic, btc_message::Version::command, max_message_size, 0x12345678);
-    EXPECT_TRUE(header1.IsValid(NetworkEnv::mainnet));
+    EXPECT_TRUE(header1.IsValid(BaseEnv::mainnet));
     EXPECT_EQ(main_magic, header1.magic());
     EXPECT_EQ(btc_message::Version::command, header1.command());
     EXPECT_EQ(max_message_size, header1.payload_length());
     EXPECT_EQ(0x12345678, header1.checksum());
     
     MessageHeader header2(0x123, "foo", max_message_size, 0x12345678);
-    EXPECT_FALSE(header2.IsValid(NetworkEnv::mainnet));
+    EXPECT_FALSE(header2.IsValid(BaseEnv::mainnet));
     EXPECT_EQ("foo", header2.command());
 }
 
@@ -91,7 +91,7 @@ TEST(MessageHeaderTest, TestConstructor4)
 {
     const MessageHeader header1(main_magic, btc_message::Version::command, max_message_size, 0x12345678);
     MessageHeader header2(header1);
-    EXPECT_TRUE(header2.IsValid(NetworkEnv::mainnet));
+    EXPECT_TRUE(header2.IsValid(BaseEnv::mainnet));
     EXPECT_EQ(main_magic, header2.magic());
     EXPECT_EQ(btc_message::Version::command, header2.command());
     EXPECT_EQ(max_message_size, header2.payload_length());
@@ -103,7 +103,7 @@ TEST(MessageHeaderTest, TestConstructor5)
 {
     MessageHeader header1(main_magic, btc_message::Version::command, max_message_size, 0x12345678);
     MessageHeader header2(std::move(header1));
-    EXPECT_TRUE(header2.IsValid(NetworkEnv::mainnet));
+    EXPECT_TRUE(header2.IsValid(BaseEnv::mainnet));
     EXPECT_EQ(main_magic, header2.magic());
     EXPECT_EQ(btc_message::Version::command, header2.command());
     EXPECT_EQ(max_message_size, header2.payload_length());

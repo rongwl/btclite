@@ -10,7 +10,7 @@
 #include <utility>
 
 #include "environment.h"
-#include "network_address.pb.h"
+#include "network_address.h"
 #include "sync.h"
 #include "util.h"
 
@@ -36,14 +36,14 @@ public:
         local_services_ = flags;
     }
     
-    const std::vector<proto_netaddr::NetAddr>& local_addrs() const
+    const std::vector<btclite::NetAddr>& local_addrs() const
     {
         return local_addrs_;
     }
     
 private:
     ServiceFlags local_services_;
-    std::vector<proto_netaddr::NetAddr> local_addrs_;
+    std::vector<btclite::NetAddr> local_addrs_;
     
     bool AddLocalAddr();
 };
@@ -115,7 +115,7 @@ public:
     }
     
     //-------------------------------------------------------------------------
-    bool IsValid(NetworkEnv env) const;
+    bool IsValid(BaseEnv env) const;
     
     //-------------------------------------------------------------------------
     bool operator==(const MessageHeader& b) const

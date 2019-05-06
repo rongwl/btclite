@@ -21,7 +21,8 @@ int main(int argc, char **argv)
             ret = fullnode.Start();
     }
     catch (const Exception& e) {
-        fprintf(stderr, "%s: %s\n", argv[0], e.what());
+        if (e.code().value() != ErrorCode::show_help)
+            fprintf(stderr, "%s: %s\n", argv[0], e.what());
         fullnode.args().PrintUsage();
         exit(e.code().value());
     }

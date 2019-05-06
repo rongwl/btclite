@@ -68,10 +68,12 @@ class Args {
 public:    
     virtual bool Init(int argc, const char* const argv[]) = 0;
     virtual void Parse(int argc, const char* const argv[]) = 0;
+    virtual void CheckArguments() const;
     virtual bool InitParameters();
 
     //-------------------------------------------------------------------------
     std::string GetArg(const std::string& arg, const std::string& arg_default) const;
+    bool GetBoolArg(const std::string& arg, bool arg_default) const;
     std::vector<std::string> GetArgs(const std::string& arg) const;
     void SetArg(const std::string& arg, const std::string& arg_val);
     void SetArgs(const std::string& arg, const std::string& arg_val);

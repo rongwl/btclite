@@ -1,10 +1,11 @@
 #include "network/include/params.h"
 #include "constants.h"
 
-bool Network::Params::Init(NetworkEnv env)
+
+bool Network::Params::Init(BaseEnv env)
 {
     switch (env) {
-        case NetworkEnv::mainnet :
+        case BaseEnv::mainnet :
         {
             msg_magic_ = main_magic;
             default_port_ = 8333;
@@ -20,7 +21,7 @@ bool Network::Params::Init(NetworkEnv env)
 
             break;
         }
-        case NetworkEnv::testnet :
+        case BaseEnv::testnet :
         {
             msg_magic_ = testnet_magic;
             default_port_ = 18333;
@@ -32,7 +33,7 @@ bool Network::Params::Init(NetworkEnv env)
             
             break;
         }
-        case NetworkEnv::regtest : 
+        case BaseEnv::regtest : 
         {
             msg_magic_ = regtest_magic;
             default_port_ = 18444;

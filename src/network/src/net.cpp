@@ -10,11 +10,11 @@ bool LocalNetConfig::AddLocalAddr()
     return true;
 }
 
-bool MessageHeader::IsValid(NetworkEnv env) const
+bool MessageHeader::IsValid(BaseEnv env) const
 {
-    if ((env == NetworkEnv::mainnet && magic_ != main_magic) ||
-            (env == NetworkEnv::testnet && magic_ != testnet_magic) ||
-            (env == NetworkEnv::regtest && magic_ != regtest_magic)) {
+    if ((env == BaseEnv::mainnet && magic_ != main_magic) ||
+            (env == BaseEnv::testnet && magic_ != testnet_magic) ||
+            (env == BaseEnv::regtest && magic_ != regtest_magic)) {
         BTCLOG(LOG_LEVEL_WARNING) << "MessageHeader::magic_(" << magic_ << ") is invalid";
         return false;
     }

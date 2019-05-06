@@ -10,8 +10,11 @@
 #include "thread.h"
 
 class P2P {
-public:    
-    bool Init(NetworkEnv env);
+public:
+    P2P();
+    
+    bool Init(BaseEnv env);
+    bool InitState(const Args& args);
     bool Start();
     bool Interrupt();
     bool Stop();
@@ -35,6 +38,11 @@ private:
     std::thread thread_message_handler_;
     
     std::vector<std::string> m_specified_outgoing_;
+    
+    bool is_listen_;
+    bool is_discover_;
+    bool is_dnsseed_;
+    
     
     void ThreadDnsSeeds();
     void ThreadOpenConnections(const std::vector<std::string> connect);

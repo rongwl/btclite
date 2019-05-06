@@ -6,25 +6,61 @@
 TEST(FullNodeArgsTest, OptionHelp)
 {
     FullNodeArgs args;
-    char *argv[2];    
     std::string argv0 = "btc-fullnode";
-    std::string argv1 = "--help";
     
-    argv[0] = const_cast<char*>(argv0.c_str());
-    argv[1] = const_cast<char*>(argv1.c_str());
-    EXPECT_EXIT(args.Init(2, argv), ::testing::ExitedWithCode(ErrorCode::show_help), "");
-    
-    argv1 = "-h";
-    argv[1] = const_cast<char*>(argv1.c_str());
-    args.Clear();
     optind = 1;
-    EXPECT_EXIT(args.Init(2, argv), ::testing::ExitedWithCode(ErrorCode::show_help), "");
-    
-    argv1 = "-?";
-    argv[1] = const_cast<char*>(argv1.c_str());
-    args.Clear();
+    try {
+        char *argv[2];
+        std::string argv1 = "--help";
+        
+        argv[0] = const_cast<char*>(argv0.c_str());
+        argv[1] = const_cast<char*>(argv1.c_str());
+        args.Clear();
+        args.Init(2, argv);
+        FAIL() << "expected ErrorCode::show_help";
+    }
+    catch (const Exception& e) {
+        EXPECT_EQ(e.code().value(), ErrorCode::show_help);
+    }
+    catch (...) {
+        FAIL() << "Expected ErrorCode::show_help";
+    }
+
     optind = 1;
-    EXPECT_EXIT(args.Init(2, argv), ::testing::ExitedWithCode(ErrorCode::show_help), "");
+    try {
+        char *argv[2];
+        std::string argv1 = "-h";
+        
+        argv[0] = const_cast<char*>(argv0.c_str());
+        argv[1] = const_cast<char*>(argv1.c_str());
+        args.Clear();
+        args.Init(2, argv);
+        FAIL() << "expected ErrorCode::show_help";
+    }
+    catch (const Exception& e) {
+        EXPECT_EQ(e.code().value(), ErrorCode::show_help);
+    }
+    catch (...) {
+        FAIL() << "Expected ErrorCode::show_help";
+    }
+    
+    optind = 1;
+    try {
+        char *argv[2];
+        std::string argv1 = "-?";
+        
+        argv[0] = const_cast<char*>(argv0.c_str());
+        argv[1] = const_cast<char*>(argv1.c_str());
+        args.Clear();
+        args.Init(2, argv);
+        FAIL() << "expected ErrorCode::show_help";
+    }
+    catch (const Exception& e) {
+        EXPECT_EQ(e.code().value(), ErrorCode::show_help);
+    }
+    catch (...) {
+        FAIL() << "Expected ErrorCode::show_help";
+    }
 }
 
 TEST(FullNodeArgsTest, OptionLog)
@@ -65,7 +101,6 @@ TEST(FullNodeArgsTest, OptionLog)
         argv[1] = const_cast<char*>(argv1.c_str());
         args.Clear();
         args.Init(2, argv);
-        args.InitParameters();
         FAIL() << "expected ErrorCode::invalid_argument";
     }
     catch (const Exception& e) {
@@ -84,7 +119,6 @@ TEST(FullNodeArgsTest, OptionLog)
         argv[1] = const_cast<char*>(argv1.c_str());
         args.Clear();
         args.Init(2, argv);
-        args.InitParameters();
         FAIL() << "expected ErrorCode::invalid_argument";
     }
     catch (const Exception& e) {
@@ -103,7 +137,6 @@ TEST(FullNodeArgsTest, OptionLog)
         argv[1] = const_cast<char*>(argv1.c_str());
         args.Clear();
         args.Init(2, argv);
-        args.InitParameters();
         FAIL() << "expected ErrorCode::invalid_argument";
     }
     catch (const Exception& e) {
@@ -122,7 +155,6 @@ TEST(FullNodeArgsTest, OptionLog)
         argv[1] = const_cast<char*>(argv1.c_str());
         args.Clear();
         args.Init(2, argv);
-        args.InitParameters();
         FAIL() << "expected ErrorCode::invalid_argument";
     }
     catch (const Exception& e) {
@@ -147,7 +179,6 @@ TEST(FullNodeArgsTest, OptionChain)
         argv[1] = const_cast<char*>(argv1.c_str());
         args.Clear();
         args.Init(2, argv);
-        args.InitParameters();
         
         EXPECT_TRUE(args.IsArgSet(GLOBAL_OPTION_TESTNET));
     }
@@ -167,7 +198,6 @@ TEST(FullNodeArgsTest, OptionChain)
         argv[1] = const_cast<char*>(argv1.c_str());
         args.Clear();
         args.Init(2, argv);
-        args.InitParameters();
         
         EXPECT_TRUE(args.IsArgSet(GLOBAL_OPTION_REGTEST));
     }
@@ -188,7 +218,6 @@ TEST(FullNodeArgsTest, OptionChain)
         argv[2] = const_cast<char*>(argv2.c_str());
         args.Clear();
         args.Init(3, argv);
-        args.InitParameters();
         FAIL() << "expected ErrorCode::invalid_option";
     }
     catch (const Exception& e) {
@@ -231,7 +260,66 @@ TEST(FullNodeArgsTest, OptionFiles)
 TEST(FullNodeArgsTest, OptionConnection)
 {
     FullNodeArgs args;
-    std::string argv0 = "btc-fullnode";
+    std::string argv0 = "btc-fullnode"; 
+    
+    optind = 1;
+    try {
+        char *argv[2];
+        std::string argv1 = "--listen=0";
+        
+        argv[0] = const_cast<char*>(argv0.c_str());
+        argv[1] = const_cast<char*>(argv1.c_str());
+        args.Clear();
+        args.Init(2, argv);
+        args.InitParameters();
+        
+        EXPECT_TRUE(args.IsArgSet(FULLNODE_OPTION_LISTEN));
+        EXPECT_EQ(args.GetArg(FULLNODE_OPTION_LISTEN, "1"), "0");
+        EXPECT_TRUE(args.IsArgSet(FULLNODE_OPTION_DISCOVER));
+        EXPECT_EQ(args.GetArg(FULLNODE_OPTION_DISCOVER, "1"), "0");
+    }
+    catch (const Exception& e) {
+        FAIL() << "Exception:" << e.code().message();
+    }
+    catch (...) {
+        FAIL() << "Exception";
+    }
+    
+    optind = 1;
+    try {
+        char *argv[2];
+        std::string argv1 = "--listen=2";
+        
+        argv[0] = const_cast<char*>(argv0.c_str());
+        argv[1] = const_cast<char*>(argv1.c_str());
+        args.Clear();
+        args.Init(2, argv);
+        FAIL() << "expected ErrorCode::invalid_argument";
+    }
+    catch (const Exception& e) {
+        EXPECT_EQ(e.code().value(), ErrorCode::invalid_argument);
+    }
+    catch (...) {
+        FAIL() << "expected ErrorCode::invalid_argument";
+    }
+    
+    optind = 1;
+    try {
+        char *argv[2];
+        std::string argv1 = "--connect=1.1.1.1111";
+        
+        argv[0] = const_cast<char*>(argv0.c_str());
+        argv[1] = const_cast<char*>(argv1.c_str());
+        args.Clear();
+        args.Init(2, argv);
+        FAIL() << "expected ErrorCode::invalid_argument";
+    }
+    catch (const Exception& e) {
+        EXPECT_EQ(e.code().value(), ErrorCode::invalid_argument);
+    }
+    catch (...) {
+        FAIL() << "expected ErrorCode::invalid_argument";
+    }
     
     optind = 1;
     try {
@@ -260,7 +348,7 @@ TEST(FullNodeArgsTest, OptionConnection)
     }
     catch (...) {
         FAIL() << "Exception";
-    }    
+    }
 }
 
 TEST(FullNodeArgsTest, InvalidOption)

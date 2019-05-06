@@ -53,8 +53,8 @@ void Args::PrintUsage() const
 
 }
 
-bool Args::InitParameters()
-{   
+void Args::CheckArguments() const
+{
     // --testnet and --regtest
     if (IsArgSet(GLOBAL_OPTION_TESTNET) && IsArgSet(GLOBAL_OPTION_REGTEST)) 
         throw Exception(ErrorCode::invalid_option, "invalid combination of --testnet and --regtest");
@@ -64,12 +64,10 @@ bool Args::InitParameters()
         const std::vector<std::string> arg_values = GetArgs(GLOBAL_OPTION_DEBUG);
         if (std::none_of(arg_values.begin(), arg_values.end(),
         [](const std::string& val) { return val == "0"; })) {
-            for (auto module : arg_values) {
-                Logging::Module m = Logging::MapIntoModule(module);
-                if (m == Logging::NONE)
-                    throw Exception(ErrorCode::invalid_argument, "invalid module '" + module + "'");
-                Logging::set_logModule(m);
-            }
+            auto result = std::find_if(arg_values.begin(), arg_values.end(), 
+            [](const std::string& module) { return Logging::MapIntoModule(module) == Logging::NONE; });
+            if (result != arg_values.end())
+                throw Exception(ErrorCode::invalid_argument, "invalid module '" + *result + "'");
         }
     }
     
@@ -86,6 +84,26 @@ bool Args::InitParameters()
         if (level < 0 || level >= LOG_LEVEL_MAX) {
             throw Exception(ErrorCode::invalid_argument, "invalid loglevel '" + arg_val + "'");
         }
+    }
+}
+
+bool Args::InitParameters()
+{   
+    // --debug
+    if (IsArgSet(GLOBAL_OPTION_DEBUG)) {
+        const std::vector<std::string> arg_values = GetArgs(GLOBAL_OPTION_DEBUG);
+        if (std::none_of(arg_values.begin(), arg_values.end(),
+        [](const std::string& val) { return val == "0"; })) {
+            for (auto module : arg_values) {
+                Logging::set_logModule(Logging::MapIntoModule(module));
+            }
+        }
+    }
+    
+    // --loglevel
+    if (IsArgSet(GLOBAL_OPTION_LOGLEVEL)) {
+        const std::string arg_val = GetArg(GLOBAL_OPTION_LOGLEVEL, DEFAULT_LOG_LEVEL);
+        int level = std::stoi(arg_val);
 
         if (level <= LOG_LEVEL_WARNING) {
             BTCLOG(LOG_LEVEL_INFO) << "set log level: " << level;
@@ -121,6 +139,20 @@ std::string Args::GetArg(const std::string& arg, const std::string& arg_default)
     auto it = map_args_.find(arg);
     if (it != map_args_.end())
         return it->second;
+    return arg_default;
+}
+
+bool Args::GetBoolArg(const std::string& arg, bool arg_default) const
+{
+    LOCK(cs_args_);
+    auto it = map_args_.find(arg);
+    if (it != map_args_.end()) {
+        if (it->second.empty() || it->second == "0")
+            return false;
+        else
+            return true;
+    }
+    
     return arg_default;
 }
 
