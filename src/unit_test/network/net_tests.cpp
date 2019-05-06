@@ -35,16 +35,16 @@ TEST(MessageHeaderTest, Methord_IsValid)
             header.set_magic(magic_vec[i]);
             header.set_command(command);
             header.set_payload_length(max_message_size);
-            EXPECT_TRUE(header.IsValid(env_vec[i]));
+            ASSERT_TRUE(header.IsValid(env_vec[i]));
         }
     
     for (auto env : env_vec) {
         header.set_magic(0);
-        EXPECT_FALSE(header.IsValid(env));
+        ASSERT_FALSE(header.IsValid(env));
     }
     for (int i = 1; i < magic_vec.size(); i++) {
         header.set_magic(magic_vec[i]);
-        EXPECT_FALSE(header.IsValid(BaseEnv::mainnet));
+        ASSERT_FALSE(header.IsValid(BaseEnv::mainnet));
     }
     
     header.set_magic(main_magic);
@@ -63,27 +63,27 @@ TEST(MessageHeaderTest, Constructor1)
     std::vector<BaseEnv> env_vec = { BaseEnv::mainnet, BaseEnv::testnet, BaseEnv::regtest };
     
     for (auto env : env_vec)
-        EXPECT_FALSE(header.IsValid(env));
+        ASSERT_FALSE(header.IsValid(env));
 }
 
 TEST(MessageHeaderTest, TestConstructor2)
 {
     MessageHeader header(main_magic);
-    EXPECT_FALSE(header.IsValid(BaseEnv::mainnet));
+    ASSERT_FALSE(header.IsValid(BaseEnv::mainnet));
     EXPECT_EQ(main_magic, header.magic());
 }
 
 TEST(TestMessageHeader, TestConstructor3)
 {
     MessageHeader header1(main_magic, btc_message::Version::command, max_message_size, 0x12345678);
-    EXPECT_TRUE(header1.IsValid(BaseEnv::mainnet));
+    ASSERT_TRUE(header1.IsValid(BaseEnv::mainnet));
     EXPECT_EQ(main_magic, header1.magic());
     EXPECT_EQ(btc_message::Version::command, header1.command());
     EXPECT_EQ(max_message_size, header1.payload_length());
     EXPECT_EQ(0x12345678, header1.checksum());
     
     MessageHeader header2(0x123, "foo", max_message_size, 0x12345678);
-    EXPECT_FALSE(header2.IsValid(BaseEnv::mainnet));
+    ASSERT_FALSE(header2.IsValid(BaseEnv::mainnet));
     EXPECT_EQ("foo", header2.command());
 }
 
@@ -91,7 +91,7 @@ TEST(MessageHeaderTest, TestConstructor4)
 {
     const MessageHeader header1(main_magic, btc_message::Version::command, max_message_size, 0x12345678);
     MessageHeader header2(header1);
-    EXPECT_TRUE(header2.IsValid(BaseEnv::mainnet));
+    ASSERT_TRUE(header2.IsValid(BaseEnv::mainnet));
     EXPECT_EQ(main_magic, header2.magic());
     EXPECT_EQ(btc_message::Version::command, header2.command());
     EXPECT_EQ(max_message_size, header2.payload_length());
@@ -103,7 +103,7 @@ TEST(MessageHeaderTest, TestConstructor5)
 {
     MessageHeader header1(main_magic, btc_message::Version::command, max_message_size, 0x12345678);
     MessageHeader header2(std::move(header1));
-    EXPECT_TRUE(header2.IsValid(BaseEnv::mainnet));
+    ASSERT_TRUE(header2.IsValid(BaseEnv::mainnet));
     EXPECT_EQ(main_magic, header2.magic());
     EXPECT_EQ(btc_message::Version::command, header2.command());
     EXPECT_EQ(max_message_size, header2.payload_length());

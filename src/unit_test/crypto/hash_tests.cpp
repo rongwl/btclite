@@ -10,7 +10,7 @@ TEST(SipHasherTest, Constructor1)
     uint64_t tag2 = sip_hasher.Update(0x1122334455667788).Final();
     ASSERT_EQ(tag1, tag2);
     tag2 = sip_hasher.Update(0x1122334455667788+1).Final();
-    ASSERT_NE(tag1, tag2);
+    EXPECT_NE(tag1, tag2);
 }
 
 TEST(SipHasherTest, Constructor2)

@@ -4,10 +4,10 @@
 
 TEST(RandomTest, MethordGetUint64)
 {
-    EXPECT_EQ(Random::GetUint64(0), 0);
+    ASSERT_EQ(Random::GetUint64(0), 0);
     for (int i = 0; i < 1000; i++) {
         uint64_t rand = Random::GetUint64(10);
-        EXPECT_LE(rand, 10);
+        ASSERT_LE(rand, 10);
     }
 }
 
@@ -17,7 +17,7 @@ TEST(RandomTest, MethordGetUint256)
     old_num = Random::GetUint256();
     for (int i = 0; i < 1000; i++) {
         new_num = Random::GetUint256();
-        EXPECT_NE(old_num, new_num);
+        ASSERT_NE(old_num, new_num);
         old_num = new_num;
     }
 }
@@ -56,10 +56,10 @@ TEST(FastRandomContextTest, MethordRandbits)
     for (int bits = 0; bits < 63; ++bits) {
         for (int j = 0; j < 1000; ++j) {
             uint64_t rangebits = ctx1.RandBits(bits);
-            EXPECT_EQ(rangebits >> bits, 0);
+            ASSERT_EQ(rangebits >> bits, 0);
             uint64_t range = ((uint64_t)1) << bits | rangebits;
             uint64_t rand = ctx2.RandRange(range);
-            EXPECT_LT(rand, range);
+            ASSERT_LT(rand, range);
         }
     }
 }
