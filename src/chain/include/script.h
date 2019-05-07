@@ -6,7 +6,6 @@
 #include <utility>
 
 #include "arithmetic.h"
-#include "constants.h"
 #include "protocol.h"
 #include "serialize.h"
 

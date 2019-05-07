@@ -6,12 +6,13 @@
 #include <functional>
 #include <list>
 #include <memory>
+#include <set>
 #include <string>
 #include <utility>
 
 #include "environment.h"
 #include "network_address.h"
-#include "sync.h"
+#include "serialize.h"
 #include "util.h"
 
 #include "message_types/version.h"
@@ -36,14 +37,14 @@ public:
         local_services_ = flags;
     }
     
-    const std::vector<btclite::NetAddr>& local_addrs() const
+    const std::set<btclite::NetAddr>& local_addrs() const
     {
         return local_addrs_;
     }
     
 private:
     ServiceFlags local_services_;
-    std::vector<btclite::NetAddr> local_addrs_;
+    std::set<btclite::NetAddr> local_addrs_;
     
     bool AddLocalAddr();
 };

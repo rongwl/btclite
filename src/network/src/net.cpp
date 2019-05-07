@@ -1,4 +1,5 @@
 #include "constants.h"
+#include "utility/include/logging.h"
 #include "net.h"
 
 void LocalNetConfig::LookupLocalAddrs()

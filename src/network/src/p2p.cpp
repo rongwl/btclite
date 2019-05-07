@@ -26,6 +26,8 @@ bool P2P::InitState(const Args& args)
     is_listen_ = args.GetBoolArg(FULLNODE_OPTION_LISTEN, true);
     is_discover_ = args.GetBoolArg(FULLNODE_OPTION_DISCOVER, true);
     is_dnsseed_ = args.GetBoolArg(FULLNODE_OPTION_DNSSEED, true);
+    
+    return true;
 }
 
 bool P2P::Start()

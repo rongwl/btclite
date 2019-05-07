@@ -9,7 +9,7 @@
 
 #include "constants.h"
 #include "Endian.h"
-#include "hash.h"
+
 
 inline uint64_t DoubleToBinary(double d)
 {

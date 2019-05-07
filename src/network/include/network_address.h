@@ -1,16 +1,21 @@
 #ifndef BTCLITE_NETWORK_ADDRESS_H
 #define BTCLITE_NETWORK_ADDRESS_H
 
+#include <cstring>
+
 #include "network_address.pb.h"
 
 namespace btclite {
     
 class NetAddr {
 public:
+    static constexpr size_t ip_byte_size = 16;
+    static constexpr size_t ip_uint32_size = 4;
+
     NetAddr()
         : addr_()
     {
-        for (int i = 0; i < 4; i++)
+        for (int i = 0; i < ip_uint32_size; i++)
             addr_.add_ip(0);
     }
     
@@ -72,10 +77,7 @@ public:
     {
         return (this->addr_.timestamp() == b.addr().timestamp() &&
                 this->addr_.services() == b.addr().services() &&
-                this->addr_.ip(0) == b.addr().ip(0) &&
-                this->addr_.ip(1) == b.addr().ip(1) &&
-                this->addr_.ip(2) == b.addr().ip(2) &&
-                this->addr_.ip(3) == b.addr().ip(3) &&
+                std::memcmp(this->addr_.ip().data(), b.addr().ip().data(), ip_byte_size) == 0 &&
                 this->addr_.port() == b.addr().port());
     }
     

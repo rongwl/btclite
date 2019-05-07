@@ -1,7 +1,7 @@
 #ifndef BTCLITE_UTIL_H
 #define BTCLITE_UTIL_H
 
-#include "utility/include/logging.h"
+
 #include "sync.h"
 
 #include <csignal>
@@ -9,6 +9,7 @@
 #include <exception>
 #include <fstream>
 #include <getopt.h>
+#include <map>
 #include <set>
 #include <thread>
 #include <vector>

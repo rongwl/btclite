@@ -1,5 +1,4 @@
 #include <arpa/inet.h>
-#include <cstring>
 
 #include "network_address.h"
 #include "constants.h"
@@ -137,8 +136,8 @@ bool NetAddr::IsValid() const
         return false;
 
     // unspecified IPv6 address (::/128)
-    unsigned char ipNone6[16] = {};
-    if (std::memcmp(addr_.ip().data(), ipNone6, 16) == 0)
+    unsigned char ip6_none[ip_byte_size] = {};
+    if (std::memcmp(addr_.ip().data(), ip6_none, ip_byte_size) == 0)
         return false;
 
     // documentation IPv6 address
@@ -214,7 +213,7 @@ int NetAddr::GetIpv6(uint8_t *out) const
     if (!IsIpv6())
         return -1;
     
-    std::memcpy(out, addr_.ip().data(), 16);
+    std::memcpy(out, addr_.ip().data(), ip_byte_size);
     
     return 0;
 }
@@ -222,7 +221,7 @@ int NetAddr::GetIpv6(uint8_t *out) const
 void NetAddr::SetIpv6(const uint8_t *src)
 {
     ASSERT_SIZE();
-    for (int i = 0; i < 16; i++)
+    for (int i = 0; i < ip_byte_size; i++)
         SetByte(i, src[i]);
 }
 

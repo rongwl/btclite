@@ -1,12 +1,11 @@
+#include <iomanip>
+#include <sys/time.h>
+
 #if defined(HAVE_CONFIG_H)
 #include "config/btclite-config.h"
 #endif
 
-#include "string_encoding.h"
 #include "utiltime.h"
-
-#include <iomanip>
-#include <sys/time.h>
 
 
 int64_t GetTimeMicros()

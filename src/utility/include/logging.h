@@ -3,12 +3,12 @@
 
 #include <array>
 #include <atomic>
+#include <cassert>
 #include <string>
 #include <map>
 
 #include <glog/logging.h>
 
-#include "Assert.h"
 
 class Logging;
 

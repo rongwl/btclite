@@ -4,8 +4,6 @@
 #include <array>
 #include <cstdint>
 
-#include "serialize.h"
-
 
 size_t VarIntSize(size_t vec_size);
 

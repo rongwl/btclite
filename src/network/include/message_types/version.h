@@ -2,6 +2,9 @@
 #define BTCLITE_MESSAGE_VERSION_H
 
 #include "message_types.h"
+#include "network_address.h"
+#include "protocol.h"
+
 
 namespace btc_message {
 

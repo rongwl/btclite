@@ -6,7 +6,6 @@
 
 #include "arithmetic.h"
 #include "Endian.h"
-#include "hash.h"
 
 
 class Random {

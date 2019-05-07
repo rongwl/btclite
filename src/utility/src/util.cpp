@@ -1,16 +1,15 @@
+#include <algorithm>
+#include <getopt.h>
+#include <locale>
+#include <stdarg.h>
+
 #if defined(HAVE_CONFIG_H)
 #include "config/btclite-config.h"
 #endif
 
 #include "error.h"
-#include "serialize.h"
-#include "sync.h"
+#include "utility/include/logging.h"
 #include "util.h"
-#include "utiltime.h"
-
-#include <getopt.h>
-#include <locale>
-#include <stdarg.h>
 
 
 volatile std::sig_atomic_t SigMonitor::received_signal_ = 0;

@@ -1,7 +1,9 @@
+#include <algorithm>
 #include <arpa/inet.h>
 
 #include "fullnode/include/config.h"
 #include "error.h"
+#include "utility/include/logging.h"
 
 
 bool FullNodeArgs::Init(int argc, const char* const argv[])

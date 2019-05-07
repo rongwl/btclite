@@ -4,10 +4,6 @@
 #include <cstdint>
 #include <string>
 
-#include "network_address.pb.h"
-#include "network_address.h"
-#include "protocol.h"
-
 
 namespace btc_message {
 

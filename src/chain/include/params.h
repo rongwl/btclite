@@ -5,7 +5,7 @@
 
 #include "block.h"
 #include "environment.h"
-#include "hash.h"
+
 
 using CheckPoint = std::map<uint32_t, Hash256>;
 

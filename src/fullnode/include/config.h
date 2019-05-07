@@ -1,9 +1,7 @@
 #ifndef BTCLITE_FULLNODE_CONFIG_H
 #define BTCLITE_FULLNODE_CONFIG_H
 
-#include "environment.h"
-#include "chain/include/params.h"
-#include "network/include/params.h"
+
 #include "util.h"
 
 

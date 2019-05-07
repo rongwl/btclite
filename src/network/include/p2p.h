@@ -3,8 +3,6 @@
 
 #include <thread>
 
-#include "hash.h"
-#include "protocol.h"
 #include "net.h"
 #include "network/include/params.h"
 #include "thread.h"
