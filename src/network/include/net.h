@@ -6,13 +6,13 @@
 #include <functional>
 #include <list>
 #include <memory>
-#include <set>
 #include <string>
 #include <utility>
 
 #include "environment.h"
 #include "network_address.h"
 #include "serialize.h"
+//#include "sync.h"
 #include "util.h"
 
 #include "message_types/version.h"
@@ -30,23 +30,27 @@ public:
     
     ServiceFlags local_services() const
     {
+        LOCK(cs_local_net_config_);
         return local_services_;
     }
     void set_local_services(ServiceFlags flags)
     {
+        LOCK(cs_local_net_config_);
         local_services_ = flags;
     }
     
-    const std::set<btclite::NetAddr>& local_addrs() const
+    const std::vector<btclite::NetAddr>& local_addrs() const
     {
+        LOCK(cs_local_net_config_);
         return local_addrs_;
     }
     
 private:
+    mutable CriticalSection cs_local_net_config_;
     ServiceFlags local_services_;
-    std::set<btclite::NetAddr> local_addrs_;
+    std::vector<btclite::NetAddr> local_addrs_;
     
-    bool AddLocalAddr();
+    bool AddLocalHost(const btclite::NetAddr& addr);
 };
 
 

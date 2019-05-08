@@ -51,6 +51,7 @@ public:
     bool IsValid() const;
     
     //-------------------------------------------------------------------------
+    std::string ToString() const;
     void Clear();
     uint8_t GetByte(int n) const;
     void SetByte(int n, uint8_t value);

@@ -1,4 +1,6 @@
 #include <arpa/inet.h>
+#include <botan/base32.h>
+#include <sstream>
 
 #include "network_address.h"
 #include "constants.h"
@@ -159,6 +161,25 @@ bool NetAddr::IsValid() const
     }
 
     return true;
+}
+
+std::string NetAddr::ToString() const
+{
+    std::stringstream ss;
+    
+    if (IsInternal())
+        return Botan::base32_encode(reinterpret_cast<const uint8_t*>(addr_.ip().data()) + sizeof(btc_ip_prefix),
+                                    ip_byte_size - sizeof(btc_ip_prefix)) + ".internal";
+
+    if (IsIpv4())
+        ss <<  GetByte(12) << "." << GetByte(13) << "." << GetByte(14) << "." << GetByte(15) << ":" << addr_.port();
+    else
+        ss << (GetByte(15) << 8 | GetByte(14)) << ":" << (GetByte(13) << 8 | GetByte(12)) << ":"
+           << (GetByte(11) << 8 | GetByte(10)) << ":" << (GetByte(9) << 8 | GetByte(8)) << ":"
+           << (GetByte(7) << 8 | GetByte(6)) << ":" << (GetByte(5) << 8 | GetByte(4)) << ":"
+           << (GetByte(3) << 8 | GetByte(2)) << ":" << (GetByte(1) << 8 | GetByte(0)) << "," << addr_.port();
+    
+    return ss.str();
 }
 
 void NetAddr::Clear()

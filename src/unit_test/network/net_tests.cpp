@@ -135,3 +135,10 @@ TEST(MessageHeaderTest, Operator_equal)
 
 TEST(MessageTest, Constructor1)
 {}
+
+TEST(LocalNetConfigTest, MethordSetLocalServiecs)
+{
+    LocalNetConfig config;
+    config.set_local_services(ServiceFlags::NODE_NETWORK);
+    EXPECT_EQ(config.local_services(), ServiceFlags::NODE_NETWORK);
+}
