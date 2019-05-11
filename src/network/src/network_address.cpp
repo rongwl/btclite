@@ -182,6 +182,40 @@ std::string NetAddr::ToString() const
     return ss.str();
 }
 
+bool NetAddr::ToSockAddr(struct sockaddr* out, socklen_t *len) const
+{
+    if (IsIpv4()) {
+        if (*len < static_cast<socklen_t>(sizeof(struct sockaddr_in)))
+            return false;
+        
+        *len = sizeof(struct sockaddr_in);
+        struct sockaddr_in *paddrin = reinterpret_cast<struct sockaddr_in*>(out);
+        std::memset(paddrin, 0, *len);
+        paddrin->sin_family = AF_INET;
+        paddrin->sin_addr.s_addr = GetIpv4();
+        paddrin->sin_port = htons(addr_.port());
+        
+        return true;
+    }
+    
+    if (IsIpv6()) {
+        if (*len < static_cast<socklen_t>(sizeof(struct sockaddr_in6)))
+            return false;
+        
+        *len = sizeof(struct sockaddr_in6);        
+        struct sockaddr_in6 *paddrin6 = reinterpret_cast<struct sockaddr_in6*>(out);
+        std::memset(paddrin6, 0, *len);
+        paddrin6->sin6_family = AF_INET6;
+        GetIpv6(paddrin6->sin6_addr.s6_addr);
+        paddrin6->sin6_port = htons(addr_.port());
+        paddrin6->sin6_scope_id = addr_.scop_id();
+        
+        return true;
+    }
+    
+    return false;
+}
+
 void NetAddr::Clear()
 {
     addr_.clear_timestamp();

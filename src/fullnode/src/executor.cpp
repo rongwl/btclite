@@ -74,7 +74,7 @@ bool FullNodeMain::InitNetwork()
 {
     BaseEnv env;
     
-    if (!network_.InitState(args_))
+    if (!network_.InitArgs(args_))
         return false;
     
     if (args_.IsArgSet(GLOBAL_OPTION_TESTNET))

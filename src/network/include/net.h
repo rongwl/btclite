@@ -24,7 +24,7 @@ using Socket = int;
 class LocalNetConfig {
 public:
     LocalNetConfig()
-        : local_services_(NODE_NONE), local_addrs_() {}
+        : local_services_(ServiceFlags(NODE_NETWORK | NODE_NETWORK_LIMITED)), local_addrs_() {}
     
     void LookupLocalAddrs();
     
@@ -292,5 +292,11 @@ private:
     InboundNode nodes_;
 };
 
+struct NetArgs {
+    bool is_listen_;
+    bool is_discover_;
+    bool is_dnsseed_;
+    std::vector<std::string> specified_outgoing_;
+};
 
 #endif // BTCLITE_NET_H

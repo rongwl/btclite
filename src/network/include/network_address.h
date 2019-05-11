@@ -2,6 +2,9 @@
 #define BTCLITE_NETWORK_ADDRESS_H
 
 #include <cstring>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netinet/ip.h> 
 
 #include "network_address.pb.h"
 
@@ -51,8 +54,11 @@ public:
     bool IsValid() const;
     
     //-------------------------------------------------------------------------
-    std::string ToString() const;
     void Clear();
+    std::string ToString() const;
+    bool ToSockAddr(struct sockaddr* out, socklen_t *len) const;
+    
+    //-------------------------------------------------------------------------
     uint8_t GetByte(int n) const;
     void SetByte(int n, uint8_t value);
     void SetNByte(const uint8_t *src, size_t n);
@@ -76,10 +82,11 @@ public:
     
     bool operator==(const NetAddr& b) const
     {
-        return (this->addr_.timestamp() == b.addr().timestamp() &&
+        return (std::memcmp(this->addr_.ip().data(), b.addr().ip().data(), ip_byte_size) == 0 &&
+                this->addr_.port() == b.addr().port() &&
+                this->addr_.scop_id() == b.addr().scop_id() &&
                 this->addr_.services() == b.addr().services() &&
-                std::memcmp(this->addr_.ip().data(), b.addr().ip().data(), ip_byte_size) == 0 &&
-                this->addr_.port() == b.addr().port());
+                this->addr_.timestamp() == b.addr().timestamp());
     }
     
     bool operator!=(const NetAddr& b) const
@@ -93,16 +100,46 @@ public:
         return addr_;
     }
     
-    void set_addr(const proto_netaddr::NetAddr& addr)
+    uint32_t port() const
     {
-        addr_ = addr;
+        return addr_.port();
+    } 
+    
+    void set_port(uint32_t port)
+    {
+        addr_.set_port(port);
     }
     
-    void set_addr(proto_netaddr::NetAddr&& addr) noexcept
+    uint32_t scop_id() const
     {
-        addr_ = std::move(addr);
+        return addr_.scop_id();
     }
     
+    void set_scop_id(uint32_t id)
+    {
+        addr_.set_scop_id(id);
+    }
+    
+    uint64_t services() const
+    {
+        return addr_.services();
+    }
+    
+    void set_services(uint64_t s)
+    {
+        addr_.set_services(s);
+    }
+    
+    uint32_t timestamp() const
+    {
+        return addr_.timestamp();
+    }
+    
+    void set_timestamp(uint32_t time)
+    {
+        addr_.set_timestamp(time);
+    }
+
 private:
     proto_netaddr::NetAddr addr_;
     

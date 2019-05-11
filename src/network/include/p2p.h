@@ -12,7 +12,7 @@ public:
     P2P();
     
     bool Init(BaseEnv env);
-    bool InitState(const Args& args);
+    bool InitArgs(const Args& args);
     bool Start();
     bool Interrupt();
     bool Stop();
@@ -23,8 +23,14 @@ public:
         return network_params_;
     }
     
+    const NetArgs& network_args() const
+    {
+        return network_args_;
+    }
+    
 private:
     Network::Params network_params_;
+    NetArgs network_args_;
     LocalNetConfig local_network_config_;
     std::vector<OutboundSession> outbound_sessions_;
     std::vector<InboundSession> inbound_sessions_;
@@ -34,13 +40,6 @@ private:
     std::thread thread_socket_handler_;
     std::thread thread_open_connections_;
     std::thread thread_message_handler_;
-    
-    std::vector<std::string> m_specified_outgoing_;
-    
-    bool is_listen_;
-    bool is_discover_;
-    bool is_dnsseed_;
-    
     
     void ThreadDnsSeeds();
     void ThreadOpenConnections(const std::vector<std::string> connect);

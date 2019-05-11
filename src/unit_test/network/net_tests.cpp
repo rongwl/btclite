@@ -6,7 +6,7 @@
 #include "constants.h"
 #include "net.h"
 
-TEST(MessageHeaderTest, Methord_GetSet)
+TEST(MessageHeaderTest, MethordGetSet)
 {
     MessageHeader header;
     header.set_magic(main_magic);
@@ -23,7 +23,7 @@ TEST(MessageHeaderTest, Methord_GetSet)
     EXPECT_EQ("foo", header.command());
 }
 
-TEST(MessageHeaderTest, Methord_IsValid)
+TEST(MessageHeaderTest, MethordIsValid)
 {
     MessageHeader header;
     std::vector<BaseEnv> env_vec = { BaseEnv::mainnet, BaseEnv::testnet, BaseEnv::regtest };
@@ -66,14 +66,14 @@ TEST(MessageHeaderTest, Constructor1)
         ASSERT_FALSE(header.IsValid(env));
 }
 
-TEST(MessageHeaderTest, TestConstructor2)
+TEST(MessageHeaderTest, Constructor2)
 {
     MessageHeader header(main_magic);
     ASSERT_FALSE(header.IsValid(BaseEnv::mainnet));
     EXPECT_EQ(main_magic, header.magic());
 }
 
-TEST(TestMessageHeader, TestConstructor3)
+TEST(TestMessageHeader, Constructor3)
 {
     MessageHeader header1(main_magic, btc_message::Version::command, max_message_size, 0x12345678);
     ASSERT_TRUE(header1.IsValid(BaseEnv::mainnet));
@@ -87,7 +87,7 @@ TEST(TestMessageHeader, TestConstructor3)
     EXPECT_EQ("foo", header2.command());
 }
 
-TEST(MessageHeaderTest, TestConstructor4)
+TEST(MessageHeaderTest, Constructor4)
 {
     const MessageHeader header1(main_magic, btc_message::Version::command, max_message_size, 0x12345678);
     MessageHeader header2(header1);
@@ -99,7 +99,7 @@ TEST(MessageHeaderTest, TestConstructor4)
     EXPECT_TRUE(header1 == header2);
 }
 
-TEST(MessageHeaderTest, TestConstructor5)
+TEST(MessageHeaderTest, Constructor5)
 {
     MessageHeader header1(main_magic, btc_message::Version::command, max_message_size, 0x12345678);
     MessageHeader header2(std::move(header1));
@@ -110,7 +110,7 @@ TEST(MessageHeaderTest, TestConstructor5)
     EXPECT_EQ(0x12345678, header2.checksum());
 }
 
-TEST(MessageHeaderTest, Operator_equal)
+TEST(MessageHeaderTest, OperatorEqual)
 {
     MessageHeader header1(main_magic, btc_message::Version::command, max_message_size, 0x12345678);
     MessageHeader header2(header1);
@@ -136,9 +136,16 @@ TEST(MessageHeaderTest, Operator_equal)
 TEST(MessageTest, Constructor1)
 {}
 
+
+TEST(LocalNetConfigTest, Constructor)
+{
+    LocalNetConfig config;
+    EXPECT_EQ(config.local_services(), NODE_NETWORK | NODE_NETWORK_LIMITED);
+}
+
 TEST(LocalNetConfigTest, MethordSetLocalServiecs)
 {
     LocalNetConfig config;
-    config.set_local_services(ServiceFlags::NODE_NETWORK);
-    EXPECT_EQ(config.local_services(), ServiceFlags::NODE_NETWORK);
+    config.set_local_services(NODE_NETWORK);
+    EXPECT_EQ(config.local_services(), NODE_NETWORK);
 }

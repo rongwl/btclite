@@ -10,6 +10,8 @@ bin_PROGRAMS += unit_test/test_util \
 #TEST_BINARY = unit_test/test_btclite
 
 
+UNIT_TEST_UTILITY_DIR = -I$(srcdir)/unit_test/utility
+
 # test_fullnode binary #
 unit_test_test_fullnode_SOURCES = unit_test/fullnode/test_fullnode.cpp \
                                   unit_test/fullnode/config_tests.cpp
@@ -33,12 +35,14 @@ unit_test_test_fullnode_LDADD += $(GTEST_LIBS) \
 unit_test_test_network_SOURCES = unit_test/network/test_network.cpp \
                                  unit_test/network/net_tests.cpp \
                                  unit_test/network/network_address_tests.cpp \
+                                 unit_test/network/p2p_tests.cpp \
                                  unit_test/network/params_tests.cpp
 
 unit_test_test_network_CPPFLAGS = $(AM_CPPFLAGS) \
                                   $(GTEST_CFLAGS) \
                                   $(GLOG_CFLAGS) \
                                   $(BOTAN_CFLAGS) \
+                                  $(UNIT_TEST_UTILITY_DIR) \
                                   $(BTCLITE_INCLUDES)
 unit_test_test_network_LDADD = $(LIBBTCLITE_CHAIN) \
                                $(LIBBTCLITE_CRYPTO) \
@@ -49,7 +53,8 @@ unit_test_test_network_LDADD += $(GTEST_LIBS) \
                                 $(PTHREAD_LIBS) \
                                 $(PROTOBUF_LIBS) \
                                 $(BOTAN_LIBS) \
-                                $(GLOG_LIBS)
+                                $(GLOG_LIBS) \
+                                $(STDCPP_FILESYSTEM_LIBS)
 
 
 # test_crypto binary #
