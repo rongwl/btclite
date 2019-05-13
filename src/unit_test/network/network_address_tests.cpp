@@ -14,57 +14,29 @@ TEST(NetAddrTest, Constructor)
     EXPECT_EQ(addr1.addr().ip().size(), btclite::NetAddr::ip_uint32_size);
     EXPECT_EQ(std::memcmp(addr1.addr().ip().data(), ip_none, btclite::NetAddr::ip_byte_size), 0);
     
-    proto_netaddr::NetAddr proto_addr;
-    proto_addr.set_timestamp(1);
-    proto_addr.set_services(2);
-    proto_addr.set_scop_id(3);
-    for (int i = 1; i <= btclite::NetAddr::ip_uint32_size; i++)
-        proto_addr.add_ip(i);
-    proto_addr.set_port(8388);
-    btclite::NetAddr addr2(proto_addr);
-    ASSERT_EQ(addr2.addr().timestamp(), proto_addr.timestamp());
-    ASSERT_EQ(addr2.addr().services(), proto_addr.services());
-    ASSERT_EQ(addr2.addr().scop_id(), proto_addr.scop_id());
-    for(int i = 0; i < btclite::NetAddr::ip_uint32_size; i++)
-        ASSERT_EQ(addr2.addr().ip(i), proto_addr.ip(i));
-    ASSERT_EQ(addr2.addr().port(), proto_addr.port());
+    for (uint8_t i = 1; i <= btclite::NetAddr::ip_uint32_size; i++)
+        addr1.SetByte(i, i);
+    addr1.set_port(1234);
+    addr1.set_scop_id(1);
+    addr1.set_services(2);
+    addr1.set_timestamp(3);
+      
+    btclite::NetAddr addr2(addr1);
+    ASSERT_EQ(addr1, addr2);
     
-    btclite::NetAddr addr3(std::move(proto_addr));
-    ASSERT_EQ(addr3.addr().timestamp(), addr2.addr().timestamp());
-    ASSERT_EQ(addr3.addr().services(), addr2.addr().services());
-    ASSERT_EQ(addr3.addr().scop_id(), addr2.addr().scop_id());
-    for(int i = 0; i < btclite::NetAddr::ip_uint32_size; i++)
-        ASSERT_EQ(addr3.addr().ip(i), addr2.addr().ip(i));
-    ASSERT_EQ(addr3.addr().port(), addr2.addr().port());
-    
-    btclite::NetAddr addr4(addr3);
-    ASSERT_EQ(addr3.addr().timestamp(), addr4.addr().timestamp());
-    ASSERT_EQ(addr3.addr().services(), addr4.addr().services());
-    ASSERT_EQ(addr3.addr().scop_id(), addr4.addr().scop_id());
-    for(int i = 0; i < btclite::NetAddr::ip_uint32_size; i++)
-        ASSERT_EQ(addr3.addr().ip(i), addr4.addr().ip(i));
-    ASSERT_EQ(addr3.addr().port(), addr4.addr().port());
-    
-    btclite::NetAddr addr5(std::move(addr4));
-    ASSERT_EQ(addr3.addr().timestamp(), addr5.addr().timestamp());
-    ASSERT_EQ(addr3.addr().services(), addr5.addr().services());
-    ASSERT_EQ(addr3.addr().scop_id(), addr5.addr().scop_id());
-    for(int i = 0; i < btclite::NetAddr::ip_uint32_size; i++)
-        ASSERT_EQ(addr3.addr().ip(i), addr5.addr().ip(i));
-    ASSERT_EQ(addr3.addr().port(), addr5.addr().port());
+    btclite::NetAddr addr3(std::move(addr1));
+    ASSERT_EQ(addr2, addr3);
 }
 
 TEST(NetAddrTest, OperatorEqual)
 {
-    proto_netaddr::NetAddr proto_addr;
-    proto_addr.set_timestamp(1);
-    proto_addr.set_services(2);
-    proto_addr.set_scop_id(3);
-    for (int i = 1; i <= btclite::NetAddr::ip_uint32_size; i++)
-        proto_addr.add_ip(i);
-    proto_addr.set_port(8388);
-    
-    btclite::NetAddr addr1(proto_addr), addr2;
+    btclite::NetAddr addr1, addr2;
+    for (uint8_t i = 1; i <= btclite::NetAddr::ip_uint32_size; i++)
+        addr1.SetByte(i, i);
+    addr1.set_port(1234);
+    addr1.set_scop_id(1);
+    addr1.set_services(2);
+    addr1.set_timestamp(3);    
     addr2 = addr1;
     EXPECT_EQ(addr1, addr2);
     
@@ -75,62 +47,22 @@ TEST(NetAddrTest, OperatorEqual)
 
 TEST(NetAddrTest, MethordIsIpv4)
 {
-    proto_netaddr::NetAddr addr;    
-    for (int i = 0; i < btclite::NetAddr::ip_uint32_size; i++)
-        addr.add_ip(0);
-    
-    addr.set_ip(2, 0xffff0000);
-    addr.set_ip(3, inet_addr("127.0.0.1"));
-    EXPECT_TRUE(btclite::NetAddr(addr).IsValid());
-    EXPECT_TRUE(btclite::NetAddr(addr).IsIpv4());
-    EXPECT_FALSE(btclite::NetAddr(addr).IsIpv6());    
+    btclite::NetAddr addr;
+    addr.SetByte(10, 0xff);
+    addr.SetByte(11, 0xff);
+
+    EXPECT_TRUE(addr.IsIpv4());
+    EXPECT_FALSE(addr.IsIpv6());    
 }
 
 TEST(NetAddrTest, MethordIsIpv6)
 {
-    proto_netaddr::NetAddr addr;    
-    for (int i = 0; i < btclite::NetAddr::ip_uint32_size; i++)
-        addr.add_ip(0);
+    btclite::NetAddr addr;
     
-    uint8_t buf[sizeof(struct in6_addr)];
-    inet_pton(AF_INET6, "ABCD:EF01:2345:6789:ABCD:EF01:2345:6789", buf);
-    addr.set_ip(0, *reinterpret_cast<uint32_t*>(buf));
-    addr.set_ip(1, *reinterpret_cast<uint32_t*>(buf+4));
-    addr.set_ip(2, *reinterpret_cast<uint32_t*>(buf+8));
-    addr.set_ip(3, *reinterpret_cast<uint32_t*>(buf+12));
-    btclite::NetAddr net_addr(addr);
-    
-    EXPECT_TRUE(btclite::NetAddr(addr).IsValid());
-    EXPECT_FALSE(btclite::NetAddr(addr).IsIpv4());
-    EXPECT_TRUE(btclite::NetAddr(addr).IsIpv6());
-}
-
-TEST(NetAddrTest, MethordGetByte)
-{
-    proto_netaddr::NetAddr addr;    
-    for (int i = 0; i < btclite::NetAddr::ip_uint32_size; i++)
-        addr.add_ip(0);
-    
-    addr.set_ip(2, 0xffff0000);
-    addr.set_ip(3, inet_addr("192.168.1.2"));
-    btclite::NetAddr net_addr(addr);
-    
-    ASSERT_EQ(net_addr.GetByte(12), 192);
-    ASSERT_EQ(net_addr.GetByte(13), 168);
-    ASSERT_EQ(net_addr.GetByte(14), 1);
-    ASSERT_EQ(net_addr.GetByte(15), 2);
-    
-    
-    uint8_t buf[sizeof(struct in6_addr)];
-    inet_pton(AF_INET6, "0001:0203:0405:0607:0809:0A0B:0C0D:0E0F", buf);
-    addr.set_ip(0, *reinterpret_cast<uint32_t*>(buf));
-    addr.set_ip(1, *reinterpret_cast<uint32_t*>(buf+4));
-    addr.set_ip(2, *reinterpret_cast<uint32_t*>(buf+8));
-    addr.set_ip(3, *reinterpret_cast<uint32_t*>(buf+12));
-    btclite::NetAddr net_addr2(addr);
-    
-    for (int i = 0; i < btclite::NetAddr::ip_byte_size; i++)
-        ASSERT_EQ(net_addr2.GetByte(i), i);
+    for (uint8_t i = 1; i <= btclite::NetAddr::ip_uint32_size; i++)
+        addr.SetByte(i, i);   
+    EXPECT_FALSE(addr.IsIpv4());
+    EXPECT_TRUE(addr.IsIpv6());
 }
 
 TEST(NetAddrTest, MethordSetByte)
@@ -156,7 +88,8 @@ TEST(NetAddrTest, MethordSetIpv4)
     btclite::NetAddr addr;
     
     addr.SetIpv4(inet_addr("192.168.1.2"));
-    ASSERT_TRUE(btclite::NetAddr(addr).IsIpv4());
+    ASSERT_TRUE(addr.IsValid());
+    ASSERT_TRUE(addr.IsIpv4());
     ASSERT_EQ(addr.GetByte(12), 192);
     ASSERT_EQ(addr.GetByte(13), 168);
     ASSERT_EQ(addr.GetByte(14), 1);
@@ -178,6 +111,7 @@ TEST(NetAddrTest, MethordSetIpv6)
     
     inet_pton(AF_INET6, "0001:0203:0405:0607:0809:0A0B:0C0D:0E0F", buf);
     addr.SetIpv6(buf);
+    ASSERT_TRUE(addr.IsValid());
     for (int i = 0; i < btclite::NetAddr::ip_byte_size; i++)
         ASSERT_EQ(addr.GetByte(i), i);
 }
