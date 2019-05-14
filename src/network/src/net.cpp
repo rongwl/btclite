@@ -1,7 +1,7 @@
+#include <fcntl.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <net/if.h>
-#include <netinet/in.h>
 #include <ifaddrs.h>
 
 #include "constants.h"
@@ -122,59 +122,3 @@ bool Message::RecvMsgHandle()
     
     return data_.get()->RecvMsgHandle();
 }
-
-Socket BaseSocket::Create()
-{
-    return 0;
-}
-
-bool BaseSocket::Close()
-{
-    return true;
-}
-
-bool Connector::Connect()
-{
-    return true;
-}
-
-bool Acceptor::Bind()
-{
-    return true;
-}
-
-Socket Acceptor::Accept()
-{
-    return 0;
-}
-
-void BaseNode::Connect()
-{
-
-}
-
-void BaseNode::Disconnect()
-{
-
-}
-
-size_t BaseNode::Receive()
-{
-    return 0;
-}
-
-size_t BaseNode::Send()
-{
-    return 0;
-}
-
-void OutboundSession::GetAddrFromSeed()
-{
-
-}
-
-void OutboundSession::OpenConnection()
-{
-
-}
-

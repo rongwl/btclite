@@ -29,12 +29,12 @@ public:
     bool Init(BaseEnv env);
     
     //-------------------------------------------------------------------------
-    MessageHeader::MsgMagic msg_magic()
+    MessageHeader::MsgMagic msg_magic() const
     {
         return msg_magic_;
     }
     
-    uint16_t default_port()
+    uint16_t default_port() const
     {
         return default_port_;
     }

@@ -1,24 +1,13 @@
 #ifndef BTCLITE_NET_H
 #define BTCLITE_NET_H
 
-#include <cstring>
-#include <deque>
-#include <functional>
-#include <list>
-#include <memory>
-#include <string>
-#include <utility>
 
 #include "environment.h"
 #include "network_address.h"
 #include "serialize.h"
-//#include "sync.h"
 #include "util.h"
 
 #include "message_types/version.h"
-
-
-using Socket = int;
 
     
 class LocalNetConfig {
@@ -207,90 +196,6 @@ private:
     std::shared_ptr<btc_message::BaseMsgType> data_;
 };
 
-
-class BaseSocket {
-public:
-    Socket Create();
-    bool Close();
-
-    Socket socket_fd() const
-    {
-        return socket_fd_;
-    }
-
-protected:
-    BaseSocket() {}
-    
-private:
-    Socket socket_fd_;
-};
-
-// outbound socket connection
-class Connector : public BaseSocket {
-public:
-    bool Connect();
-
-};
-
-// inbound socket connection
-class Acceptor : public BaseSocket {
-public:
-    bool Bind();
-    Socket Accept();
-};
-
-
-/* Information about a connected peer */
-class BaseNode {
-public:
-    using NodeId = int64_t;
-    
-    void Connect();
-    void Disconnect();
-    size_t Receive();
-    size_t Send();
-    
-    NodeId id() const
-    {
-        return id_;
-    }
-private:
-    NodeId id_;
-};
-// mixin uncopyable
-using Node = Uncopyable<BaseNode>;
-
-class OutboundNode : public Node {
-public:
-private:
-    Connector connector_;
-    std::deque<std::vector<unsigned char> > send_msg_;
-};
-
-class InboundNode: public Node {
-public:
-private:
-    Acceptor acceptor_;
-    std::list<Message> recv_msg_;
-};
-
-
-class OutboundSession {
-public:
-    void GetAddrFromSeed();
-    
-private:
-    std::unique_ptr<Semaphore> semaphore_;
-    OutboundNode nodes_;
-    
-    void OpenConnection();
-}; 
-
-class InboundSession {
-public:
-private:
-    InboundNode nodes_;
-};
 
 struct NetArgs {
     bool is_listen_;

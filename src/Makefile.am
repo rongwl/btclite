@@ -53,6 +53,8 @@ BTCLITE_HEADER_FILES = \
                        network/include/protocol.h \
                        network/include/net.h \
                        network/include/network_address.h \
+                       network/include/session.h \
+                       network/include/socket.h \
                        crypto/include/hash.h \
                        utility/include/blob.h \
                        utility/include/Endian.h \
@@ -132,7 +134,9 @@ network_src_libbtclite_network_a_SOURCES = network/proto/network_address.pb.cc \
                                            network/src/peers.cpp \
                                            network/src/p2p.cpp \
                                            network/src/protocol.cpp \
-                                           network/src/net.cpp 
+                                           network/src/net.cpp \
+                                           network/src/session.cpp \
+                                           network/src/socket.cpp
 
 
 fullnode_src_libbtclite_fullnode_a_CPPFLAGS = $(AM_CXXFLAGS) \

@@ -22,11 +22,6 @@ public:
             addr_.add_ip(0);
     }
     
-    /*NetAddr(const proto_netaddr::NetAddr& addr)
-        : addr_(addr) {}
-    NetAddr(proto_netaddr::NetAddr&& addr) noexcept
-        : addr_(std::move(addr)) {}*/
-    
     NetAddr(const NetAddr& addr)
         : addr_(addr.addr_) {}
     NetAddr(NetAddr&& addr) noexcept
