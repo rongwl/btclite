@@ -1,6 +1,7 @@
 #ifndef BTCLITE_SOCKET_H
 #define BTCLITE_SOCKET_H
 
+
 #include "network/include/params.h"
 
 
@@ -8,14 +9,21 @@ using Socket = int;
 
 class BasicSocket {
 public:
+    BasicSocket()
+        : sock_fd_(0), sock_addr_()
+    {
+        std::memset(&sock_addr_, 0, sizeof(sock_addr_));
+    }
+    
     BasicSocket(const struct sockaddr_in& sock_addr4)
     {
         std::memcpy(&sock_addr_, &sock_addr4, sizeof(sock_addr4));
     }
+    
     BasicSocket(const struct sockaddr_in6& sock_addr6)
     {
         std::memcpy(&sock_addr_, &sock_addr6, sizeof(sock_addr6));
-    }
+    }    
     
     //-------------------------------------------------------------------------
     bool Create();
@@ -39,31 +47,5 @@ private:
     struct sockaddr_storage sock_addr_;
 };
 
-// outbound socket connection
-class Connector {
-public:
-    bool Connect();
-
-};
-
-// inbound socket connection
-class Acceptor {
-public:
-    Acceptor()
-        : sockets_() {}
-    
-    bool Init(const Network::Params& params);
-    bool Bind();
-    bool Listen();
-    Socket Accept();
-    
-    const std::vector<BasicSocket>& sockets() const
-    {
-        return sockets_;
-    }
-    
-private:
-    std::vector<BasicSocket> sockets_;
-};
 
 #endif // BTCLITE_SOCKET_H

@@ -18,8 +18,8 @@ message Peer {
 }
 
 message Peers {
-    repeated Peer new_peers = 1;
-    repeated Peer tried_peers = 2;
+    map<uint32, Peer> new_peers = 1;
+    map<uint32, Peer> tried_peers = 2;
 }
 /* Stochastic peers manager, merge from bitcoin0.16.3
  *

@@ -208,7 +208,7 @@ bool NetAddr::ToSockAddr(struct sockaddr* out, socklen_t *len) const
         paddrin6->sin6_family = AF_INET6;
         GetIpv6(paddrin6->sin6_addr.s6_addr);
         paddrin6->sin6_port = htons(addr_.port());
-        paddrin6->sin6_scope_id = addr_.scop_id();
+        paddrin6->sin6_scope_id = addr_.scope_id();
         
         return true;
     }
@@ -282,3 +282,61 @@ void NetAddr::SetIpv6(const uint8_t *src)
 
 
 } // namespace btclite
+
+SubNet::SubNet(const btclite::NetAddr& addr, int32_t mask)
+    : net_addr_(addr), valid_(true)
+{
+    // Default to /32 (IPv4) or /128 (IPv6), i.e. match single address
+    memset(netmask_, 0xff, sizeof(netmask_));
+
+    // IPv4 addresses start at offset 12, and first 12 bytes must match, so just offset n
+    const int astartofs = net_addr_.IsIpv4() ? 12 : 0;
+
+    int32_t n = mask;
+    if(n >= 0 && n <= (128 - astartofs*8)) // Only valid if in range of bits of address
+    {
+        n += astartofs*8;
+        // Clear bits [n..127]
+        for (; n < 128; ++n)
+            netmask_[n>>3] &= ~(1<<(7-(n&7)));
+    } else
+        valid_ = false;
+
+    // Normalize network according to netmask
+    for(int x = 0; x < netmask_byte_size; ++x)
+        net_addr_.SetByte(x, (net_addr_.GetByte(x) & netmask_[x]));
+}
+
+SubNet::SubNet(const btclite::NetAddr &addr, const btclite::NetAddr &mask)
+    : net_addr_(addr), valid_(true)
+{
+    // Default to /32 (IPv4) or /128 (IPv6), i.e. match single address
+    memset(netmask_, 255, sizeof(netmask_));
+
+    // IPv4 addresses start at offset 12, and first 12 bytes must match, so just offset n
+    const int astartofs = net_addr_.IsIpv4() ? 12 : 0;
+
+    for(int x=astartofs; x<16; ++x)
+        netmask_[x] = mask.GetByte(x);
+
+    // Normalize network according to netmask
+    for(int x = 0; x < netmask_byte_size; ++x)
+        net_addr_.SetByte(x, (net_addr_.GetByte(x) & netmask_[x]));
+}
+
+bool SubNet::Match(const btclite::NetAddr& addr) const
+{
+    if (!valid_ || !addr.IsValid())
+        return false;
+    
+    for (int i = 0; i < netmask_byte_size; ++i)
+        if ((addr.GetByte(i) & netmask_[i]) != net_addr_.GetByte(i))
+            return false;
+    
+    return true;
+}
+
+std::string SubNet::ToString() const
+{
+    return std::string();
+}

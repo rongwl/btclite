@@ -38,6 +38,7 @@ bin_PROGRAMS = btc-fullnode
 
 BTCLITE_HEADER_FILES = \
                        chain/include/block.h \
+                       chain/include/chain.h \
                        chain/include/params.h \
                        chain/include/script.h \
                        chain/include/script_witness.h \
@@ -45,13 +46,18 @@ BTCLITE_HEADER_FILES = \
                        config/environment.h \
                        fullnode/include/clientversion.h \
                        fullnode/include/config.h \
+                       network/include/acceptor.h \
+                       network/include/bandb.h \
+                       network/include/connector.h \
                        network/include/message_types.h \
                        network/include/message_types/version.h \
+                       network/include/node.h \
                        network/include/p2p.h \
                        network/include/params.h \
                        network/include/peers.h \
                        network/include/protocol.h \
                        network/include/net.h \
+                       network/include/netbase.h \
                        network/include/network_address.h \
                        network/include/session.h \
                        network/include/socket.h \
@@ -121,20 +127,27 @@ chain_src_libbtclite_chain_a_SOURCES = chain/src/block.cpp \
 network_src_libbtclite_network_a_CPPFLAGS = $(AM_CXXFLAGS) \
                                             $(BOTAN_CFLAGS) \
                                             $(GLOG_CFLAGS) \
+                                            $(BTCLITE_CHAIN_INCLUDES) \
                                             $(BTCLITE_CONFIG_INCLUDES) \
                                             $(BTCLITE_CRYPTO_INCLUDES) \
                                             $(BTCLITE_NETWORK_INCLUDES) \
                                             $(BTCLITE_NETWORK_PROTO_INCLUDES) \
                                             $(BTCLITE_UTIL_INCLUDES)
-network_src_libbtclite_network_a_SOURCES = network/proto/network_address.pb.cc \
+network_src_libbtclite_network_a_SOURCES = network/proto/banmap.pb.cc \
+                                           network/proto/network_address.pb.cc \
                                            network/proto/peers.pb.cc \
+                                           network/src/acceptor.cpp \
+                                           network/src/bandb.cpp \
+                                           network/src/connector.cpp \
                                            network/src/message_types/version.cpp \
+                                           network/src/netbase.cpp \
                                            network/src/network_address.cpp \
                                            network/src/params.cpp \
                                            network/src/peers.cpp \
                                            network/src/p2p.cpp \
                                            network/src/protocol.cpp \
                                            network/src/net.cpp \
+                                           network/src/node.cpp \
                                            network/src/session.cpp \
                                            network/src/socket.cpp
 

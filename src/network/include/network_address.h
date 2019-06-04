@@ -8,6 +8,7 @@
 
 #include "network_address.pb.h"
 
+
 namespace btclite {
     
 class NetAddr {
@@ -18,14 +19,25 @@ public:
     NetAddr()
         : addr_()
     {
-        for (int i = 0; i < ip_uint32_size; i++)
-            addr_.add_ip(0);
+        addr_.mutable_ip()->Resize(ip_uint32_size, 0);
     }
     
-    NetAddr(const NetAddr& addr)
-        : addr_(addr.addr_) {}
-    NetAddr(NetAddr&& addr) noexcept
-        : addr_(std::move(addr.addr_)) {}
+    explicit NetAddr(const struct sockaddr_in& addr)
+        : addr_()
+    {
+        addr_.mutable_ip()->Resize(ip_uint32_size, 0);
+        SetIpv4(addr.sin_addr.s_addr);
+        set_port(addr.sin_port);
+    }
+    
+    explicit NetAddr(const struct sockaddr_in6& addr6)
+        : addr_()
+    {
+        addr_.mutable_ip()->Resize(ip_uint32_size, 0);
+        SetIpv6(addr6.sin6_addr.s6_addr);
+        set_port(addr6.sin6_port);
+        set_scope_id(addr6.sin6_scope_id);
+    }
     
     //-------------------------------------------------------------------------
     bool IsIpv4() const;
@@ -63,25 +75,10 @@ public:
     void SetIpv6(const uint8_t *src);
     
     //-------------------------------------------------------------------------
-    NetAddr& operator=(const NetAddr& b)
-    {
-        addr_ = b.addr_;
-        return *this;
-    }
-    
-    NetAddr& operator=(NetAddr&& b) noexcept
-    {
-        addr_ = std::move(b.addr_);
-        return *this;
-    }
-    
     bool operator==(const NetAddr& b) const
     {
         return (std::memcmp(this->addr_.ip().data(), b.addr().ip().data(), ip_byte_size) == 0 &&
-                this->addr_.port() == b.addr().port() &&
-                this->addr_.scop_id() == b.addr().scop_id() &&
-                this->addr_.services() == b.addr().services() &&
-                this->addr_.timestamp() == b.addr().timestamp());
+                this->addr_.port() == b.addr().port());
     }
     
     bool operator!=(const NetAddr& b) const
@@ -105,14 +102,14 @@ public:
         addr_.set_port(port);
     }
     
-    uint32_t scop_id() const
+    uint32_t scope_id() const
     {
-        return addr_.scop_id();
+        return addr_.scope_id();
     }
     
-    void set_scop_id(uint32_t id)
+    void set_scope_id(uint32_t id)
     {
-        addr_.set_scop_id(id);
+        addr_.set_scope_id(id);
     }
     
     uint64_t services() const
@@ -144,6 +141,71 @@ private:
                              ASSERT_RANGE(N)
 };
 
-}
+} // namespace btclite
+
+class SubNet {
+public:
+    static constexpr size_t netmask_byte_size = 16;
+    
+    SubNet()
+        : net_addr_(), valid_(false)
+    {
+        std::memset(netmask_, 0, sizeof(netmask_));
+    }
+    
+    explicit SubNet(const btclite::NetAddr& addr)
+        : net_addr_(addr), valid_(addr.IsValid())
+    {
+        std::memset(netmask_, 0xff, sizeof(netmask_));
+    }
+    
+    explicit SubNet(btclite::NetAddr&& addr) noexcept
+        : net_addr_(std::move(addr)), valid_(addr.IsValid())
+    {
+        std::memset(netmask_, 0xff, sizeof(netmask_));
+    }
+    
+    SubNet(const btclite::NetAddr& addr, int32_t mask);
+    SubNet(const btclite::NetAddr &addr, const btclite::NetAddr &mask);
+    
+    //-------------------------------------------------------------------------
+    bool IsValid() const
+    {
+        return valid_;
+    }
+    
+    bool Match(const btclite::NetAddr& addr) const;
+    std::string ToString() const;
+    
+    //-------------------------------------------------------------------------
+    friend bool operator==(const SubNet& a, const SubNet& b)
+    {
+        return (std::memcmp(a.net_addr().addr().ip().data(),
+                            b.net_addr().addr().ip().data(),
+                            btclite::NetAddr::ip_byte_size) == 0);
+    }
+    
+    friend bool operator!=(const SubNet& a, const SubNet& b)
+    {
+        return !(a == b);
+    }
+    
+    //-------------------------------------------------------------------------
+    const btclite::NetAddr& net_addr() const
+    {
+        return net_addr_;
+    }
+    
+    const uint8_t* const netmask() const
+    {
+        return netmask_;
+    }
+    
+private:
+    btclite::NetAddr net_addr_;
+    uint8_t netmask_[netmask_byte_size];
+    bool valid_;
+};
+
 
 #endif // BTCLITE_NETWORK_ADDRESS_H

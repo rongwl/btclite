@@ -4,42 +4,21 @@
 #include <deque>
 #include <list>
 
-//#include "net.h"
-#include "socket.h"
+#include "node.h"
 #include "util.h"
 
-
-/* Information about a connected peer */
-class BaseNode {
-public:
-    using NodeId = int64_t;
-    
-    void Connect();
-    void Disconnect();
-    size_t Receive();
-    size_t Send();
-    
-    NodeId id() const
-    {
-        return id_;
-    }
-private:
-    NodeId id_;
-};
-// mixin uncopyable
-using Node = Uncopyable<BaseNode>;
 
 class OutboundNode : public Node {
 public:
 private:
-    Connector connector_;
+    //Connector connector_;
     std::deque<std::vector<unsigned char> > send_msg_;
 };
 
 class InboundNode: public Node {
 public:
 private:
-    Acceptor acceptor_;
+    //Acceptor acceptor_;
     std::list<Message> recv_msg_;
 };
 
@@ -50,7 +29,7 @@ public:
     
 private:
     std::unique_ptr<Semaphore> semaphore_;
-    OutboundNode nodes_;
+    //OutboundNode node_;
     
     void OpenConnection();
 }; 
@@ -58,7 +37,7 @@ private:
 class InboundSession {
 public:
 private:
-    InboundNode nodes_;
+    //InboundNode node_;
 };
 
 #endif // BTCLITE_SESSION_H

@@ -9,6 +9,7 @@
 #include <memory>
 #include <mutex>
 
+#include "utility/include/logging.h"
 #include "util.h"
 
 
@@ -75,6 +76,25 @@ std::thread* thread_group::create_thread(F threadfunc)
     std::unique_ptr<std::thread> new_thread(new std::thread(threadfunc));
     threads.push_back(new_thread.get());
     return new_thread.release();
+}
+
+template <typename Callable>
+void TraceThread(const std::string& name,  Callable func)
+{
+    try
+    {
+        BTCLOG(LOG_LEVEL_INFO) << name << " thread start";
+        func();
+        BTCLOG(LOG_LEVEL_INFO) << name << " thread exit";
+    }
+    catch (const std::exception& e) {
+        BTCLOG(LOG_LEVEL_WARNING) << name << " thread exception: " << e.what();
+        throw;
+    }
+    catch (...) {
+        BTCLOG(LOG_LEVEL_WARNING) << name << " thread unknown exception";
+        throw;
+    }
 }
 
 #endif // BTCLITE_THREAD_INTERRUPT_H

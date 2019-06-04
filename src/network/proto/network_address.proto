@@ -6,7 +6,7 @@ package proto_netaddr;
 message NetAddr {
     repeated fixed32 ip = 1; // in network byte order
     uint32 port = 2;
-    uint32 scop_id = 3; // for scoped/link-local ipv6 addresses
+    uint32 scope_id = 3; // for scoped/link-local ipv6 addresses
     fixed64 services = 4;
     uint32 timestamp = 5;
 }

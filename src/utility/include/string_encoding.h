@@ -10,6 +10,9 @@
 #include <vector>
 
 
+bool ParsePrechecks(const std::string& str);
+bool ParseInt32(const std::string& str, int32_t *out);
+
 template <typename Iterator>
 std::string HexEncode(Iterator rbegin, Iterator rend, bool fSpaces=false)
 {
@@ -63,5 +66,6 @@ void ReverseEndian(Iterator begin, Iterator end)
         end--;
     }
 }
+
 
 #endif // BTCLITE_UTILSTRENCODINGS_H

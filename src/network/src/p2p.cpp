@@ -5,8 +5,8 @@ P2P::P2P()
     : network_params_(),
       network_args_(),
       local_network_config_(), 
-      outbound_sessions_(),
-      inbound_sessions_(),
+      //outbound_sessions_(),
+      //inbound_sessions_(),
       interrupt_(),
       thread_dns_seeds_(),
       thread_socket_handler_(),
@@ -56,7 +56,9 @@ void P2P::ThreadOpenConnections(const std::vector<std::string> connect)
 
 void P2P::ThreadSocketHandler()
 {
+    while (!interrupt_) {
 
+    }
 }
 
 void P2P::ThreadMessageHandler()

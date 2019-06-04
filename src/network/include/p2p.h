@@ -3,7 +3,8 @@
 
 #include <thread>
 
-#include "session.h"
+#include "acceptor.h"
+#include "connector.h"
 #include "network/include/params.h"
 #include "thread.h"
 
@@ -28,12 +29,35 @@ public:
         return network_args_;
     }
     
+    static const Nodes& nodes()
+    {
+        return nodes_;
+    }
+    
+    static Nodes *mutable_nodes()
+    {
+        return &nodes_;
+    }
+    
+    static std::map<Node::NodeId, NodeState>& map_node_state() 
+    {
+        return map_node_state_;
+    }
+    
+    static std::map<Node::NodeId, NodeState> *mutable_map_node_state()
+    {
+        return &map_node_state_;
+    }
+    
 private:
     Network::Params network_params_;
     NetArgs network_args_;
     LocalNetConfig local_network_config_;
-    std::vector<OutboundSession> outbound_sessions_;
-    std::vector<InboundSession> inbound_sessions_;
+    //std::vector<OutboundSession> outbound_sessions_;
+    //std::vector<InboundSession> inbound_sessions_;
+    Acceptor acceptor_;
+    static Nodes nodes_;
+    static std::map<Node::NodeId, NodeState> map_node_state_;
     
     ThreadInterrupt interrupt_;
     std::thread thread_dns_seeds_;

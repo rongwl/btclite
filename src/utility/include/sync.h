@@ -16,9 +16,9 @@ void static inline DeleteLock(void*) {}
 #endif
 
 template <typename Mutex>
-class CMutexLock {
+class MutexLock {
 public:
-    CMutexLock(Mutex& mutex, const char *psz_name, const char *psz_file, int line, bool try_lock = false)
+    MutexLock(Mutex& mutex, const char *psz_name, const char *psz_file, int line, bool try_lock = false)
         : lock(mutex, std::defer_lock)
     {
         if (try_lock) 
@@ -27,7 +27,7 @@ public:
             Enter(psz_name, psz_file, line);
     }
 
-    CMutexLock(Mutex *pmutex, const char *psz_name, const char *psz_file, int line, bool try_lock = false)
+    MutexLock(Mutex *pmutex, const char *psz_name, const char *psz_file, int line, bool try_lock = false)
     {
         if (!pmutex)
             return;
@@ -38,7 +38,7 @@ public:
             Enter(psz_name, psz_file, line);
     }
 
-    ~CMutexLock() 
+    ~MutexLock() 
     {
         if (lock.owns_lock())
             LeaveCritical();
@@ -74,7 +74,7 @@ public:
     }
 };
 
-using CriticalBlock = CMutexLock<CriticalSection>;
+using CriticalBlock = MutexLock<CriticalSection>;
 
 #define PASTE(x, y) x ## y
 #define PASTE2(x, y) PASTE(x, y)
