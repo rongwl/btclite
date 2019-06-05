@@ -172,12 +172,12 @@ std::string NetAddr::ToString() const
                                     ip_byte_size - sizeof(btc_ip_prefix)) + ".internal";
 
     if (IsIpv4())
-        ss <<  GetByte(12) << "." << GetByte(13) << "." << GetByte(14) << "." << GetByte(15) << ":" << addr_.port();
+        ss << +GetByte(12) << "." << +GetByte(13) << "." << +GetByte(14) << "." << +GetByte(15);
     else
-        ss << (GetByte(15) << 8 | GetByte(14)) << ":" << (GetByte(13) << 8 | GetByte(12)) << ":"
-           << (GetByte(11) << 8 | GetByte(10)) << ":" << (GetByte(9) << 8 | GetByte(8)) << ":"
-           << (GetByte(7) << 8 | GetByte(6)) << ":" << (GetByte(5) << 8 | GetByte(4)) << ":"
-           << (GetByte(3) << 8 | GetByte(2)) << ":" << (GetByte(1) << 8 | GetByte(0)) << "," << addr_.port();
+        ss << std::hex << ((GetByte(0) << 8) | GetByte(1)) << ":" << ((GetByte(2) << 8) | GetByte(3)) << ":"
+           << ((GetByte(4) << 8) | GetByte(5)) << ":" << ((GetByte(6) << 8) | GetByte(7)) << ":"
+           << ((GetByte(8) << 8) | GetByte(9)) << ":" << ((GetByte(10) << 8) | GetByte(11)) << ":"
+           << ((GetByte(12) << 8) | GetByte(13)) << ":" << ((GetByte(14) << 8) | GetByte(15));
     
     return ss.str();
 }
@@ -220,7 +220,8 @@ void NetAddr::Clear()
 {
     addr_.clear_timestamp();
     addr_.clear_services();
-    addr_.clear_ip();
+    for (int i = 0; i < addr_.ip_size(); i++)
+        addr_.set_ip(i, 0);
     addr_.clear_port();
 }
 
@@ -338,5 +339,55 @@ bool SubNet::Match(const btclite::NetAddr& addr) const
 
 std::string SubNet::ToString() const
 {
-    return std::string();
+    /* Parse binary 1{n}0{N-n} to see if mask can be represented as /n */
+    int cidr = 0;
+    bool valid_cidr = true;
+    int n = net_addr_.IsIpv4() ? 12 : 0;
+    for (; n < 16 && netmask_[n] == 0xff; ++n)
+        cidr += 8;
+    if (n < 16) {
+        int bits = NetmaskBits(netmask_[n]);
+        if (bits < 0)
+            valid_cidr = false;
+        else
+            cidr += bits;
+        ++n;
+    }
+    for (; n < 16 && valid_cidr; ++n)
+        if (netmask_[n] != 0x00)
+            valid_cidr = false;
+
+    /* Format output */
+    std::stringstream os;
+    if (valid_cidr) {
+        os << cidr;
+    } else {
+        if (net_addr_.IsIpv4())
+            os << +netmask_[12] << "." << +netmask_[13] << "." << +netmask_[14] << "." << +netmask_[15];
+        else
+            os << std::hex << (netmask_[0] << 8 | netmask_[1]) << ":" << (netmask_[2] << 8 | netmask_[3]) << ":"
+               << (netmask_[4] << 8 | netmask_[5]) << ":" << (netmask_[6] << 8 | netmask_[7]) << ":"
+               << (netmask_[8] << 8 | netmask_[9]) << ":" << (netmask_[10] << 8 | netmask_[11]) << ":"
+               << (netmask_[12] << 8 | netmask_[13]) << ":" << (netmask_[14] << 8 | netmask_[15]);
+    }
+
+    return net_addr_.ToString() + "/" + os.str();;
+}
+
+int SubNet::NetmaskBits(uint8_t x)
+{
+    int bits = 0, flag = 0;
+    
+    for (int i = 7; i >= 0 ; i--) {
+        if (x & (1 << i)) {
+            if (flag == 1)
+                return -1;
+            else
+                bits++;
+        }
+        else
+            flag = 1;
+    }
+    
+    return bits;
 }

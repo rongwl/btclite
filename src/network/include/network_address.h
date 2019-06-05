@@ -145,7 +145,8 @@ private:
 
 class SubNet {
 public:
-    static constexpr size_t netmask_byte_size = 16;
+    static constexpr size_t netmask_byte_size = 16;    
+    static int NetmaskBits(uint8_t x);
     
     SubNet()
         : net_addr_(), valid_(false)
@@ -172,6 +173,13 @@ public:
     bool IsValid() const
     {
         return valid_;
+    }
+    
+    void Clear()
+    {
+        net_addr_.Clear();
+        std::memset(netmask_, 0, sizeof(netmask_));
+        valid_ = false;
     }
     
     bool Match(const btclite::NetAddr& addr) const;
