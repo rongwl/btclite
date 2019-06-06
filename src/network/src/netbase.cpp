@@ -32,9 +32,9 @@ bool LookupHost(const char *psz_name, std::vector<btclite::NetAddr> *out,
     return LookupIntern(str_host.c_str(), out, max_solutions, allow_lookup);
 }
 
-bool LookupSubNet(const char* pszName, SubNet *out)
+bool LookupSubNet(const char* psz_name, SubNet *out)
 {
-    std::string str_subnet(pszName);
+    std::string str_subnet(psz_name);
     size_t slash = str_subnet.find_last_of('/');
     std::vector<btclite::NetAddr> vip;
 
