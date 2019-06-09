@@ -64,3 +64,13 @@ void Nodes::ClearNodeState()
 {
 
 }
+
+void Nodes::DisconnectBanNode(const SubNet& subnet)
+{
+    LOCK(cs_nodes_);
+    
+    for (auto it = list_.begin(); it != list_.end(); ++it) {
+        if (subnet.Match(btclite::NetAddr(it->socket().sock_addr())))
+            it->set_disconnected(true);
+    }
+}

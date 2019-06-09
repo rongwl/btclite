@@ -5,6 +5,8 @@
 #include <cassert>
 #include <sstream>
 
+
+int64_t GetTimeSeconds();
 int64_t GetTimeMicros();
 std::string DateTimeStrFormat();
 

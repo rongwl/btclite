@@ -7,6 +7,40 @@
 
 namespace btclite {
 
+NetAddr::NetAddr(const struct sockaddr_in& addr)
+    : addr_()
+{
+    addr_.mutable_ip()->Resize(ip_uint32_size, 0);
+    SetIpv4(addr.sin_addr.s_addr);
+    set_port(addr.sin_port);
+}
+
+NetAddr::NetAddr(const struct sockaddr_in6& addr6)
+    : addr_()
+{
+    addr_.mutable_ip()->Resize(ip_uint32_size, 0);
+    SetIpv6(addr6.sin6_addr.s6_addr);
+    set_port(addr6.sin6_port);
+    set_scope_id(addr6.sin6_scope_id);
+}
+
+NetAddr::NetAddr(const struct sockaddr_storage& addr)
+    : addr_()
+{
+    addr_.mutable_ip()->Resize(ip_uint32_size, 0);
+    if (addr.ss_family == AF_INET) {
+        const struct sockaddr_in *addr4 = reinterpret_cast<const struct sockaddr_in*>(&addr);
+        SetIpv4(addr4->sin_addr.s_addr);
+        set_port(addr4->sin_port);
+    }
+    else {
+        const struct sockaddr_in6 *addr6 = reinterpret_cast<const struct sockaddr_in6*>(&addr);
+        SetIpv6(addr6->sin6_addr.s6_addr);
+        set_port(addr6->sin6_port);
+        set_scope_id(addr6->sin6_scope_id);
+    }
+}
+
 bool NetAddr::IsIpv4() const
 {
     ASSERT_SIZE();

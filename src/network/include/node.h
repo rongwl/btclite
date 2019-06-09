@@ -189,6 +189,8 @@ public:
     void ClearDisconnected();
     void CheckInactive();
     
+    void DisconnectBanNode(const SubNet& subnet);
+    
     const std::list<Node>& list() const
     {
         return list_;

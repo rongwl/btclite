@@ -110,14 +110,14 @@ public:
     bool LockDataDir();
 
     //-------------------------------------------------------------------------
-    const fs::path& data_dir() const
+    fs::path data_dir() const
     {
         LOCK(cs_path_);
         return data_dir_;
     }
     void set_data_dir(const fs::path& path);
     
-    const fs::path& config_file() const
+    fs::path config_file() const
     {
         LOCK(cs_path_);
         return config_file_;

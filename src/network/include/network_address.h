@@ -22,22 +22,9 @@ public:
         addr_.mutable_ip()->Resize(ip_uint32_size, 0);
     }
     
-    explicit NetAddr(const struct sockaddr_in& addr)
-        : addr_()
-    {
-        addr_.mutable_ip()->Resize(ip_uint32_size, 0);
-        SetIpv4(addr.sin_addr.s_addr);
-        set_port(addr.sin_port);
-    }
-    
-    explicit NetAddr(const struct sockaddr_in6& addr6)
-        : addr_()
-    {
-        addr_.mutable_ip()->Resize(ip_uint32_size, 0);
-        SetIpv6(addr6.sin6_addr.s6_addr);
-        set_port(addr6.sin6_port);
-        set_scope_id(addr6.sin6_scope_id);
-    }
+    explicit NetAddr(const struct sockaddr_in& addr);    
+    explicit NetAddr(const struct sockaddr_in6& addr6);    
+    explicit NetAddr(const struct sockaddr_storage& addr);
     
     //-------------------------------------------------------------------------
     bool IsIpv4() const;

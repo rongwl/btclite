@@ -28,11 +28,11 @@ public:
         local_services_ = flags;
     }
     
-    const std::vector<btclite::NetAddr>& local_addrs() const
+    /*const std::vector<btclite::NetAddr>& local_addrs() const
     {
         LOCK(cs_local_net_config_);
         return local_addrs_;
-    }
+    }*/
     
 private:
     mutable CriticalSection cs_local_net_config_;

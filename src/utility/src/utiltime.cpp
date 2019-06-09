@@ -8,6 +8,13 @@
 #include "utiltime.h"
 
 
+int64_t GetTimeSeconds()
+{
+    time_t now = time(nullptr);
+    assert(now > 0);
+    return now;
+}
+
 int64_t GetTimeMicros()
 {
     struct timeval tv;
