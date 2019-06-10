@@ -5,6 +5,7 @@ P2P::P2P()
     : network_params_(),
       network_args_(),
       local_network_config_(), 
+      ban_db_(),
       //outbound_sessions_(),
       //inbound_sessions_(),
       interrupt_(),
@@ -13,18 +14,16 @@ P2P::P2P()
       thread_open_connections_(),
       thread_message_handler_() {}
 
-bool P2P::Init(BaseEnv env)
+bool P2P::Init(BaseEnv env, const Args& args, const DataFiles& data_files)
 {
-    network_params_.Init(env);
-}
-
-bool P2P::InitArgs(const Args& args)
-{
-    network_args_.is_listen_ = args.GetBoolArg(FULLNODE_OPTION_LISTEN, true);
-    network_args_.is_discover_ = args.GetBoolArg(FULLNODE_OPTION_DISCOVER, true);
-    network_args_.is_dnsseed_ = args.GetBoolArg(FULLNODE_OPTION_DNSSEED, true);
-    if (args.IsArgSet(FULLNODE_OPTION_CONNECT))
-        network_args_.specified_outgoing_ = args.GetArgs(FULLNODE_OPTION_CONNECT);
+    if (!network_params_.Init(env))
+        return false;
+    
+    if (!InitArgs(args))
+        return false;
+    
+    if (!InitBanDb(data_files))
+        return false;
     
     return true;
 }
@@ -42,6 +41,22 @@ bool P2P::Interrupt()
 bool P2P::Stop()
 {
     return true;
+}
+
+bool P2P::InitArgs(const Args& args)
+{
+    network_args_.is_listen_ = args.GetBoolArg(FULLNODE_OPTION_LISTEN, true);
+    network_args_.is_discover_ = args.GetBoolArg(FULLNODE_OPTION_DISCOVER, true);
+    network_args_.is_dnsseed_ = args.GetBoolArg(FULLNODE_OPTION_DNSSEED, true);
+    if (args.IsArgSet(FULLNODE_OPTION_CONNECT))
+        network_args_.specified_outgoing_ = args.GetArgs(FULLNODE_OPTION_CONNECT);
+    
+    return true;
+}
+
+bool P2P::InitBanDb(const DataFiles& data_files)
+{
+    return ban_db_.Init(data_files.path_data_dir());
 }
 
 void P2P::ThreadDnsSeeds()

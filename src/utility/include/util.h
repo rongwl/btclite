@@ -2,6 +2,7 @@
 #define BTCLITE_UTIL_H
 
 
+#include "fs.h"
 #include "sync.h"
 
 #include <csignal>
@@ -14,14 +15,6 @@
 #include <thread>
 #include <vector>
 
-
-#if __GNUC__ >= 8
-#include <filesystem>
-namespace fs = std::filesystem;
-#else 
-#include <experimental/filesystem>
-namespace fs = std::experimental::filesystem;
-#endif
 
 #define GLOBAL_OPTION_HELP     "help"
 #define GLOBAL_OPTION_DATADIR  "datadir"
@@ -102,32 +95,32 @@ private:
 class DataFiles {
 public:
     DataFiles()
-        : data_dir_(), config_file_() {}
+        : path_data_dir_(), path_config_file_() {}
     DataFiles(const fs::path& data_dir, const std::string& config_file)
-        : data_dir_(data_dir), config_file_(data_dir_ / config_file) {}
+        : path_data_dir_(data_dir), path_config_file_(path_data_dir_ / config_file) {}
     
     virtual bool Init(const std::string& path, const std::string& config_file) = 0;
     bool LockDataDir();
 
     //-------------------------------------------------------------------------
-    fs::path data_dir() const
+    fs::path path_data_dir() const
     {
         LOCK(cs_path_);
-        return data_dir_;
+        return path_data_dir_;
     }
-    void set_data_dir(const fs::path& path);
+    void set_path_data_dir(const fs::path& path);
     
-    fs::path config_file() const
+    fs::path path_config_file() const
     {
         LOCK(cs_path_);
-        return config_file_;
+        return path_config_file_;
     }
-    void set_config_file(const std::string& filename);
+    void set_path_config_file(const std::string& filename);
     
 private:    
     mutable CriticalSection cs_path_;
-    fs::path data_dir_;
-    fs::path config_file_;    
+    fs::path path_data_dir_;
+    fs::path path_config_file_;    
 };
 
 class BaseExecutor {

@@ -148,23 +148,23 @@ bool FullNodeArgs::InitParameters()
 bool FullNodeDataFiles::Init(const std::string& dir_path, const std::string& config_file)
 {
     if (!fs::is_directory(dir_path)) {
-        BTCLOG(LOG_LEVEL_WARNING) << "Specified data path \"" << data_dir().c_str()
+        BTCLOG(LOG_LEVEL_WARNING) << "Specified data path \"" << path_data_dir().c_str()
                                  << "\" does not exist. Use default data path.";
         if (dir_path == DefaultDataDirPath())
             fs::create_directories(dir_path);        
     }
     else
-        set_data_dir(fs::path(dir_path));
+        set_path_data_dir(fs::path(dir_path));
     
-    std::ifstream ifs(data_dir() / config_file);
+    std::ifstream ifs(path_data_dir() / config_file);
     if (!ifs.good()) {
-        BTCLOG(LOG_LEVEL_WARNING) << "Specified config file \"" << data_dir().c_str() << "/" << config_file
+        BTCLOG(LOG_LEVEL_WARNING) << "Specified config file \"" << path_data_dir().c_str() << "/" << config_file
                                  << "\" does not exist. Use default config file.";
         if (config_file == DEFAULT_CONFIG_FILE)
-            std::ofstream file(DataFiles::config_file()); // create default config file if it does not exist
+            std::ofstream file(DataFiles::path_config_file()); // create default config file if it does not exist
     }
     else
-        set_config_file(config_file);
+        set_path_config_file(config_file);
     
     return true;
 }

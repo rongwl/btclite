@@ -398,26 +398,26 @@ TEST(FullNodeArgsTest, InvalidOption)
 TEST(FullNodeDataFilesTest, Conctructor)
 {
     FullNodeDataFiles data_files;
-    EXPECT_EQ(data_files.data_dir(), FullNodeDataFiles::DefaultDataDirPath());
-    EXPECT_EQ(data_files.config_file(), data_files.data_dir() / DEFAULT_CONFIG_FILE);
+    EXPECT_EQ(data_files.path_data_dir(), FullNodeDataFiles::DefaultDataDirPath());
+    EXPECT_EQ(data_files.path_config_file(), data_files.path_data_dir() / DEFAULT_CONFIG_FILE);
 }
 
 TEST(FullNodeDataFilesTest, MethordInit)
 {
     FullNodeDataFiles data_files;
     data_files.Init(fs::path("/123"), "bar.conf");
-    EXPECT_EQ(data_files.data_dir(), FullNodeDataFiles::DefaultDataDirPath());
-    EXPECT_EQ(data_files.config_file(), data_files.data_dir() / DEFAULT_CONFIG_FILE);
+    EXPECT_EQ(data_files.path_data_dir(), FullNodeDataFiles::DefaultDataDirPath());
+    EXPECT_EQ(data_files.path_config_file(), data_files.path_data_dir() / DEFAULT_CONFIG_FILE);
     
     data_files.Init();
-    EXPECT_EQ(data_files.data_dir(), FullNodeDataFiles::DefaultDataDirPath());
-    EXPECT_EQ(data_files.config_file(), data_files.data_dir() / DEFAULT_CONFIG_FILE);
-    EXPECT_TRUE(fs::is_directory(data_files.data_dir()));
-    std::ifstream ifs(data_files.config_file());
+    EXPECT_EQ(data_files.path_data_dir(), FullNodeDataFiles::DefaultDataDirPath());
+    EXPECT_EQ(data_files.path_config_file(), data_files.path_data_dir() / DEFAULT_CONFIG_FILE);
+    EXPECT_TRUE(fs::is_directory(data_files.path_data_dir()));
+    std::ifstream ifs(data_files.path_config_file());
     EXPECT_TRUE(ifs.good());
     
     std::ofstream ofs(fs::path("/tmp") / "foo.conf");
     data_files.Init(fs::path("/tmp"), "foo.conf");
-    EXPECT_EQ(data_files.data_dir(), fs::path("/tmp"));
-    EXPECT_EQ(data_files.config_file(), fs::path("/tmp") / "foo.conf");
+    EXPECT_EQ(data_files.path_data_dir(), fs::path("/tmp"));
+    EXPECT_EQ(data_files.path_config_file(), fs::path("/tmp") / "foo.conf");
 }

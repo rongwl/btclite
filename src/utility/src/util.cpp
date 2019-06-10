@@ -216,7 +216,7 @@ bool DataFiles::LockDataDir()
     return true;
 }
 
-void DataFiles::set_data_dir(const fs::path& path)
+void DataFiles::set_path_data_dir(const fs::path& path)
 {
     LOCK(cs_path_);
     if (!fs::is_directory(path)) {
@@ -224,19 +224,19 @@ void DataFiles::set_data_dir(const fs::path& path)
                                  << "\" does not exist.";
         return;
     }
-    data_dir_ = path;
+    path_data_dir_ = path;
 }
 
-void DataFiles::set_config_file(const std::string& filename)
+void DataFiles::set_path_config_file(const std::string& filename)
 {
     LOCK(cs_path_);
-    std::ifstream ifs(data_dir_ / filename);
+    std::ifstream ifs(path_data_dir_ / filename);
     if (!ifs.good()) {
-        BTCLOG(LOG_LEVEL_WARNING) << "Specified config file \"" << data_dir_.c_str() << "/" << filename
+        BTCLOG(LOG_LEVEL_WARNING) << "Specified config file \"" << path_data_dir_.c_str() << "/" << filename
                                  << "\" does not exist.";
         return;
     }
-    config_file_ = (data_dir_ / filename);
+    path_config_file_ = (path_data_dir_ / filename);
 }
 
 bool BaseExecutor::BasicSetup()

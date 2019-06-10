@@ -62,20 +62,17 @@ bool FullNodeMain::InitDataFiles()
 
 bool FullNodeMain::LoadConfigFile()
 {
-    if (!fs::is_directory(data_files_.data_dir())) {
-        BTCLOG(LOG_LEVEL_ERROR) << "Error: Specified data directory \"" << data_files_.data_dir().c_str() << "\" does not exist.";
+    if (!fs::is_directory(data_files_.path_data_dir())) {
+        BTCLOG(LOG_LEVEL_ERROR) << "Error: Specified data directory \"" << data_files_.path_data_dir().c_str() << "\" does not exist.";
         return false;
     }
     
-    return args_.ParseFromFile(data_files_.config_file().c_str());
+    return args_.ParseFromFile(data_files_.path_config_file().c_str());
 }
 
 bool FullNodeMain::InitNetwork()
 {
     BaseEnv env;
-    
-    if (!network_.InitArgs(args_))
-        return false;
     
     if (args_.IsArgSet(GLOBAL_OPTION_TESTNET))
         env = BaseEnv::testnet;
@@ -84,7 +81,7 @@ bool FullNodeMain::InitNetwork()
     else
         env = BaseEnv::mainnet;
         
-    return network_.Init(env);
+    return network_.Init(env, args_, data_files_);
 }
 
 

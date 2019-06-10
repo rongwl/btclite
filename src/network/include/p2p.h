@@ -4,6 +4,7 @@
 #include <thread>
 
 #include "acceptor.h"
+#include "bandb.h"
 #include "connector.h"
 #include "network/include/params.h"
 #include "thread.h"
@@ -12,8 +13,7 @@ class P2P {
 public:
     P2P();
     
-    bool Init(BaseEnv env);
-    bool InitArgs(const Args& args);
+    bool Init(BaseEnv env, const Args& args, const DataFiles& data_files);
     bool Start();
     bool Interrupt();
     bool Stop();
@@ -53,6 +53,7 @@ private:
     Network::Params network_params_;
     NetArgs network_args_;
     LocalNetConfig local_network_config_;
+    BanDb ban_db_;
     //std::vector<OutboundSession> outbound_sessions_;
     //std::vector<InboundSession> inbound_sessions_;
     Acceptor acceptor_;
@@ -64,6 +65,9 @@ private:
     std::thread thread_socket_handler_;
     std::thread thread_open_connections_;
     std::thread thread_message_handler_;
+    
+    bool InitArgs(const Args& args);
+    bool InitBanDb(const DataFiles& data_files);
     
     void ThreadDnsSeeds();
     void ThreadOpenConnections(const std::vector<std::string> connect);

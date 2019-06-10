@@ -62,11 +62,12 @@ BTCLITE_HEADER_FILES = \
                        network/include/session.h \
                        network/include/socket.h \
                        crypto/include/hash.h \
+                       utility/include/arithmetic.h \
                        utility/include/blob.h \
+                       utility/include/constants.h \
                        utility/include/Endian.h \
                        utility/include/error.h \
-                       utility/include/arithmetic.h \
-                       utility/include/constants.h \
+                       utility/include/fs.h \
                        utility/include/logging.h \
                        utility/include/network_address.h \
                        utility/include/random.h \
