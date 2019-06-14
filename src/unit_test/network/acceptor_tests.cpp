@@ -5,10 +5,9 @@
 
 TEST(AcceptorTest, MethordInit)
 {
-    Network::Params params;
+    Network::Params params(BaseEnv::mainnet);
     Acceptor acceptor;
     
-    params.Init(BaseEnv::mainnet);
     ASSERT_TRUE(acceptor.Init(params));
     ASSERT_EQ(acceptor.listen_sockets().size(), 2);
     ASSERT_GT(acceptor.listen_sockets()[0].sock_fd(), 0);
@@ -30,10 +29,9 @@ TEST(AcceptorTest, MethordInit)
 
 TEST(AcceptorTest, MethordBind)
 {
-    Network::Params params;
+    Network::Params params(BaseEnv::mainnet);
     Acceptor acceptor;
     
-    params.Init(BaseEnv::mainnet);
     ASSERT_TRUE(acceptor.Init(params));
     EXPECT_TRUE(acceptor.Bind());    
     for (auto socket : acceptor.listen_sockets())
@@ -43,10 +41,9 @@ TEST(AcceptorTest, MethordBind)
 
 TEST(AcceptorTest, MethordListen)
 {
-    Network::Params params;
+    Network::Params params(BaseEnv::mainnet);
     Acceptor acceptor;
     
-    params.Init(BaseEnv::mainnet);
     ASSERT_TRUE(acceptor.Init(params));
     ASSERT_TRUE(acceptor.Bind());
     EXPECT_TRUE(acceptor.Listen());

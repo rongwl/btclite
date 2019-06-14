@@ -38,24 +38,15 @@ TEST(ArgsTest, MethordGetBoolArg)
 
 TEST(DataFilesTest, Constructor)
 {
-    TestDataFiles data_files(fs::path("/foo"), "bar.conf");
-    EXPECT_EQ(data_files.path_data_dir(), fs::path("/foo"));
-    EXPECT_EQ(data_files.path_config_file(), fs::path("/foo") / "bar.conf");
-}
-
-TEST(DataFilesTest, MethordGetSet)
-{
-    TestDataFiles data_files;
-    data_files.set_path_data_dir(fs::path("/tmp"));
-    EXPECT_EQ(data_files.path_data_dir(), fs::path("/tmp"));
+    TestDataFiles data_files1;
+    EXPECT_EQ(data_files1.path_data_dir(), DataFiles::PathHome());
+    EXPECT_EQ(data_files1.path_config_file(), data_files1.path_data_dir() / "btclite.conf");
     
-    std::ofstream file(fs::path("/tmp") / "foo.conf");
-    data_files.set_path_config_file("foo.conf");
-    EXPECT_EQ(data_files.path_config_file(), fs::path("/tmp") / "foo.conf");
+    TestDataFiles data_files2(fs::path("/foo"));
+    EXPECT_EQ(data_files2.path_data_dir(), fs::path("/foo"));
+    EXPECT_EQ(data_files2.path_config_file(), fs::path("/foo") / "btclite.conf");
     
-    data_files.set_path_data_dir(fs::path("/123"));
-    EXPECT_EQ(data_files.path_data_dir(), fs::path("/tmp"));
-    
-    data_files.set_path_config_file("bar.conf");
-    EXPECT_EQ(data_files.path_config_file(), fs::path("/tmp") / "foo.conf");
+    TestDataFiles data_files3(fs::path("/foo"), "bar.conf");
+    EXPECT_EQ(data_files3.path_data_dir(), fs::path("/foo"));
+    EXPECT_EQ(data_files3.path_config_file(), fs::path("/foo") / "bar.conf");
 }

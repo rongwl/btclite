@@ -2,7 +2,6 @@
 #define BTCLITE_NET_H
 
 
-#include "environment.h"
 #include "network_address.h"
 #include "serialize.h"
 #include "util.h"
@@ -197,7 +196,14 @@ private:
 };
 
 
-struct NetArgs {
+class NetArgs {
+public:
+    NetArgs()
+        : is_listen_(true), is_discover_(true), is_dnsseed_(true), specified_outgoing_() {}
+    
+    NetArgs(const Args& args);
+    
+private:
     bool is_listen_;
     bool is_discover_;
     bool is_dnsseed_;

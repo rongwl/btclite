@@ -133,7 +133,8 @@ network_src_libbtclite_network_a_CPPFLAGS = $(AM_CXXFLAGS) \
                                             $(BTCLITE_CRYPTO_INCLUDES) \
                                             $(BTCLITE_NETWORK_INCLUDES) \
                                             $(BTCLITE_NETWORK_PROTO_INCLUDES) \
-                                            $(BTCLITE_UTIL_INCLUDES)
+                                            $(BTCLITE_UTIL_INCLUDES) \
+                                            $(BTCLITE_FULLNODE_INCLUDES)
 network_src_libbtclite_network_a_SOURCES = network/proto/banmap.pb.cc \
                                            network/proto/network_address.pb.cc \
                                            network/proto/peers.pb.cc \

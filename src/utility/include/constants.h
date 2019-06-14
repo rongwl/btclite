@@ -31,4 +31,6 @@ constexpr uint64_t max_outbound_timeframe = 60 * 60 * 24;
 constexpr size_t max_send_buffer = 1000;
 constexpr size_t max_receive_buffer = 5000;
 
+constexpr uint64_t default_misbehaving_bantime = 60 * 60 * 24;
+
 #endif // BTCLITE_CONSTANTS_H

@@ -2,7 +2,7 @@
 #include "constants.h"
 
 
-bool Network::Params::Init(BaseEnv env)
+Network::Params::Params(BaseEnv env)
 {
     switch (env) {
         case BaseEnv::mainnet :
@@ -42,8 +42,10 @@ bool Network::Params::Init(BaseEnv env)
             break;
         }
         default :
-            return false;
+            msg_magic_ = 0;
+            default_port_ = 0;
+            seeds_.clear();
+            
+            break;
     }
-    
-    return true;
 }

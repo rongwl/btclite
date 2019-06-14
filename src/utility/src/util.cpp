@@ -216,9 +216,17 @@ bool DataFiles::LockDataDir()
     return true;
 }
 
+fs::path DataFiles::PathHome()
+{
+    char *home_path = getenv("HOME");            
+    if (home_path == NULL)
+        return fs::path("/");
+    else
+        return fs::path(home_path);
+}
+
 void DataFiles::set_path_data_dir(const fs::path& path)
 {
-    LOCK(cs_path_);
     if (!fs::is_directory(path)) {
         BTCLOG(LOG_LEVEL_WARNING) << "Set data path \"" << path.c_str()
                                  << "\" does not exist.";
@@ -229,7 +237,6 @@ void DataFiles::set_path_data_dir(const fs::path& path)
 
 void DataFiles::set_path_config_file(const std::string& filename)
 {
-    LOCK(cs_path_);
     std::ifstream ifs(path_data_dir_ / filename);
     if (!ifs.good()) {
         BTCLOG(LOG_LEVEL_WARNING) << "Specified config file \"" << path_data_dir_.c_str() << "/" << filename
@@ -237,6 +244,24 @@ void DataFiles::set_path_config_file(const std::string& filename)
         return;
     }
     path_config_file_ = (path_data_dir_ / filename);
+}
+
+ExecutorConfig::ExecutorConfig(int argc, const char* const argv[])
+    : argc_(argc), argv_(argv)
+{
+    for (int i = 1; i < argc; i++) {
+        std::string option(argv[i]);
+        if (option == "--testnet") {
+            env_ = BaseEnv::testnet;
+            return;
+        }
+        else if (option == "--regtest") {
+            env_ = BaseEnv::regtest;
+            return;
+        }
+    }
+    
+    env_ = BaseEnv::mainnet;
 }
 
 bool BaseExecutor::BasicSetup()

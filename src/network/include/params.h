@@ -25,8 +25,9 @@ class Params {
 public:
     Params()
         : msg_magic_(0), default_port_(0), seeds_() {}
+    
+    Params(BaseEnv env);
 
-    bool Init(BaseEnv env);
     
     //-------------------------------------------------------------------------
     MessageHeader::MsgMagic msg_magic() const

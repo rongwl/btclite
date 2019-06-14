@@ -4,6 +4,7 @@
 #include <net/if.h>
 #include <ifaddrs.h>
 
+#include "config.h"
 #include "constants.h"
 #include "utility/include/logging.h"
 #include "net.h"
@@ -121,4 +122,14 @@ bool Message::RecvMsgHandle()
         return false;
     
     return data_.get()->RecvMsgHandle();
+}
+
+NetArgs::NetArgs(const Args& args)
+    : is_listen_(args.GetBoolArg(FULLNODE_OPTION_LISTEN, true)),
+      is_discover_(args.GetBoolArg(FULLNODE_OPTION_DISCOVER, true)),
+      is_dnsseed_(args.GetBoolArg(FULLNODE_OPTION_DNSSEED, true)),
+      specified_outgoing_()
+{
+    if (args.IsArgSet(FULLNODE_OPTION_CONNECT))
+        specified_outgoing_ = args.GetArgs(FULLNODE_OPTION_CONNECT);
 }

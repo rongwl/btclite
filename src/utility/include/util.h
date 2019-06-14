@@ -2,6 +2,7 @@
 #define BTCLITE_UTIL_H
 
 
+#include "environment.h"
 #include "fs.h"
 #include "sync.h"
 
@@ -64,7 +65,8 @@ public:
     virtual void Parse(int argc, const char* const argv[]) = 0;
     virtual void CheckArguments() const;
     virtual bool InitParameters();
-
+    virtual void PrintUsage() const;
+    
     //-------------------------------------------------------------------------
     std::string GetArg(const std::string& arg, const std::string& arg_default) const;
     bool GetBoolArg(const std::string& arg, bool arg_default) const;
@@ -83,7 +85,6 @@ public:
     bool ParseFromFile(const std::string& path) const;
     
 protected:
-    virtual void PrintUsage() const;
     void CheckOptions(int argc, const char* const argv[]);
     
 private:
@@ -95,38 +96,72 @@ private:
 class DataFiles {
 public:
     DataFiles()
-        : path_data_dir_(), path_config_file_() {}
+        : path_data_dir_(PathHome()), path_config_file_(path_data_dir_ / "btclite.conf") {}
+    
+    explicit DataFiles(const fs::path& data_dir)
+        : path_data_dir_(data_dir), path_config_file_(path_data_dir_ / "btclite.conf") {}
+    
     DataFiles(const fs::path& data_dir, const std::string& config_file)
         : path_data_dir_(data_dir), path_config_file_(path_data_dir_ / config_file) {}
     
     virtual bool Init(const std::string& path, const std::string& config_file) = 0;
     bool LockDataDir();
+    static fs::path PathHome();
 
     //-------------------------------------------------------------------------
-    fs::path path_data_dir() const
+    const fs::path& path_data_dir() const
     {
-        LOCK(cs_path_);
         return path_data_dir_;
     }
-    void set_path_data_dir(const fs::path& path);
     
-    fs::path path_config_file() const
+    const fs::path& path_config_file() const
     {
-        LOCK(cs_path_);
         return path_config_file_;
     }
+    
+protected:
+    void set_path_data_dir(const fs::path& path);
     void set_path_config_file(const std::string& filename);
     
 private:    
-    mutable CriticalSection cs_path_;
     fs::path path_data_dir_;
     fs::path path_config_file_;    
 };
 
+class ExecutorConfig {
+public:
+    ExecutorConfig(int argc, const char* const argv[]);
+    
+    virtual bool Init() = 0;
+    virtual const Args& args() const = 0;
+    virtual const DataFiles& data_files() const = 0;
+    
+    //-------------------------------------------------------------------------
+    int argc() const
+    {
+        return argc_;
+    }
+    
+    const char* const *argv() const
+    {
+        return argv_;
+    }
+    
+    BaseEnv env() const
+    {
+        return env_;
+    }
+
+private:
+    int argc_;
+    const char* const *argv_;
+    BaseEnv env_;
+};
+
 class BaseExecutor {
 public:    
-    BaseExecutor(int argc, const char* const argv[])
-        : argc_(argc), argv_(argv), sig_int_(SigMonitor(SIGINT)), sig_term_(SigMonitor(SIGTERM)) {}
+    BaseExecutor()
+        : sig_int_(SigMonitor(SIGINT)), sig_term_(SigMonitor(SIGTERM)) {}
     
     virtual bool Init() = 0;
     virtual bool Start() = 0;
@@ -137,19 +172,7 @@ public:
     virtual bool BasicSetup();
     virtual void WaitForSignal();
 
-    //-------------------------------------------------------------------------
-    int argc() const
-    {
-        return argc_;
-    }
-    const char* const *argv() const
-    {
-        return argv_;
-    }
-
 private:
-    int argc_;
-    const char* const *argv_;
     SigMonitor sig_int_;
     SigMonitor sig_term_;
 };

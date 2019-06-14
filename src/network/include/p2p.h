@@ -11,9 +11,9 @@
 
 class P2P {
 public:
-    P2P();
+    P2P(const ExecutorConfig& config);
     
-    bool Init(BaseEnv env, const Args& args, const DataFiles& data_files);
+    bool Init();
     bool Start();
     bool Interrupt();
     bool Stop();
@@ -50,6 +50,7 @@ public:
     }
     
 private:
+    const ExecutorConfig& executor_config_;
     Network::Params network_params_;
     NetArgs network_args_;
     LocalNetConfig local_network_config_;
@@ -65,9 +66,6 @@ private:
     std::thread thread_socket_handler_;
     std::thread thread_open_connections_;
     std::thread thread_message_handler_;
-    
-    bool InitArgs(const Args& args);
-    bool InitBanDb(const DataFiles& data_files);
     
     void ThreadDnsSeeds();
     void ThreadOpenConnections(const std::vector<std::string> connect);

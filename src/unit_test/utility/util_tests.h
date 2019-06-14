@@ -17,4 +17,5 @@ public:
     bool Init(const std::string& path, const std::string& config_file) {}
 };
 
+
 #endif // BTCLITE_UTIL_TESTS_H

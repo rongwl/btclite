@@ -8,8 +8,8 @@
 
 class FullNodeMain : public Executor {
 public:
-    FullNodeMain(int argc, const char* const argv[])
-        : Executor(argc, argv) , data_files_(), chain_params_(), network_() {}
+    FullNodeMain(const FullNodeConfig& config)
+        : config_(config), chain_params_(), network_(config) {}
 
     //-------------------------------------------------------------------------
     bool Init();
@@ -18,20 +18,11 @@ public:
     void Interrupt();
     void Stop();
     
-    //-------------------------------------------------------------------------
-    const FullNodeArgs& args() const
-    {
-        return args_;
-    }
-    
 private:
-    FullNodeArgs args_;
-    FullNodeDataFiles data_files_;
+    const FullNodeConfig& config_;
     Chain::Params chain_params_;
     P2P network_;
 
-    bool InitDataFiles();
-    bool LoadConfigFile();
     bool InitNetwork();
 };
 
