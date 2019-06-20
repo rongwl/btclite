@@ -48,6 +48,7 @@ BTCLITE_HEADER_FILES = \
                        fullnode/include/config.h \
                        network/include/acceptor.h \
                        network/include/bandb.h \
+                       network/include/bloom.h \
                        network/include/connector.h \
                        network/include/message_types.h \
                        network/include/message_types/version.h \

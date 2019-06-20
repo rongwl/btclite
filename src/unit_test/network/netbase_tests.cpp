@@ -28,7 +28,11 @@ TEST(NetBaseTest, LookupHost)
     LookupHost("::1", &addr, false);
     ASSERT_TRUE(addr.IsIpv6());
     addr.GetIpv6(out);
-    EXPECT_EQ(std::memcmp(buf, out, sizeof(out)), 0);    
+    EXPECT_EQ(std::memcmp(buf, out, sizeof(out)), 0);
+    
+    addr.Clear();
+    LookupHost("bitcoin.org", &addr, true);
+    EXPECT_TRUE(addr.IsValid());
 }
 
 TEST(NetBaseTest, LookupSubNet)

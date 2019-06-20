@@ -4,6 +4,7 @@
 
 #include <list>
 
+#include "bloom.h"
 #include "chain.h"
 #include "hash.h"
 #include "socket.h"
@@ -139,8 +140,9 @@ class Node {
 public:
     using NodeId = int64_t;
     
-    Node()
-        : id_(0), socket_(), disconnected_(false) {}
+    Node(NodeId id, ServiceFlags services, int start_height, Socket sock_fd, const btclite::NetAddr& addr,
+         uint64_t keyed_net_group, uint64_t local_host_nonce, const btclite::NetAddr &addr_bind, 
+         const std::string& host_name, bool is_inbound);
     
     //-------------------------------------------------------------------------
     void Connect();
@@ -149,19 +151,39 @@ public:
     size_t Send();
     
     //-------------------------------------------------------------------------
+    int64_t time_connected() const
+    {
+        return time_connected_;
+    }
+    
     NodeId id() const
     {
         return id_;
     }
     
-    const BasicSocket& socket() const
+    ServiceFlags services() const
     {
-        return socket_;
+        return services_;
     }
     
-    BasicSocket* mutable_socket()
+    Socket sock_fd() const
     {
-        return &socket_;
+        return sock_fd_;
+    }
+    
+    const btclite::NetAddr& addr() const
+    {
+        return addr_;
+    }
+    
+    uint64_t keyed_net_group() const
+    {
+        return keyed_net_group_;
+    }
+    
+    bool is_inbound() const
+    {
+        return is_inbound_;
     }
     
     bool disconnected() const
@@ -174,11 +196,79 @@ public:
         disconnected_ = disconnected;
     }
     
+    const BloomFilter *bloom_filter() const
+    {
+        LOCK(cs_bloom_filter_);
+        return bloom_filter_.get();
+    }
+    
+    bool relay_txes() const
+    {
+        LOCK(cs_bloom_filter_);
+        return relay_txes_;
+    }
+    
+    int64_t min_ping_usec_time() const
+    {
+        return min_ping_usec_time_;
+    }
+    
+    int64_t last_block_time() const
+    {
+        return last_block_time_;
+    }
+    
+    int64_t last_tx_time() const
+    {
+        return last_tx_time_;
+    }
+    
 private:
-    NodeId id_;
-    BasicSocket socket_;
+    const int64_t time_connected_;
+    const NodeId id_;
+    const ServiceFlags services_;
+    const int start_height_;
+    Socket sock_fd_;
+    const btclite::NetAddr addr_;
+    const uint64_t keyed_net_group_;
+    const uint64_t local_host_nonce_;
+    const btclite::NetAddr addr_bind_;
+    
+    mutable CriticalSection cs_host_name_;
+    std::string host_name_;
+    
+    const bool is_inbound_;
     std::atomic_bool disconnected_;
     SemaphoreGrant grant_outbound_;
+    
+    mutable CriticalSection cs_bloom_filter_;
+    std::unique_ptr<BloomFilter> bloom_filter_;
+    // We use fRelayTxes for two purposes -
+    // a) it allows us to not relay tx invs before receiving the peer's version message
+    // b) the peer may tell us in its version message that we should not relay tx invs
+    //    unless it loads a bloom filter.
+    bool relay_txes_; // protected by cs_bloom_filter_
+    
+    // Best measured round-trip time.
+    std::atomic<int64_t> min_ping_usec_time_;
+    
+    // Block and TXN accept times
+    std::atomic<int64_t> last_block_time_;
+    std::atomic<int64_t> last_tx_time_;
+};
+
+struct NodeEvictionCandidate
+{
+    Node::NodeId id;
+    int64_t time_connected;
+    int64_t min_ping_usec_time;
+    int64_t last_block_time;
+    int64_t last_tx_time;
+    bool relevant_services;
+    bool relay_txes;
+    bool bloom_filter;
+    btclite::NetAddr addr;
+    uint64_t keyed_net_group;
 };
 
 class Nodes {
@@ -186,10 +276,12 @@ public:
     Nodes()
         : list_() {}
     
+    bool DisconnectNodes(Node::NodeId id);
     void ClearDisconnected();
     void CheckInactive();
     
     void DisconnectBanNode(const SubNet& subnet);
+    bool AttemptToEvictConnection();
     
     const std::list<Node>& list() const
     {
@@ -202,6 +294,8 @@ private:
     uint32_t n_sync_started_;
     
     void ClearNodeState();
+    void MakeEvictionCandidate(std::vector<NodeEvictionCandidate> *out);
 };
+
 
 #endif // BTCLITE_NODE_H

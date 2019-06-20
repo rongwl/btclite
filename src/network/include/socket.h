@@ -9,27 +9,15 @@ using Socket = int;
 
 class BasicSocket {
 public:
-    BasicSocket()
-        : sock_fd_(0), sock_addr_()
-    {
-        std::memset(&sock_addr_, 0, sizeof(sock_addr_));
-    }
-    
-    BasicSocket(const struct sockaddr_in& sock_addr4)
-    {
-        std::memcpy(&sock_addr_, &sock_addr4, sizeof(sock_addr4));
-    }
-    
-    BasicSocket(const struct sockaddr_in6& sock_addr6)
-    {
-        std::memcpy(&sock_addr_, &sock_addr6, sizeof(sock_addr6));
-    }    
+    BasicSocket();
+    explicit BasicSocket(sa_family_t family);
     
     //-------------------------------------------------------------------------
     bool Create();
     bool Close();    
     bool SetSockNoDelay();
     bool SetSockNonBlocking();
+    static bool GetBindAddr(Socket sock_fd, btclite::NetAddr *out);
     
     //-------------------------------------------------------------------------
     Socket sock_fd() const

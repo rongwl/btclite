@@ -49,7 +49,16 @@ enum ServiceFlags : uint64_t {
     // BIP process.
 };
 
+constexpr ServiceFlags desirable_service_flags = ServiceFlags(NODE_NETWORK | NODE_WITNESS);
 
+/**
+ * A shortcut for (services & desirable_service_flags)
+ * == desirable_service_flags, ie determines whether the given
+ * set of service flags are sufficient for a peer to be "relevant".
+ */
+static inline bool HasAllDesirableServiceFlags(ServiceFlags services) {
+    return !(desirable_service_flags & (~services));
+}
 
 
 #endif // BTCLITE_PROTOCOL_H

@@ -51,6 +51,7 @@ public:
     void Clear();
     std::string ToString() const;
     bool ToSockAddr(struct sockaddr* out, socklen_t *len) const;
+    bool FromSockAddr(const struct sockaddr *in);
     
     //-------------------------------------------------------------------------
     uint8_t GetByte(int n) const;

@@ -8,7 +8,7 @@
 
 #include "message_types/version.h"
 
-    
+
 class LocalNetConfig {
 public:
     LocalNetConfig()

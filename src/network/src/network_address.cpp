@@ -250,6 +250,20 @@ bool NetAddr::ToSockAddr(struct sockaddr* out, socklen_t *len) const
     return false;
 }
 
+bool NetAddr::FromSockAddr(const struct sockaddr *in)
+{
+    if (in->sa_family == AF_INET) {
+        *this = NetAddr(*reinterpret_cast<const struct sockaddr_in*>(in));
+        return true;
+    }
+    else if (in->sa_family == AF_INET6) {
+        *this = NetAddr(*reinterpret_cast<const sockaddr_in6*>(in));
+        return true;
+    }
+    
+    return false;
+}
+
 void NetAddr::Clear()
 {
     addr_.clear_timestamp();
