@@ -257,6 +257,24 @@ private:
     std::atomic<int64_t> last_tx_time_;
 };
 
+using MapNodeState = std::map<Node::NodeId, NodeState>;
+
+// Singleton pattern, thread safe
+class SingletonNodeStateMap {
+public:
+    static MapNodeState& GetInstances()
+    {
+        static MapNodeState map_node_state;
+        return map_node_state;
+    }
+    
+    SingletonNodeStateMap(const SingletonNodeStateMap&) = delete;
+    SingletonNodeStateMap& operator=(const SingletonNodeStateMap&) = delete;
+    
+private:
+    SingletonNodeStateMap() {}
+};
+
 struct NodeEvictionCandidate
 {
     Node::NodeId id;
@@ -276,10 +294,16 @@ public:
     Nodes()
         : list_() {}
     
-    bool DisconnectNodes(Node::NodeId id);
+    Node::NodeId GetNewNodeId()
+    {
+        static std::atomic<Node::NodeId> last_node_id = 0;
+        return last_node_id.fetch_add(1, std::memory_order_relaxed);
+    }
+    
     void ClearDisconnected();
     void CheckInactive();
     
+    bool DisconnectNode(Node::NodeId id);
     void DisconnectBanNode(const SubNet& subnet);
     bool AttemptToEvictConnection();
     
@@ -295,6 +319,22 @@ private:
     
     void ClearNodeState();
     void MakeEvictionCandidate(std::vector<NodeEvictionCandidate> *out);
+};
+
+// Singleton pattern, thread safe
+class SingletonNodes {
+public:
+    static Nodes& GetInstances()
+    {
+        static Nodes nodes;
+        return nodes;
+    }
+    
+    SingletonNodes(const SingletonNodes&) = delete;
+    SingletonNodes& operator=(const SingletonNodes&) = delete;
+    
+private:
+    SingletonNodes() {}    
 };
 
 

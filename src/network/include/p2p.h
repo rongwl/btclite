@@ -29,24 +29,9 @@ public:
         return network_args_;
     }
     
-    static const Nodes& nodes()
+    static SipHasher& GetDeterministicRandomizer(uint64_t id)
     {
-        return nodes_;
-    }
-    
-    static Nodes *mutable_nodes()
-    {
-        return &nodes_;
-    }
-    
-    static std::map<Node::NodeId, NodeState>& map_node_state() 
-    {
-        return map_node_state_;
-    }
-    
-    static std::map<Node::NodeId, NodeState> *mutable_map_node_state()
-    {
-        return &map_node_state_;
+        return sip_hash_.Update(id);
     }
     
 private:
@@ -58,8 +43,9 @@ private:
     //std::vector<OutboundSession> outbound_sessions_;
     //std::vector<InboundSession> inbound_sessions_;
     Acceptor acceptor_;
-    static Nodes nodes_;
-    static std::map<Node::NodeId, NodeState> map_node_state_;
+    
+    // for generating deterministic random number
+    static SipHasher sip_hash_;
     
     ThreadInterrupt interrupt_;
     std::thread thread_dns_seeds_;

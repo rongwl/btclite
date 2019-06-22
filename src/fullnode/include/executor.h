@@ -2,6 +2,7 @@
 #define BTCLITE_FULLNODE_EXECUTOR_H
 
 
+#include "chain.h"
 #include "chain/include/params.h"
 #include "fullnode/include/config.h"
 #include "p2p.h"
@@ -22,6 +23,7 @@ private:
     const FullNodeConfig& config_;
     Chain::Params chain_params_;
     P2P network_;
+    BlockChain block_chain_;
 
     bool InitNetwork();
 };

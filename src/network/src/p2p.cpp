@@ -2,8 +2,7 @@
 #include "fullnode/include/config.h"
 
 
-Nodes P2P::nodes_;
-std::map<Node::NodeId, NodeState> P2P::map_node_state_;
+SipHasher P2P::sip_hash_;
 
 P2P::P2P(const ExecutorConfig& config)
     : executor_config_(config),

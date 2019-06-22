@@ -1,5 +1,5 @@
 #include "bandb.h"
-#include "p2p.h"
+#include "node.h"
 #include "utility/include/logging.h"
 #include "utiltime.h"
 
@@ -21,7 +21,7 @@ bool BanDb::Add(const SubNet& sub_net, const BanReason &ban_reason)
     if (!Add_(sub_net, ban_entry))
         return false;
     
-    P2P::mutable_nodes()->DisconnectBanNode(sub_net);
+    SingletonNodes::GetInstances().DisconnectBanNode(sub_net);
     
     if (ban_reason == ManuallyAdded)
         DumpBanList();

@@ -62,20 +62,6 @@ size_t Node::Send()
     return 0;
 }
 
-bool Nodes::DisconnectNodes(Node::NodeId id)
-{
-    LOCK(cs_nodes_);
-    
-    for (auto it = list_.begin(); it != list_.end(); ++it) {
-        if (it->id() == id) {
-            it->set_disconnected(true);
-            return true;
-        }
-    }
-    
-    return false;
-}
-
 void Nodes::ClearDisconnected()
 {
     LOCK(cs_nodes_);
@@ -90,6 +76,20 @@ void Nodes::ClearDisconnected()
 void Nodes::ClearNodeState()
 {
 
+}
+
+bool Nodes::DisconnectNode(Node::NodeId id)
+{
+    LOCK(cs_nodes_);
+    
+    for (auto it = list_.begin(); it != list_.end(); ++it) {
+        if (it->id() == id) {
+            it->set_disconnected(true);
+            return true;
+        }
+    }
+    
+    return false;
 }
 
 void Nodes::DisconnectBanNode(const SubNet& subnet)
@@ -204,7 +204,7 @@ bool Nodes::AttemptToEvictConnection()
     
     // Reduce to the network group with the most connections
     eviction_candidates = std::move(map_netgroup_nodes[most_connections_group]);
-    if (!DisconnectNodes(eviction_candidates.front().id))
+    if (!DisconnectNode(eviction_candidates.front().id))
         return false;
     
     return true;
