@@ -259,7 +259,7 @@ private:
 
 using MapNodeState = std::map<Node::NodeId, NodeState>;
 
-// Singleton pattern, thread safe
+// Singleton pattern, thread safe after c++11
 class SingletonNodeStateMap {
 public:
     static MapNodeState& GetInstances()
@@ -289,7 +289,7 @@ struct NodeEvictionCandidate
     uint64_t keyed_net_group;
 };
 
-class Nodes {
+class Nodes : Uncopyable {
 public:
     Nodes()
         : list_() {}
@@ -321,7 +321,7 @@ private:
     void MakeEvictionCandidate(std::vector<NodeEvictionCandidate> *out);
 };
 
-// Singleton pattern, thread safe
+// Singleton pattern, thread safe after c++11
 class SingletonNodes {
 public:
     static Nodes& GetInstances()

@@ -124,12 +124,12 @@ bool Message::RecvMsgHandle()
     return data_.get()->RecvMsgHandle();
 }
 
-NetArgs::NetArgs(const Args& args)
-    : is_listen_(args.GetBoolArg(FULLNODE_OPTION_LISTEN, true)),
-      is_discover_(args.GetBoolArg(FULLNODE_OPTION_DISCOVER, true)),
-      is_dnsseed_(args.GetBoolArg(FULLNODE_OPTION_DNSSEED, true)),
+NetArgs::NetArgs()
+    : is_listen_(ExecutorConfig::args().GetBoolArg(FULLNODE_OPTION_LISTEN, true)),
+      is_discover_(ExecutorConfig::args().GetBoolArg(FULLNODE_OPTION_DISCOVER, true)),
+      is_dnsseed_(ExecutorConfig::args().GetBoolArg(FULLNODE_OPTION_DNSSEED, true)),
       specified_outgoing_()
 {
-    if (args.IsArgSet(FULLNODE_OPTION_CONNECT))
-        specified_outgoing_ = args.GetArgs(FULLNODE_OPTION_CONNECT);
+    if (ExecutorConfig::args().IsArgSet(FULLNODE_OPTION_CONNECT))
+        specified_outgoing_ = ExecutorConfig::args().GetArgs(FULLNODE_OPTION_CONNECT);
 }

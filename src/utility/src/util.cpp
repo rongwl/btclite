@@ -12,6 +12,8 @@
 #include "util.h"
 
 
+Args ExecutorConfig::args_;
+fs::path ExecutorConfig::path_data_dir_;
 volatile std::sig_atomic_t SigMonitor::received_signal_ = 0;
 
 
@@ -26,7 +28,7 @@ static void HandleAllocFail()
     std::terminate();
 }
 
-void Args::PrintUsage() const
+void HelpInfo::PrintUsage()
 {
     fprintf(stdout, "Common Options:\n");
     fprintf(stdout, "  -h or -?,  --help     print this help message and exit\n");
@@ -52,15 +54,15 @@ void Args::PrintUsage() const
 
 }
 
-void Args::CheckArguments() const
+void ExecutorConfig::CheckArguments() const
 {
     // --testnet and --regtest
-    if (IsArgSet(GLOBAL_OPTION_TESTNET) && IsArgSet(GLOBAL_OPTION_REGTEST)) 
+    if (args_.IsArgSet(GLOBAL_OPTION_TESTNET) && args_.IsArgSet(GLOBAL_OPTION_REGTEST)) 
         throw Exception(ErrorCode::invalid_option, "invalid combination of --testnet and --regtest");
     
     // --debug
-    if (IsArgSet(GLOBAL_OPTION_DEBUG)) {
-        const std::vector<std::string> arg_values = GetArgs(GLOBAL_OPTION_DEBUG);
+    if (args_.IsArgSet(GLOBAL_OPTION_DEBUG)) {
+        const std::vector<std::string> arg_values = args_.GetArgs(GLOBAL_OPTION_DEBUG);
         if (std::none_of(arg_values.begin(), arg_values.end(),
         [](const std::string& val) { return val == "0"; })) {
             auto result = std::find_if(arg_values.begin(), arg_values.end(), 
@@ -71,8 +73,8 @@ void Args::CheckArguments() const
     }
     
     // --loglevel
-    if (IsArgSet(GLOBAL_OPTION_LOGLEVEL)) {
-        const std::string arg_val = GetArg(GLOBAL_OPTION_LOGLEVEL, DEFAULT_LOG_LEVEL);
+    if (args_.IsArgSet(GLOBAL_OPTION_LOGLEVEL)) {
+        const std::string arg_val = args_.GetArg(GLOBAL_OPTION_LOGLEVEL, DEFAULT_LOG_LEVEL);
         int level = -1;
         try {
             level = std::stoi(arg_val);
@@ -86,11 +88,11 @@ void Args::CheckArguments() const
     }
 }
 
-bool Args::InitParameters()
+bool ExecutorConfig::InitParameters()
 {   
     // --debug
-    if (IsArgSet(GLOBAL_OPTION_DEBUG)) {
-        const std::vector<std::string> arg_values = GetArgs(GLOBAL_OPTION_DEBUG);
+    if (args_.IsArgSet(GLOBAL_OPTION_DEBUG)) {
+        const std::vector<std::string> arg_values = args_.GetArgs(GLOBAL_OPTION_DEBUG);
         if (std::none_of(arg_values.begin(), arg_values.end(),
         [](const std::string& val) { return val == "0"; })) {
             for (auto module : arg_values) {
@@ -100,8 +102,8 @@ bool Args::InitParameters()
     }
     
     // --loglevel
-    if (IsArgSet(GLOBAL_OPTION_LOGLEVEL)) {
-        const std::string arg_val = GetArg(GLOBAL_OPTION_LOGLEVEL, DEFAULT_LOG_LEVEL);
+    if (args_.IsArgSet(GLOBAL_OPTION_LOGLEVEL)) {
+        const std::string arg_val = args_.GetArg(GLOBAL_OPTION_LOGLEVEL, DEFAULT_LOG_LEVEL);
         int level = std::stoi(arg_val);
 
         if (level <= LOG_LEVEL_WARNING) {
@@ -121,8 +123,11 @@ bool Args::InitParameters()
 }
 
 /* Check options that getopt_long() can not print totally */
-void Args::CheckOptions(int argc, const char* const argv[])
+void ExecutorConfig::CheckOptions(int argc, const char* const argv[])
 {
+    if (argc == 0 || argv == nullptr)
+        throw Exception(ErrorCode::invalid_argument, "argument is null");
+    
     for (int i = 1; i < argc; i++) {
         std::string str(argv[i]);
         if ((str.length() > 2 && str.compare(0, 2, "--")) ||
@@ -130,6 +135,47 @@ void Args::CheckOptions(int argc, const char* const argv[])
             throw Exception(ErrorCode::invalid_option, "invalid option '" + str + "'");
         }
     }
+}
+
+bool ExecutorConfig::ParseFromFile(const fs::path& path) const
+{
+    std::ifstream ifs(path);
+    if (!ifs.good()) {
+        return true; // No config file is OK
+    }
+    
+    std::string line;
+    while (std::getline(ifs, line)) {
+        line.erase(std::remove_if(line.begin(), line.end(), 
+        [](unsigned char x){return std::isspace(x);}),
+        line.end());
+        if (line[0] == '#' || line.empty())
+            continue;
+        auto pos = line.find("=");
+        if (pos != std::string::npos) {
+            std::string str = line.substr(0, pos);
+            if (!args_.IsArgSet(str) && str != GLOBAL_OPTION_CONF) {
+                // Don't overwrite existing settings so command line settings override config file
+                std::string str_val = line.substr(pos+1);
+            }
+        }
+    }
+    
+    return true;
+}
+
+bool ExecutorConfig::LockDataDir()
+{
+    return true;
+}
+
+fs::path ExecutorConfig::PathHome()
+{
+    char *home_path = getenv("HOME");            
+    if (home_path == NULL)
+        return fs::path("/");
+    else
+        return fs::path(home_path);
 }
 
 std::string Args::GetArg(const std::string& arg, const std::string& arg_default) const
@@ -184,87 +230,7 @@ bool Args::IsArgSet(const std::string& arg) const
     return map_args_.count(arg);
 }
 
-bool Args::ParseFromFile(const std::string& path) const
-{
-    std::ifstream ifs(path);
-    if (!ifs.good()) {
-        return true; // No config file is OK
-    }
-     
-    std::string line;
-    while (std::getline(ifs, line)) {
-     line.erase(std::remove_if(line.begin(), line.end(), 
-            [](unsigned char x){return std::isspace(x);}),
-         line.end());
-     if (line[0] == '#' || line.empty())
-      continue;
-     auto pos = line.find("=");
-     if (pos != std::string::npos) {
-      std::string str = line.substr(0, pos);
-      if (!IsArgSet(str) && str != GLOBAL_OPTION_CONF) {
-       // Don't overwrite existing settings so command line settings override config file
-       std::string str_val = line.substr(pos+1);
-      }
-     }
-    }
-    
-    return true;
-}
-
-bool DataFiles::LockDataDir()
-{
-    return true;
-}
-
-fs::path DataFiles::PathHome()
-{
-    char *home_path = getenv("HOME");            
-    if (home_path == NULL)
-        return fs::path("/");
-    else
-        return fs::path(home_path);
-}
-
-void DataFiles::set_path_data_dir(const fs::path& path)
-{
-    if (!fs::is_directory(path)) {
-        BTCLOG(LOG_LEVEL_WARNING) << "Set data path \"" << path.c_str()
-                                 << "\" does not exist.";
-        return;
-    }
-    path_data_dir_ = path;
-}
-
-void DataFiles::set_path_config_file(const std::string& filename)
-{
-    std::ifstream ifs(path_data_dir_ / filename);
-    if (!ifs.good()) {
-        BTCLOG(LOG_LEVEL_WARNING) << "Specified config file \"" << path_data_dir_.c_str() << "/" << filename
-                                 << "\" does not exist.";
-        return;
-    }
-    path_config_file_ = (path_data_dir_ / filename);
-}
-
-ExecutorConfig::ExecutorConfig(int argc, const char* const argv[])
-    : argc_(argc), argv_(argv)
-{
-    for (int i = 1; i < argc; i++) {
-        std::string option(argv[i]);
-        if (option == "--testnet") {
-            env_ = BaseEnv::testnet;
-            return;
-        }
-        else if (option == "--regtest") {
-            env_ = BaseEnv::regtest;
-            return;
-        }
-    }
-    
-    env_ = BaseEnv::mainnet;
-}
-
-bool BaseExecutor::BasicSetup()
+bool Executor::BasicSetup()
 {    
     // Ignore SIGPIPE, otherwise it will bring the daemon down if the client closes unexpectedly
     std::signal(SIGPIPE, SIG_IGN);
@@ -274,7 +240,7 @@ bool BaseExecutor::BasicSetup()
     return true;
 }
 
-void BaseExecutor::WaitForSignal()
+void Executor::WaitForSignal()
 {
     while (!sig_int_.IsReceived() && !sig_term_.IsReceived()) {
         std::this_thread::sleep_for(std::chrono::milliseconds(200));

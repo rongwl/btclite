@@ -50,24 +50,17 @@ private:
     }
 };
 
-// mixin class
-template <class BASE>
-class Uncopyable : public BASE {
+class Uncopyable {
 public:
-    using BASE::BASE;
     Uncopyable(const Uncopyable&) = delete;
-    void operator=(const Uncopyable&) = delete;
+    Uncopyable& operator=(const Uncopyable&) = delete;
+    
+protected:
+    Uncopyable() {}
 };
 
-class Args {
-public:    
-    virtual bool Init(int argc, const char* const argv[]) = 0;
-    virtual void Parse(int argc, const char* const argv[]) = 0;
-    virtual void CheckArguments() const;
-    virtual bool InitParameters();
-    virtual void PrintUsage() const;
-    
-    //-------------------------------------------------------------------------
+class Args : Uncopyable {
+public:
     std::string GetArg(const std::string& arg, const std::string& arg_default) const;
     bool GetBoolArg(const std::string& arg, bool arg_default) const;
     std::vector<std::string> GetArgs(const std::string& arg) const;
@@ -81,86 +74,50 @@ public:
         map_args_.clear();
         map_multi_args_.clear();
     }
-    
-    bool ParseFromFile(const std::string& path) const;
-    
-protected:
-    void CheckOptions(int argc, const char* const argv[]);
-    
+
 private:
     mutable CriticalSection cs_args_;
     std::map<std::string, std::string> map_args_;
     std::map<std::string, std::vector<std::string> > map_multi_args_;
 };
 
-class DataFiles {
+class ExecutorConfig : Uncopyable {
 public:
-    DataFiles()
-        : path_data_dir_(PathHome()), path_config_file_(path_data_dir_ / "btclite.conf") {}
+    virtual void Parse(int argc, const char* const argv[]) = 0;
+    virtual bool InitDataDir() = 0;
+    virtual bool InitParameters();
     
-    explicit DataFiles(const fs::path& data_dir)
-        : path_data_dir_(data_dir), path_config_file_(path_data_dir_ / "btclite.conf") {}
-    
-    DataFiles(const fs::path& data_dir, const std::string& config_file)
-        : path_data_dir_(data_dir), path_config_file_(path_data_dir_ / config_file) {}
-    
-    virtual bool Init(const std::string& path, const std::string& config_file) = 0;
     bool LockDataDir();
     static fs::path PathHome();
-
-    //-------------------------------------------------------------------------
-    const fs::path& path_data_dir() const
+    
+    static const Args& args()
+    {
+        return args_;
+    }
+    
+    static const fs::path& path_data_dir()
     {
         return path_data_dir_;
     }
-    
-    const fs::path& path_config_file() const
-    {
-        return path_config_file_;
-    }
-    
+
 protected:
-    void set_path_data_dir(const fs::path& path);
-    void set_path_config_file(const std::string& filename);
+    static Args args_;
+    static fs::path path_data_dir_;
+    std::string config_file_;
     
-private:    
-    fs::path path_data_dir_;
-    fs::path path_config_file_;    
+    virtual void CheckArguments() const;
+    void CheckOptions(int argc, const char* const argv[]);
+    bool ParseFromFile(const fs::path& path) const;
 };
 
-class ExecutorConfig {
+class HelpInfo {
 public:
-    ExecutorConfig(int argc, const char* const argv[]);
-    
-    virtual bool Init() = 0;
-    virtual const Args& args() const = 0;
-    virtual const DataFiles& data_files() const = 0;
-    
-    //-------------------------------------------------------------------------
-    int argc() const
-    {
-        return argc_;
-    }
-    
-    const char* const *argv() const
-    {
-        return argv_;
-    }
-    
-    BaseEnv env() const
-    {
-        return env_;
-    }
-
-private:
-    int argc_;
-    const char* const *argv_;
-    BaseEnv env_;
+    static void PrintUsage();
 };
 
-class BaseExecutor {
+class Executor : Uncopyable {
 public:    
-    BaseExecutor()
+    Executor()
         : sig_int_(SigMonitor(SIGINT)), sig_term_(SigMonitor(SIGTERM)) {}
     
     virtual bool Init() = 0;
@@ -176,8 +133,7 @@ private:
     SigMonitor sig_int_;
     SigMonitor sig_term_;
 };
-// mixin uncopyable
-using Executor = Uncopyable<BaseExecutor>;
+
 
 void SetupEnvironment();
 

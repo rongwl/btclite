@@ -3,19 +3,16 @@
 
 #include "util.h"
 
-class TestArgs : public Args {
+
+class TestExecutorConfig : public ExecutorConfig {
 public:
-    bool Init(int argc, const char* const argv[]) {}
-    void Parse(int argc, const char* const argv[]) {}
-    bool InitParameters() {}    
+    void Prase(int argc, const char* const argv[]) {}
+    bool InitDataDir() {}
+    
+    static void set_path_data_dir(const fs::path& path)
+    {
+        path_data_dir_ = path;
+    }
 };
-
-
-class TestDataFiles : public DataFiles {
-public:
-    using DataFiles::DataFiles;
-    bool Init(const std::string& path, const std::string& config_file) {}
-};
-
 
 #endif // BTCLITE_UTIL_TESTS_H

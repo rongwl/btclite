@@ -6,6 +6,8 @@
 #include "util.h"
 
 
+#define FULLNODE_BIN_NAME        "btc-fullnode"
+
 #define FULLNODE_OPTION_CONNECT  "connect"
 #define FULLNODE_OPTION_LISTEN   "listen"
 #define FULLNODE_OPTION_DISCOVER "discover"
@@ -19,56 +21,27 @@
 #define DEFAULT_DNSSEED   "1"
 
 
-class FullNodeArgs : public Args {
-public:    
-    bool Init(int argc, const char* const argv[]);
+class FullNodeConfig : public ExecutorConfig {
+public:
+    FullNodeConfig(int argc, const char* const argv[])
+        : path_default_data_path_(PathHome() / DEFAULT_DATA_DIR)
+    {
+        Parse(argc, argv);
+    }
+    
+    bool InitDataDir();
     bool InitParameters();
-    void PrintUsage() const;
-
+    
 private:
-    const std::string bin_name_ = "btc-fullnode";
+    fs::path path_default_data_path_;
     
     void Parse(int argc, const char* const argv[]);
     void CheckArguments() const;
 };
 
-class FullNodeDataFiles : public DataFiles {
+class FullNodeHelpInfo {
 public:
-    FullNodeDataFiles()
-        : DataFiles(DefaultDataDirPath(), DEFAULT_CONFIG_FILE) {}
-    
-    bool Init(const std::string& path = DefaultDataDirPath(),
-              const std::string& config_file = DEFAULT_CONFIG_FILE);
-    
-    static fs::path DefaultDataDirPath()
-    {
-        return PathHome() / DEFAULT_DATA_DIR;
-    }
-};
-
-class FullNodeConfig : public ExecutorConfig {
-public:
-    FullNodeConfig(int argc, const char* const argv[])
-        : ExecutorConfig(argc, argv) {}
-    
-    bool Init();
-    
-    const Args& args() const
-    {
-        return args_;
-    }
-    
-    const DataFiles& data_files() const
-    {
-        return data_files_;
-    }
-    
-private:
-    FullNodeArgs args_;
-    FullNodeDataFiles data_files_;
-    
-    bool InitDataFiles();
-    bool LoadConfigFile();
+    static void PrintUsage();
 };
 
 

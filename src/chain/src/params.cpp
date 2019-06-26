@@ -5,7 +5,7 @@ void Bip9Params::UpdateVersionBitsParameters(Bip9Deployment::Deployment d, int64
 
 }
 
-void Consensus::Params::Init(BaseEnv env)
+Consensus::Params::Params(BaseEnv env)
 {
 
 }
@@ -58,7 +58,8 @@ void Consensus::Params::CreateGenesisBlock(uint32_t time, uint32_t nonce, uint32
     CreateGenesisBlock(coinbase, output_script, time, nonce, bits, version, reward);
 }
 
-void Chain::Params::Init(BaseEnv env)
+Chain::Params::Params(BaseEnv env)
+    : consensus_(env)
 {
-    //consensus_.Init(env);
+
 }

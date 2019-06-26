@@ -7,10 +7,11 @@
 #include "fullnode/include/config.h"
 #include "p2p.h"
 
+
 class FullNodeMain : public Executor {
 public:
-    FullNodeMain(const FullNodeConfig& config)
-        : config_(config), chain_params_(), network_(config) {}
+    FullNodeMain(BaseEnv env)
+        : chain_params_(env), network_(env) {}
 
     //-------------------------------------------------------------------------
     bool Init();
@@ -20,7 +21,6 @@ public:
     void Stop();
     
 private:
-    const FullNodeConfig& config_;
     Chain::Params chain_params_;
     P2P network_;
     BlockChain block_chain_;

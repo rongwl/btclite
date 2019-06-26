@@ -4,7 +4,7 @@
 
 TEST(ArgsTest, MethordSetArg)
 {
-    TestArgs args;
+    Args args;
     
     args.SetArg("test", "123");
     ASSERT_TRUE(args.IsArgSet("test"));
@@ -14,7 +14,7 @@ TEST(ArgsTest, MethordSetArg)
 
 TEST(ArgsTest, MethordSetArgs)
 {
-    TestArgs args;
+    Args args;
     std::vector<std::string> vs = { "1", "2", "3" };
     
     args.SetArgs("test", vs[0]);
@@ -26,7 +26,7 @@ TEST(ArgsTest, MethordSetArgs)
 
 TEST(ArgsTest, MethordGetBoolArg)
 {
-    TestArgs args;
+    Args args;
     
     args.SetArg("test", "1");
     EXPECT_TRUE(args.GetBoolArg("test", false));
@@ -36,17 +36,4 @@ TEST(ArgsTest, MethordGetBoolArg)
     EXPECT_TRUE(args.GetBoolArg("test", false));
 }
 
-TEST(DataFilesTest, Constructor)
-{
-    TestDataFiles data_files1;
-    EXPECT_EQ(data_files1.path_data_dir(), DataFiles::PathHome());
-    EXPECT_EQ(data_files1.path_config_file(), data_files1.path_data_dir() / "btclite.conf");
-    
-    TestDataFiles data_files2(fs::path("/foo"));
-    EXPECT_EQ(data_files2.path_data_dir(), fs::path("/foo"));
-    EXPECT_EQ(data_files2.path_config_file(), fs::path("/foo") / "btclite.conf");
-    
-    TestDataFiles data_files3(fs::path("/foo"), "bar.conf");
-    EXPECT_EQ(data_files3.path_data_dir(), fs::path("/foo"));
-    EXPECT_EQ(data_files3.path_config_file(), fs::path("/foo") / "bar.conf");
-}
+

@@ -10,35 +10,30 @@
 
 TEST(BanDbTest, Constructor)
 {
-    BanDb ban_db1;
-    ASSERT_EQ(ban_db1.path_ban_list(), DataFiles::PathHome() / "banlist.dat");
-    EXPECT_FALSE(ban_db1.dirty());
-    
-    TestDataFiles data_files(fs::path("/foo"));
-    BanDb ban_db2(data_files);
-    ASSERT_EQ(ban_db2.path_ban_list(), fs::path("/foo") / "banlist.dat");
-    EXPECT_FALSE(ban_db2.dirty());
+    TestExecutorConfig::set_path_data_dir(fs::path("/foo"));
+    BanDb ban_db;
+    ASSERT_EQ(ban_db.path_ban_list(), fs::path("/foo") / "banlist.dat");
+    EXPECT_FALSE(ban_db.dirty());
 }
 
 TEST(BanDbTest, MethordAdd)
 {
     btclite::NetAddr addr;
     addr.SetIpv4(inet_addr("1.2.3.4"));
-    TestDataFiles data_files(fs::path("/tmp"));
-    BanDb ban_db1(data_files);
+    TestExecutorConfig::set_path_data_dir(fs::path("/tmp"));
+    BanDb ban_db;
     
-    ban_db1.Add(addr, BanDb::NodeMisbehaving);
-    auto it = ban_db1.ban_map().map().find(SubNet(addr).ToString());
-    ASSERT_NE(it, ban_db1.ban_map().map().end());
+    ban_db.Add(addr, BanDb::NodeMisbehaving);
+    auto it = ban_db.ban_map().map().find(SubNet(addr).ToString());
+    ASSERT_NE(it, ban_db.ban_map().map().end());
     EXPECT_EQ(it->second.ban_reason(), BanDb::NodeMisbehaving);
-    EXPECT_TRUE(ban_db1.dirty());
+    EXPECT_TRUE(ban_db.dirty());
 }
 
 TEST(BanDbTest, MethordSweepBanned)
 {
     btclite::NetAddr addr;
     addr.SetIpv4(inet_addr("1.2.3.4"));
-    TestDataFiles data_files(fs::path("/tmp"));
     SubNet subnet(addr);
     proto_banmap::BanEntry ban_entry;
     ban_entry.set_version(1);
@@ -48,7 +43,8 @@ TEST(BanDbTest, MethordSweepBanned)
     proto_banmap::BanMap ban_map;
     (*ban_map.mutable_map())[subnet.ToString()] = ban_entry;
     
-    BanDb ban_db(data_files, ban_map);
+    TestExecutorConfig::set_path_data_dir(fs::path("/tmp"));
+    BanDb ban_db(ban_map);
     ASSERT_EQ(ban_db.path_ban_list(), fs::path("/tmp") / "banlist.dat");
     auto it = ban_db.ban_map().map().find(subnet.ToString());
     ASSERT_NE(it, ban_db.ban_map().map().end());
@@ -70,7 +66,6 @@ TEST(BanDbTest, MethordSweepBanned)
 TEST(BanDbTest, MethordDumpBanList)
 {    
     btclite::NetAddr addr;
-    TestDataFiles data_files(fs::path("/tmp"));
     proto_banmap::BanEntry ban_entry;
     proto_banmap::BanMap ban_map;
     char buf[10];
@@ -87,7 +82,8 @@ TEST(BanDbTest, MethordDumpBanList)
         (*ban_map.mutable_map())[subnet.ToString()] = ban_entry;
     }
     
-    BanDb ban_db(data_files, ban_map);
+    TestExecutorConfig::set_path_data_dir(fs::path("/tmp"));
+    BanDb ban_db(ban_map);
     ASSERT_TRUE(ban_db.dirty());
     ban_db.DumpBanList();
     std::fstream fs(ban_db.path_ban_list(), std::ios::in | std::ios::binary);

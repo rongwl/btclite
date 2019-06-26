@@ -6,14 +6,7 @@
 #include "utility/include/logging.h"
 
 
-bool FullNodeArgs::Init(int argc, const char* const argv[])
-{
-    Parse(argc, argv);
-    
-    return true;
-}
-
-void FullNodeArgs::Parse(int argc, const char* const argv[])
+void FullNodeConfig::Parse(int argc, const char* const argv[])
 {
     CheckOptions(argc, argv);
 
@@ -33,7 +26,7 @@ void FullNodeArgs::Parse(int argc, const char* const argv[])
     };
     int c, option_index = 0;
 
-    Clear();
+    args_.Clear();
 
     while ((c = getopt_long(argc, const_cast<char* const*>(argv), "h?", fullnode_options, &option_index)) != -1) {
         switch (c) {
@@ -48,7 +41,7 @@ void FullNodeArgs::Parse(int argc, const char* const argv[])
                     }
                 }
 
-                SetArgs(str, str_val);
+                args_.SetArgs(str, str_val);
                 break;
             }
             case 'h' :
@@ -64,13 +57,13 @@ void FullNodeArgs::Parse(int argc, const char* const argv[])
     CheckArguments();
 }
 
-void FullNodeArgs::CheckArguments() const
+void FullNodeConfig::CheckArguments() const
 {
-    Args::CheckArguments();
+    ExecutorConfig::CheckArguments();
     
     // --connect
-    if (IsArgSet(FULLNODE_OPTION_CONNECT)) {
-        const std::vector<std::string> arg_values = GetArgs(FULLNODE_OPTION_CONNECT);
+    if (args_.IsArgSet(FULLNODE_OPTION_CONNECT)) {
+        const std::vector<std::string> arg_values = args_.GetArgs(FULLNODE_OPTION_CONNECT);
         auto is_invalid_ip =  [](const std::string& val)
                               {
                                   struct sockaddr_in sa;
@@ -83,34 +76,34 @@ void FullNodeArgs::CheckArguments() const
     }
     
     // --listen
-    if (IsArgSet(FULLNODE_OPTION_LISTEN))
+    if (args_.IsArgSet(FULLNODE_OPTION_LISTEN))
     {
-        std::string val = GetArg(FULLNODE_OPTION_LISTEN, DEFAULT_LISTEN);
+        std::string val = args_.GetArg(FULLNODE_OPTION_LISTEN, DEFAULT_LISTEN);
         if (val != "1" && val != "0")
             throw Exception(ErrorCode::invalid_argument, "invalid argument '" + val + "'");
     }
 
     // --discover
-    if (IsArgSet(FULLNODE_OPTION_DISCOVER))
+    if (args_.IsArgSet(FULLNODE_OPTION_DISCOVER))
     {
-        std::string val = GetArg(FULLNODE_OPTION_DISCOVER, DEFAULT_DISCOVER);
+        std::string val = args_.GetArg(FULLNODE_OPTION_DISCOVER, DEFAULT_DISCOVER);
         if (val != "1" && val != "0")
             throw Exception(ErrorCode::invalid_argument, "invalid argument '" + val + "'");
     }
     
     // --dnsseed
-    if (IsArgSet(FULLNODE_OPTION_DNSSEED))
+    if (args_.IsArgSet(FULLNODE_OPTION_DNSSEED))
     {
-        std::string val = GetArg(FULLNODE_OPTION_DNSSEED, DEFAULT_DNSSEED);
+        std::string val = args_.GetArg(FULLNODE_OPTION_DNSSEED, DEFAULT_DNSSEED);
         if (val != "1" && val != "0")
             throw Exception(ErrorCode::invalid_argument, "invalid argument '" + val + "'");
     }
 }
 
-void FullNodeArgs::PrintUsage() const
+void FullNodeHelpInfo::PrintUsage()
 {
-    fprintf(stdout, "Usage: %s [OPTIONS...]\n\n", bin_name_.c_str());
-    Args::PrintUsage();
+    fprintf(stdout, "Usage: %s [OPTIONS...]\n\n", FULLNODE_BIN_NAME);
+    HelpInfo::PrintUsage();
     fprintf(stdout, "  --datadir=<dir>       specify data directory.\n");
     fprintf(stdout, "  --conf=<file>         specify configuration file (default: %s)\n", DEFAULT_CONFIG_FILE);
     fprintf(stdout, "\nConnection Options:\n");
@@ -123,91 +116,52 @@ void FullNodeArgs::PrintUsage() const
 
 }
 
-bool FullNodeArgs::InitParameters()
+bool FullNodeConfig::InitDataDir()
 {
-    if (!Args::InitParameters())
+    path_data_dir_ = path_default_data_path_;
+    if (args_.IsArgSet(GLOBAL_OPTION_DATADIR)) {
+        const std::string path = args_.GetArg(GLOBAL_OPTION_DATADIR, DEFAULT_DATA_DIR);
+        if (fs::is_directory(path))
+            path_data_dir_ = fs::path(path);
+        else
+            BTCLOG(LOG_LEVEL_WARNING) << "Specified data path \"" << path << "\" does not exist. Use default data path.";
+    }
+    
+    if (path_data_dir_ == path_default_data_path_)
+        fs::create_directories(path_data_dir_); // create default data dir if it does not exist
+    
+    config_file_ = DEFAULT_CONFIG_FILE;
+    if (args_.IsArgSet(GLOBAL_OPTION_CONF)) {
+        config_file_ = args_.GetArg(GLOBAL_OPTION_CONF, DEFAULT_CONFIG_FILE);
+        if (!std::ifstream(path_data_dir() / config_file_).good())
+            BTCLOG(LOG_LEVEL_WARNING) << "Specified config file \"" << path_data_dir().c_str() << "/" << config_file_
+                                      << "\" does not exist. Use default config file.";
+    }
+    
+    if (config_file_ == DEFAULT_CONFIG_FILE)
+        std::ofstream file(path_data_dir_ / config_file_); // create default config file if it does not exist    
+    
+    return ParseFromFile(path_data_dir_ / config_file_);
+}
+
+bool FullNodeConfig::InitParameters()
+{
+    if (!ExecutorConfig::InitParameters())
         return false;
     
     // --connect
-    if (IsArgSet(FULLNODE_OPTION_CONNECT)) {
-        SetArg(FULLNODE_OPTION_LISTEN, "0");
+    if (args_.IsArgSet(FULLNODE_OPTION_CONNECT)) {
+        args_.SetArg(FULLNODE_OPTION_LISTEN, "0");
         BTCLOG(LOG_LEVEL_DEBUG) << "set --connect=1 -> set --listen=0";
-        SetArg(FULLNODE_OPTION_DNSSEED, "0");
+        args_.SetArg(FULLNODE_OPTION_DNSSEED, "0");
         BTCLOG(LOG_LEVEL_DEBUG) << "set --connect=1 -> set --dnsseed=0";
     }
     
     // --listen
-    if (GetArg(FULLNODE_OPTION_LISTEN, DEFAULT_LISTEN) == "0") {
-        SetArg(FULLNODE_OPTION_DISCOVER, "0");
+    if (args_.GetArg(FULLNODE_OPTION_LISTEN, DEFAULT_LISTEN) == "0") {
+        args_.SetArg(FULLNODE_OPTION_DISCOVER, "0");
         BTCLOG(LOG_LEVEL_DEBUG) << "set --listen=0 -> set --discover=0";
     }
     
     return true;
-}
-
-bool FullNodeDataFiles::Init(const std::string& dir_path, const std::string& config_file)
-{
-    if (!fs::is_directory(dir_path)) {
-        BTCLOG(LOG_LEVEL_WARNING) << "Specified data path \"" << path_data_dir().c_str()
-                                 << "\" does not exist. Use default data path.";
-        if (dir_path == DefaultDataDirPath())
-            fs::create_directories(dir_path);        
-    }
-    else
-        set_path_data_dir(fs::path(dir_path));
-    
-    std::ifstream ifs(path_data_dir() / config_file);
-    if (!ifs.good()) {
-        BTCLOG(LOG_LEVEL_WARNING) << "Specified config file \"" << path_data_dir().c_str() << "/" << config_file
-                                 << "\" does not exist. Use default config file.";
-        if (config_file == DEFAULT_CONFIG_FILE)
-            std::ofstream file(DataFiles::path_config_file()); // create default config file if it does not exist
-    }
-    else
-        set_path_config_file(config_file);
-    
-    return true;
-}
-
-bool FullNodeConfig::Init()
-{
-    if (!args_.Init(argc(), argv())) 
-        return false;
-
-    if (!InitDataFiles())
-        return false;
-
-    if (!LoadConfigFile())
-        return false;
-
-    if (!args_.InitParameters())
-        return false;
-    
-    return true;
-}
-
-bool FullNodeConfig::InitDataFiles()
-{
-    std::string path = FullNodeDataFiles::DefaultDataDirPath().c_str();
-    if (args_.IsArgSet(GLOBAL_OPTION_DATADIR))
-        path = args_.GetArg(GLOBAL_OPTION_DATADIR, DEFAULT_DATA_DIR);
-    
-    std::string config_file = args_.GetArg(GLOBAL_OPTION_CONF, DEFAULT_CONFIG_FILE);
-    if (!data_files_.Init(path, config_file))
-        return false;
-    
-    if (!data_files_.LockDataDir())
-        return false;
-    
-    return true;
-}
-
-bool FullNodeConfig::LoadConfigFile()
-{
-    if (!fs::is_directory(data_files_.path_data_dir())) {
-        BTCLOG(LOG_LEVEL_ERROR) << "Error: Specified data directory \"" << data_files_.path_data_dir().c_str() << "\" does not exist.";
-        return false;
-    }
-    
-    return args_.ParseFromFile(data_files_.path_config_file().c_str());
 }

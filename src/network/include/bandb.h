@@ -17,13 +17,10 @@ public:
     };
     
     BanDb()
-        : path_ban_list_(DataFiles::PathHome() / default_ban_list), ban_map_(), dirty_(false) {}
+        : path_ban_list_(ExecutorConfig::path_data_dir() / default_ban_list), ban_map_(), dirty_(false) {}
     
-    explicit BanDb(const DataFiles& data_files)
-        : path_ban_list_(data_files.path_data_dir() / default_ban_list), ban_map_(), dirty_(false) {}
-    
-    BanDb(const DataFiles& data_files, const proto_banmap::BanMap& ban_map)
-        : path_ban_list_(data_files.path_data_dir() / default_ban_list), ban_map_(ban_map), dirty_(true) {}
+    explicit BanDb(const proto_banmap::BanMap& ban_map)
+        : path_ban_list_(ExecutorConfig::path_data_dir() / default_ban_list), ban_map_(ban_map), dirty_(true) {}
     
     //-------------------------------------------------------------------------
     bool Add(const btclite::NetAddr& addr, const BanReason &ban_reason);

@@ -198,10 +198,7 @@ private:
 
 class NetArgs {
 public:
-    NetArgs()
-        : is_listen_(true), is_discover_(true), is_dnsseed_(true), specified_outgoing_() {}
-    
-    NetArgs(const Args& args);
+    NetArgs();
     
 private:
     bool is_listen_;

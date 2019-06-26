@@ -9,9 +9,10 @@
 #include "network/include/params.h"
 #include "thread.h"
 
-class P2P {
+class P2P : Uncopyable {
 public:
-    P2P(const ExecutorConfig& config);
+    P2P(BaseEnv env)
+        : network_params_(env), network_args_(), ban_db_() {}
     
     bool Init();
     bool Start();
@@ -29,13 +30,7 @@ public:
         return network_args_;
     }
     
-    static SipHasher& GetDeterministicRandomizer(uint64_t id)
-    {
-        return sip_hash_.Update(id);
-    }
-    
 private:
-    const ExecutorConfig& executor_config_;
     Network::Params network_params_;
     NetArgs network_args_;
     LocalNetConfig local_network_config_;
@@ -43,9 +38,6 @@ private:
     //std::vector<OutboundSession> outbound_sessions_;
     //std::vector<InboundSession> inbound_sessions_;
     Acceptor acceptor_;
-    
-    // for generating deterministic random number
-    static SipHasher sip_hash_;
     
     ThreadInterrupt interrupt_;
     std::thread thread_dns_seeds_;

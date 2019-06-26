@@ -35,7 +35,7 @@ private:
 };
 
 
-class thread_group {
+class thread_group : Uncopyable {
 public:
     thread_group() {}
     ~thread_group()
@@ -66,8 +66,7 @@ private:
     mutable std::mutex m;
     std::list<std::thread *> threads;
 };
-// mixin uncopyable
-using ThreadGroup = Uncopyable<thread_group>;
+
 
 template <typename F>
 std::thread* thread_group::create_thread(F threadfunc)

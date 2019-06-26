@@ -22,7 +22,7 @@ private:
 };
 
 // An in-memory indexed chain of blocks.
-class BlockChain {
+class BlockChain : Uncopyable {
 public:
 private:
     std::vector<BlockIndex*> chain_;

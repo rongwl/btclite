@@ -2,14 +2,6 @@
 #include "fullnode/include/config.h"
 
 
-SipHasher P2P::sip_hash_;
-
-P2P::P2P(const ExecutorConfig& config)
-    : executor_config_(config),
-      network_params_(config.env()),
-      network_args_(config.args()),
-      ban_db_(config.data_files()) {}
-
 bool P2P::Init()
 {    
     return true;
