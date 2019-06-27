@@ -6,65 +6,61 @@
 #include "socket.h"
 
 TEST(BasicSocketTest, Constructor)
-{
-    struct sockaddr_in sock_addr4;
-    struct sockaddr_in6 sock_addr6;
+{    
+    BasicSocket socket1;
+    ASSERT_EQ(socket1.sock_fd(), 0);
     
-    memset(&sock_addr4, 0, sizeof(sock_addr4));
-    memset(&sock_addr6, 0, sizeof(sock_addr6));
-    
-    sock_addr4.sin_family = AF_INET;
-    sock_addr4.sin_addr.s_addr = htonl(INADDR_ANY);
-    sock_addr4.sin_port = htons(8333);
-    BasicSocket socket(AF_INET);
-    ASSERT_EQ(std::memcmp(&socket.sock_addr(), &sock_addr4, sizeof(sock_addr4)), 0);
-    
-    sock_addr6.sin6_family = AF_INET6;
-    std::memcpy(&sock_addr6.sin6_addr, &in6addr_any, sizeof(in6addr_any));
-    sock_addr6.sin6_port = htons(8333);
-    sock_addr6.sin6_scope_id = 0;
-    BasicSocket socket2(AF_INET6);
-    ASSERT_EQ(std::memcmp(&socket2.sock_addr(), &sock_addr6, sizeof(sock_addr6)), 0);
+    BasicSocket socket2(3);
+    ASSERT_EQ(socket2.sock_fd(), 3);
 }
 
 TEST(BasicSocketTest, MethordCreate)
 {
-    struct sockaddr_in sock_addr4;
-    struct sockaddr_in6 sock_addr6;
-    
-    memset(&sock_addr4, 0, sizeof(sock_addr4));
-    memset(&sock_addr6, 0, sizeof(sock_addr6));
-    
-    BasicSocket socket(AF_INET);
+    BasicSocket socket;
     ASSERT_TRUE(socket.Create());
     EXPECT_GT(socket.sock_fd(), 0);
     EXPECT_TRUE(socket.Close());
     EXPECT_EQ(socket.sock_fd(), -1);
-    
-    BasicSocket socket2(AF_INET6);
-    ASSERT_TRUE(socket2.Create());
-    EXPECT_GT(socket2.sock_fd(), 0);
-    EXPECT_TRUE(socket2.Close());
-    EXPECT_EQ(socket2.sock_fd(), -1);
 }
 
 TEST(BasicSocketTest, MethordGetBindAddr)
 {
     Socket sock_fd;
     btclite::NetAddr addr;
+    struct sockaddr_in sock_addr1, sock_addr2;
+    struct sockaddr_in6 sock_addr3, sock_addr4;
+    socklen_t len;
     
-    BasicSocket socket4(AF_INET);
-    ASSERT_TRUE(socket4.Create());
-    ASSERT_EQ(bind(socket4.sock_fd(), reinterpret_cast<const struct sockaddr*>(&socket4.sock_addr()), sizeof(socket4.sock_addr())), 0);
-    BasicSocket::GetBindAddr(socket4.sock_fd(), &addr);
-    EXPECT_EQ(addr, btclite::NetAddr(socket4.sock_addr()));
-    socket4.Close();
-    
-    BasicSocket socket6(AF_INET6);
-    ASSERT_TRUE(socket6.Create());
-    ASSERT_EQ(bind(socket6.sock_fd(), reinterpret_cast<const struct sockaddr*>(&socket6.sock_addr()), sizeof(socket6.sock_addr())), 0);
-    addr.Clear();
-    BasicSocket::GetBindAddr(socket6.sock_fd(), &addr);
-    EXPECT_EQ(addr, btclite::NetAddr(socket6.sock_addr()));
-    socket6.Close();
+    std::memset(&sock_addr1, 0, sizeof(sock_addr1));
+    sock_addr1.sin_family = AF_INET;
+    sock_addr1.sin_addr.s_addr = htonl(INADDR_ANY);
+    sock_addr1.sin_port = htons(8333);
+    sock_fd = socket(AF_INET, SOCK_STREAM, 0);
+    ASSERT_GT(sock_fd, 0);
+    EXPECT_EQ(bind(sock_fd, (const struct sockaddr*)&sock_addr1, sizeof(sock_addr1)), 0);
+    BasicSocket socket1(sock_fd);
+    EXPECT_TRUE(socket1.GetBindAddr(&addr));
+    std::memset(&sock_addr2, 0, sizeof(sock_addr2));
+    len = sizeof(sock_addr2);
+    EXPECT_TRUE(addr.ToSockAddr((struct sockaddr*)&sock_addr2, &len));
+    EXPECT_EQ(len, sizeof(sockaddr_in));
+    EXPECT_EQ(std::memcmp(&sock_addr1, &sock_addr2, len), 0);
+    socket1.Close();
+
+    std::memset(&sock_addr3, 0, sizeof(sock_addr3));
+    sock_addr3.sin6_family = AF_INET6;
+    std::memcpy(&sock_addr3.sin6_addr, &in6addr_any, sizeof(in6addr_any));
+    sock_addr3.sin6_port = htons(8333);
+    sock_addr3.sin6_scope_id = 0;
+    sock_fd = socket(AF_INET6, SOCK_STREAM, 0);
+    ASSERT_GT(sock_fd, 0);
+    EXPECT_EQ(bind(sock_fd, (const struct sockaddr*)&sock_addr3, sizeof(sock_addr3)), 0);
+    BasicSocket socket2(sock_fd);
+    EXPECT_TRUE(socket2.GetBindAddr(&addr));
+    std::memset(&sock_addr4, 0, sizeof(sock_addr4));
+    len = sizeof(sock_addr4);
+    EXPECT_TRUE(addr.ToSockAddr((struct sockaddr*)&sock_addr4, &len));
+    EXPECT_EQ(len, sizeof(sockaddr_in6));
+    EXPECT_EQ(std::memcmp(&sock_addr3, &sock_addr4, sizeof(sockaddr_in6)), 0);
+    socket2.Close();
 }

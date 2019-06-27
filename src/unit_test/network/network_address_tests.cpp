@@ -34,7 +34,7 @@ TEST(NetAddrTest, Constructor)
     btclite::NetAddr addr4(sock_addr);
     ASSERT_TRUE(addr4.IsIpv4());
     EXPECT_EQ(addr4.GetIpv4(), sock_addr.sin_addr.s_addr);
-    EXPECT_EQ(addr4.port(), sock_addr.sin_port);
+    EXPECT_EQ(addr4.port(), ntohs(sock_addr.sin_port));
     
     struct sockaddr_in6 sock_addr6;
     uint8_t out[btclite::NetAddr::ip_byte_size];
@@ -47,22 +47,27 @@ TEST(NetAddrTest, Constructor)
     ASSERT_TRUE(addr5.IsIpv6());
     addr5.GetIpv6(out);
     EXPECT_EQ(std::memcmp(sock_addr6.sin6_addr.s6_addr, out, sizeof(out)), 0);
-    EXPECT_EQ(addr5.port(), sock_addr6.sin6_port);
+    EXPECT_EQ(addr5.port(), ntohs(sock_addr6.sin6_port));
     EXPECT_EQ(addr5.scope_id(), sock_addr6.sin6_scope_id);
     
     struct sockaddr_storage *storage_addr = reinterpret_cast<struct sockaddr_storage*>(&sock_addr);
     btclite::NetAddr addr6(*storage_addr);
     ASSERT_TRUE(addr6.IsIpv4());
     EXPECT_EQ(addr6.GetIpv4(), sock_addr.sin_addr.s_addr);
-    EXPECT_EQ(addr6.port(), sock_addr.sin_port);
+    EXPECT_EQ(addr6.port(), ntohs(sock_addr.sin_port));
     
     storage_addr = reinterpret_cast<struct sockaddr_storage*>(&sock_addr6);
     btclite::NetAddr addr7(*storage_addr);
     ASSERT_TRUE(addr7.IsIpv6());
     addr7.GetIpv6(out);
     EXPECT_EQ(std::memcmp(sock_addr6.sin6_addr.s6_addr, out, sizeof(out)), 0);
-    EXPECT_EQ(addr7.port(), sock_addr6.sin6_port);
+    EXPECT_EQ(addr7.port(), ntohs(sock_addr6.sin6_port));
     EXPECT_EQ(addr7.scope_id(), sock_addr6.sin6_scope_id);
+    
+    inet_pton(AF_INET6, "::ffff:192.168.1.1", sock_addr6.sin6_addr.s6_addr);
+    btclite::NetAddr addr8(sock_addr6);
+    ASSERT_TRUE(addr8.IsIpv4());
+    EXPECT_EQ(addr8.GetIpv4(), inet_addr("192.168.1.1"));
 }
 
 TEST(NetAddrTest, OperatorEqual)
@@ -311,7 +316,7 @@ TEST(NetAddrTest, MethordFromSockAddr)
     addr.FromSockAddr(reinterpret_cast<const struct sockaddr*>(&sock_addr));
     ASSERT_TRUE(addr.IsIpv4());
     EXPECT_EQ(addr.GetIpv4(), sock_addr.sin_addr.s_addr);
-    EXPECT_EQ(addr.port(), sock_addr.sin_port);
+    EXPECT_EQ(addr.port(), ntohs(sock_addr.sin_port));
     
     struct sockaddr_in6 sock_addr6;
     uint8_t out[btclite::NetAddr::ip_byte_size];
@@ -320,13 +325,19 @@ TEST(NetAddrTest, MethordFromSockAddr)
         sock_addr6.sin6_addr.s6_addr[i] = i;
     sock_addr6.sin6_port = htons(1234);
     sock_addr6.sin6_scope_id = 1;
-    btclite::NetAddr addr2;
-    addr2.FromSockAddr(reinterpret_cast<const struct sockaddr*>(&sock_addr6));
-    ASSERT_TRUE(addr2.IsIpv6());
-    addr2.GetIpv6(out);
+    addr.Clear();
+    addr.FromSockAddr(reinterpret_cast<const struct sockaddr*>(&sock_addr6));
+    ASSERT_TRUE(addr.IsIpv6());
+    addr.GetIpv6(out);
     EXPECT_EQ(std::memcmp(sock_addr6.sin6_addr.s6_addr, out, sizeof(out)), 0);
-    EXPECT_EQ(addr2.port(), sock_addr6.sin6_port);
-    EXPECT_EQ(addr2.scope_id(), sock_addr6.sin6_scope_id);
+    EXPECT_EQ(addr.port(), ntohs(sock_addr6.sin6_port));
+    EXPECT_EQ(addr.scope_id(), sock_addr6.sin6_scope_id);
+    
+    inet_pton(AF_INET6, "::ffff:192.168.1.1", sock_addr6.sin6_addr.s6_addr);
+    addr.Clear();
+    addr.FromSockAddr(reinterpret_cast<const struct sockaddr*>(&sock_addr6));
+    ASSERT_TRUE(addr.IsIpv4());
+    EXPECT_EQ(addr.GetIpv4(), inet_addr("192.168.1.1"));
 }
 
 TEST(NetAddrTest, MethordToString)

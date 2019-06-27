@@ -9,15 +9,18 @@ using Socket = int;
 
 class BasicSocket {
 public:
-    BasicSocket();
-    explicit BasicSocket(sa_family_t family);
+    BasicSocket()
+        : sock_fd_(0) {}
+    
+    explicit BasicSocket(Socket sock_fd)
+        : sock_fd_(sock_fd) {}
     
     //-------------------------------------------------------------------------
     bool Create();
     bool Close();    
     bool SetSockNoDelay();
     bool SetSockNonBlocking();
-    static bool GetBindAddr(Socket sock_fd, btclite::NetAddr *out);
+    bool GetBindAddr(btclite::NetAddr *out);
     
     //-------------------------------------------------------------------------
     Socket sock_fd() const
@@ -25,14 +28,8 @@ public:
         return sock_fd_;
     }
     
-    const struct sockaddr_storage& sock_addr() const
-    {
-        return sock_addr_;
-    }
-    
 private:
     Socket sock_fd_;
-    struct sockaddr_storage sock_addr_;
 };
 
 

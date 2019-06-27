@@ -110,6 +110,26 @@ private:
     void CreateGenesisBlock(uint32_t time, uint32_t nonce, uint32_t bits, int32_t version, uint64_t reward);
 };
 
+class SingletonParams {
+public:
+    static Params& GetInstance(BaseEnv env)
+    {
+        static Params params(env);
+        return params;
+    }
+    
+    static Params& GetInstance()
+    {
+        return GetInstance(BaseEnv::mainnet);
+    }
+    
+    SingletonParams(const SingletonParams&) = delete;
+    SingletonParams& operator=(const SingletonParams&) = delete;
+    
+private:
+    SingletonParams() {}
+};
+
 } // namespace Consensus
 
 
@@ -169,12 +189,32 @@ public:
     }
     
 private:
-    Consensus::Params consensus_;
+    Consensus::Params& consensus_;
     uint64_t prune_after_height_;
     std::vector<unsigned char> base58_prefixes_[MAX_BASE58_TYPES];
     std::string bech32_hrp_;
     CheckPoint checkpoints_;
     ChainTxData chain_tx_data_;
+};
+
+class SingletonParams {
+public:
+    static Params& GetInstance(BaseEnv env)
+    {
+        static Params params(env);
+        return params;
+    }
+    
+    static Params& GetInstance()
+    {
+        return GetInstance(BaseEnv::mainnet);
+    }
+    
+    SingletonParams(const SingletonParams&) = delete;
+    SingletonParams& operator=(const SingletonParams&) = delete;
+    
+private:
+    SingletonParams() {}    
 };
 
 } // namespace Chain

@@ -7,45 +7,14 @@
 #include "socket.h"
 
 
-BasicSocket::BasicSocket()
-    : sock_fd_(0), sock_addr_()
-{
-    struct sockaddr_in sock_addr4;
-    
-    std::memset(&sock_addr4, 0, sizeof(sock_addr4));
-    std::memset(&sock_addr_, 0, sizeof(sock_addr_));
-    sock_addr4.sin_family = AF_INET;
-    sock_addr4.sin_addr.s_addr = htonl(INADDR_ANY);
-    sock_addr4.sin_port = htons(8333);
-    std::memcpy(&sock_addr_, &sock_addr4, sizeof(sock_addr4));
-}
-
-BasicSocket::BasicSocket(sa_family_t family)
-{
-    std::memset(&sock_addr_, 0, sizeof(sock_addr_));
-    
-    if (family == AF_INET) {
-        struct sockaddr_in sock_addr4;
-        std::memset(&sock_addr4, 0, sizeof(sock_addr4));
-        sock_addr4.sin_family = AF_INET;
-        sock_addr4.sin_addr.s_addr = htonl(INADDR_ANY);
-        sock_addr4.sin_port = htons(8333);
-        std::memcpy(&sock_addr_, &sock_addr4, sizeof(sock_addr4));
-    }
-    else {
-        struct sockaddr_in6 sock_addr6;
-        std::memset(&sock_addr6, 0, sizeof(sock_addr6));
-        sock_addr6.sin6_family = AF_INET6;
-        std::memcpy(&sock_addr6.sin6_addr, &in6addr_any, sizeof(in6addr_any));
-        sock_addr6.sin6_port = htons(8333);
-        sock_addr6.sin6_scope_id = 0;
-        std::memcpy(&sock_addr_, &sock_addr6, sizeof(sock_addr6));
-    }
-}
-
 bool BasicSocket::Create()
 {
-    if (-1 == (sock_fd_ = socket(((struct sockaddr*)&sock_addr_)->sa_family, SOCK_STREAM, IPPROTO_TCP))) {
+    if (sock_fd_ > 0) {
+        BTCLOG(LOG_LEVEL_WARNING) << "socket already opened";
+        return true;
+    }
+    
+    if (-1 == (sock_fd_ = socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP))) {
         BTCLOG(LOG_LEVEL_ERROR) << "create socket failed, error:" << std::strerror(errno);
         return false;
     }
@@ -94,19 +63,17 @@ bool BasicSocket::SetSockNonBlocking()
     return true;
 }
 
-bool BasicSocket::GetBindAddr(Socket sock_fd, btclite::NetAddr *out)
+bool BasicSocket::GetBindAddr(btclite::NetAddr *out)
 {
     struct sockaddr_storage sockaddr_bind;
-    socklen_t sockaddr_bind_len = sizeof(sockaddr_bind);
+    socklen_t len = sizeof(sockaddr_bind);
     
-    if (sock_fd > 0) {
-        if (!getsockname(sock_fd, (struct sockaddr*)&sockaddr_bind, &sockaddr_bind_len)) {
-            out->FromSockAddr(reinterpret_cast<const struct sockaddr*>(&sockaddr_bind));
-        } else {
-            BTCLOG_MOD(LOG_LEVEL_INFO, Logging::NET) << "Warning: getsockname failed";
-            return false;
-        }
+    if (sock_fd_ > 0) {
+        if (!getsockname(sock_fd_, (struct sockaddr*)&sockaddr_bind, &len))
+            return out->FromSockAddr(reinterpret_cast<const struct sockaddr*>(&sockaddr_bind));
+        else 
+            BTCLOG_MOD(LOG_LEVEL_WARNING, Logging::NET) << "Warning: get bind addr failed";
     }
     
-    return true;
+    return false;
 }

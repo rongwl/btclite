@@ -9,20 +9,27 @@
 class Acceptor {
 public:
     Acceptor()
-        : listen_sockets_() {}
+        : listen_socket_()
+    {
+        listen_socket_.Create();
+    }
     
-    bool Init(const Network::Params& params);
+    ~Acceptor()
+    {
+        listen_socket_.Close();
+    }
+    
     bool Bind();
     bool Listen();
-    Socket Accept();
+    bool Accept();
     
-    const std::vector<BasicSocket>& listen_sockets() const
+    const BasicSocket& listen_socket() const
     {
-        return listen_sockets_;
+        return listen_socket_;
     }
     
 private:
-    std::vector<BasicSocket> listen_sockets_;
+    BasicSocket listen_socket_;
 };
 
 #endif // BTCLITE_ACCEPTOR_H

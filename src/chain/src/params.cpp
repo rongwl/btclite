@@ -59,7 +59,7 @@ void Consensus::Params::CreateGenesisBlock(uint32_t time, uint32_t nonce, uint32
 }
 
 Chain::Params::Params(BaseEnv env)
-    : consensus_(env)
+    : consensus_(Consensus::SingletonParams::GetInstance(env))
 {
 
 }

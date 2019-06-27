@@ -3,6 +3,7 @@
 
 
 #include "block.h"
+#include "util.h"
 
 
 /*

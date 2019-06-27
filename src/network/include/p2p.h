@@ -12,7 +12,8 @@
 class P2P : Uncopyable {
 public:
     P2P(BaseEnv env)
-        : network_params_(env), network_args_(), ban_db_() {}
+        : network_params_(Network::SingletonParams::GetInstance(env)),
+          network_args_(), ban_db_(), acceptor_() {}
     
     bool Init();
     bool Start();
@@ -31,7 +32,7 @@ public:
     }
     
 private:
-    Network::Params network_params_;
+    Network::Params& network_params_;
     NetArgs network_args_;
     LocalNetConfig local_network_config_;
     BanDb ban_db_;

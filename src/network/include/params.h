@@ -47,6 +47,26 @@ private:
     std::vector<Seed> seeds_;
 };
 
+class SingletonParams {
+public:
+    static Params& GetInstance(BaseEnv env)
+    {
+        static Params params(env);
+        return params;
+    }
+    
+    static Params& GetInstance()
+    {
+        return GetInstance(BaseEnv::mainnet);
+    }
+    
+    SingletonParams(const SingletonParams&) = delete;
+    SingletonParams& operator=(const SingletonParams&) = delete;
+    
+private:
+    SingletonParams() {}        
+};
+
 } // namespace Network
 
 #endif // BTCLITE_NETWORK_PARAMS_H
