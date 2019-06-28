@@ -7,7 +7,7 @@ TEST(AcceptorTest, Constructor)
 {
     Network::Params& params = Network::SingletonParams::GetInstance(BaseEnv::mainnet);
     Acceptor acceptor;
-    BasicSocket socket = acceptor.listen_socket();
+    Socket socket = acceptor.listen_socket();
     ASSERT_GT(socket.sock_fd(), 0);
     socket.Close();
 }
@@ -20,7 +20,7 @@ TEST(AcceptorTest, MethordBind)
     Acceptor acceptor;
     
     ASSERT_TRUE(acceptor.Bind());
-    BasicSocket socket = acceptor.listen_socket();
+    Socket socket = acceptor.listen_socket();
     
     EXPECT_EQ(getsockname(socket.sock_fd(), (struct sockaddr*)&sockaddr, &len), 0);
     EXPECT_EQ(sockaddr.sin6_family, AF_INET6);
@@ -38,7 +38,7 @@ TEST(AcceptorTest, MethordListen)
     
     ASSERT_TRUE(acceptor.Bind());
     EXPECT_TRUE(acceptor.Listen());
-    BasicSocket socket = acceptor.listen_socket();
+    Socket socket = acceptor.listen_socket();
     socket.Close();
     EXPECT_FALSE(acceptor.Listen());
 }

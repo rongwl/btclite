@@ -25,8 +25,27 @@ private:
 // An in-memory indexed chain of blocks.
 class BlockChain : Uncopyable {
 public:
+    uint32_t Height() const
+    {
+        return chain_.size() - 1;
+    }
 private:
     std::vector<BlockIndex*> chain_;
+};
+
+class SingletonBlockChain {
+public:
+    static BlockChain& GetInstance()
+    {
+        static BlockChain chain;
+        return chain;
+    }
+    
+    SingletonBlockChain(const SingletonBlockChain&) = delete;
+    SingletonBlockChain& operator=(const SingletonBlockChain&) = delete;
+    
+private:
+    SingletonBlockChain() {}
 };
 
 #endif // BTCLITE_CHAIN_H

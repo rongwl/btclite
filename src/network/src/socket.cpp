@@ -7,7 +7,7 @@
 #include "socket.h"
 
 
-bool BasicSocket::Create()
+bool Socket::Create()
 {
     if (sock_fd_ > 0) {
         BTCLOG(LOG_LEVEL_WARNING) << "socket already opened";
@@ -36,7 +36,7 @@ bool BasicSocket::Create()
     return true;
 }
 
-bool BasicSocket::Close()
+bool Socket::Close()
 {
     if (-1 == sock_fd_)
         return true;
@@ -47,7 +47,7 @@ bool BasicSocket::Close()
     return true;
 }
 
-bool BasicSocket::SetSockNoDelay()
+bool Socket::SetSockNoDelay()
 {
     int set = 1;
     if (-1 == setsockopt(sock_fd_, IPPROTO_TCP, TCP_NODELAY, (const char*)&set, sizeof(int)))
@@ -55,7 +55,7 @@ bool BasicSocket::SetSockNoDelay()
     return true;
 }
 
-bool BasicSocket::SetSockNonBlocking()
+bool Socket::SetSockNonBlocking()
 {
     int flags = fcntl(sock_fd_, F_GETFL, 0);
     if (-1 == fcntl(sock_fd_, F_SETFL, flags | O_NONBLOCK)) 
@@ -63,7 +63,7 @@ bool BasicSocket::SetSockNonBlocking()
     return true;
 }
 
-bool BasicSocket::GetBindAddr(btclite::NetAddr *out)
+bool Socket::GetBindAddr(btclite::NetAddr *out)
 {
     struct sockaddr_storage sockaddr_bind;
     socklen_t len = sizeof(sockaddr_bind);

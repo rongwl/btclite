@@ -29,6 +29,7 @@ public:
     //-------------------------------------------------------------------------
     void SweepBanned();
     void DumpBanList();
+    bool IsBanned(btclite::NetAddr addr);
     
     //-------------------------------------------------------------------------
     const fs::path& path_ban_list() const
@@ -63,6 +64,21 @@ private:
     bool dirty_;
     
     bool Add_(const SubNet& sub_net, const proto_banmap::BanEntry& ban_entry);
+};
+
+class SingletonBanDb {
+public:
+    static BanDb& GetInstance()
+    {
+        static BanDb ban_db;
+        return ban_db;
+    }
+    
+    SingletonBanDb(const SingletonBanDb&) = delete;
+    SingletonBanDb& operator=(const SingletonBanDb&) = delete;
+    
+private:
+    SingletonBanDb() {}
 };
 
 #endif // BTCLITE_NETWORK_BANDB_H

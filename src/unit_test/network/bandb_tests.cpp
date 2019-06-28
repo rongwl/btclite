@@ -23,7 +23,7 @@ TEST(BanDbTest, MethordAdd)
     TestExecutorConfig::set_path_data_dir(fs::path("/tmp"));
     BanDb ban_db;
     
-    ban_db.Add(addr, BanDb::NodeMisbehaving);
+    ASSERT_TRUE(ban_db.Add(addr, BanDb::NodeMisbehaving));
     auto it = ban_db.ban_map().map().find(SubNet(addr).ToString());
     ASSERT_NE(it, ban_db.ban_map().map().end());
     EXPECT_EQ(it->second.ban_reason(), BanDb::NodeMisbehaving);
@@ -56,7 +56,7 @@ TEST(BanDbTest, MethordSweepBanned)
     ban_db.SweepBanned();
     EXPECT_EQ(ban_db.ban_map().map().find(subnet.ToString()), ban_db.ban_map().map().end());
     
-    ban_db.Add(subnet, BanDb::NodeMisbehaving);
+    ASSERT_TRUE(ban_db.Add(subnet, BanDb::NodeMisbehaving));
     ban_db.SweepBanned();
     it = ban_db.ban_map().map().find(subnet.ToString());
     EXPECT_NE(it, ban_db.ban_map().map().end());
@@ -98,4 +98,42 @@ TEST(BanDbTest, MethordDumpBanList)
         ASSERT_EQ(it->second.ban_reason(), BanDb::ManuallyAdded);
     }
     fs::remove(ban_db.path_ban_list());    
+}
+
+TEST(BanDbTest, MethordIsBanned)
+{
+    btclite::NetAddr addr;
+    proto_banmap::BanEntry ban_entry;
+    proto_banmap::BanMap ban_map;
+    char buf[10];
+    
+    std::memset(buf, 0, sizeof(buf));
+    for (int i = 0; i < 10; i++) {        
+        std::sprintf(buf, "1.2.3.%d", i);
+        addr.SetIpv4(inet_addr(buf));
+        ban_entry.set_version(i);
+        ban_entry.set_create_time(GetTimeSeconds());
+        ban_entry.set_ban_until(GetTimeSeconds()+default_misbehaving_bantime);
+        ban_entry.set_ban_reason(BanDb::NodeMisbehaving);
+        (*ban_map.mutable_map())[SubNet(addr).ToString()] = ban_entry;
+    }
+        
+    TestExecutorConfig::set_path_data_dir(fs::path("/tmp"));
+    BanDb ban_db1(ban_map);
+    for (int i = 0; i < 10; i++) {
+        std::sprintf(buf, "1.2.3.%d", i);
+        addr.SetIpv4(inet_addr(buf));
+        EXPECT_TRUE(ban_db1.IsBanned(addr));
+    }
+    
+    ban_entry.set_ban_until(ban_entry.ban_until() - default_misbehaving_bantime);
+    addr.SetIpv4(inet_addr("1.2.3.4"));
+    (*ban_map.mutable_map())[SubNet(addr).ToString()] = ban_entry;
+    BanDb ban_db2(ban_map);
+    EXPECT_FALSE(ban_db2.IsBanned(addr));
+    
+    addr.SetIpv4(inet_addr("1.2.3.10"));
+    EXPECT_FALSE(ban_db2.IsBanned(addr));
+    
+
 }

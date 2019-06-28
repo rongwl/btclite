@@ -13,19 +13,16 @@ class P2P : Uncopyable {
 public:
     P2P(BaseEnv env)
         : network_params_(Network::SingletonParams::GetInstance(env)),
-          network_args_(), ban_db_(), acceptor_() {}
+          network_args_(), local_network_config_(SingletonLocalNetCfg::GetInstance()), 
+          nodes_(SingletonNodes::GetInstance()), map_node_state_(SingletonMapNodeState::GetInstance()),
+          ban_db_(SingletonBanDb::GetInstance()), acceptor_() {}
     
     bool Init();
     bool Start();
     bool Interrupt();
     bool Stop();
     
-    //-------------------------------------------------------------------------
-    const Network::Params& network_params() const
-    {
-        return network_params_;
-    }
-    
+    //-------------------------------------------------------------------------    
     const NetArgs& network_args() const
     {
         return network_args_;
@@ -34,8 +31,10 @@ public:
 private:
     Network::Params& network_params_;
     NetArgs network_args_;
-    LocalNetConfig local_network_config_;
-    BanDb ban_db_;
+    LocalNetConfig& local_network_config_;
+    Nodes& nodes_;
+    MapNodeState& map_node_state_;
+    BanDb& ban_db_;
     //std::vector<OutboundSession> outbound_sessions_;
     //std::vector<InboundSession> inbound_sessions_;
     Acceptor acceptor_;

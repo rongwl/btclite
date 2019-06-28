@@ -7,16 +7,16 @@
 
 TEST(BasicSocketTest, Constructor)
 {    
-    BasicSocket socket1;
+    Socket socket1;
     ASSERT_EQ(socket1.sock_fd(), 0);
     
-    BasicSocket socket2(3);
+    Socket socket2(3);
     ASSERT_EQ(socket2.sock_fd(), 3);
 }
 
 TEST(BasicSocketTest, MethordCreate)
 {
-    BasicSocket socket;
+    Socket socket;
     ASSERT_TRUE(socket.Create());
     EXPECT_GT(socket.sock_fd(), 0);
     EXPECT_TRUE(socket.Close());
@@ -25,7 +25,7 @@ TEST(BasicSocketTest, MethordCreate)
 
 TEST(BasicSocketTest, MethordGetBindAddr)
 {
-    Socket sock_fd;
+    Socket::Fd sock_fd;
     btclite::NetAddr addr;
     struct sockaddr_in sock_addr1, sock_addr2;
     struct sockaddr_in6 sock_addr3, sock_addr4;
@@ -38,7 +38,7 @@ TEST(BasicSocketTest, MethordGetBindAddr)
     sock_fd = socket(AF_INET, SOCK_STREAM, 0);
     ASSERT_GT(sock_fd, 0);
     EXPECT_EQ(bind(sock_fd, (const struct sockaddr*)&sock_addr1, sizeof(sock_addr1)), 0);
-    BasicSocket socket1(sock_fd);
+    Socket socket1(sock_fd);
     EXPECT_TRUE(socket1.GetBindAddr(&addr));
     std::memset(&sock_addr2, 0, sizeof(sock_addr2));
     len = sizeof(sock_addr2);
@@ -55,7 +55,7 @@ TEST(BasicSocketTest, MethordGetBindAddr)
     sock_fd = socket(AF_INET6, SOCK_STREAM, 0);
     ASSERT_GT(sock_fd, 0);
     EXPECT_EQ(bind(sock_fd, (const struct sockaddr*)&sock_addr3, sizeof(sock_addr3)), 0);
-    BasicSocket socket2(sock_fd);
+    Socket socket2(sock_fd);
     EXPECT_TRUE(socket2.GetBindAddr(&addr));
     std::memset(&sock_addr4, 0, sizeof(sock_addr4));
     len = sizeof(sock_addr4);

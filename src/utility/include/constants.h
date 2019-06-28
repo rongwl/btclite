@@ -27,6 +27,7 @@ constexpr uint8_t btc_ip_prefix[] = { 0xFD, 0x6B, 0x88, 0xC0, 0x87, 0x24 };
 constexpr uint8_t max_peer_connections = 125;
 // Maximum number of automatic outgoing nodes
 constexpr uint8_t max_outbound_connections = 8;
+constexpr uint8_t max_inbound_connections = max_peer_connections - max_outbound_connections;
 constexpr uint64_t max_outbound_timeframe = 60 * 60 * 24;
 constexpr size_t max_send_buffer = 1000;
 constexpr size_t max_receive_buffer = 5000;

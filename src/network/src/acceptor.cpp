@@ -1,4 +1,6 @@
 #include "acceptor.h"
+#include "bandb.h"
+#include "random.h"
 #include "utility/include/logging.h"
 
 
@@ -43,8 +45,8 @@ bool Acceptor::Accept()
     btclite::NetAddr addr;
     
     std::memset(&sockaddr, 0, len);
-    Socket sock_fd = accept(listen_socket_.sock_fd(), (struct sockaddr*)&sockaddr, &len);
-    if (sock_fd == -1) {
+    Socket::Fd conn_fd = accept(listen_socket_.sock_fd(), (struct sockaddr*)&sockaddr, &len);
+    if (conn_fd == -1) {
         BTCLOG(LOG_LEVEL_ERROR) << "socket accept failed, error:" << std::strerror(errno);
         return false;
     }
@@ -52,15 +54,41 @@ bool Acceptor::Accept()
     if (!addr.FromSockAddr(reinterpret_cast<const struct sockaddr*>(&sockaddr)))
         BTCLOG(LOG_LEVEL_WARNING) << "unknown socket family";
     
-    if (sock_fd >= FD_SETSIZE) {
+    if (conn_fd >= FD_SETSIZE) {
         BTCLOG(LOG_LEVEL_WARNING) << "connection from " << addr.ToString() << " dropped: non-selectable socket";
-        close(sock_fd);
+        close(conn_fd);
         return false;
     }
     
     // According to the internet TCP_NODELAY is not carried into accepted sockets
     // on all platforms.  Set it again here just to be sure.
+    Socket(conn_fd).SetSockNoDelay();
     
+    if (SingletonBanDb::GetInstance().IsBanned(addr))
+    {
+        BTCLOG_MOD(LOG_LEVEL_INFO, Logging::NET) << "connection from " << addr.ToString() << " dropped (banned)";
+        close(conn_fd);
+        return false;
+    }
+    
+    if (SingletonNodes::GetInstance().CountInbound() >= max_inbound_connections) {
+        BTCLOG(LOG_LEVEL_INFO) << "can not accept new connection, inbound connections is full";
+        close(conn_fd);
+        return false;
+    }
+    
+    btclite::NetAddr addr_bind;
+    if (!Socket(conn_fd).GetBindAddr(&addr_bind)) {
+        close(conn_fd);
+        return false;
+    }
+    
+    Node *node = new Node(SingletonNodes::GetInstance().GetNewNodeId(),
+                          SingletonLocalNetCfg::GetInstance().local_services(),
+                          SingletonBlockChain::GetInstance().Height(),
+                          conn_fd, addr, Random::GetUint64(std::numeric_limits<uint64_t>::max()),
+                          addr_bind, "", true);
+    SingletonMapNodeState::GetInstance().Add(node->id(), node->addr(), node->host_name());
     
     return true;
 }

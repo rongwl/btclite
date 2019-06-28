@@ -45,11 +45,9 @@ struct QueuedBlock {
 // Maintain validation-specific state about nodes
 class NodeState {
 public:
-    NodeState(btclite::NetAddr& addr, std::string addr_name);
+    NodeState(const btclite::NetAddr& addr, const std::string& addr_name);
     
 private:
-    mutable CriticalSection cs_node_state_;
-    
     //! The peer's address
     const btclite::NetAddr address_;
     
@@ -138,11 +136,10 @@ private:
 /* Information about a connected peer */
 class Node {
 public:
-    using NodeId = int64_t;
+    using Id = int64_t;
     
-    Node(NodeId id, ServiceFlags services, int start_height, Socket sock_fd, const btclite::NetAddr& addr,
-         uint64_t keyed_net_group, uint64_t local_host_nonce, const btclite::NetAddr &addr_bind, 
-         const std::string& host_name, bool is_inbound);
+    Node(Id id, ServiceFlags services, int start_height, Socket::Fd sock_fd, const btclite::NetAddr& addr,
+         uint64_t local_host_nonce, const btclite::NetAddr &addr_bind, const std::string& host_name, bool is_inbound);
     
     //-------------------------------------------------------------------------
     void Connect();
@@ -156,7 +153,7 @@ public:
         return time_connected_;
     }
     
-    NodeId id() const
+    Id id() const
     {
         return id_;
     }
@@ -166,7 +163,7 @@ public:
         return services_;
     }
     
-    Socket sock_fd() const
+    Socket::Fd sock_fd() const
     {
         return sock_fd_;
     }
@@ -176,10 +173,10 @@ public:
         return addr_;
     }
     
-    uint64_t keyed_net_group() const
+    /*uint64_t keyed_net_group() const
     {
         return keyed_net_group_;
-    }
+    }*/
     
     bool is_inbound() const
     {
@@ -194,6 +191,12 @@ public:
     void set_disconnected(bool disconnected)
     {
         disconnected_ = disconnected;
+    }
+    
+    std::string host_name() const
+    {
+        LOCK(cs_host_name_);
+        return host_name_;
     }
     
     const BloomFilter *bloom_filter() const
@@ -225,12 +228,12 @@ public:
     
 private:
     const int64_t time_connected_;
-    const NodeId id_;
+    const Id id_;
     const ServiceFlags services_;
     const int start_height_;
-    Socket sock_fd_;
+    Socket::Fd sock_fd_;
     const btclite::NetAddr addr_;
-    const uint64_t keyed_net_group_;
+    //const uint64_t keyed_net_group_;
     const uint64_t local_host_nonce_;
     const btclite::NetAddr addr_bind_;
     
@@ -257,27 +260,50 @@ private:
     std::atomic<int64_t> last_tx_time_;
 };
 
-using MapNodeState = std::map<Node::NodeId, NodeState>;
+class MapNodeState {
+public:
+    using MapType = std::map<Node::Id, NodeState>;
+    
+    MapNodeState()
+        : map_() {}
+    
+    void Add(Node::Id id, const btclite::NetAddr& addr, const std::string& addr_name)
+    {
+        LOCK(cs_map_);
+        map_.emplace_hint(map_.end(), std::piecewise_construct,
+                          std::forward_as_tuple(id), std::forward_as_tuple(addr, std::move(addr_name)));
+    }
+    
+    const MapType& map() const
+    {
+        LOCK(cs_map_);
+        return map_;
+    }
+    
+private:
+    mutable CriticalSection cs_map_; 
+    MapType map_;
+};
 
 // Singleton pattern, thread safe after c++11
-class SingletonNodeStateMap {
+class SingletonMapNodeState {
 public:
-    static MapNodeState& GetInstances()
+    static MapNodeState& GetInstance()
     {
         static MapNodeState map_node_state;
         return map_node_state;
     }
     
-    SingletonNodeStateMap(const SingletonNodeStateMap&) = delete;
-    SingletonNodeStateMap& operator=(const SingletonNodeStateMap&) = delete;
+    SingletonMapNodeState(const SingletonMapNodeState&) = delete;
+    SingletonMapNodeState& operator=(const SingletonMapNodeState&) = delete;
     
 private:
-    SingletonNodeStateMap() {}
+    SingletonMapNodeState() {}
 };
 
 struct NodeEvictionCandidate
 {
-    Node::NodeId id;
+    Node::Id id;
     int64_t time_connected;
     int64_t min_ping_usec_time;
     int64_t last_block_time;
@@ -294,37 +320,38 @@ public:
     Nodes()
         : list_() {}
     
-    Node::NodeId GetNewNodeId()
+    Node::Id GetNewNodeId()
     {
-        static std::atomic<Node::NodeId> last_node_id = 0;
+        static std::atomic<Node::Id> last_node_id = 0;
         return last_node_id.fetch_add(1, std::memory_order_relaxed);
     }
     
     void ClearDisconnected();
     void CheckInactive();
     
-    bool DisconnectNode(Node::NodeId id);
+    bool DisconnectNode(Node::Id id);
     void DisconnectBanNode(const SubNet& subnet);
-    bool AttemptToEvictConnection();
+    //bool AttemptToEvictConnection();
+    int CountInbound();
     
-    const std::list<Node>& list() const
+    const std::list<Node*>& list() const
     {
         return list_;
     }
     
 private:
     mutable CriticalSection cs_nodes_;
-    std::list<Node> list_;
+    std::list<Node*> list_;
     uint32_t n_sync_started_;
     
     void ClearNodeState();
-    void MakeEvictionCandidate(std::vector<NodeEvictionCandidate> *out);
+    //void MakeEvictionCandidate(std::vector<NodeEvictionCandidate> *out);
 };
 
 // Singleton pattern, thread safe after c++11
 class SingletonNodes {
 public:
-    static Nodes& GetInstances()
+    static Nodes& GetInstance()
     {
         static Nodes nodes;
         return nodes;

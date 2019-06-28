@@ -23,13 +23,13 @@ public:
     bool Listen();
     bool Accept();
     
-    const BasicSocket& listen_socket() const
+    const Socket& listen_socket() const
     {
         return listen_socket_;
     }
     
 private:
-    BasicSocket listen_socket_;
+    Socket listen_socket_;
 };
 
 #endif // BTCLITE_ACCEPTOR_H

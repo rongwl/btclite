@@ -2,7 +2,7 @@
 #include "utiltime.h"
 
 
-NodeState::NodeState(btclite::NetAddr& addr, std::string addr_name)
+NodeState::NodeState(const btclite::NetAddr& addr, const std::string& addr_name)
     : address_(addr), name_(addr_name)
 {
     connected_ = false;
@@ -30,14 +30,12 @@ NodeState::NodeState(btclite::NetAddr& addr, std::string addr_name)
     last_block_announcement_ = 0;
 }
 
-Node::Node(NodeId id, ServiceFlags services, int start_height, Socket sock_fd, const btclite::NetAddr& addr,
-     uint64_t keyed_net_group, uint64_t local_host_nonce, const btclite::NetAddr &addr_bind, 
-     const std::string& host_name, bool is_inbound)
+Node::Node(Id id, ServiceFlags services, int start_height, Socket::Fd sock_fd, const btclite::NetAddr& addr,
+     uint64_t local_host_nonce, const btclite::NetAddr &addr_bind, const std::string& host_name, bool is_inbound)
     : time_connected_(GetTimeSeconds()), id_(id), services_(services), start_height_(start_height),
-      sock_fd_(sock_fd), addr_(addr), keyed_net_group_(keyed_net_group), local_host_nonce_(local_host_nonce),
-      addr_bind_(addr_bind), host_name_(host_name), is_inbound_(is_inbound), disconnected_(false),
-      bloom_filter_(std::make_unique<BloomFilter>()), min_ping_usec_time_(std::numeric_limits<int64_t>::max()), 
-      last_block_time_(0), last_tx_time_(0)
+      sock_fd_(sock_fd), addr_(addr), local_host_nonce_(local_host_nonce), addr_bind_(addr_bind), 
+      host_name_(host_name), is_inbound_(is_inbound), disconnected_(false), bloom_filter_(std::make_unique<BloomFilter>()),
+      min_ping_usec_time_(std::numeric_limits<int64_t>::max()), last_block_time_(0), last_tx_time_(0)
 {
 
 }
@@ -67,7 +65,7 @@ void Nodes::ClearDisconnected()
     LOCK(cs_nodes_);
     
     for (auto it = list_.begin(); it != list_.end(); ++it) {
-        if (it->disconnected()) {
+        if ((*it)->disconnected()) {
         
         }
     }
@@ -78,13 +76,13 @@ void Nodes::ClearNodeState()
 
 }
 
-bool Nodes::DisconnectNode(Node::NodeId id)
+bool Nodes::DisconnectNode(Node::Id id)
 {
     LOCK(cs_nodes_);
     
     for (auto it = list_.begin(); it != list_.end(); ++it) {
-        if (it->id() == id) {
-            it->set_disconnected(true);
+        if ((*it)->id() == id) {
+            (*it)->set_disconnected(true);
             return true;
         }
     }
@@ -97,11 +95,11 @@ void Nodes::DisconnectBanNode(const SubNet& subnet)
     LOCK(cs_nodes_);
     
     for (auto it = list_.begin(); it != list_.end(); ++it) {
-        if (subnet.Match(it->addr()))
-            it->set_disconnected(true);
+        if (subnet.Match((*it)->addr()))
+            (*it)->set_disconnected(true);
     }
 }
-
+/*
 static bool ReverseCompareNodeMinPingTime(const NodeEvictionCandidate &a, const NodeEvictionCandidate &b)
 {
     return a.min_ping_usec_time > b.min_ping_usec_time;
@@ -139,7 +137,7 @@ static bool CompareNodeTXTime(const NodeEvictionCandidate &a, const NodeEviction
     
     return a.time_connected > b.time_connected;
 }
-
+*/
 //! Sort an array by the specified comparator, then erase the last K elements.
 template<typename T, typename Comparator>
 static void EraseLastKElements(std::vector<T> &elements, Comparator comparator, size_t k)
@@ -158,6 +156,7 @@ static void EraseLastKElements(std::vector<T> &elements, Comparator comparator, 
  *   to forge.  In order to partition a node the attacker must be
  *   simultaneously better at all of them than honest peers.
  */
+/*
 bool Nodes::AttemptToEvictConnection()
 {
     std::vector<NodeEvictionCandidate> eviction_candidates;
@@ -209,21 +208,35 @@ bool Nodes::AttemptToEvictConnection()
     
     return true;
 }
-
+*/
+int Nodes::CountInbound()
+{
+    int num = 0;
+    
+    LOCK(cs_nodes_);    
+    for (auto it = list_.begin(); it != list_.end(); ++it) {
+        if ((*it)->is_inbound())
+            num++;
+    }
+    
+    return num;
+}
+/*
 void Nodes::MakeEvictionCandidate(std::vector<NodeEvictionCandidate> *out)
 {
     LOCK(cs_nodes_);
     
     for (auto it = list_.begin(); it != list_.end(); ++it) {
-        if (!it->is_inbound())
+        if (!(*it)->is_inbound())
             continue;
-        if (it->disconnected())
+        if ((*it)->disconnected())
             continue;
-        NodeEvictionCandidate candidate = {it->id(), it->time_connected(), it->min_ping_usec_time(),
-                                           it->last_block_time(), it->last_tx_time(),
-                                           HasAllDesirableServiceFlags(it->services()),
-                                           it->relay_txes(), it->bloom_filter() != nullptr,
-                                           it->addr(), it->keyed_net_group()};
+        NodeEvictionCandidate candidate = {(*it)->id(), (*it)->time_connected(), (*it)->min_ping_usec_time(),
+                                           (*it)->last_block_time(), (*it)->last_tx_time(),
+                                           HasAllDesirableServiceFlags((*it)->services()),
+                                           (*it)->relay_txes(), (*it)->bloom_filter() != nullptr,
+                                           (*it)->addr(), (*it)->keyed_net_group()};
         out->push_back(candidate);
     }
 }
+*/

@@ -11,7 +11,8 @@
 class FullNodeMain : public Executor {
 public:
     FullNodeMain(BaseEnv env)
-        : chain_params_(Chain::SingletonParams::GetInstance(env)), network_(env) {}
+        : chain_params_(Chain::SingletonParams::GetInstance(env)),
+          network_(env), block_chain_(SingletonBlockChain::GetInstance()) {}
 
     //-------------------------------------------------------------------------
     bool Init();
@@ -23,7 +24,7 @@ public:
 private:
     Chain::Params& chain_params_;
     P2P network_;
-    BlockChain block_chain_;
+    BlockChain& block_chain_;
 
     bool InitNetwork();
 };

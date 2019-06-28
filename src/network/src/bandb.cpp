@@ -21,7 +21,7 @@ bool BanDb::Add(const SubNet& sub_net, const BanReason &ban_reason)
     if (!Add_(sub_net, ban_entry))
         return false;
     
-    SingletonNodes::GetInstances().DisconnectBanNode(sub_net);
+    SingletonNodes::GetInstance().DisconnectBanNode(sub_net);
     
     if (ban_reason == ManuallyAdded)
         DumpBanList();
@@ -69,4 +69,18 @@ void BanDb::DumpBanList()
         set_dirty(false);
     
     BTCLOG_MOD(LOG_LEVEL_INFO, Logging::NET) << "Flushed " << banmap.map().size() << " banned node ips/subnets to banlist.dat";
+}
+
+bool BanDb::IsBanned(btclite::NetAddr addr)
+{
+    LOCK(cs_ban_map_);
+    
+    for (auto it = ban_map_.map().begin(); it != ban_map_.map().end(); ++it) {
+        if (SubNet(addr).ToString() == it->first && GetTimeSeconds() < it->second.ban_until()) {
+            //std::cout << "map str:" << it->first << " subnet str:" << SubNet(addr).ToString() << '\n';
+            return true;
+        }
+    }
+    
+    return false;
 }

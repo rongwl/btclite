@@ -5,14 +5,14 @@
 #include "network/include/params.h"
 
 
-using Socket = int;
-
-class BasicSocket {
+class Socket {
 public:
-    BasicSocket()
+    using Fd = int;
+    
+    Socket()
         : sock_fd_(0) {}
     
-    explicit BasicSocket(Socket sock_fd)
+    explicit Socket(Socket::Fd sock_fd)
         : sock_fd_(sock_fd) {}
     
     //-------------------------------------------------------------------------
@@ -23,13 +23,13 @@ public:
     bool GetBindAddr(btclite::NetAddr *out);
     
     //-------------------------------------------------------------------------
-    Socket sock_fd() const
+    Socket::Fd sock_fd() const
     {
         return sock_fd_;
     }
     
 private:
-    Socket sock_fd_;
+    Socket::Fd sock_fd_;
 };
 
 

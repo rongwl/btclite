@@ -41,6 +41,21 @@ private:
     bool AddLocalHost(const btclite::NetAddr& addr);
 };
 
+class SingletonLocalNetCfg {
+public:
+    static LocalNetConfig& GetInstance()
+    {
+        static LocalNetConfig config;
+        return config;
+    }
+    
+    SingletonLocalNetCfg(const SingletonLocalNetCfg&) = delete;
+    SingletonLocalNetCfg& operator=(const SingletonLocalNetCfg&) = delete;
+    
+private:
+    SingletonLocalNetCfg() {}
+};
+
 
 class MessageHeader {
 public:
