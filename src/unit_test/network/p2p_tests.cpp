@@ -5,7 +5,7 @@
 #include "util_tests.h"
 
 
-TEST(P2PTest, MethordInitArgs)
+TEST(P2PTest, MethodInitArgs)
 {
     /*P2P p2p;
     TestArgs args;

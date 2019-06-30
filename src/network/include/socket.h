@@ -5,25 +5,43 @@
 #include "network/include/params.h"
 
 
-class Socket {
+// for mock
+class SocketInterface {
+public:
+    virtual ~SocketInterface() {}
+    
+    virtual bool Create(int domain, int type, int protocol) = 0;
+    virtual bool Bind(const struct sockaddr *addr, socklen_t addr_len) = 0;
+    virtual bool Listen(int back_log) = 0;
+    virtual int Accept(struct sockaddr_storage *addr, socklen_t *addr_len) = 0;
+    virtual bool Connect(const struct sockaddr *addr, socklen_t addr_len) = 0;
+    virtual bool Close() = 0;
+    virtual int sock_fd() const = 0;
+};
+
+class Socket : public SocketInterface {
 public:
     using Fd = int;
     
     Socket()
         : sock_fd_(0) {}
     
-    explicit Socket(Socket::Fd sock_fd)
+    explicit Socket(Fd sock_fd)
         : sock_fd_(sock_fd) {}
     
     //-------------------------------------------------------------------------
-    bool Create();
+    bool Create(int domain, int type, int protocol);
+    bool Bind(const struct sockaddr *addr, socklen_t addr_len);
+    bool Listen(int back_log);
+    Fd Accept(struct sockaddr_storage *addr, socklen_t *addr_len);
+    bool Connect(const struct sockaddr *addr, socklen_t addr_len);
     bool Close();    
     bool SetSockNoDelay();
     bool SetSockNonBlocking();
     bool GetBindAddr(btclite::NetAddr *out);
     
     //-------------------------------------------------------------------------
-    Socket::Fd sock_fd() const
+    Fd sock_fd() const
     {
         return sock_fd_;
     }
@@ -32,5 +50,19 @@ private:
     Socket::Fd sock_fd_;
 };
 
+class SingletonListenSocket {
+public:
+    static Socket& GetInstance()
+    {
+        static Socket socket;
+        return socket;
+    }
+    
+    SingletonListenSocket(const SingletonListenSocket&) = delete;
+    SingletonListenSocket& operator=(const SingletonListenSocket&) = delete;
+    
+private:
+    SingletonListenSocket() {}
+};
 
 #endif // BTCLITE_SOCKET_H

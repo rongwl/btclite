@@ -9,27 +9,25 @@
 class Acceptor {
 public:
     Acceptor()
-        : listen_socket_()
+        : listen_socket_(SingletonListenSocket::GetInstance())
     {
-        listen_socket_.Create();
+        listen_socket_.Create(AF_INET6, SOCK_STREAM, IPPROTO_TCP);
     }
+    
+    // for mock
+    explicit Acceptor(SocketInterface& socket)
+        : listen_socket_(socket) {}
     
     ~Acceptor()
     {
         listen_socket_.Close();
     }
     
-    bool Bind();
-    bool Listen();
+    bool BindAndListen();
     bool Accept();
-    
-    const Socket& listen_socket() const
-    {
-        return listen_socket_;
-    }
-    
+
 private:
-    Socket listen_socket_;
+    SocketInterface& listen_socket_;
 };
 
 #endif // BTCLITE_ACCEPTOR_H

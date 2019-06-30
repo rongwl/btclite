@@ -84,7 +84,7 @@ TEST(NetAddrTest, OperatorEqual)
     EXPECT_EQ(addr1, addr3);
 }
 
-TEST(NetAddrTest, MethordIsIpv4)
+TEST(NetAddrTest, MethodIsIpv4)
 {
     btclite::NetAddr addr;
     addr.SetByte(10, 0xff);
@@ -94,7 +94,7 @@ TEST(NetAddrTest, MethordIsIpv4)
     EXPECT_FALSE(addr.IsIpv6());    
 }
 
-TEST(NetAddrTest, MethordIsIpv6)
+TEST(NetAddrTest, MethodIsIpv6)
 {
     btclite::NetAddr addr;
     
@@ -104,7 +104,7 @@ TEST(NetAddrTest, MethordIsIpv6)
     EXPECT_TRUE(addr.IsIpv6());
 }
 
-TEST(NetAddrTest, MethordSetByte)
+TEST(NetAddrTest, MethodSetByte)
 {
     btclite::NetAddr addr;
     
@@ -114,7 +114,7 @@ TEST(NetAddrTest, MethordSetByte)
         ASSERT_EQ(addr.GetByte(i), i);
 }
 
-TEST(NetAddrTest, MethordSetNByte)
+TEST(NetAddrTest, MethodSetNByte)
 {
     btclite::NetAddr addr;
     
@@ -122,7 +122,7 @@ TEST(NetAddrTest, MethordSetNByte)
     EXPECT_TRUE(addr.IsIpv4());
 }
 
-TEST(NetAddrTest, MethordSetIpv4)
+TEST(NetAddrTest, MethodSetIpv4)
 {
     btclite::NetAddr addr;
     
@@ -135,7 +135,7 @@ TEST(NetAddrTest, MethordSetIpv4)
     ASSERT_EQ(addr.GetByte(15), 2);
 }
 
-TEST(NetAddrTest, MethordGetIpv4)
+TEST(NetAddrTest, MethodGetIpv4)
 {
     btclite::NetAddr addr;
     
@@ -143,7 +143,7 @@ TEST(NetAddrTest, MethordGetIpv4)
     ASSERT_EQ(addr.GetIpv4(), inet_addr("192.168.1.1"));
 }
 
-TEST(NetAddrTest, MethordSetIpv6)
+TEST(NetAddrTest, MethodSetIpv6)
 {
     btclite::NetAddr addr;
     uint8_t buf[sizeof(struct in6_addr)];
@@ -155,7 +155,7 @@ TEST(NetAddrTest, MethordSetIpv6)
         ASSERT_EQ(addr.GetByte(i), i);
 }
 
-TEST(NetAddrTest, MethordGetIpv6)
+TEST(NetAddrTest, MethodGetIpv6)
 {
     btclite::NetAddr addr;
     uint8_t out[btclite::NetAddr::ip_byte_size];
@@ -261,7 +261,7 @@ TEST(NetAddrTest, Properties)
     EXPECT_FALSE(addr.IsValid());
 }
 
-TEST(NetAddrTest, MethordToSockAddr)
+TEST(NetAddrTest, MethodToSockAddr)
 {
     btclite::NetAddr addr;
     struct sockaddr_storage sock_addr;
@@ -306,7 +306,7 @@ TEST(NetAddrTest, MethordToSockAddr)
     EXPECT_EQ(sock_addr6->sin6_scope_id, addr.scope_id());
 }
 
-TEST(NetAddrTest, MethordFromSockAddr)
+TEST(NetAddrTest, MethodFromSockAddr)
 {
     struct sockaddr_in sock_addr;
     sock_addr.sin_family = AF_INET;
@@ -340,7 +340,7 @@ TEST(NetAddrTest, MethordFromSockAddr)
     EXPECT_EQ(addr.GetIpv4(), inet_addr("192.168.1.1"));
 }
 
-TEST(NetAddrTest, MethordToString)
+TEST(NetAddrTest, MethodToString)
 {
     btclite::NetAddr addr;
     uint8_t buf[sizeof(struct in6_addr)];
@@ -352,7 +352,7 @@ TEST(NetAddrTest, MethordToString)
     EXPECT_EQ(addr.ToString(), "1:2:3:4:5:6:7:8");
 }
 
-TEST(NetAddrTest, MethordClear)
+TEST(NetAddrTest, MethodClear)
 {
     btclite::NetAddr addr;
     
@@ -364,7 +364,7 @@ TEST(NetAddrTest, MethordClear)
 }
 
 
-TEST(SubNetTest, MethordNetmaskBits)
+TEST(SubNetTest, MethodNetmaskBits)
 {
     EXPECT_EQ(SubNet::NetmaskBits(0), 0);
     EXPECT_EQ(SubNet::NetmaskBits(0x80), 1);
@@ -440,7 +440,7 @@ TEST(SubNetTest, Constructor)
     EXPECT_EQ(std::memcmp(subnet5.netmask(), mask, 16), 0);
 }
 
-TEST(SubNetTest, MethordMatch)
+TEST(SubNetTest, MethodMatch)
 {
     btclite::NetAddr addr;
     uint8_t buf[sizeof(struct in6_addr)];
@@ -521,7 +521,7 @@ TEST(SubNetTest, MethordMatch)
     EXPECT_FALSE(subnet13.Match(addr));    
 }
 
-TEST(SubNetTest, MethordIsValid)
+TEST(SubNetTest, MethodIsValid)
 {
     btclite::NetAddr addr;
     uint8_t buf[sizeof(struct in6_addr)];
@@ -577,7 +577,7 @@ TEST(SubNetTest, OperatorEqual)
     EXPECT_NE(subnet4, subnet6);
 }
 
-TEST(SubNetTest, MethordToString)
+TEST(SubNetTest, MethodToString)
 {
     btclite::NetAddr addr, netmask;
     uint8_t buf[sizeof(struct in6_addr)];

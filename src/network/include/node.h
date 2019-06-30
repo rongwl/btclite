@@ -139,7 +139,7 @@ public:
     using Id = int64_t;
     
     Node(Id id, ServiceFlags services, int start_height, Socket::Fd sock_fd, const btclite::NetAddr& addr,
-         uint64_t local_host_nonce, const btclite::NetAddr &addr_bind, const std::string& host_name, bool is_inbound);
+         uint64_t local_host_nonce, const std::string& host_name, bool is_inbound);
     
     //-------------------------------------------------------------------------
     void Connect();
@@ -235,7 +235,6 @@ private:
     const btclite::NetAddr addr_;
     //const uint64_t keyed_net_group_;
     const uint64_t local_host_nonce_;
-    const btclite::NetAddr addr_bind_;
     
     mutable CriticalSection cs_host_name_;
     std::string host_name_;

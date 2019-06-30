@@ -403,7 +403,7 @@ TEST(FullNodeDataFilesTest, Conctructor)
     EXPECT_EQ(data_files.path_config_file(), data_files.path_data_dir() / DEFAULT_CONFIG_FILE);
 }
 
-TEST(FullNodeDataFilesTest, MethordInit)
+TEST(FullNodeDataFilesTest, MethodInit)
 {
     FullNodeDataFiles data_files;
     data_files.Init(fs::path("/123"), "bar.conf");

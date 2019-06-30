@@ -6,7 +6,7 @@
 #include "constants.h"
 #include "net.h"
 
-TEST(MessageHeaderTest, MethordGetSet)
+TEST(MessageHeaderTest, MethodGetSet)
 {
     MessageHeader header;
     header.set_magic(main_magic);
@@ -23,7 +23,7 @@ TEST(MessageHeaderTest, MethordGetSet)
     EXPECT_EQ("foo", header.command());
 }
 
-TEST(MessageHeaderTest, MethordIsValid)
+TEST(MessageHeaderTest, MethodIsValid)
 {
     MessageHeader header;
     std::vector<BaseEnv> env_vec = { BaseEnv::mainnet, BaseEnv::testnet, BaseEnv::regtest };
@@ -143,7 +143,7 @@ TEST(LocalNetConfigTest, Constructor)
     EXPECT_EQ(config.local_services(), NODE_NETWORK | NODE_NETWORK_LIMITED);
 }
 
-TEST(LocalNetConfigTest, MethordSetLocalServiecs)
+TEST(LocalNetConfigTest, MethodSetLocalServiecs)
 {
     LocalNetConfig config;
     config.set_local_services(NODE_NETWORK);

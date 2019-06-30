@@ -31,10 +31,10 @@ NodeState::NodeState(const btclite::NetAddr& addr, const std::string& addr_name)
 }
 
 Node::Node(Id id, ServiceFlags services, int start_height, Socket::Fd sock_fd, const btclite::NetAddr& addr,
-     uint64_t local_host_nonce, const btclite::NetAddr &addr_bind, const std::string& host_name, bool is_inbound)
+     uint64_t local_host_nonce, const std::string& host_name, bool is_inbound)
     : time_connected_(GetTimeSeconds()), id_(id), services_(services), start_height_(start_height),
-      sock_fd_(sock_fd), addr_(addr), local_host_nonce_(local_host_nonce), addr_bind_(addr_bind), 
-      host_name_(host_name), is_inbound_(is_inbound), disconnected_(false), bloom_filter_(std::make_unique<BloomFilter>()),
+      sock_fd_(sock_fd), addr_(addr), local_host_nonce_(local_host_nonce), host_name_(host_name),
+      is_inbound_(is_inbound), disconnected_(false), bloom_filter_(std::make_unique<BloomFilter>()),
       min_ping_usec_time_(std::numeric_limits<int64_t>::max()), last_block_time_(0), last_tx_time_(0)
 {
 

@@ -39,9 +39,12 @@ PKG_CHECK_MODULES(BOTAN, botan-2 >= 2.8.0)
 dnl Require glog
 PKG_CHECK_MODULES(GLOG, libglog >= 0.3.5)
 
-dnl Require googletest
+dnl Require google test
 PKG_CHECK_MODULES(GTEST, gtest >= 1.8.1)
-    
+
+dnl Require google mock
+PKG_CHECK_MODULES(GMOCK, gmock >= 1.8.1)
+
  # Initialize libtool.
 LT_INIT([pic-only])
 

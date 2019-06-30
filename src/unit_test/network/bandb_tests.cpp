@@ -16,7 +16,7 @@ TEST(BanDbTest, Constructor)
     EXPECT_FALSE(ban_db.dirty());
 }
 
-TEST(BanDbTest, MethordAdd)
+TEST(BanDbTest, MethodAdd)
 {
     btclite::NetAddr addr;
     addr.SetIpv4(inet_addr("1.2.3.4"));
@@ -30,7 +30,7 @@ TEST(BanDbTest, MethordAdd)
     EXPECT_TRUE(ban_db.dirty());
 }
 
-TEST(BanDbTest, MethordSweepBanned)
+TEST(BanDbTest, MethodSweepBanned)
 {
     btclite::NetAddr addr;
     addr.SetIpv4(inet_addr("1.2.3.4"));
@@ -63,7 +63,7 @@ TEST(BanDbTest, MethordSweepBanned)
     EXPECT_EQ(it->second.ban_reason(), BanDb::NodeMisbehaving);
 }
 
-TEST(BanDbTest, MethordDumpBanList)
+TEST(BanDbTest, MethodDumpBanList)
 {    
     btclite::NetAddr addr;
     proto_banmap::BanEntry ban_entry;
@@ -100,7 +100,7 @@ TEST(BanDbTest, MethordDumpBanList)
     fs::remove(ban_db.path_ban_list());    
 }
 
-TEST(BanDbTest, MethordIsBanned)
+TEST(BanDbTest, MethodIsBanned)
 {
     btclite::NetAddr addr;
     proto_banmap::BanEntry ban_entry;

@@ -2,7 +2,7 @@
 
 #include "random.h"
 
-TEST(RandomTest, MethordGetUint64)
+TEST(RandomTest, MethodGetUint64)
 {
     ASSERT_EQ(Random::GetUint64(0), 0);
     for (int i = 0; i < 1000; i++) {
@@ -11,7 +11,7 @@ TEST(RandomTest, MethordGetUint64)
     }
 }
 
-TEST(RandomTest, MethordGetUint256)
+TEST(RandomTest, MethodGetUint256)
 {
     Uint256 new_num, old_num;
     old_num = Random::GetUint256();
@@ -49,7 +49,7 @@ TEST(FastRandomContextTest, Rand)
     EXPECT_NE(ctx3.RandBytes(7), ctx4.RandBytes(7));
 }
 
-TEST(FastRandomContextTest, MethordRandbits)
+TEST(FastRandomContextTest, MethodRandbits)
 {
     FastRandomContext ctx1;
     FastRandomContext ctx2;

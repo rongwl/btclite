@@ -14,16 +14,16 @@ TEST(BasicSocketTest, Constructor)
     ASSERT_EQ(socket2.sock_fd(), 3);
 }
 
-TEST(BasicSocketTest, MethordCreate)
+TEST(BasicSocketTest, MethodCreate)
 {
     Socket socket;
-    ASSERT_TRUE(socket.Create());
+    ASSERT_TRUE(socket.Create(AF_INET6, SOCK_STREAM, IPPROTO_TCP));
     EXPECT_GT(socket.sock_fd(), 0);
     EXPECT_TRUE(socket.Close());
     EXPECT_EQ(socket.sock_fd(), -1);
 }
 
-TEST(BasicSocketTest, MethordGetBindAddr)
+TEST(BasicSocketTest, MethodGetBindAddr)
 {
     Socket::Fd sock_fd;
     btclite::NetAddr addr;

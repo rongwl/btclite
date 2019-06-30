@@ -40,10 +40,12 @@ unit_test_test_network_SOURCES = unit_test/network/test_network.cpp \
                                  unit_test/network/netbase_tests.cpp \
                                  unit_test/network/p2p_tests.cpp \
                                  unit_test/network/params_tests.cpp \
-                                 unit_test/network/socket_tests.cpp
+                                 unit_test/network/socket_tests.cpp \
+                                 unit_test/network/socket_tests.h
 
 unit_test_test_network_CPPFLAGS = $(AM_CPPFLAGS) \
                                   $(GTEST_CFLAGS) \
+                                  $(GMOCK_CFLAGS) \
                                   $(GLOG_CFLAGS) \
                                   $(BOTAN_CFLAGS) \
                                   $(UNIT_TEST_UTILITY_DIR) \
@@ -54,6 +56,7 @@ unit_test_test_network_LDADD = $(LIBBTCLITE_CHAIN) \
                                $(LIBBTCLITE_NETWORK) \
                                $(LIBBTCLITE_UTIL)
 unit_test_test_network_LDADD += $(GTEST_LIBS) \
+                                $(GMOCK_LIBS) \
                                 $(PTHREAD_LIBS) \
                                 $(PROTOBUF_LIBS) \
                                 $(BOTAN_LIBS) \

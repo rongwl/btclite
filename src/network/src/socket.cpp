@@ -7,14 +7,14 @@
 #include "socket.h"
 
 
-bool Socket::Create()
+bool Socket::Create(int domain, int type, int protocol)
 {
     if (sock_fd_ > 0) {
         BTCLOG(LOG_LEVEL_WARNING) << "socket already opened";
         return true;
     }
     
-    if (-1 == (sock_fd_ = socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP))) {
+    if (-1 == (sock_fd_ = socket(domain, type, protocol))) {
         BTCLOG(LOG_LEVEL_ERROR) << "create socket failed, error:" << std::strerror(errno);
         return false;
     }
@@ -30,6 +30,46 @@ bool Socket::Create()
     if (!SetSockNonBlocking()) {
         Close();
         BTCLOG(LOG_LEVEL_ERROR) << "setting socket to non-blocking failed, error:" << std::strerror(errno);
+        return false;
+    }
+    
+    return true;
+}
+
+bool Socket::Bind(const struct sockaddr *addr, socklen_t addr_len)
+{
+    if (-1 == bind(sock_fd_, addr, addr_len)) {
+        BTCLOG(LOG_LEVEL_ERROR) << "binding addr to socket failed, error:" << std::strerror(errno);
+        return false;
+    }
+    
+    return true;
+}
+
+bool Socket::Listen(int back_log)
+{
+    if (-1 == listen(sock_fd_, SOMAXCONN)) {
+        BTCLOG(LOG_LEVEL_ERROR) << "listening for incoming connections failed, error:" << std::strerror(errno);
+        return false;
+    }
+    
+    return true;
+}
+
+Socket::Fd Socket::Accept(struct sockaddr_storage *addr, socklen_t *addr_len)
+{
+    Fd conn_fd = accept(sock_fd_, (struct sockaddr*)addr, addr_len);
+    if (conn_fd == -1) {
+        BTCLOG(LOG_LEVEL_ERROR) << "accept new connection failed, error:" << std::strerror(errno);
+    }
+    
+    return conn_fd;
+}
+
+bool Socket::Connect(const struct sockaddr *addr, socklen_t addr_len)
+{
+    if (-1 == connect(sock_fd_, addr, addr_len)) {
+        BTCLOG(LOG_LEVEL_ERROR) << "socket connect failed, error:" << std::strerror(errno);
         return false;
     }
     

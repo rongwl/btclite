@@ -2,7 +2,7 @@
 
 #include "util_tests.h"
 
-TEST(ArgsTest, MethordSetArg)
+TEST(ArgsTest, MethodSetArg)
 {
     Args args;
     
@@ -12,7 +12,7 @@ TEST(ArgsTest, MethordSetArg)
     EXPECT_EQ(args.GetArg("Test", "default"), "default");
 }
 
-TEST(ArgsTest, MethordSetArgs)
+TEST(ArgsTest, MethodSetArgs)
 {
     Args args;
     std::vector<std::string> vs = { "1", "2", "3" };
@@ -24,7 +24,7 @@ TEST(ArgsTest, MethordSetArgs)
     EXPECT_EQ(args.GetArgs("test"), vs);
 }
 
-TEST(ArgsTest, MethordGetBoolArg)
+TEST(ArgsTest, MethodGetBoolArg)
 {
     Args args;
     
