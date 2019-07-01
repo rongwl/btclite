@@ -4,13 +4,12 @@
 #include "utiltime.h"
 
 
-bool BanDb::Add(const btclite::NetAddr& addr, const BanReason &ban_reason)
+bool BanDb::Add(const btclite::NetAddr& addr, const BanReason &ban_reason, bool dump_list)
 {
-    SubNet subnet(addr);
-    return Add(subnet, ban_reason);
+    return Add(SubNet(addr), ban_reason, dump_list);
 }
 
-bool BanDb::Add(const SubNet& sub_net, const BanReason &ban_reason)
+bool BanDb::Add(const SubNet& sub_net, const BanReason &ban_reason, bool dump_list)
 {
     proto_banmap::BanEntry ban_entry;
     
@@ -23,10 +22,36 @@ bool BanDb::Add(const SubNet& sub_net, const BanReason &ban_reason)
     
     SingletonNodes::GetInstance().DisconnectBanNode(sub_net);
     
-    if (ban_reason == ManuallyAdded)
+    if (ban_reason == ManuallyAdded && dump_list)
         DumpBanList();
 
     return true;
+}
+
+bool BanDb::Erase(const btclite::NetAddr& addr, bool dump_list)
+{
+    return Erase(SubNet(addr), dump_list);
+}
+
+bool BanDb::Erase(const SubNet& sub_net, bool dump_list)
+{
+    LOCK(cs_ban_map_);
+    if (!ban_map_.mutable_map()->erase(sub_net.ToString()))
+        return false;
+    dirty_ = true;
+    
+    if (dump_list)
+        DumpBanList();
+    
+    return true;
+}
+
+void BanDb::Clear()
+{
+    LOCK(cs_ban_map_);
+    ban_map_.clear_map();
+    dirty_ = true;
+    DumpBanList();    
 }
 
 bool BanDb::Add_(const SubNet& sub_net, const proto_banmap::BanEntry& ban_entry)

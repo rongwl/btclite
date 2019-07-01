@@ -1,4 +1,5 @@
 #include "node.h"
+#include "random.h"
 #include "utiltime.h"
 
 
@@ -30,12 +31,21 @@ NodeState::NodeState(const btclite::NetAddr& addr, const std::string& addr_name)
     last_block_announcement_ = 0;
 }
 
-Node::Node(Id id, ServiceFlags services, int start_height, Socket::Fd sock_fd, const btclite::NetAddr& addr,
-     uint64_t local_host_nonce, const std::string& host_name, bool is_inbound)
-    : time_connected_(GetTimeSeconds()), id_(id), services_(services), start_height_(start_height),
-      sock_fd_(sock_fd), addr_(addr), local_host_nonce_(local_host_nonce), host_name_(host_name),
-      is_inbound_(is_inbound), disconnected_(false), bloom_filter_(std::make_unique<BloomFilter>()),
-      min_ping_usec_time_(std::numeric_limits<int64_t>::max()), last_block_time_(0), last_tx_time_(0)
+Node::Node(Socket::Fd sock_fd, const btclite::NetAddr& addr, const std::string& host_name, bool is_inbound)
+    : time_connected_(GetTimeSeconds()),
+      id_(SingletonNodes::GetInstance().GetNewNodeId()),
+      services_(SingletonLocalNetCfg::GetInstance().local_services()),
+      start_height_(SingletonBlockChain::GetInstance().Height()),
+      sock_fd_(sock_fd),
+      addr_(addr),
+      local_host_nonce_(Random::GetUint64(std::numeric_limits<uint64_t>::max())),
+      host_name_(host_name),
+      is_inbound_(is_inbound),
+      disconnected_(false),
+      bloom_filter_(std::make_unique<BloomFilter>()),
+      min_ping_usec_time_(std::numeric_limits<int64_t>::max()),
+      last_block_time_(0),
+      last_tx_time_(0)
 {
 
 }

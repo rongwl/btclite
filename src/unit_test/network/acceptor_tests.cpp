@@ -2,6 +2,7 @@
 #include <arpa/inet.h>
 
 #include "acceptor.h"
+#include "bandb.h"
 #include "socket_tests.h"
 
 
@@ -42,12 +43,33 @@ TEST(AcceptorTest, MethodAccept)
     sock_addr.sin6_port = htons(8333);
     sock_addr.sin6_scope_id = 0;    
     EXPECT_CALL(socket, Close()).Times(1).WillOnce(testing::Return(true));
-    for (int i = 1; i < 10; i++) {
+    for (int i = 1; i < max_inbound_connections; i++) {
         std::string addr = "::ffff:1.2.3." + std::to_string(i);
         inet_pton(AF_INET6, addr.c_str(), sock_addr.sin6_addr.s6_addr);    
-        EXPECT_CALL(socket, Accept(testing::_, testing::_)).Times(1).\
-        WillOnce(testing::DoAll(testing::SetArgPointee<0>(*paddr), testing::Return(i+1)));
+        EXPECT_CALL(socket, Accept(testing::_, testing::_)).Times(1).
+                    WillOnce(testing::DoAll(testing::SetArgPointee<0>(*paddr), testing::Return(i+1)));
         ASSERT_TRUE(acceptor.Accept());
-    }
+    }   
     
+    EXPECT_CALL(socket, Accept(testing::_, testing::_)).Times(1).WillOnce(testing::Return(-1));
+    EXPECT_FALSE(acceptor.Accept());
+    
+    EXPECT_CALL(socket, Accept(testing::_, testing::_)).Times(1).WillOnce(testing::Return(FD_SETSIZE));
+    EXPECT_FALSE(acceptor.Accept());
+    
+    inet_pton(AF_INET6, "::ffff:1.2.3.250", sock_addr.sin6_addr.s6_addr);
+    SingletonBanDb::GetInstance().Add(btclite::NetAddr(sock_addr), BanDb::NodeMisbehaving);
+    EXPECT_CALL(socket, Accept(testing::_, testing::_)).Times(1).
+                WillOnce(testing::DoAll(testing::SetArgPointee<0>(*paddr), testing::Return(200)));
+    EXPECT_FALSE(acceptor.Accept());
+    
+    SingletonBanDb::GetInstance().Erase(btclite::NetAddr(sock_addr), false);
+    EXPECT_CALL(socket, Accept(testing::_, testing::_)).Times(1).
+                WillOnce(testing::DoAll(testing::SetArgPointee<0>(*paddr), testing::Return(200)));
+    EXPECT_TRUE(acceptor.Accept());
+    
+    inet_pton(AF_INET6, "::ffff:1.2.3.251", sock_addr.sin6_addr.s6_addr);
+    EXPECT_CALL(socket, Accept(testing::_, testing::_)).Times(1).
+                WillOnce(testing::DoAll(testing::SetArgPointee<0>(*paddr), testing::Return(201)));
+    EXPECT_FALSE(acceptor.Accept());
 }

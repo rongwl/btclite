@@ -1,6 +1,5 @@
 #include "acceptor.h"
 #include "bandb.h"
-#include "random.h"
 #include "utility/include/logging.h"
 
 
@@ -70,12 +69,11 @@ bool Acceptor::Accept()
         return false;
     }
     
-    Node *node = new Node(SingletonNodes::GetInstance().GetNewNodeId(),
-                          SingletonLocalNetCfg::GetInstance().local_services(),
-                          SingletonBlockChain::GetInstance().Height(),
-                          conn_fd, addr, Random::GetUint64(std::numeric_limits<uint64_t>::max()),
-                          "", true);
+    Node *node = new Node(conn_fd, addr, "", true);
     SingletonMapNodeState::GetInstance().Add(node->id(), node->addr(), node->host_name());
+    SingletonNodes::GetInstance().Add(node);
+
+    BTCLOG_MOD(LOG_LEVEL_DEBUG, Logging::NET) << "connection from " << addr.ToString() << " accepted";
     
     return true;
 }

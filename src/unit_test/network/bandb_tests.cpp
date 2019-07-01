@@ -28,6 +28,29 @@ TEST(BanDbTest, MethodAdd)
     ASSERT_NE(it, ban_db.ban_map().map().end());
     EXPECT_EQ(it->second.ban_reason(), BanDb::NodeMisbehaving);
     EXPECT_TRUE(ban_db.dirty());
+    
+    ban_db.set_dirty(false);
+    ASSERT_TRUE(ban_db.Erase(addr, false));
+    it = ban_db.ban_map().map().find(SubNet(addr).ToString());
+    EXPECT_EQ(it, ban_db.ban_map().map().end());
+    EXPECT_TRUE(ban_db.dirty());
+    EXPECT_FALSE(ban_db.Erase(addr, false));
+}
+
+TEST(BanDbTest, MethordClear)
+{
+    TestExecutorConfig::set_path_data_dir(fs::path("/tmp"));
+    BanDb ban_db;
+    btclite::NetAddr addr;
+    
+    for (int i = 1; i < 10; i++) {
+        std::string ip = "1.2.3." + std::to_string(i);
+        addr.SetIpv4(inet_addr(ip.c_str()));
+        ASSERT_TRUE(ban_db.Add(addr, BanDb::NodeMisbehaving));
+    }
+    EXPECT_EQ(ban_db.Size(), 9);
+    ban_db.Clear();
+    EXPECT_EQ(ban_db.Size(), 0);
 }
 
 TEST(BanDbTest, MethodSweepBanned)

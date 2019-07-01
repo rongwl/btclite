@@ -138,8 +138,7 @@ class Node {
 public:
     using Id = int64_t;
     
-    Node(Id id, ServiceFlags services, int start_height, Socket::Fd sock_fd, const btclite::NetAddr& addr,
-         uint64_t local_host_nonce, const std::string& host_name, bool is_inbound);
+    Node(Socket::Fd sock_fd, const btclite::NetAddr& addr, const std::string& host_name, bool is_inbound);
     
     //-------------------------------------------------------------------------
     void Connect();
@@ -325,6 +324,12 @@ public:
         return last_node_id.fetch_add(1, std::memory_order_relaxed);
     }
     
+    void Add(Node* node)
+    {
+        LOCK(cs_nodes_);
+        list_.push_back(node);
+    }
+    
     void ClearDisconnected();
     void CheckInactive();
     
@@ -333,10 +338,10 @@ public:
     //bool AttemptToEvictConnection();
     int CountInbound();
     
-    const std::list<Node*>& list() const
+    /*const std::list<Node*>& list() const
     {
         return list_;
-    }
+    }*/
     
 private:
     mutable CriticalSection cs_nodes_;
