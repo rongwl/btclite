@@ -6,7 +6,7 @@
 
 
 // inbound socket connection
-class Acceptor {
+class Acceptor : Uncopyable {
 public:
     Acceptor()
         : listen_socket_(SingletonListenSocket::GetInstance())

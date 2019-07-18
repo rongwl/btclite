@@ -17,9 +17,9 @@
 // Complain if any thread tries to lock in a different order.
 //
 
-class CLockLocation {
+class LockLocation {
 public:
-    CLockLocation(const char *psz_name, const char *psz_file, int l, bool try_lock)
+    LockLocation(const char *psz_name, const char *psz_file, int l, bool try_lock)
         : mutex_name_(psz_name), file_(psz_file), line_(l), is_try_(try_lock) {}
     
     std::string ToString() const
@@ -43,7 +43,7 @@ private:
     bool is_try_;
 };
 
-using LockStack = std::vector<std::pair<void*, CLockLocation> >;
+using LockStack = std::vector<std::pair<void*, LockLocation> >;
 using LockOrders = std::map<std::pair<void*, void*>, LockStack>;
 using InvLockOrders = std::set<std::pair<void*, void*> >;
 
@@ -88,7 +88,7 @@ static void potential_deadlock_detected(const std::pair<void*, void*>& mismatch,
     assert(false);
 }
 
-void PushLock(void *c, const CLockLocation& lock_location, bool try_lock)
+void PushLock(void *c, const LockLocation& lock_location, bool try_lock)
 {
     std::unique_lock<std::mutex> lock(lock_data.lock_stack_mutex_);
     g_lock_stack.push_back(std::make_pair(c, lock_location));
@@ -131,7 +131,7 @@ void DeleteLock(void *cs)
 
 void EnterCritical(const char *psz_name, const char *psz_file, int line, void *cs, bool try_lock)
 {
-    PushLock(cs, CLockLocation(psz_name, psz_file, line, try_lock), try_lock);
+    PushLock(cs, LockLocation(psz_name, psz_file, line, try_lock), try_lock);
 }
 
 void LeaveCritical()
