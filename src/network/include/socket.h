@@ -19,7 +19,7 @@ public:
     virtual int sock_fd() const = 0;
 };
 
-class Socket : public SocketInterface {
+class Socket : public SocketInterface, Uncopyable {
 public:
     using Fd = int;
     

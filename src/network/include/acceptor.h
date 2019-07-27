@@ -2,6 +2,7 @@
 #define BTCLITE_ACCEPTOR_H
 
 
+#include "libevent.h"
 #include "node.h"
 
 
@@ -28,6 +29,27 @@ public:
 
 private:
     SocketInterface& listen_socket_;
+};
+
+class Accept2 : Uncopyable {
+public:
+    Accept2();
+    
+    ~Accept2()
+    {
+        sock_event_.EvconnlistenerFree();
+        sock_event_.EventBaseFree();
+    }
+    
+    bool StartEventLoop();
+    
+private:
+    SockEvent sock_event_;
+    struct sockaddr_in6 sock_addr_;
+    
+    static void AcceptConnCb(struct evconnlistener *listener, evutil_socket_t fd,
+                             struct sockaddr *addr, int socklen, void *ctx);
+    static void AcceptErrCb(struct evconnlistener *listener, void *ctx);
 };
 
 #endif // BTCLITE_ACCEPTOR_H

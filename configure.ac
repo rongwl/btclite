@@ -45,6 +45,9 @@ PKG_CHECK_MODULES(GTEST, gtest >= 1.8.1)
 dnl Require google mock
 PKG_CHECK_MODULES(GMOCK, gmock >= 1.8.1)
 
+dnl Require libevent
+PKG_CHECK_MODULES([EVENT], [libevent],, [AC_MSG_ERROR(libevent not found.)])
+
  # Initialize libtool.
 LT_INIT([pic-only])
 

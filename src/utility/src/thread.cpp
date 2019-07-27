@@ -37,65 +37,65 @@ bool ThreadInterrupt::sleep_for(std::chrono::minutes rel_time)
 }
 
 
-bool thread_group::is_this_thread_in()
+bool ThreadGroup::IsThisThreadIn()
 {
     std::thread::id id = std::this_thread::get_id();
-    std::lock_guard<std::mutex> guard(m);
-    for (auto it = threads.begin(), end = threads.end(); it != end; ++it) {
+    std::lock_guard<std::mutex> guard(mutex_);
+    for (auto it = threads_.begin(), end = threads_.end(); it != end; ++it) {
         if ((*it)->get_id() == id)
             return true;
     }
     return false;
 }
 
-bool thread_group::is_thread_in(std::thread* thrd)
+bool ThreadGroup::IsThreadIn(std::thread* thrd)
 {
     if (!thrd)
         return false;
 
     std::thread::id id = thrd->get_id();
-    std::lock_guard<std::mutex> guard(m);
-    for (auto it = threads.begin(), end = threads.end(); it != end; ++it) {
+    std::lock_guard<std::mutex> guard(mutex_);
+    for (auto it = threads_.begin(), end = threads_.end(); it != end; ++it) {
         if ((*it)->get_id() == id)
             return true;
     }
     return false;
 }
 
-void thread_group::add_thread(std::thread *thrd)
+void ThreadGroup::AddThread(std::thread *thrd)
 {
     if (!thrd)
         return;
-    if (is_thread_in(thrd))
-        throw std::runtime_error("thread_group: trying to add a duplicated thread");
-    std::lock_guard<std::mutex> guard(m);
-    threads.push_back(thrd);
+    if (IsThreadIn(thrd))
+        throw std::runtime_error("ThreadGroup: trying to add a duplicated thread");
+    std::lock_guard<std::mutex> guard(mutex_);
+    threads_.push_back(thrd);
 }
 
-void thread_group::remove_thread(std::thread *thrd)
+void ThreadGroup::RemoveThread(std::thread *thrd)
 {
-    std::lock_guard<std::mutex> guard(m);
-    auto it = std::find(threads.begin(), threads.end(), thrd);
-    if (it != threads.end())
-        threads.erase(it);
+    std::lock_guard<std::mutex> guard(mutex_);
+    auto it = std::find(threads_.begin(), threads_.end(), thrd);
+    if (it != threads_.end())
+        threads_.erase(it);
 }
 
-void thread_group::join_all()
+void ThreadGroup::JoinAll()
 {
-    if (is_this_thread_in())
-        throw std::runtime_error("thread_group: trying joining itself");
-    std::lock_guard<std::mutex> guard(m);
-    for (auto it = threads.begin(); it != threads.end(); ++it) {
+    if (IsThisThreadIn())
+        throw std::runtime_error("ThreadGroup: trying joining itself");
+    std::lock_guard<std::mutex> guard(mutex_);
+    for (auto it = threads_.begin(); it != threads_.end(); ++it) {
         if ((*it)->joinable())
             (*it)->join();
     }
 }
 
 ThreadPool::ThreadPool(size_t threads)
-    :   stop_(false)
+    : stop_(false)
 {
-    for(size_t i = 0;i < threads; ++i)
-        workers_.emplace_back(
+    for(size_t i = 0; i < threads; ++i)
+        threads_.emplace_back(
             [this]
     {
         while(1)
@@ -125,6 +125,6 @@ ThreadPool::~ThreadPool()
         stop_ = true;
     }
     condition_.notify_all();
-    for(std::thread &worker: workers_)
+    for(std::thread &worker: threads_)
         worker.join();
 }

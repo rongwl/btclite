@@ -61,6 +61,7 @@ unit_test_test_network_LDADD += $(GTEST_LIBS) \
                                 $(PROTOBUF_LIBS) \
                                 $(BOTAN_LIBS) \
                                 $(GLOG_LIBS) \
+                                $(EVENT_LIBS) \
                                 $(STDCPP_FILESYSTEM_LIBS)
 
 

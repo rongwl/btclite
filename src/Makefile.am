@@ -50,6 +50,7 @@ BTCLITE_HEADER_FILES = \
                        network/include/bandb.h \
                        network/include/bloom.h \
                        network/include/connector.h \
+                       network/include/libevent.h \
                        network/include/message_types.h \
                        network/include/message_types/version.h \
                        network/include/node.h \
@@ -142,6 +143,7 @@ network_src_libbtclite_network_a_SOURCES = network/proto/banmap.pb.cc \
                                            network/src/acceptor.cpp \
                                            network/src/bandb.cpp \
                                            network/src/connector.cpp \
+                                           network/src/libevent.cpp \
                                            network/src/message_types/version.cpp \
                                            network/src/netbase.cpp \
                                            network/src/network_address.cpp \
@@ -185,7 +187,8 @@ btc_fullnode_LDADD += $(PTHREAD_LIBS) \
                       $(STDCPP_FILESYSTEM_LIBS) \
                       $(PROTOBUF_LIBS) \
                       $(BOTAN_LIBS) \
-                      $(GLOG_LIBS)
+                      $(GLOG_LIBS) \
+                      $(EVENT_LIBS)
 
 
 network/proto/%.pb.cc network/proto/%.pb.h: network/proto/%.proto

@@ -77,3 +77,70 @@ bool Acceptor::Accept()
     
     return true;
 }
+
+Accept2::Accept2()
+    : sock_event_(), sock_addr_()
+{
+    memset(&sock_addr_, 0, sizeof(sock_addr_));
+    sock_addr_.sin6_family = AF_INET6;
+    sock_addr_.sin6_port = htons(Network::SingletonParams::GetInstance().default_port());
+    sock_addr_.sin6_addr = in6addr_any;
+    sock_addr_.sin6_scope_id = 0;
+}
+
+bool Accept2::StartEventLoop()
+{
+    if (!sock_event_.EventBaseNew())
+        return false;
+    
+    if (!sock_event_.EvconnlistenerNewBind(AcceptConnCb, NULL, LEV_OPT_CLOSE_ON_FREE|LEV_OPT_REUSEABLE,
+                                          SOMAXCONN, (const struct sockaddr*)&sock_addr_, sizeof(sock_addr_)))
+        return false;  
+    
+    sock_event_.EvconnlistenerSetErrorCb(AcceptErrCb);
+    
+    sock_event_.EventBaseDispatch();
+    
+    return true;
+}
+
+void Accept2::AcceptConnCb(struct evconnlistener *listener, evutil_socket_t fd,
+                           struct sockaddr *sock_addr, int socklen, void *ctx)
+{
+    btclite::NetAddr addr;
+    
+    if (!addr.FromSockAddr(sock_addr))
+        BTCLOG(LOG_LEVEL_WARNING) << "unknown socket family";
+    
+    // According to the internet TCP_NODELAY is not carried into accepted sockets
+    // on all platforms.  Set it again here just to be sure.
+    Socket(evconnlistener_get_fd(listener)).SetSockNoDelay();
+    
+    if (SingletonBanDb::GetInstance().IsBanned(addr))
+    {
+        BTCLOG_MOD(LOG_LEVEL_INFO, Logging::NET) << "connection from " << addr.ToString() << " dropped (banned)";
+        evutil_closesocket(fd);
+        return;
+    }
+    
+    if (SingletonNodes::GetInstance().CountInbound() >= max_inbound_connections) {
+        BTCLOG(LOG_LEVEL_INFO) << "can not accept new connection, inbound connections is full";
+        evutil_closesocket(fd);
+        return;
+    }
+    
+    Node *node = new Node(fd, addr, "", true);
+    SingletonMapNodeState::GetInstance().Add(node->id(), node->addr(), node->host_name());
+    SingletonNodes::GetInstance().Add(node);
+
+    BTCLOG_MOD(LOG_LEVEL_DEBUG, Logging::NET) << "connection from " << addr.ToString() << " accepted";
+}
+
+void Accept2::AcceptErrCb(struct evconnlistener *listener, void *ctx)
+{
+    struct event_base *base = evconnlistener_get_base(listener);
+    int err = EVUTIL_SOCKET_ERROR();
+
+    BTCLOG(LOG_LEVEL_WARNING) << "listen on event failed, error:" << evutil_socket_error_to_string(err);
+}
+

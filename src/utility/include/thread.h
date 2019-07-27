@@ -38,75 +38,75 @@ private:
 };
 
 
-class thread_group : Uncopyable {
+class ThreadGroup : Uncopyable {
 public:
-    thread_group() {}
-    ~thread_group()
+    ThreadGroup() {}
+    ~ThreadGroup()
     {
-        for (auto it = threads.begin(), end = threads.end(); it != end; ++it)
+        for (auto it = threads_.begin(), end = threads_.end(); it != end; ++it)
             delete *it;
     }
 
     //-------------------------------------------------------------------------
-    bool is_this_thread_in();
-    bool is_thread_in(std::thread* thrd);
+    bool IsThisThreadIn();
+    bool IsThreadIn(std::thread* thrd);
 
     //-------------------------------------------------------------------------
-    template <typename F>
-    std::thread* create_thread(F threadfunc);
-    void add_thread(std::thread *thrd);
-    void remove_thread(std::thread *thrd);
-    void join_all();
+    template <typename Func, typename... Args>
+    std::thread* CreateThread(Func&& threadfunc, Args&&... args);
+    void AddThread(std::thread *thrd);
+    void RemoveThread(std::thread *thrd);
+    void JoinAll();
 
     //-------------------------------------------------------------------------
-    ssize_t size() const
+    ssize_t Size() const
     {
-        std::lock_guard<std::mutex> guard(m);
-        return threads.size();
+        std::lock_guard<std::mutex> guard(mutex_);
+        return threads_.size();
     }
 
 private:
-    mutable std::mutex m;
-    std::list<std::thread *> threads;
+    mutable std::mutex mutex_;
+    std::list<std::thread *> threads_;
 };
 
 
-template <typename F>
-std::thread* thread_group::create_thread(F threadfunc)
+template <typename Func, typename... Args>
+std::thread* ThreadGroup::CreateThread(Func&& threadfunc, Args&&... args)
 {
-    std::lock_guard<std::mutex> guard(m);
-    std::unique_ptr<std::thread> new_thread(new std::thread(threadfunc));
-    threads.push_back(new_thread.get());
+    std::lock_guard<std::mutex> guard(mutex_);
+    std::unique_ptr<std::thread> new_thread(new std::thread(threadfunc, args...));
+    threads_.push_back(new_thread.get());
     return new_thread.release();
 }
 
-class ThreadPool {
+class ThreadPool : Uncopyable {
 public:
     ThreadPool(size_t);
-    template<class F, class... Args>
-    std::future<typename std::result_of<F(Args...)>::type> enqueue(F&& f, Args&&... args); 
     ~ThreadPool();
+    
+    template<typename Func, typename... Args>
+    std::future<typename std::result_of<Func(Args...)>::type> AddTask(Func&& f, Args&&... args);
     
 private:
     // need to keep track of threads so we can join them
-    std::vector< std::thread > workers_;
+    std::vector<std::thread> threads_;
     // the task queue
-    std::queue< std::function<void()> > tasks_;
+    std::queue<std::function<void()> > tasks_;
     
     // synchronization
-    std::mutex queue_mutex_;
+    mutable std::mutex queue_mutex_;
     std::condition_variable condition_;
     bool stop_;
 };
 
-// add new work item to the pool
-template<class F, class... Args>
-std::future<typename std::result_of<F(Args...)>::type> ThreadPool::enqueue(F&& f, Args&&... args) 
+template<class Func, class... Args>
+std::future<typename std::result_of<Func(Args...)>::type> ThreadPool::AddTask(Func&& f, Args&&... args) 
 {
-    using return_type = typename std::result_of<F(Args...)>::type;
+    using return_type = typename std::result_of<Func(Args...)>::type;
 
-    auto task = std::make_shared< std::packaged_task<return_type()> >(
-                    std::bind(std::forward<F>(f), std::forward<Args>(args)...)
+    auto task = std::make_shared<std::packaged_task<return_type()> >(
+                    std::bind(std::forward<Func>(f), std::forward<Args>(args)...)
                 );
     
     std::future<return_type> ret = task->get_future();
@@ -120,12 +120,13 @@ std::future<typename std::result_of<F(Args...)>::type> ThreadPool::enqueue(F&& f
         tasks_.emplace([task](){ (*task)(); });
     }
     condition_.notify_one();
+    
     return ret;
 }
 
 
-template <typename Callable>
-void TraceThread(const std::string& name,  Callable func)
+template <typename Func>
+void TraceThread(const std::string& name,  Func&& func)
 {
     try
     {
