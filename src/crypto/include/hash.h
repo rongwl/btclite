@@ -8,7 +8,7 @@
 
 #include "arithmetic.h"
 
-using Hash256 = Blob<256>;
+using Hash256 = Uint256;
 
 
 void DoubleSha256(const uint8_t in[], size_t length, Hash256 *out);

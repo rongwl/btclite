@@ -1,11 +1,9 @@
 #ifndef BTCLITE_PROTOCOL_H
 #define BTCLITE_PROTOCOL_H
 
+
 #include <array>
 #include <cstdint>
-
-
-size_t VarIntSize(size_t vec_size);
 
 
 /* Services flags */

@@ -2,7 +2,6 @@
 
 #include "fullnode/include/config.h"
 #include "error.h"
-#include "utility/include/logging.h"
 
 
 #if 0

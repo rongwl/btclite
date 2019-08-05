@@ -5,6 +5,7 @@
 #include "environment.h"
 #include "fs.h"
 #include "sync.h"
+#include "utility/include/logging.h"
 
 #include <csignal>
 #include <cstdlib>

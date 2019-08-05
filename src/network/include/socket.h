@@ -3,6 +3,7 @@
 
 
 #include "network/include/params.h"
+#include "util.h"
 
 
 // for mock
@@ -50,16 +51,13 @@ private:
     Socket::Fd sock_fd_;
 };
 
-class SingletonListenSocket {
+class SingletonListenSocket : Uncopyable {
 public:
     static Socket& GetInstance()
     {
         static Socket socket;
         return socket;
     }
-    
-    SingletonListenSocket(const SingletonListenSocket&) = delete;
-    SingletonListenSocket& operator=(const SingletonListenSocket&) = delete;
     
 private:
     SingletonListenSocket() {}

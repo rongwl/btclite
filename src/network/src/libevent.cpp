@@ -1,5 +1,4 @@
 #include "libevent.h"
-#include "utility/include/logging.h"
 
 
 bool SockEvent::EventBaseNew()
@@ -27,7 +26,26 @@ void SockEvent::EventBaseFree()
 
 int SockEvent::EventBaseLoopexit(const struct timeval *tv)
 {
+    if (ev_base_)
+        event_base_loopexit(ev_base_, tv);
+}
 
+struct bufferevent *SockEvent::BuffereventSocketNew(evutil_socket_t fd, int options)
+{
+    if (ev_base_)
+        return bufferevent_socket_new(ev_base_, fd, options);
+    return nullptr;
+}
+
+void SockEvent::BuffereventSetcb(struct bufferevent *bev, bufferevent_data_cb readcb,
+                                 bufferevent_data_cb writecb, bufferevent_event_cb eventcb, void *cbarg)
+{
+    bufferevent_setcb(bev, readcb, writecb, eventcb, cbarg);
+}
+
+int SockEvent::BuffereventEnable(struct bufferevent *bev, short event)
+{
+    return bufferevent_enable(bev, event);
 }
 
 bool SockEvent::EvconnlistenerNewBind(evconnlistener_cb cb, void *ptr, unsigned flags, int backlog,

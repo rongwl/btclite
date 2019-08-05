@@ -4,6 +4,7 @@
 #include "message_types.h"
 #include "network_address.h"
 #include "protocol.h"
+#include "serialize.h"
 
 
 namespace btc_message {

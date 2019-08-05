@@ -19,7 +19,7 @@ public:
         Clear();
     }
     
-    Blob(std::initializer_list<uint8_t> init)
+    explicit Blob(std::initializer_list<uint8_t> init)
     {   
         Clear();
         for (auto it1 = this->begin(), it2 = init.begin(); it1 != this->end() && it2 != init.end(); it1++, it2++)
@@ -44,6 +44,11 @@ public:
     size_t size() const
     {
         return width_;
+    }
+    
+    int Compare(const Blob& b) const
+    {
+        return std::memcmp(this->data(), b.data(), width_);
     }
     
     //-------------------------------------------------------------------------

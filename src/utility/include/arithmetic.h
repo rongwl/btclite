@@ -15,7 +15,27 @@ public:
     { 
         std::memcpy(this->data(), &low, sizeof(uint64_t));
         std::memcpy(this->data()+sizeof(uint64_t), &high, sizeof(uint64_t));
-    }   
+    }
+    
+    friend bool operator==(const Uint128& a, const Uint128& b)
+    {
+        return (a.Compare(b) == 0);
+    }
+    
+    friend bool operator!=(const Uint128& a, const Uint128& b)
+    {
+        return !(a == b);
+    }
+    
+    friend bool operator<(const Uint128& a, const Uint128& b)
+    {
+        return (a.Compare(b) < 0);
+    }
+    
+    friend bool operator>(const Uint128& a, const Uint128& b)
+    {
+        return (a.Compare(b) > 0);
+    }
 };
 
 class Uint256 : public Blob<256> {
@@ -26,6 +46,26 @@ public:
     {
         std::memcpy(this->data(), low.data(), low.size());
         std::memcpy(this->data()+low.size(), high.data(), high.size());
+    }
+    
+    friend bool operator==(const Uint256& a, const Uint256& b)
+    {
+        return (a.Compare(b) == 0);
+    }
+    
+    friend bool operator!=(const Uint256& a, const Uint256& b)
+    {
+        return !(a == b);
+    }
+    
+    friend bool operator<(const Uint256& a, const Uint256& b)
+    {
+        return (a.Compare(b) < 0);
+    }
+    
+    friend bool operator>(const Uint256& a, const Uint256& b)
+    {
+        return (a.Compare(b) > 0);
     }
 };
 

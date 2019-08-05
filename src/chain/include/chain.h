@@ -33,16 +33,13 @@ private:
     std::vector<BlockIndex*> chain_;
 };
 
-class SingletonBlockChain {
+class SingletonBlockChain : Uncopyable {
 public:
     static BlockChain& GetInstance()
     {
         static BlockChain chain;
         return chain;
     }
-    
-    SingletonBlockChain(const SingletonBlockChain&) = delete;
-    SingletonBlockChain& operator=(const SingletonBlockChain&) = delete;
     
 private:
     SingletonBlockChain() {}

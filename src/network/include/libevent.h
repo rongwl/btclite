@@ -19,6 +19,11 @@ public:
     virtual void EventBaseFree() = 0;
     virtual int EventBaseLoopexit(const struct timeval *tv) = 0;
     
+    virtual struct bufferevent *BuffereventSocketNew(evutil_socket_t fd, int options) = 0;
+    virtual void BuffereventSetcb(struct bufferevent *bev, bufferevent_data_cb readcb,
+                                  bufferevent_data_cb writecb, bufferevent_event_cb eventcb, void *cbarg) = 0;
+    virtual int BuffereventEnable(struct bufferevent *bev, short event) = 0;
+    
     virtual bool EvconnlistenerNewBind(evconnlistener_cb cb, void *ptr, unsigned flags, int backlog,
                                       const struct sockaddr *sa, int socklen) = 0;
     virtual void EvconnlistenerSetErrorCb(evconnlistener_errorcb cb) = 0;
@@ -35,6 +40,11 @@ public:
     int EventBaseDispatch();  
     void EventBaseFree();
     int EventBaseLoopexit(const struct timeval *tv);
+    
+    struct bufferevent *BuffereventSocketNew(evutil_socket_t fd, int options);
+    void BuffereventSetcb(struct bufferevent *bev, bufferevent_data_cb readcb,
+                          bufferevent_data_cb writecb, bufferevent_event_cb eventcb, void *cbarg);
+    int BuffereventEnable(struct bufferevent *bev, short event);
     
     bool EvconnlistenerNewBind(evconnlistener_cb cb, void *ptr, unsigned flags, int backlog,
                               const struct sockaddr *sa, int socklen);    

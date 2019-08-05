@@ -47,7 +47,7 @@ private:
     std::vector<Seed> seeds_;
 };
 
-class SingletonParams {
+class SingletonParams : Uncopyable {
 public:
     static Params& GetInstance(BaseEnv env)
     {
@@ -59,9 +59,6 @@ public:
     {
         return GetInstance(BaseEnv::mainnet);
     }
-    
-    SingletonParams(const SingletonParams&) = delete;
-    SingletonParams& operator=(const SingletonParams&) = delete;
     
 private:
     SingletonParams() {}        

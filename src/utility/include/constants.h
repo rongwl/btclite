@@ -34,4 +34,17 @@ constexpr size_t max_receive_buffer = 5000;
 
 constexpr uint64_t default_misbehaving_bantime = 60 * 60 * 24;
 
+// Expiration time for orphan transactions in seconds
+constexpr int64_t orphan_tx_expire_time = 20 * 60;
+// Minimum time between orphan transactions expire time checks in seconds
+constexpr int64_t orphan_tx_expire_interval = 5 * 60;
+
+constexpr struct timeval node_checking_timeout = { 60, 0 };
+
+// Time after which to disconnect, after waiting for a ping response (or inactivity).
+constexpr int ping_timeout = 20 * 60;
+
+//! BIP 0031, pong message, is enabled for all versions AFTER this one
+constexpr int bip0031_version = 60000;
+
 #endif // BTCLITE_CONSTANTS_H

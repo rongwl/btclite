@@ -12,7 +12,6 @@
 #include <mutex>
 #include <queue>
 
-#include "utility/include/logging.h"
 #include "util.h"
 
 
@@ -124,6 +123,17 @@ std::future<typename std::result_of<Func(Args...)>::type> ThreadPool::AddTask(Fu
     return ret;
 }
 
+class SingletonThreadPool : Uncopyable {
+public:
+    static ThreadPool& GetInstance()
+    {
+        static ThreadPool thread_pool(2 * std::thread::hardware_concurrency() + 1);
+        return thread_pool;
+    }
+    
+private:
+    SingletonThreadPool() {}
+};
 
 template <typename Func>
 void TraceThread(const std::string& name,  Func&& func)

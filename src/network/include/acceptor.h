@@ -48,8 +48,11 @@ private:
     struct sockaddr_in6 sock_addr_;
     
     static void AcceptConnCb(struct evconnlistener *listener, evutil_socket_t fd,
-                             struct sockaddr *addr, int socklen, void *ctx);
-    static void AcceptErrCb(struct evconnlistener *listener, void *ctx);
+                             struct sockaddr *addr, int socklen, void *arg);
+    static void AcceptErrCb(struct evconnlistener *listener, void *arg);
+    static void ConnReadCb(struct bufferevent *bev, void *ctx);
+    static void ConnEventCb(struct bufferevent *bev, short events, void *ctx);
+    static void CheckingTimeoutCb(evutil_socket_t fd, short event, void *arg);
 };
 
 #endif // BTCLITE_ACCEPTOR_H

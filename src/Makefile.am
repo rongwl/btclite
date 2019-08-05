@@ -48,6 +48,7 @@ BTCLITE_HEADER_FILES = \
                        fullnode/include/config.h \
                        network/include/acceptor.h \
                        network/include/bandb.h \
+                       network/include/block_sync.h \
                        network/include/bloom.h \
                        network/include/connector.h \
                        network/include/libevent.h \
@@ -104,13 +105,14 @@ utility_src_libbtclite_util_a_CPPFLAGS = $(AM_CXXFLAGS) \
                                          $(BTCLITE_NETWORK_PROTO_INCLUDES) \
                                          $(BTCLITE_FULLNODE_INCLUDES)
 utility_src_libbtclite_util_a_SOURCES = utility/src/error.cpp \
-                                        utility/src/random.cpp \
-                                        utility/src/sync.cpp \
                                         utility/src/logging.cpp \
-                                        utility/src/util.cpp \
-                                        utility/src/utiltime.cpp \
+                                        utility/src/random.cpp \
+                                        utility/src/serialize.cpp \
                                         utility/src/string_encoding.cpp \
-                                        utility/src/thread.cpp
+                                        utility/src/sync.cpp \
+                                        utility/src/thread.cpp \
+                                        utility/src/util.cpp \
+                                        utility/src/utiltime.cpp 
 
 
 chain_src_libbtclite_chain_a_CPPFLAGS = $(AM_CXXFLAGS) \
@@ -142,6 +144,7 @@ network_src_libbtclite_network_a_SOURCES = network/proto/banmap.pb.cc \
                                            network/proto/peers.pb.cc \
                                            network/src/acceptor.cpp \
                                            network/src/bandb.cpp \
+                                           network/src/block_sync.cpp \
                                            network/src/connector.cpp \
                                            network/src/libevent.cpp \
                                            network/src/message_types/version.cpp \
@@ -179,9 +182,9 @@ btc_fullnode_SOURCES = fullnode/src/main.cpp \
                        $(BTCLITE_HEADER_FILES)
 btc_fullnode_LDADD = \
                      $(LIBBTCLITE_FULLNODE) \
+                     $(LIBBTCLITE_NETWORK) \
                      $(LIBBTCLITE_CHAIN) \
                      $(LIBBTCLITE_CRYPTO) \
-                     $(LIBBTCLITE_NETWORK) \
                      $(LIBBTCLITE_UTIL)
 btc_fullnode_LDADD += $(PTHREAD_LIBS) \
                       $(STDCPP_FILESYSTEM_LIBS) \

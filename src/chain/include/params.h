@@ -5,6 +5,7 @@
 
 #include "block.h"
 #include "environment.h"
+#include "util.h"
 
 
 using CheckPoint = std::map<uint32_t, Hash256>;
@@ -110,7 +111,7 @@ private:
     void CreateGenesisBlock(uint32_t time, uint32_t nonce, uint32_t bits, int32_t version, uint64_t reward);
 };
 
-class SingletonParams {
+class SingletonParams : Uncopyable {
 public:
     static Params& GetInstance(BaseEnv env)
     {
@@ -122,9 +123,6 @@ public:
     {
         return GetInstance(BaseEnv::mainnet);
     }
-    
-    SingletonParams(const SingletonParams&) = delete;
-    SingletonParams& operator=(const SingletonParams&) = delete;
     
 private:
     SingletonParams() {}
@@ -197,7 +195,7 @@ private:
     ChainTxData chain_tx_data_;
 };
 
-class SingletonParams {
+class SingletonParams : Uncopyable {
 public:
     static Params& GetInstance(BaseEnv env)
     {
@@ -209,9 +207,6 @@ public:
     {
         return GetInstance(BaseEnv::mainnet);
     }
-    
-    SingletonParams(const SingletonParams&) = delete;
-    SingletonParams& operator=(const SingletonParams&) = delete;
     
 private:
     SingletonParams() {}    

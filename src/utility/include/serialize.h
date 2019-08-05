@@ -11,6 +11,8 @@
 #include "Endian.h"
 
 
+size_t VarIntSize(size_t vec_size);
+
 inline uint64_t DoubleToBinary(double d)
 {
     union {

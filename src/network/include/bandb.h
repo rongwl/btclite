@@ -75,16 +75,13 @@ private:
     bool Add_(const SubNet& sub_net, const proto_banmap::BanEntry& ban_entry);
 };
 
-class SingletonBanDb {
+class SingletonBanDb : Uncopyable {
 public:
     static BanDb& GetInstance()
     {
         static BanDb ban_db;
         return ban_db;
     }
-    
-    SingletonBanDb(const SingletonBanDb&) = delete;
-    SingletonBanDb& operator=(const SingletonBanDb&) = delete;
     
 private:
     SingletonBanDb() {}

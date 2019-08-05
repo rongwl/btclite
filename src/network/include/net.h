@@ -2,12 +2,13 @@
 #define BTCLITE_NET_H
 
 
+#include "message_types/version.h"
 #include "network_address.h"
 #include "serialize.h"
 #include "util.h"
 
-#include "message_types/version.h"
 
+using PeerId = int64_t;
 
 class LocalNetConfig {
 public:
@@ -41,16 +42,13 @@ private:
     bool AddLocalHost(const btclite::NetAddr& addr);
 };
 
-class SingletonLocalNetCfg {
+class SingletonLocalNetCfg : Uncopyable {
 public:
     static LocalNetConfig& GetInstance()
     {
         static LocalNetConfig config;
         return config;
     }
-    
-    SingletonLocalNetCfg(const SingletonLocalNetCfg&) = delete;
-    SingletonLocalNetCfg& operator=(const SingletonLocalNetCfg&) = delete;
     
 private:
     SingletonLocalNetCfg() {}
@@ -221,5 +219,6 @@ private:
     bool is_dnsseed_;
     std::vector<std::string> specified_outgoing_;
 };
+
 
 #endif // BTCLITE_NET_H

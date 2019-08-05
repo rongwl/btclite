@@ -5,7 +5,7 @@
 #include "bandb.h"
 #include "socket_tests.h"
 
-
+#if 0
 TEST(AcceptorTest, Constructor)
 {
     Network::Params& params = Network::SingletonParams::GetInstance(BaseEnv::mainnet);
@@ -73,3 +73,4 @@ TEST(AcceptorTest, MethodAccept)
                 WillOnce(testing::DoAll(testing::SetArgPointee<0>(*paddr), testing::Return(201)));
     EXPECT_FALSE(acceptor.Accept());
 }
+#endif

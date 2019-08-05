@@ -1,6 +1,7 @@
 #include "acceptor.h"
 #include "bandb.h"
-#include "utility/include/logging.h"
+#include "block_sync.h"
+#include "utiltime.h"
 
 
 bool Acceptor::BindAndListen()
@@ -48,7 +49,7 @@ bool Acceptor::Accept()
     
     if (conn_fd >= FD_SETSIZE) {
         BTCLOG(LOG_LEVEL_WARNING) << "connection from " << addr.ToString() << " dropped: non-selectable socket";
-        close(conn_fd);
+        //close(conn_fd);
         return false;
     }
     
@@ -59,19 +60,19 @@ bool Acceptor::Accept()
     if (SingletonBanDb::GetInstance().IsBanned(addr))
     {
         BTCLOG_MOD(LOG_LEVEL_INFO, Logging::NET) << "connection from " << addr.ToString() << " dropped (banned)";
-        close(conn_fd);
+        //close(conn_fd);
         return false;
     }
     
     if (SingletonNodes::GetInstance().CountInbound() >= max_inbound_connections) {
         BTCLOG(LOG_LEVEL_INFO) << "can not accept new connection, inbound connections is full";
-        close(conn_fd);
+        //close(conn_fd);
         return false;
     }
     
-    Node *node = new Node(conn_fd, addr, "", true);
+    /*Node *node = new Node(conn_fd, addr, "", true);
     SingletonMapNodeState::GetInstance().Add(node->id(), node->addr(), node->host_name());
-    SingletonNodes::GetInstance().Add(node);
+    SingletonNodes::GetInstance().Add(node);*/
 
     BTCLOG_MOD(LOG_LEVEL_DEBUG, Logging::NET) << "connection from " << addr.ToString() << " accepted";
     
@@ -105,9 +106,12 @@ bool Accept2::StartEventLoop()
 }
 
 void Accept2::AcceptConnCb(struct evconnlistener *listener, evutil_socket_t fd,
-                           struct sockaddr *sock_addr, int socklen, void *ctx)
+                           struct sockaddr *sock_addr, int socklen, void *arg)
 {
     btclite::NetAddr addr;
+    struct event_base *base;
+    struct bufferevent *bev;
+    struct event *ev_timeout;
     
     if (!addr.FromSockAddr(sock_addr))
         BTCLOG(LOG_LEVEL_WARNING) << "unknown socket family";
@@ -129,14 +133,49 @@ void Accept2::AcceptConnCb(struct evconnlistener *listener, evutil_socket_t fd,
         return;
     }
     
-    Node *node = new Node(fd, addr, "", true);
-    SingletonMapNodeState::GetInstance().Add(node->id(), node->addr(), node->host_name());
-    SingletonNodes::GetInstance().Add(node);
+    if (nullptr == (base = evconnlistener_get_base(listener))) {
+        BTCLOG(LOG_LEVEL_WARNING) << "get event base by listener failed";
+        evutil_closesocket(fd);
+        return;
+    }
+    
+    if (nullptr == (bev = bufferevent_socket_new(base, fd, BEV_OPT_CLOSE_ON_FREE))) {
+        BTCLOG(LOG_LEVEL_WARNING) << "create buffer event for socker fd failed";
+        evutil_closesocket(fd);
+        return;
+    }
+    
+    auto node = std::make_shared<Node>(bev, addr);
+    Nodes& nodes = SingletonNodes::GetInstance();
+    nodes.AddNode(node);
+    auto it = nodes.GetNode(node->id());
+    if (it == nodes.End()) {
+        BTCLOG(LOG_LEVEL_WARNING) << "save new node to nodes failed";
+        bufferevent_free(bev);;
+        return;
+    }
+    
+    if (nullptr == (ev_timeout = event_new(base, fd, EV_PERSIST, CheckingTimeoutCb, (void*)(&(*it))))) {
+        BTCLOG(LOG_LEVEL_WARNING) << "create timeout event for inactivity node checking failed";
+        bufferevent_free(bev);;
+        return;
+    }
+    
+    if (event_add(ev_timeout, &node_checking_timeout) < 0) {
+        BTCLOG(LOG_LEVEL_WARNING) << "add timeout event for inactivity node checking failed";
+        bufferevent_free(bev);;
+        return;
+    }
+    
+    SingletonBlockSync::GetInstance().AddSyncState(node->id(), node->addr(), node->host_name());
+    
+    bufferevent_setcb(bev, ConnReadCb, NULL, ConnEventCb, (void*)(&(*it)));
+    bufferevent_enable(bev, EV_READ);
 
     BTCLOG_MOD(LOG_LEVEL_DEBUG, Logging::NET) << "connection from " << addr.ToString() << " accepted";
 }
 
-void Accept2::AcceptErrCb(struct evconnlistener *listener, void *ctx)
+void Accept2::AcceptErrCb(struct evconnlistener *listener, void *arg)
 {
     struct event_base *base = evconnlistener_get_base(listener);
     int err = EVUTIL_SOCKET_ERROR();
@@ -144,3 +183,53 @@ void Accept2::AcceptErrCb(struct evconnlistener *listener, void *ctx)
     BTCLOG(LOG_LEVEL_WARNING) << "listen on event failed, error:" << evutil_socket_error_to_string(err);
 }
 
+void Accept2::ConnReadCb(struct bufferevent *bev, void *ctx)
+{
+    // increase reference count
+    std::shared_ptr<Node> pnode(*(reinterpret_cast<std::shared_ptr<Node>*>(ctx)));
+}
+
+void Accept2::ConnEventCb(struct bufferevent *bev, short events, void *ctx)
+{
+
+}
+
+void Accept2::CheckingTimeoutCb(evutil_socket_t fd, short event, void *arg)
+{
+    // increase reference count
+    std::shared_ptr<Node> pnode(*(reinterpret_cast<std::shared_ptr<Node>*>(arg)));
+    
+    int64_t now = GetTimeSeconds();
+    if (pnode->time_last_recv() == 0 || pnode->time_last_send() == 0)
+    {
+        BTCLOG(LOG_LEVEL_INFO) << "socket no message in first 60 seconds, "
+                               << pnode->time_last_recv() << " " << pnode->time_last_send() << " from " << pnode->id();
+        pnode->set_disconnected(true);
+        SingletonNodes::GetInstance().EraseNode(pnode);
+    }
+    else if (now - pnode->time_last_send() > ping_timeout)
+    {
+        BTCLOG(LOG_LEVEL_INFO) << "socket sending timeout: " << (now - pnode->time_last_send());
+        pnode->set_disconnected(true);
+        SingletonNodes::GetInstance().EraseNode(pnode);
+    }
+    else if (now - pnode->time_last_recv() > (pnode->version() > bip0031_version ? ping_timeout : 90*60))
+    {
+        BTCLOG(LOG_LEVEL_INFO) << "socket receive timeout: " << (now - pnode->time_last_recv());
+        pnode->set_disconnected(true);
+        SingletonNodes::GetInstance().EraseNode(pnode);
+    }
+    else if (pnode->ping_time().ping_nonce_sent &&
+             pnode->ping_time().ping_usec_start + ping_timeout * 1000000 < GetTimeMicros())
+    {
+        BTCLOG(LOG_LEVEL_INFO) << "ping timeout: " << (now - pnode->ping_time().ping_usec_start / 1000000);
+        pnode->set_disconnected(true);
+        SingletonNodes::GetInstance().EraseNode(pnode);
+    }
+    else if (!pnode->conn_established())
+    {
+        BTCLOG(LOG_LEVEL_INFO) << "version handshake timeout from " << pnode->id();
+        pnode->set_disconnected(true);
+        SingletonNodes::GetInstance().EraseNode(pnode);
+    }
+}

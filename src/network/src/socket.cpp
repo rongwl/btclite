@@ -3,7 +3,6 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
-#include "utility/include/logging.h"
 #include "socket.h"
 
 

@@ -50,10 +50,10 @@ unit_test_test_network_CPPFLAGS = $(AM_CPPFLAGS) \
                                   $(BOTAN_CFLAGS) \
                                   $(UNIT_TEST_UTILITY_DIR) \
                                   $(BTCLITE_INCLUDES)
-unit_test_test_network_LDADD = $(LIBBTCLITE_CHAIN) \
-                               $(LIBBTCLITE_CRYPTO) \
-                               $(LIBBTCLITE_FULLNODE) \
+unit_test_test_network_LDADD = $(LIBBTCLITE_FULLNODE) \
                                $(LIBBTCLITE_NETWORK) \
+                               $(LIBBTCLITE_CHAIN) \
+                               $(LIBBTCLITE_CRYPTO) \
                                $(LIBBTCLITE_UTIL)
 unit_test_test_network_LDADD += $(GTEST_LIBS) \
                                 $(GMOCK_LIBS) \

@@ -1,53 +1,40 @@
+#include "chain.h"
 #include "node.h"
 #include "random.h"
+#include "thread.h"
 #include "utiltime.h"
+#include <functional>
 
 
-NodeState::NodeState(const btclite::NetAddr& addr, const std::string& addr_name)
-    : address_(addr), name_(addr_name)
-{
-    connected_ = false;
-    misbehavior_score_ = 0;
-    should_ban_ = false;
-    best_known_block_index_ = nullptr;
-    last_unknown_block_hash_.Clear();
-    last_common_block_index_ = nullptr;
-    best_header_sent_index_ = nullptr;
-    unconnecting_headers_len_ = 0;
-    sync_started_ = false;
-    headers_sync_timeout_ = 0;
-    stalling_since_ = 0;
-    downloading_since_ = 0;
-    blocks_in_flight_ = 0;
-    blocks_in_flight_valid_headers_ = 0;
-    preferred_download_ = false;
-    prefer_headers_ = false;
-    prefer_header_and_ids_ = false;
-    provides_header_and_ids_ = false;
-    is_witness_ = false;
-    wants_cmpct_witness_ = false;
-    supports_desired_cmpct_version_ = false;
-    chain_sync_ = { 0, nullptr, false, false };
-    last_block_announcement_ = 0;
-}
-
-Node::Node(Socket::Fd sock_fd, const btclite::NetAddr& addr, const std::string& host_name, bool is_inbound)
+Node::Node(const struct bufferevent *bev, const btclite::NetAddr& addr, bool is_inbound, std::string host_name)
     : time_connected_(GetTimeSeconds()),
       id_(SingletonNodes::GetInstance().GetNewNodeId()),
+      version_(0),
       services_(SingletonLocalNetCfg::GetInstance().local_services()),
       start_height_(SingletonBlockChain::GetInstance().Height()),
-      sock_fd_(sock_fd),
+      bev_socket_(const_cast<struct bufferevent*>(bev)),
       addr_(addr),
       local_host_nonce_(Random::GetUint64(std::numeric_limits<uint64_t>::max())),
-      host_name_(host_name),
+      time_last_send_(0),
+      time_last_recv_(0),
       is_inbound_(is_inbound),
+      host_name_(host_name),
+      conn_established_(false),
       disconnected_(false),
       bloom_filter_(std::make_unique<BloomFilter>()),
-      min_ping_usec_time_(std::numeric_limits<int64_t>::max()),
+      ping_time_({ 0, 0, 0, std::numeric_limits<int64_t>::max(), false }),
       last_block_time_(0),
       last_tx_time_(0)
 {
 
+}
+
+Node::~Node()
+{
+    if (bev_socket_)
+        bufferevent_free(bev_socket_);
+    auto task = std::bind(&BlockSync::ErasePeerSyncState, &(SingletonBlockSync::GetInstance()), std::placeholders::_1);
+    SingletonThreadPool::GetInstance().AddTask(std::function<void(PeerId)>(task), id_);
 }
 
 void Node::Connect()
@@ -57,7 +44,7 @@ void Node::Connect()
 
 void Node::Disconnect()
 {
-
+    disconnected_ = true;
 }
 
 size_t Node::Receive()
@@ -81,23 +68,9 @@ void Nodes::ClearDisconnected()
     }
 }
 
-void Nodes::ClearNodeState()
+void Nodes::CheckInactive()
 {
 
-}
-
-bool Nodes::DisconnectNode(Node::Id id)
-{
-    LOCK(cs_nodes_);
-    
-    for (auto it = list_.begin(); it != list_.end(); ++it) {
-        if ((*it)->id() == id) {
-            (*it)->set_disconnected(true);
-            return true;
-        }
-    }
-    
-    return false;
 }
 
 void Nodes::DisconnectBanNode(const SubNet& subnet)
@@ -109,6 +82,7 @@ void Nodes::DisconnectBanNode(const SubNet& subnet)
             (*it)->set_disconnected(true);
     }
 }
+
 /*
 static bool ReverseCompareNodeMinPingTime(const NodeEvictionCandidate &a, const NodeEvictionCandidate &b)
 {
@@ -230,6 +204,12 @@ int Nodes::CountInbound()
     }
     
     return num;
+}
+
+int Nodes::CountOutbound()
+{
+    LOCK(cs_nodes_);
+    return list_.size() - CountInbound();
 }
 /*
 void Nodes::MakeEvictionCandidate(std::vector<NodeEvictionCandidate> *out)

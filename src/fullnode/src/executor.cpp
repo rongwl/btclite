@@ -1,5 +1,4 @@
 #include "fullnode/include/executor.h"
-#include "utility/include/logging.h"
 
 
 bool FullNodeMain::Init()
