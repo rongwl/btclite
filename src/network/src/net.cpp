@@ -7,6 +7,8 @@
 #include "config.h"
 #include "constants.h"
 #include "net.h"
+#include "network/include/params.h"
+
 
 void LocalNetConfig::LookupLocalAddrs()
 {
@@ -60,11 +62,9 @@ bool LocalNetConfig::AddLocalHost(const btclite::NetAddr& addr)
     return true;
 }
 
-bool MessageHeader::IsValid(BaseEnv env) const
+bool MessageHeader::IsValid() const
 {
-    if ((env == BaseEnv::mainnet && magic_ != main_magic) ||
-            (env == BaseEnv::testnet && magic_ != testnet_magic) ||
-            (env == BaseEnv::regtest && magic_ != regtest_magic)) {
+    if (magic_ != Network::SingletonParams::GetInstance().msg_magic()) {
         BTCLOG(LOG_LEVEL_WARNING) << "MessageHeader::magic_(" << magic_ << ") is invalid";
         return false;
     }
@@ -107,20 +107,43 @@ bool MessageHeader::IsValid(BaseEnv env) const
     return true;
 }
 
-void Message::DataFactory(const std::string& command)
+void MessageHeader::ReadRawData(const uint8_t *in)
 {
-    if (command == btc_message::Version::command)
-        data_ = std::make_shared<btc_message::Version>();
+    if (!in)
+        return;
+    
+    magic_ = *reinterpret_cast<const uint32_t*>(in);
+    in += sizeof(magic_);
+    
+    const char *command = reinterpret_cast<const char*>(in);
+    command_ = std::move(std::string(command, command + strnlen(command, COMMAND_SIZE)));
+    in += COMMAND_SIZE;
+    
+    payload_length_ = *reinterpret_cast<const uint32_t*>(in);
+    in += sizeof(payload_length_);
+    
+    checksum_ = *reinterpret_cast<const uint32_t*>(in);
+}
+
+void MessageHeader::WriteRawData(uint8_t *cout)
+{
+
+}
+
+void Message::DataFactory(const uint8_t *data_raw)
+{
+    if (header_.command() == btc_message::Version::command)
+        data_ = std::make_shared<btc_message::Version>(data_raw);
     else
         data_.reset();
 }
 
 bool Message::RecvMsgHandle()
 {
-    if (!data_.use_count())
+    if (data_ == nullptr)
         return false;
     
-    return data_.get()->RecvMsgHandle();
+    return data_->RecvMsgHandle();
 }
 
 NetArgs::NetArgs()

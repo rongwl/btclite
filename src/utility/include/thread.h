@@ -114,7 +114,7 @@ std::future<typename std::result_of<Func(Args...)>::type> ThreadPool::AddTask(Fu
 
         // don't allow enqueueing after stopping the pool
         if(stop_)
-            throw std::runtime_error("enqueue on stopped ThreadPool");
+            throw std::runtime_error("AddTask on stopped ThreadPool");
 
         tasks_.emplace([task](){ (*task)(); });
     }

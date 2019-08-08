@@ -14,7 +14,7 @@ public:
     static const std::string command;
     
     template <size_t N>
-    struct RawNetData {
+    struct RawData {
         int32_t value_;
         uint64_t services_;
         int64_t timestamp_;
@@ -51,17 +51,23 @@ public:
           nonce_(nonce), user_agent_(std::move(user_agent)),
           start_height_(start_height), relay_(relay) {}
     
-    Version(const Version& version)
+    explicit Version(const Version& version)
         : Version(version.value_, version.services_, version.timestamp_,
                   version.address_receiver_, version.address_from_, version.nonce_,
                   version.user_agent_, version.start_height_, version.relay_) {}
     
-    Version(Version&& version) noexcept
+    explicit Version(Version&& version) noexcept
         : Version(version.value_, version.services_, version.timestamp_,
                   std::move(version.address_receiver_),
                   std::move(version.address_from_), version.nonce_,
                   std::move(version.user_agent_), version.start_height_,
                   version.relay_) {}
+    
+    explicit Version(const uint8_t *raw)
+        : Version()
+    {
+        ReadRawData(raw);
+    }
     
     //-------------------------------------------------------------------------
     bool IsValid();
@@ -73,8 +79,8 @@ public:
     
     //-------------------------------------------------------------------------
     bool RecvMsgHandle();
-    void GetRawData(const char *in);
-    void SetRawData(char *out);
+    void ReadRawData(const uint8_t *in);
+    void WriteRawData(uint8_t *out);
     
     //-------------------------------------------------------------------------
     uint32_t value() const

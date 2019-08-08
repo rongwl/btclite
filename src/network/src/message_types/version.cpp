@@ -64,12 +64,12 @@ bool Version::RecvMsgHandle()
     return true;
 }
 
-void Version::GetRawData(const char *in)
+void Version::ReadRawData(const uint8_t *in)
 {
 
 }
 
-void Version::SetRawData(char *out)
+void Version::WriteRawData(uint8_t *out)
 {
 
 }

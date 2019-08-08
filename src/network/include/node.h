@@ -3,6 +3,7 @@
 
 
 #include <event2/bufferevent.h>
+#include <queue>
 
 #include "block_sync.h"
 #include "bloom.h"
@@ -26,6 +27,50 @@ struct PingTime {
     std::atomic<bool> ping_queued;
 };
 
+template <typename T>
+class LockQueue {
+public:
+    bool IsEmpty() const
+    {
+        LOCK(cs_queue_);
+        return queue_.empty();
+    }
+    
+    size_t Size() const
+    {
+        LOCK(cs_queue_);
+        return queue_.size();
+    }
+    
+    const T& Front() const
+    {
+        LOCK(cs_queue_);
+        return queue_.front();
+    }
+    
+    const T& Back() const
+    {
+        LOCK(cs_queue_);
+        return queue_.front();
+    }
+    
+    void Push(const T& val)
+    {
+        LOCK(cs_queue_);
+        queue_.push(val);
+    }
+    
+    void Pop()
+    {
+        LOCK(cs_queue_);
+        queue_.pop();
+    }
+    
+private:
+    mutable CriticalSection cs_queue_;
+    std::queue<T> queue_;
+};
+
 /* Information about a connected peer */
 class Node {
 public:    
@@ -34,9 +79,10 @@ public:
     ~Node();
     
     //-------------------------------------------------------------------------
+    static void InactivityTimeoutCb(std::shared_ptr<Node> node);
     void Connect();
     void Disconnect();
-    size_t Receive();
+    bool ParseMessage(struct evbuffer *buf);
     size_t Send();
     
     //-------------------------------------------------------------------------
@@ -169,6 +215,8 @@ private:
     // Block and TXN accept times
     std::atomic<int64_t> last_block_time_;
     std::atomic<int64_t> last_tx_time_;
+    
+    LockQueue<std::shared_ptr<Message> > recv_msgs_;
 };
 
 struct NodeEvictionCandidate
@@ -253,7 +301,7 @@ public:
     }
     
     void ClearDisconnected();
-    void CheckInactive();
+    //void CheckInactive();
     
     void DisconnectBanNode(const SubNet& subnet);
     //bool AttemptToEvictConnection();

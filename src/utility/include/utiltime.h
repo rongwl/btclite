@@ -7,6 +7,7 @@
 
 
 int64_t GetTimeSeconds();
+int64_t GetTimeMillis();
 int64_t GetTimeMicros();
 std::string DateTimeStrFormat();
 

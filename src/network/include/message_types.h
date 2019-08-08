@@ -25,13 +25,14 @@ struct VarStr {
     char string_[N];
 };
 
+} // namespace btc_message
+
 class BaseMsgType {
 public:
     virtual bool RecvMsgHandle() = 0;
-    virtual void GetRawData(const char *in) = 0;
-    virtual void SetRawData(char *out) = 0;
+    virtual void ReadRawData(const uint8_t *in) = 0;
+    virtual void WriteRawData(uint8_t *out) = 0;
 };
 
-} // namespace message
 
 #endif // BTCLITE_MESSAGE_TYPES_H

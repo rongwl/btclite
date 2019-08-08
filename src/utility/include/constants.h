@@ -42,7 +42,7 @@ constexpr int64_t orphan_tx_expire_interval = 5 * 60;
 constexpr struct timeval node_checking_timeout = { 60, 0 };
 
 // Time after which to disconnect, after waiting for a ping response (or inactivity).
-constexpr int ping_timeout = 20 * 60;
+constexpr int conn_timeout_interval = 20 * 60;
 
 //! BIP 0031, pong message, is enabled for all versions AFTER this one
 constexpr int bip0031_version = 60000;

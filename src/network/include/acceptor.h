@@ -53,6 +53,7 @@ private:
     static void ConnReadCb(struct bufferevent *bev, void *ctx);
     static void ConnEventCb(struct bufferevent *bev, short events, void *ctx);
     static void CheckingTimeoutCb(evutil_socket_t fd, short event, void *arg);
+    //static void 
 };
 
 #endif // BTCLITE_ACCEPTOR_H

@@ -1,9 +1,10 @@
+#include <event2/buffer.h>
+
 #include "chain.h"
 #include "node.h"
 #include "random.h"
 #include "thread.h"
 #include "utiltime.h"
-#include <functional>
 
 
 Node::Node(const struct bufferevent *bev, const btclite::NetAddr& addr, bool is_inbound, std::string host_name)
@@ -24,9 +25,10 @@ Node::Node(const struct bufferevent *bev, const btclite::NetAddr& addr, bool is_
       bloom_filter_(std::make_unique<BloomFilter>()),
       ping_time_({ 0, 0, 0, std::numeric_limits<int64_t>::max(), false }),
       last_block_time_(0),
-      last_tx_time_(0)
+      last_tx_time_(0),
+      recv_msgs_()
 {
-
+    
 }
 
 Node::~Node()
@@ -35,6 +37,11 @@ Node::~Node()
         bufferevent_free(bev_socket_);
     auto task = std::bind(&BlockSync::ErasePeerSyncState, &(SingletonBlockSync::GetInstance()), std::placeholders::_1);
     SingletonThreadPool::GetInstance().AddTask(std::function<void(PeerId)>(task), id_);
+}
+
+void Node::InactivityTimeoutCb(std::shared_ptr<Node> node)
+{
+
 }
 
 void Node::Connect()
@@ -47,9 +54,35 @@ void Node::Disconnect()
     disconnected_ = true;
 }
 
-size_t Node::Receive()
+bool Node::ParseMessage(struct evbuffer *buf)
 {
-    return 0;
+    uint8_t *raw = evbuffer_pullup(buf, MessageHeader::SIZE);
+    bool is_first = recv_msgs_.IsEmpty();
+    
+    while (raw) {
+        MessageHeader header(raw);
+        
+        if (!header.IsValid()) {
+            BTCLOG(LOG_LEVEL_ERROR) << "received invalid message header";
+            return false;
+        }
+        
+        raw = evbuffer_pullup(buf, header.payload_length());
+        auto message_ptr = std::make_shared<Message>(std::move(header), raw);
+        recv_msgs_.Push(message_ptr);
+        
+        raw = evbuffer_pullup(buf, MessageHeader::SIZE);
+    }
+    
+    if (is_first) {
+        // Just take one message
+        std::shared_ptr<Message> message_ptr = recv_msgs_.Front();
+        auto task = std::bind(&Message::RecvMsgHandle, message_ptr);
+        SingletonThreadPool::GetInstance().AddTask(std::function<void()>(task));
+        recv_msgs_.Pop();
+    }
+    
+    return true;
 }
 
 size_t Node::Send()
@@ -68,10 +101,10 @@ void Nodes::ClearDisconnected()
     }
 }
 
-void Nodes::CheckInactive()
+/*void Nodes::CheckInactive()
 {
 
-}
+}*/
 
 void Nodes::DisconnectBanNode(const SubNet& subnet)
 {

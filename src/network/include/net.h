@@ -59,14 +59,16 @@ class MessageHeader {
 public:
     static constexpr size_t MESSAGE_START_SIZE = 4;
     static constexpr size_t COMMAND_SIZE = 12;
+    static constexpr size_t PAYLOAD_SIZE = 4;
     static constexpr size_t CHECKSUM_SIZE = 4;
+    static constexpr size_t SIZE = MESSAGE_START_SIZE + COMMAND_SIZE + PAYLOAD_SIZE + CHECKSUM_SIZE;
     
-    struct RawNetData {
-        char magic_[MESSAGE_START_SIZE];
-        char command_[COMMAND_SIZE];
-        uint32_t payload_length_;
-        uint8_t checksum_[CHECKSUM_SIZE];
-    };    
+    /*struct RawData {
+        uint32_t magic;
+        char command[COMMAND_SIZE];
+        uint32_t payload_length;
+        uint32_t checksum;
+    };*/
     using MsgMagic = uint32_t;
     
     //-------------------------------------------------------------------------
@@ -76,9 +78,10 @@ public:
     explicit MessageHeader(uint32_t magic)
         : magic_(magic), command_(), payload_length_(0), checksum_(0) {}
     
-    explicit MessageHeader(const char *raw_data)
+    explicit MessageHeader(const uint8_t *raw_data)
+        : magic_(0), command_(), payload_length_(0), checksum_(0)
     {
-        GetRawData(raw_data);
+        ReadRawData(raw_data);
     }
     
     MessageHeader(uint32_t magic, const std::string& command, uint32_t payload_length, uint32_t checksum)
@@ -111,17 +114,11 @@ public:
         serial.SerialRead(&payload_length_);
         serial.SerialRead(&checksum_);
     }
-    bool GetRawData(const char *in)
-    {
-        
-    }
-    void SetRawData(char *cout)
-    {
-        
-    }
     
     //-------------------------------------------------------------------------
-    bool IsValid(BaseEnv env) const;
+    bool IsValid() const;    
+    void ReadRawData(const uint8_t *in);
+    void WriteRawData(uint8_t *cout);
     
     //-------------------------------------------------------------------------
     bool operator==(const MessageHeader& b) const
@@ -190,22 +187,31 @@ public:
     Message()
         : header_(), data_(nullptr) {}
     
-    explicit Message(const MessageHeader& header)
+    Message(const MessageHeader& header, const uint8_t *data_raw)
         : header_(header)
     {
-        DataFactory(header.command());
+        DataFactory(data_raw);
     }
     
-    explicit Message(const char *raw_data)
-        : Message(MessageHeader(raw_data)) {}
+    Message(MessageHeader&& header, const uint8_t *data_raw) noexcept
+        : header_(std::move(header))
+    {
+        DataFactory(data_raw);
+    }
     
-    //-------------------------------------------------------------------------
-    void DataFactory(const std::string& command);
+    explicit Message(const uint8_t *raw)
+        : header_(std::move(MessageHeader(raw)))
+    {
+        DataFactory(raw+MessageHeader::SIZE);
+    }
+    
+    //-------------------------------------------------------------------------    
+    void DataFactory(const uint8_t *raw);
     bool RecvMsgHandle();
     
 private:
     MessageHeader header_;
-    std::shared_ptr<btc_message::BaseMsgType> data_;
+    std::shared_ptr<BaseMsgType> data_;
 };
 
 

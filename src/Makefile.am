@@ -80,6 +80,7 @@ BTCLITE_HEADER_FILES = \
                        utility/include/tinyformat.h \
                        utility/include/util.h \
                        utility/include/string_encoding.h \
+                       utility/include/timer.h \
                        utility/include/utiltime.h 
 
 
@@ -111,6 +112,7 @@ utility_src_libbtclite_util_a_SOURCES = utility/src/error.cpp \
                                         utility/src/string_encoding.cpp \
                                         utility/src/sync.cpp \
                                         utility/src/thread.cpp \
+                                        utility/src/timer.cpp \
                                         utility/src/util.cpp \
                                         utility/src/utiltime.cpp 
 

@@ -15,6 +15,13 @@ int64_t GetTimeSeconds()
     return now;
 }
 
+int64_t GetTimeMillis()
+{
+    struct timeval tv;
+    assert(0 == gettimeofday(&tv, NULL));
+    return tv.tv_sec*1000 + tv.tv_usec/1000;
+}
+
 int64_t GetTimeMicros()
 {
     struct timeval tv;

@@ -42,7 +42,7 @@ public:
     }
     
 private:
-    MessageHeader::MsgMagic msg_magic_;
+    MessageHeader::MsgMagic msg_magic_; // little endian
     uint16_t default_port_;
     std::vector<Seed> seeds_;
 };
