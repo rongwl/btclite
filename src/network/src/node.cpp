@@ -101,11 +101,6 @@ void Nodes::ClearDisconnected()
     }
 }
 
-/*void Nodes::CheckInactive()
-{
-
-}*/
-
 void Nodes::DisconnectBanNode(const SubNet& subnet)
 {
     LOCK(cs_nodes_);

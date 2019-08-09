@@ -28,12 +28,6 @@ public:
         local_services_ = flags;
     }
     
-    /*const std::vector<btclite::NetAddr>& local_addrs() const
-    {
-        LOCK(cs_local_net_config_);
-        return local_addrs_;
-    }*/
-    
 private:
     mutable CriticalSection cs_local_net_config_;
     ServiceFlags local_services_;
@@ -63,12 +57,6 @@ public:
     static constexpr size_t CHECKSUM_SIZE = 4;
     static constexpr size_t SIZE = MESSAGE_START_SIZE + COMMAND_SIZE + PAYLOAD_SIZE + CHECKSUM_SIZE;
     
-    /*struct RawData {
-        uint32_t magic;
-        char command[COMMAND_SIZE];
-        uint32_t payload_length;
-        uint32_t checksum;
-    };*/
     using MsgMagic = uint32_t;
     
     //-------------------------------------------------------------------------

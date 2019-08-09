@@ -301,7 +301,6 @@ public:
     }
     
     void ClearDisconnected();
-    //void CheckInactive();
     
     void DisconnectBanNode(const SubNet& subnet);
     //bool AttemptToEvictConnection();
