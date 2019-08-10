@@ -1,10 +1,12 @@
+#include "node.h"
+
 #include <event2/buffer.h>
 
 #include "chain.h"
-#include "node.h"
 #include "random.h"
 #include "thread.h"
 #include "utiltime.h"
+#include "message_types/messages.h"
 
 
 Node::Node(const struct bufferevent *bev, const btclite::NetAddr& addr, bool is_inbound, std::string host_name)
@@ -25,8 +27,7 @@ Node::Node(const struct bufferevent *bev, const btclite::NetAddr& addr, bool is_
       bloom_filter_(std::make_unique<BloomFilter>()),
       ping_time_({ 0, 0, 0, std::numeric_limits<int64_t>::max(), false }),
       last_block_time_(0),
-      last_tx_time_(0),
-      recv_msgs_()
+      last_tx_time_(0)
 {
     
 }
@@ -49,15 +50,12 @@ void Node::Connect()
 
 }
 
-void Node::Disconnect()
-{
-    disconnected_ = true;
-}
-
 bool Node::ParseMessage(struct evbuffer *buf)
 {
     uint8_t *raw = evbuffer_pullup(buf, MessageHeader::SIZE);
-    bool is_first = recv_msgs_.IsEmpty();
+    
+    if (disconnected_)
+        return false;
     
     while (raw) {
         MessageHeader header(raw);
@@ -69,17 +67,15 @@ bool Node::ParseMessage(struct evbuffer *buf)
         
         raw = evbuffer_pullup(buf, header.payload_length());
         auto message_ptr = std::make_shared<Message>(std::move(header), raw);
-        recv_msgs_.Push(message_ptr);
+        
+        auto it = SingletonNodes::GetInstance().GetNode(id_);
+        assert(it != SingletonNodes::GetInstance().End());
+        
+        MsgHandler handler(message_ptr, *it);
+        auto task = std::bind(MsgHandler::HandleMessage, message_ptr, *it, handler.data_handler());
+        SingletonThreadPool::GetInstance().AddTask(std::function<bool()>(task));
         
         raw = evbuffer_pullup(buf, MessageHeader::SIZE);
-    }
-    
-    if (is_first) {
-        // Just take one message
-        std::shared_ptr<Message> message_ptr = recv_msgs_.Front();
-        auto task = std::bind(&Message::RecvMsgHandle, message_ptr);
-        SingletonThreadPool::GetInstance().AddTask(std::function<void()>(task));
-        recv_msgs_.Pop();
     }
     
     return true;
@@ -258,3 +254,48 @@ void Nodes::MakeEvictionCandidate(std::vector<NodeEvictionCandidate> *out)
     }
 }
 */
+
+void MsgHandler::Factory(std::shared_ptr<Message> msg, std::shared_ptr<Node> src_node)
+{
+    if (msg->header().command() == btc_message::Version::command) {
+        data_handler_ = std::move(std::function<bool()>(std::bind(HandleRecvVersion, msg, src_node)));
+    }
+}
+
+bool MsgHandler::HandleMessage(std::shared_ptr<Message> msg, std::shared_ptr<Node> src_node,
+                              MsgDataHandler data_handler)
+{
+    bool ret = false;
+    
+    if (src_node->disconnected())
+        return false;
+        
+    if (!VerifyMsgHeader(msg->header()))
+        return false;
+    
+    try {
+        ret = data_handler();
+    }
+    catch (const std::exception& e) {
+        
+    }
+    catch (...) {
+        
+    }
+    
+    return ret;
+}
+
+bool MsgHandler::VerifyMsgHeader(const MessageHeader& header)
+{
+    return true;
+}
+
+bool MsgHandler::HandleRecvVersion(std::shared_ptr<Message> msg, std::shared_ptr<Node> src_node)
+{
+    bool ret = false;
+    
+    
+    
+    return ret;
+}

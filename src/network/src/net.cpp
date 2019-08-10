@@ -1,3 +1,5 @@
+#include "net.h"
+
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -6,8 +8,8 @@
 
 #include "config.h"
 #include "constants.h"
-#include "net.h"
 #include "network/include/params.h"
+#include "message_types/messages.h"
 
 
 void LocalNetConfig::LookupLocalAddrs()
@@ -138,13 +140,12 @@ void Message::DataFactory(const uint8_t *data_raw)
         data_.reset();
 }
 
-bool Message::RecvMsgHandle()
+/*bool Message::RecvMsgHandle(std::shared_ptr<Node> src_node)
 {
-    if (data_ == nullptr)
-        return false;
+    bool ret = false;
     
-    return data_->RecvMsgHandle();
-}
+    return ret;
+}*/
 
 NetArgs::NetArgs()
     : is_listen_(ExecutorConfig::args().GetBoolArg(FULLNODE_OPTION_LISTEN, true)),

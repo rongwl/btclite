@@ -3,6 +3,7 @@
 
 
 #include <event2/bufferevent.h>
+#include <functional>
 #include <queue>
 
 #include "block_sync.h"
@@ -27,53 +28,9 @@ struct PingTime {
     std::atomic<bool> ping_queued;
 };
 
-template <typename T>
-class LockQueue {
-public:
-    bool IsEmpty() const
-    {
-        LOCK(cs_queue_);
-        return queue_.empty();
-    }
-    
-    size_t Size() const
-    {
-        LOCK(cs_queue_);
-        return queue_.size();
-    }
-    
-    const T& Front() const
-    {
-        LOCK(cs_queue_);
-        return queue_.front();
-    }
-    
-    const T& Back() const
-    {
-        LOCK(cs_queue_);
-        return queue_.front();
-    }
-    
-    void Push(const T& val)
-    {
-        LOCK(cs_queue_);
-        queue_.push(val);
-    }
-    
-    void Pop()
-    {
-        LOCK(cs_queue_);
-        queue_.pop();
-    }
-    
-private:
-    mutable CriticalSection cs_queue_;
-    std::queue<T> queue_;
-};
-
 /* Information about a connected peer */
 class Node {
-public:    
+public:
     Node(const struct bufferevent *bev, const btclite::NetAddr& addr,
          bool is_inbound = true, std::string host_name = "");
     ~Node();
@@ -81,7 +38,6 @@ public:
     //-------------------------------------------------------------------------
     static void InactivityTimeoutCb(std::shared_ptr<Node> node);
     void Connect();
-    void Disconnect();
     bool ParseMessage(struct evbuffer *buf);
     size_t Send();
     
@@ -215,8 +171,6 @@ private:
     // Block and TXN accept times
     std::atomic<int64_t> last_block_time_;
     std::atomic<int64_t> last_tx_time_;
-    
-    LockQueue<std::shared_ptr<Message> > recv_msgs_;
 };
 
 struct NodeEvictionCandidate
@@ -330,6 +284,32 @@ public:
     
 private:
     SingletonNodes() {}    
+};
+
+class MsgHandler {
+public:
+    using MsgDataHandler = std::function<bool()>;
+    
+    MsgHandler(std::shared_ptr<Message> msg, std::shared_ptr<Node> src_node)
+    {
+        Factory(msg, src_node);
+    }
+    
+    static bool HandleMessage(std::shared_ptr<Message> msg, std::shared_ptr<Node> src_node,
+                              MsgDataHandler data_handler);
+    
+    std::function<bool()> data_handler() const
+    {
+        return data_handler_;
+    }
+    
+private:
+    MsgDataHandler data_handler_;
+    
+    void Factory(std::shared_ptr<Message> msg, std::shared_ptr<Node> src_node);
+
+    static bool VerifyMsgHeader(const MessageHeader& header);
+    static bool HandleRecvVersion(std::shared_ptr<Message> msg, std::shared_ptr<Node> src_node);
 };
 
 

@@ -78,7 +78,7 @@ public:
     Version& operator=(Version&& b) noexcept;
     
     //-------------------------------------------------------------------------
-    bool RecvMsgHandle();
+    //bool RecvMsgHandle(std::shared_ptr<Node> src_node);
     void ReadRawData(const uint8_t *in);
     void WriteRawData(uint8_t *out);
     

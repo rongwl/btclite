@@ -6,6 +6,7 @@
 #include "constants.h"
 #include "net.h"
 #include "network/include/params.h"
+#include "message_types/version.h"
 
 
 TEST(MessageHeaderTest, MethodGetSet)
@@ -128,10 +129,6 @@ TEST(MessageHeaderTest, OperatorEqual)
     header2.set_checksum(123);
     EXPECT_TRUE(header1 != header2);
 }
-
-
-TEST(MessageTest, Constructor1)
-{}
 
 
 TEST(LocalNetConfigTest, Constructor)

@@ -2,8 +2,9 @@
 #define BTCLITE_NET_H
 
 
-#include "message_types/version.h"
+#include "message_types.h"
 #include "network_address.h"
+#include "protocol.h"
 #include "serialize.h"
 #include "util.h"
 
@@ -193,15 +194,20 @@ public:
         DataFactory(raw+MessageHeader::SIZE);
     }
     
-    //-------------------------------------------------------------------------    
+    //-------------------------------------------------------------------------
     void DataFactory(const uint8_t *raw);
-    bool RecvMsgHandle();
+    //bool RecvMsgHandle(std::shared_ptr<Node> src_node);
+    
+    //-------------------------------------------------------------------------
+    const MessageHeader& header() const
+    {
+        return header_;
+    }
     
 private:
     MessageHeader header_;
-    std::shared_ptr<BaseMsgType> data_;
+    std::shared_ptr<void> data_;
 };
-
 
 class NetArgs {
 public:

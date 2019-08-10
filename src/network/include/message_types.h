@@ -1,9 +1,13 @@
 #ifndef BTCLITE_MESSAGE_TYPES_H
 #define BTCLITE_MESSAGE_TYPES_H
 
+
 #include <cstdint>
+#include <memory>
 #include <string>
 
+
+class Node;
 
 namespace btc_message {
 
@@ -29,7 +33,7 @@ struct VarStr {
 
 class BaseMsgType {
 public:
-    virtual bool RecvMsgHandle() = 0;
+    //virtual bool RecvMsgHandle(std::shared_ptr<Node> src_node) = 0;
     virtual void ReadRawData(const uint8_t *in) = 0;
     virtual void WriteRawData(uint8_t *out) = 0;
 };

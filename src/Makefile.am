@@ -53,6 +53,7 @@ BTCLITE_HEADER_FILES = \
                        network/include/connector.h \
                        network/include/libevent.h \
                        network/include/message_types.h \
+                       network/include/messages.h \
                        network/include/message_types/version.h \
                        network/include/node.h \
                        network/include/p2p.h \

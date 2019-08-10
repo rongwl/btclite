@@ -1,9 +1,9 @@
+#include "socket.h"
+
 #include <fcntl.h>
 #include <netinet/tcp.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-
-#include "socket.h"
 
 
 bool Socket::Create(int domain, int type, int protocol)
