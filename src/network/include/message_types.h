@@ -33,7 +33,6 @@ struct VarStr {
 
 class BaseMsgType {
 public:
-    //virtual bool RecvMsgHandle(std::shared_ptr<Node> src_node) = 0;
     virtual void ReadRawData(const uint8_t *in) = 0;
     virtual void WriteRawData(uint8_t *out) = 0;
 };

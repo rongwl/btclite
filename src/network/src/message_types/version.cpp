@@ -59,11 +59,6 @@ Version& Version::operator=(Version&& b) noexcept
     return *this;
 }
 
-/*bool Version::RecvMsgHandle(std::shared_ptr<Node> src_node)
-{
-    return true;
-}*/
-
 void Version::ReadRawData(const uint8_t *in)
 {
 

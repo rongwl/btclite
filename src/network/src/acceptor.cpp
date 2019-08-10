@@ -157,18 +157,6 @@ void Accept2::AcceptConnCb(struct evconnlistener *listener, evutil_socket_t fd,
         return;
     }
     
-    /*if (nullptr == (ev_timeout = event_new(base, fd, EV_PERSIST, CheckingTimeoutCb, (void*)(&(*it))))) {
-        BTCLOG(LOG_LEVEL_WARNING) << "create timeout event for inactivity node checking failed";
-        bufferevent_free(bev);
-        return;
-    }
-    
-    if (event_add(ev_timeout, &node_checking_timeout) < 0) {
-        BTCLOG(LOG_LEVEL_WARNING) << "add timeout event for inactivity node checking failed";
-        bufferevent_free(bev);
-        return;
-    }*/
-    
     SingletonBlockSync::GetInstance().AddSyncState(node->id(), node->addr(), node->host_name());
     
     bufferevent_setcb(bev, ConnReadCb, NULL, ConnEventCb, (void*)(&(*it)));

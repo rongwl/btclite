@@ -140,13 +140,6 @@ void Message::DataFactory(const uint8_t *data_raw)
         data_.reset();
 }
 
-/*bool Message::RecvMsgHandle(std::shared_ptr<Node> src_node)
-{
-    bool ret = false;
-    
-    return ret;
-}*/
-
 NetArgs::NetArgs()
     : is_listen_(ExecutorConfig::args().GetBoolArg(FULLNODE_OPTION_LISTEN, true)),
       is_discover_(ExecutorConfig::args().GetBoolArg(FULLNODE_OPTION_DISCOVER, true)),

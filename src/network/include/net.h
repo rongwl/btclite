@@ -196,7 +196,6 @@ public:
     
     //-------------------------------------------------------------------------
     void DataFactory(const uint8_t *raw);
-    //bool RecvMsgHandle(std::shared_ptr<Node> src_node);
     
     //-------------------------------------------------------------------------
     const MessageHeader& header() const
