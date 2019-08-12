@@ -8,6 +8,7 @@
 
 #include "block_sync.h"
 #include "bloom.h"
+#include "timer.h"
 
 
 // Ping time measurement
@@ -26,6 +27,14 @@ struct PingTime {
     
     // Whether a ping is requested.
     std::atomic<bool> ping_queued;
+};
+
+struct NodeTimers {
+    TimerMng::TimerPtr no_msg_timer;
+    TimerMng::TimerPtr no_sending_timer;
+    TimerMng::TimerPtr no_receiving_timer;
+    TimerMng::TimerPtr no_ping_timer;
+    TimerMng::TimerPtr no_connection_timer;
 };
 
 /* Information about a connected peer */
@@ -60,6 +69,11 @@ public:
     ServiceFlags services() const
     {
         return services_;
+    }
+    
+    const struct bufferevent* const bev() const
+    {
+        return bev_;
     }
     
     const btclite::NetAddr& addr() const
@@ -135,13 +149,23 @@ public:
         return last_tx_time_;
     }
     
+    const NodeTimers& timers() const
+    {
+        return timers_;
+    }
+    
+    NodeTimers *mutable_timers()
+    {
+        return &timers_;
+    }
+    
 private:
     const int64_t time_connected_;
     const PeerId id_;
     std::atomic<int> version_;
     const ServiceFlags services_;
     const int start_height_;
-    struct bufferevent *bev_socket_;
+    struct bufferevent *bev_;
     const btclite::NetAddr addr_;
     //const uint64_t keyed_net_group_;
     const uint64_t local_host_nonce_;
@@ -171,6 +195,8 @@ private:
     // Block and TXN accept times
     std::atomic<int64_t> last_block_time_;
     std::atomic<int64_t> last_tx_time_;
+    
+    NodeTimers timers_;
 };
 
 struct NodeEvictionCandidate
@@ -189,9 +215,6 @@ struct NodeEvictionCandidate
 
 class Nodes : Uncopyable {
 public:
-    using iterator = std::list<std::shared_ptr<Node> >::iterator;
-    using const_iterator = std::list<std::shared_ptr<Node> >::const_iterator;
-    
     Nodes()
         : list_() {}
     
@@ -201,35 +224,28 @@ public:
         return last_node_id.fetch_add(1, std::memory_order_relaxed);
     }
     
-    iterator Begin()
+    size_t Size() const
     {
         LOCK(cs_nodes_);
-        return list_.begin();
-    }
-    const_iterator Begin() const
-    {
-        LOCK(cs_nodes_);
-        return list_.begin();
+        return list_.size();
     }
     
-    iterator End()
-    {
-        LOCK(cs_nodes_);
-        return list_.end();
-    }
-    const_iterator End() const
-    {
-        LOCK(cs_nodes_);
-        return list_.end();
-    }
-    
-    const_iterator GetNode(PeerId id) const
+    std::shared_ptr<Node> GetNode(PeerId id)
     {
         LOCK(cs_nodes_);
         for (auto it = list_.begin(); it != list_.end(); ++it)
             if ((*it)->id() == id)
-                return it;
-        return list_.end();
+                return (*it);
+        return std::shared_ptr<Node>();
+    }
+    
+    std::shared_ptr<Node> GetNode(struct bufferevent *bev)
+    {
+        LOCK(cs_nodes_);
+        for (auto it = list_.begin(); it != list_.end(); ++it)
+            if ((*it)->bev() == bev)
+                return (*it);
+        return std::shared_ptr<Node>();
     }
     
     void AddNode(std::shared_ptr<Node> node)

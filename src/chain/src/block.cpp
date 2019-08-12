@@ -1,7 +1,8 @@
+#include "block.h"
+
 #include <memory>
 #include <sstream>
 
-#include "block.h"
 
 const Hash256& BlockHeader::Hash() const
 {

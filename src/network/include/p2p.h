@@ -34,13 +34,11 @@ private:
     LocalNetConfig& local_network_config_;
     Nodes& nodes_;
     BanDb& ban_db_;
-    //std::vector<OutboundSession> outbound_sessions_;
-    //std::vector<InboundSession> inbound_sessions_;
     Acceptor acceptor_;
     
     ThreadInterrupt interrupt_;
     std::thread thread_dns_seeds_;
-    std::thread thread_socket_handler_;
+    std::thread thread_acceptor_loop_;
     std::thread thread_open_connections_;
     std::thread thread_message_handler_;
     

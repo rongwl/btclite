@@ -1,5 +1,5 @@
-
 #include "thread.h"
+
 
 ThreadInterrupt::operator bool() const
 {

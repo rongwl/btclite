@@ -1,6 +1,7 @@
+#include "string_encoding.h"
+
 #include <cstring>
 
-#include "string_encoding.h"
 
 void HexDecode(const std::string& in, std::vector<uint8_t> *out)
 {

@@ -1,5 +1,6 @@
 #include "utility/include/logging.h"
 
+
 std::atomic<uint32_t> Logging::log_module_ = 0;
 
 const std::array<uint8_t, LOG_LEVEL_MAX> Logging::map_loglevel_ = {

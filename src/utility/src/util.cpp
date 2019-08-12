@@ -1,3 +1,5 @@
+#include "util.h"
+
 #include <algorithm>
 #include <getopt.h>
 #include <locale>
@@ -8,7 +10,6 @@
 #endif
 
 #include "error.h"
-#include "util.h"
 
 
 Args ExecutorConfig::args_;

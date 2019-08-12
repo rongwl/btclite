@@ -15,7 +15,7 @@ Node::Node(const struct bufferevent *bev, const btclite::NetAddr& addr, bool is_
       version_(0),
       services_(SingletonLocalNetCfg::GetInstance().local_services()),
       start_height_(SingletonBlockChain::GetInstance().Height()),
-      bev_socket_(const_cast<struct bufferevent*>(bev)),
+      bev_(const_cast<struct bufferevent*>(bev)),
       addr_(addr),
       local_host_nonce_(Random::GetUint64(std::numeric_limits<uint64_t>::max())),
       time_last_send_(0),
@@ -27,22 +27,24 @@ Node::Node(const struct bufferevent *bev, const btclite::NetAddr& addr, bool is_
       bloom_filter_(std::make_unique<BloomFilter>()),
       ping_time_({ 0, 0, 0, std::numeric_limits<int64_t>::max(), false }),
       last_block_time_(0),
-      last_tx_time_(0)
+      last_tx_time_(0),
+      timers_()
 {
     
 }
 
 Node::~Node()
 {
-    if (bev_socket_)
-        bufferevent_free(bev_socket_);
+    if (bev_)
+        bufferevent_free(bev_);
     auto task = std::bind(&BlockSync::ErasePeerSyncState, &(SingletonBlockSync::GetInstance()), std::placeholders::_1);
     SingletonThreadPool::GetInstance().AddTask(std::function<void(PeerId)>(task), id_);
 }
 
 void Node::InactivityTimeoutCb(std::shared_ptr<Node> node)
 {
-
+    node->set_disconnected(true);
+    SingletonNodes::GetInstance().EraseNode(node);
 }
 
 void Node::Connect()
@@ -66,13 +68,13 @@ bool Node::ParseMessage(struct evbuffer *buf)
         }
         
         raw = evbuffer_pullup(buf, header.payload_length());
-        auto message_ptr = std::make_shared<Message>(std::move(header), raw);
+        auto pmessage = std::make_shared<Message>(std::move(header), raw);
         
-        auto it = SingletonNodes::GetInstance().GetNode(id_);
-        assert(it != SingletonNodes::GetInstance().End());
+        std::shared_ptr<Node> pnode = SingletonNodes::GetInstance().GetNode(id_);
+        assert(pnode != nullptr);
         
-        MsgHandler handler(message_ptr, *it);
-        auto task = std::bind(MsgHandler::HandleMessage, message_ptr, *it, handler.data_handler());
+        MsgHandler handler(pmessage, pnode);
+        auto task = std::bind(MsgHandler::HandleMessage, pmessage, pnode, handler.data_handler());
         SingletonThreadPool::GetInstance().AddTask(std::function<bool()>(task));
         
         raw = evbuffer_pullup(buf, MessageHeader::SIZE);

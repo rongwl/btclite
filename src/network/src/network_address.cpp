@@ -1,9 +1,11 @@
+#include "network_address.h"
+
 #include <arpa/inet.h>
 #include <botan/base32.h>
 #include <sstream>
 
-#include "network_address.h"
 #include "constants.h"
+
 
 namespace btclite {
 

@@ -1,6 +1,7 @@
+#include "error.h"
+
 #include <unordered_map>
 
-#include "error.h"
 
 std::error_code make_error_code(ErrorCode e)
 {

@@ -3,74 +3,78 @@
 
 #include "acceptor.h"
 #include "bandb.h"
-#include "socket_tests.h"
 
-#if 0
+
 TEST(AcceptorTest, Constructor)
 {
-    Network::Params& params = Network::SingletonParams::GetInstance(BaseEnv::mainnet);
     Acceptor acceptor;
-    ASSERT_GT(SingletonListenSocket::GetInstance().sock_fd(), 0);
+    const struct sockaddr_in6& sock_addr = acceptor.sock_addr();
+    ASSERT_EQ(sock_addr.sin6_family, AF_INET6);
+    ASSERT_EQ(sock_addr.sin6_port, htons(Network::SingletonParams::GetInstance().default_port()));
+    ASSERT_EQ(std::memcmp(sock_addr.sin6_addr.s6_addr, in6addr_any.s6_addr, 16), 0);
+    ASSERT_EQ(sock_addr.sin6_scope_id, 0);
 }
 
-TEST(AcceptorTest, MethodListenAndBind)
-{    
-    Network::Params& params = Network::SingletonParams::GetInstance(BaseEnv::mainnet);
-    struct sockaddr_in6 sockaddr;
-    socklen_t len = sizeof(sockaddr);
-    Acceptor acceptor;
-    
-    ASSERT_TRUE(acceptor.BindAndListen());
-    Socket& socket = SingletonListenSocket::GetInstance();    
-    EXPECT_EQ(getsockname(socket.sock_fd(), (struct sockaddr*)&sockaddr, &len), 0);
-    EXPECT_EQ(sockaddr.sin6_family, AF_INET6);
-    EXPECT_EQ(std::memcmp(sockaddr.sin6_addr.s6_addr, in6addr_any.s6_addr, sizeof(in6addr_any)), 0);
-    EXPECT_EQ(sockaddr.sin6_port, htons(params.default_port()));
-    EXPECT_EQ(sockaddr.sin6_scope_id, 0);
-    socket.Close();
-    EXPECT_FALSE(acceptor.BindAndListen());
-}
-
-TEST(AcceptorTest, MethodAccept)
+TEST(AcceptorTest, MethordAcceptConnCb)
 {
-    MockSocket socket;
-    Acceptor acceptor(socket);
-    struct sockaddr_in6 sock_addr;
-    struct sockaddr_storage *paddr = reinterpret_cast<struct sockaddr_storage*>(&sock_addr);
-
-    std::memset(&sock_addr, 0, sizeof(sock_addr));
-    sock_addr.sin6_family = AF_INET6;
-    sock_addr.sin6_port = htons(8333);
-    sock_addr.sin6_scope_id = 0;    
-    EXPECT_CALL(socket, Close()).Times(1).WillOnce(testing::Return(true));
+    Acceptor acceptor;
+    struct event_base *base;
+    struct evconnlistener *listener;
+    struct bufferevent *bev;
+    Socket::Fd fd;
+    
+    base = event_base_new();
+    ASSERT_NE(base, nullptr);
+    listener = evconnlistener_new_bind(base, NULL, NULL, LEV_OPT_CLOSE_ON_FREE|LEV_OPT_REUSEABLE,
+                                       SOMAXCONN, (const struct sockaddr*)&acceptor.sock_addr(),
+                                       sizeof(acceptor.sock_addr()));
+    ASSERT_NE(listener, nullptr);
+    
+    fd = evconnlistener_get_fd(listener);
+    ASSERT_GT(fd, 0);
+    
+    struct sockaddr_in6 client_addr;
+    memset(&client_addr, 0, sizeof(client_addr));
+    client_addr.sin6_family = AF_INET6;
+    client_addr.sin6_port = htons(8333);
+    int count = 0;
     for (int i = 1; i < max_inbound_connections; i++) {
-        std::string addr = "::ffff:1.2.3." + std::to_string(i);
-        inet_pton(AF_INET6, addr.c_str(), sock_addr.sin6_addr.s6_addr);    
-        EXPECT_CALL(socket, Accept(testing::_, testing::_)).Times(1).
-                    WillOnce(testing::DoAll(testing::SetArgPointee<0>(*paddr), testing::Return(i+1)));
-        ASSERT_TRUE(acceptor.Accept());
-    }   
+        std::string str_addr = "::ffff:1.2.3." + std::to_string(i);
+        inet_pton(AF_INET6, str_addr.c_str(), client_addr.sin6_addr.s6_addr);
+        btclite::NetAddr addr(client_addr);
+        acceptor.AcceptConnCb(listener, fd, (struct sockaddr*)&client_addr, sizeof(client_addr), nullptr);
+        ASSERT_EQ(SingletonNodes::GetInstance().CountInbound(), i);
+        count = i;
+        
+        std::shared_ptr<Node> pnode = SingletonNodes::GetInstance().GetNode(i-1);
+        ASSERT_NE(pnode, nullptr);
+        ASSERT_EQ(pnode->addr(), addr);
+        
+        const PeerSyncState* const pstate = SingletonBlockSync::GetInstance().GetSyncState(i-1);
+        ASSERT_NE(pstate, nullptr);
+        ASSERT_EQ(pstate->addr(), addr);
+    }
     
-    EXPECT_CALL(socket, Accept(testing::_, testing::_)).Times(1).WillOnce(testing::Return(-1));
-    EXPECT_FALSE(acceptor.Accept());
+    inet_pton(AF_INET6, "::ffff:1.2.3.250", client_addr.sin6_addr.s6_addr);
+    btclite::NetAddr addr(client_addr);
+    SingletonBanDb::GetInstance().Add(addr, BanDb::NodeMisbehaving);
+    acceptor.AcceptConnCb(listener, fd, (struct sockaddr*)&client_addr, sizeof(client_addr), nullptr);
+    EXPECT_EQ(SingletonNodes::GetInstance().CountInbound(), count);  
     
-    EXPECT_CALL(socket, Accept(testing::_, testing::_)).Times(1).WillOnce(testing::Return(FD_SETSIZE));
-    EXPECT_FALSE(acceptor.Accept());
+    SingletonBanDb::GetInstance().Erase(addr, false);
+    acceptor.AcceptConnCb(listener, fd, (struct sockaddr*)&client_addr, sizeof(client_addr), nullptr);
+    EXPECT_EQ(SingletonNodes::GetInstance().CountInbound(), ++count);
+    std::shared_ptr<Node> pnode = SingletonNodes::GetInstance().GetNode(count-1);
+    ASSERT_NE(pnode, nullptr);
+    EXPECT_EQ(pnode->addr(), addr);
+    const PeerSyncState* const pstate = SingletonBlockSync::GetInstance().GetSyncState(count-1);
+    ASSERT_NE(pstate, nullptr);
+    ASSERT_EQ(pstate->addr(), addr);
     
-    inet_pton(AF_INET6, "::ffff:1.2.3.250", sock_addr.sin6_addr.s6_addr);
-    SingletonBanDb::GetInstance().Add(btclite::NetAddr(sock_addr), BanDb::NodeMisbehaving);
-    EXPECT_CALL(socket, Accept(testing::_, testing::_)).Times(1).
-                WillOnce(testing::DoAll(testing::SetArgPointee<0>(*paddr), testing::Return(200)));
-    EXPECT_FALSE(acceptor.Accept());
+    inet_pton(AF_INET6, "::ffff:1.2.3.251", client_addr.sin6_addr.s6_addr);
+    acceptor.AcceptConnCb(listener, fd, (struct sockaddr*)&client_addr, sizeof(client_addr), nullptr);
+    EXPECT_EQ(SingletonNodes::GetInstance().CountInbound(), count);
     
-    SingletonBanDb::GetInstance().Erase(btclite::NetAddr(sock_addr), false);
-    EXPECT_CALL(socket, Accept(testing::_, testing::_)).Times(1).
-                WillOnce(testing::DoAll(testing::SetArgPointee<0>(*paddr), testing::Return(200)));
-    EXPECT_TRUE(acceptor.Accept());
-    
-    inet_pton(AF_INET6, "::ffff:1.2.3.251", sock_addr.sin6_addr.s6_addr);
-    EXPECT_CALL(socket, Accept(testing::_, testing::_)).Times(1).
-                WillOnce(testing::DoAll(testing::SetArgPointee<0>(*paddr), testing::Return(201)));
-    EXPECT_FALSE(acceptor.Accept());
+    evconnlistener_free(listener);
+    event_base_free(base);
 }
-#endif

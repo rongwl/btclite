@@ -39,7 +39,12 @@ constexpr int64_t orphan_tx_expire_time = 20 * 60;
 // Minimum time between orphan transactions expire time checks in seconds
 constexpr int64_t orphan_tx_expire_interval = 5 * 60;
 
-constexpr struct timeval node_checking_timeout = { 60, 0 };
+constexpr uint32_t no_msg_timeout = 60;
+constexpr uint32_t no_sending_timeout = 2*60;
+constexpr uint32_t no_receiving_timeout_bip31 = 2*60;
+constexpr uint32_t no_receiving_timeout = 90*60;
+constexpr uint32_t no_ping_timeout = 2*60;
+constexpr uint32_t no_connection_timeout = 60;
 
 // Time after which to disconnect, after waiting for a ping response (or inactivity).
 constexpr int conn_timeout_interval = 20 * 60;

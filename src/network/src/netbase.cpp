@@ -1,8 +1,9 @@
+#include "netbase.h"
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
 
-#include "netbase.h"
 #include "string_encoding.h"
 
 

@@ -1,11 +1,11 @@
+#include "utiltime.h"
+
 #include <iomanip>
 #include <sys/time.h>
 
 #if defined(HAVE_CONFIG_H)
 #include "config/btclite-config.h"
 #endif
-
-#include "utiltime.h"
 
 
 int64_t GetTimeSeconds()

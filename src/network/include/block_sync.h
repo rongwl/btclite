@@ -136,7 +136,12 @@ struct DownloadState {
 class PeerSyncState {
 public:
     PeerSyncState(const btclite::NetAddr& addr, const std::string& addr_name)
-        : address_(addr), name_(addr_name) {}
+        : addr_(addr), name_(addr_name) {}
+    
+    const btclite::NetAddr& addr() const
+    {
+        return addr_;
+    }
     
     const SyncBasicState& basic_state() const
     {
@@ -199,7 +204,7 @@ public:
     }
     
 private:    
-    const btclite::NetAddr address_;    
+    const btclite::NetAddr addr_;    
     const std::string name_;    
     SyncBasicState basic_state_;    
     SyncStats stats_;    
@@ -219,6 +224,16 @@ public:
         LOCK(cs_block_sync_);
         map_sync_state_.emplace_hint(map_sync_state_.end(), std::piecewise_construct,
                                      std::forward_as_tuple(id), std::forward_as_tuple(addr, std::move(addr_name)));
+    }
+    
+    // not thread safe, just for unit test
+    const PeerSyncState* const GetSyncState(PeerId id) const
+    {
+        LOCK(cs_block_sync_);
+        auto it = map_sync_state_.find(id);
+        if (it != map_sync_state_.end())
+            return &(it->second);
+        return nullptr;
     }
     
     void ErasePeerSyncState(PeerId id);

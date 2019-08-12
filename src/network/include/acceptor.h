@@ -6,49 +6,35 @@
 #include "node.h"
 
 
-// inbound socket connection
 class Acceptor : Uncopyable {
 public:
-    Acceptor()
-        : listen_socket_(SingletonListenSocket::GetInstance())
-    {
-        listen_socket_.Create(AF_INET6, SOCK_STREAM, IPPROTO_TCP);
-    }
+    Acceptor();
     
-    // for mock
-    explicit Acceptor(SocketInterface& socket)
-        : listen_socket_(socket) {}
-    
-    ~Acceptor()
-    {
-        listen_socket_.Close();
-    }
-    
-    bool BindAndListen();
-    bool Accept();
-
-private:
-    SocketInterface& listen_socket_;
-};
-
-class Accept2 : Uncopyable {
-public:
-    Accept2();
-    
-    ~Accept2()
+    /*~Acceptor()
     {
         sock_event_.EvconnlistenerFree();
         sock_event_.EventBaseFree();
-    }
+    }*/
     
     bool StartEventLoop();
-    
-private:
-    SockEvent sock_event_;
-    struct sockaddr_in6 sock_addr_;
+    void ExitEventLoop()
+    {
+        event_base_loopexit(base_, NULL);
+    }
     
     static void AcceptConnCb(struct evconnlistener *listener, evutil_socket_t fd,
                              struct sockaddr *addr, int socklen, void *arg);
+    
+    const struct sockaddr_in6& sock_addr() const
+    {
+        return sock_addr_;
+    }
+    
+private:
+    struct event_base *base_;
+    struct evconnlistener *listener_;
+    struct sockaddr_in6 sock_addr_;    
+    
     static void AcceptErrCb(struct evconnlistener *listener, void *arg);
     static void ConnReadCb(struct bufferevent *bev, void *ctx);
     static void ConnEventCb(struct bufferevent *bev, short events, void *ctx);

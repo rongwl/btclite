@@ -1,5 +1,6 @@
 #include "hash.h"
 
+
 void DoubleSha256(const uint8_t in[], size_t length, Hash256 *out)
 {
     std::unique_ptr<Botan::HashFunction> hash_func(Botan::HashFunction::create("SHA-256"));

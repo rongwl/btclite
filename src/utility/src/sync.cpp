@@ -1,8 +1,9 @@
+#include "sync.h"
+
 #include <set>
 #include <sstream>
 
 #include "utility/include/logging.h"
-#include "sync.h"
 
 
 #ifdef CHECK_LOCKORDER

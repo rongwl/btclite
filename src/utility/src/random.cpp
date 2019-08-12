@@ -1,7 +1,8 @@
+#include "random.h"
+
 #include <botan/system_rng.h>
 #include <random>
 
-#include "random.h"
 
 uint64_t Random::GetUint64(uint64_t max)
 {

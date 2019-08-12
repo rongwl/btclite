@@ -1,7 +1,8 @@
+#include "fullnode/include/config.h"
+
 #include <algorithm>
 #include <arpa/inet.h>
 
-#include "fullnode/include/config.h"
 #include "error.h"
 #include "utility/include/logging.h"
 

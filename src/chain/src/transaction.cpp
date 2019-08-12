@@ -1,7 +1,8 @@
+#include "transaction.h"
+
 #include <botan/hash.h>
 #include <numeric>
 
-#include "transaction.h"
 
 std::string TxIn::ToString() const
 {
