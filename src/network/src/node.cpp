@@ -37,8 +37,10 @@ Node::~Node()
 {
     if (bev_)
         bufferevent_free(bev_);
-    auto task = std::bind(&BlockSync::ErasePeerSyncState, &(SingletonBlockSync::GetInstance()), std::placeholders::_1);
-    SingletonThreadPool::GetInstance().AddTask(std::function<void(PeerId)>(task), id_);
+    if (!SingletonNetInterrupt::GetInstance()) {
+        auto task = std::bind(&BlockSync::ErasePeerSyncState, &(SingletonBlockSync::GetInstance()), std::placeholders::_1);
+        SingletonThreadPool::GetInstance().AddTask(std::function<void(PeerId)>(task), id_);
+    }
 }
 
 void Node::InactivityTimeoutCb(std::shared_ptr<Node> node)

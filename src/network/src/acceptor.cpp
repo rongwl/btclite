@@ -14,34 +14,31 @@ Acceptor::Acceptor()
     sock_addr_.sin6_scope_id = 0;
 }
 
-bool Acceptor::StartEventLoop()
+bool Acceptor::InitEvent()
 {
+    evthread_use_pthreads();
+    
     if (nullptr == (base_ = event_base_new())) {
         BTCLOG(LOG_LEVEL_ERROR) << "open event_base failed";
         return false;
     }
     
     if (nullptr == (listener_ = evconnlistener_new_bind(base_, AcceptConnCb, NULL,
-                               LEV_OPT_CLOSE_ON_FREE|LEV_OPT_REUSEABLE,
-                               SOMAXCONN, (const struct sockaddr*)&sock_addr_,
-                               sizeof(sock_addr_))))
+                                LEV_OPT_CLOSE_ON_FREE|LEV_OPT_REUSEABLE,
+                                SOMAXCONN, (const struct sockaddr*)&sock_addr_,
+                                sizeof(sock_addr_))))
     {
-        event_base_free(base_);
         BTCLOG(LOG_LEVEL_ERROR) << "create event listener failed";
         return false;
     }
     
     //Disable Nagle's algorithm
     if (!Socket(evconnlistener_get_fd(listener_)).SetSockNoDelay()) {
-        evconnlistener_free(listener_);
-        event_base_free(base_);
         BTCLOG(LOG_LEVEL_ERROR) << "setting socket to no-delay failed, error:" << std::strerror(errno);
         return false;
     } 
     
     evconnlistener_set_error_cb(listener_, AcceptErrCb);
-    
-    event_base_dispatch(base_);
     
     return true;
 }
@@ -94,7 +91,6 @@ void Acceptor::AcceptConnCb(struct evconnlistener *listener, evutil_socket_t fd,
     nodes.AddNode(node);    
     if (!nodes.GetNode(node->id())) {
         BTCLOG(LOG_LEVEL_WARNING) << "save new node to nodes failed";
-        bufferevent_free(bev);
         return;
     }
     
@@ -108,10 +104,9 @@ void Acceptor::AcceptConnCb(struct evconnlistener *listener, evutil_socket_t fd,
 
 void Acceptor::AcceptErrCb(struct evconnlistener *listener, void *arg)
 {
-    struct event_base *base = evconnlistener_get_base(listener);
     int err = EVUTIL_SOCKET_ERROR();
 
-    BTCLOG(LOG_LEVEL_WARNING) << "listen on event failed, error:" << evutil_socket_error_to_string(err);
+    BTCLOG(LOG_LEVEL_WARNING) << "accept new socket failed, error:" << evutil_socket_error_to_string(err);
 }
 
 void Acceptor::ConnReadCb(struct bufferevent *bev, void *ctx)

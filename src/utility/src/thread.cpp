@@ -1,12 +1,17 @@
 #include "thread.h"
 
 
+void SetThreadName(const char* name)
+{
+
+}
+
 ThreadInterrupt::operator bool() const
 {
     return flag.load(std::memory_order_acquire);
 }
 
-void ThreadInterrupt::reset()
+void ThreadInterrupt::Reset()
 {
     flag.store(false, std::memory_order_release);
 }
@@ -20,20 +25,20 @@ void ThreadInterrupt::operator()()
     cond.notify_all();
 }
 
-bool ThreadInterrupt::sleep_for(std::chrono::milliseconds rel_time)
+bool ThreadInterrupt::Sleep_for(std::chrono::milliseconds rel_time)
 {
     std::unique_lock<std::mutex> lock(mut);
     return !cond.wait_for(lock, rel_time, [this]() { return flag.load(std::memory_order_acquire); });
 }
 
-bool ThreadInterrupt::sleep_for(std::chrono::seconds rel_time)
+bool ThreadInterrupt::Sleep_for(std::chrono::seconds rel_time)
 {
-    return sleep_for(std::chrono::duration_cast<std::chrono::milliseconds>(rel_time));
+    return Sleep_for(std::chrono::duration_cast<std::chrono::milliseconds>(rel_time));
 }
 
-bool ThreadInterrupt::sleep_for(std::chrono::minutes rel_time)
+bool ThreadInterrupt::Sleep_for(std::chrono::minutes rel_time)
 {
-    return sleep_for(std::chrono::duration_cast<std::chrono::milliseconds>(rel_time));
+    return Sleep_for(std::chrono::duration_cast<std::chrono::milliseconds>(rel_time));
 }
 
 

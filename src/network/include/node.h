@@ -276,11 +276,6 @@ public:
     //bool AttemptToEvictConnection();
     int CountInbound();
     int CountOutbound();
-
-    /*const std::list<Node*>& list() const
-    {
-        return list_;
-    }*/
     
 private:
     mutable CriticalSection cs_nodes_;

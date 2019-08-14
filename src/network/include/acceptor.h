@@ -10,16 +10,32 @@ class Acceptor : Uncopyable {
 public:
     Acceptor();
     
-    /*~Acceptor()
+    ~Acceptor()
     {
-        sock_event_.EvconnlistenerFree();
-        sock_event_.EventBaseFree();
-    }*/
+        if (listener_)
+            evconnlistener_free(listener_);
+        if (base_)
+            event_base_free(base_);
+    }
     
-    bool StartEventLoop();
+    bool InitEvent();
+    void StartEventLoop()
+    {
+        BTCLOG(LOG_LEVEL_INFO) << "Dispatching acceptor event loop...";
+
+        if (base_) 
+            event_base_dispatch(base_);
+        else
+            BTCLOG(LOG_LEVEL_ERROR) << "event base is null";            
+        
+        BTCLOG(LOG_LEVEL_WARNING) << "Exited acceptor event loop";
+    }
+    
     void ExitEventLoop()
     {
-        event_base_loopexit(base_, NULL);
+        struct timeval delay = {2, 0};
+        BTCLOG(LOG_LEVEL_INFO) << "Exit acceptor event loop in 2s";
+        event_base_loopexit(base_, &delay);
     }
     
     static void AcceptConnCb(struct evconnlistener *listener, evutil_socket_t fd,
@@ -39,7 +55,6 @@ private:
     static void ConnReadCb(struct bufferevent *bev, void *ctx);
     static void ConnEventCb(struct bufferevent *bev, short events, void *ctx);
     static void CheckingTimeoutCb(evutil_socket_t fd, short event, void *arg);
-    //static void 
 };
 
 #endif // BTCLITE_ACCEPTOR_H

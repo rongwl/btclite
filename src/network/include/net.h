@@ -6,6 +6,7 @@
 #include "network_address.h"
 #include "protocol.h"
 #include "serialize.h"
+#include "thread.h"
 #include "util.h"
 
 
@@ -47,6 +48,18 @@ public:
     
 private:
     SingletonLocalNetCfg() {}
+};
+
+class SingletonNetInterrupt : Uncopyable {
+public:
+    static ThreadInterrupt& GetInstance()
+    {
+        static ThreadInterrupt interrupt;
+        return interrupt;
+    }
+    
+private:
+    SingletonNetInterrupt() {}
 };
 
 

@@ -16,7 +16,7 @@
 #include <set>
 #include <thread>
 #include <vector>
-
+#include <iostream>
 
 #define GLOBAL_OPTION_HELP     "help"
 #define GLOBAL_OPTION_DATADIR  "datadir"
@@ -119,11 +119,10 @@ public:
 class Executor : Uncopyable {
 public:    
     Executor()
-        : sig_int_(SigMonitor(SIGINT)), sig_term_(SigMonitor(SIGTERM)) {}
+        : sig_int_(SIGINT), sig_term_(SIGTERM) {}
     
     virtual bool Init() = 0;
     virtual bool Start() = 0;
-    virtual bool Run() = 0;
     virtual void Interrupt() = 0;
     virtual void Stop() = 0;
     

@@ -194,7 +194,8 @@ btc_fullnode_LDADD += $(PTHREAD_LIBS) \
                       $(PROTOBUF_LIBS) \
                       $(BOTAN_LIBS) \
                       $(GLOG_LIBS) \
-                      $(EVENT_LIBS)
+                      $(EVENT_LIBS) \
+                      $(EVENT_PTHREADS_LIBS)
 
 
 network/proto/%.pb.cc network/proto/%.pb.h: network/proto/%.proto

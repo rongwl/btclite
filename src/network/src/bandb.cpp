@@ -75,7 +75,7 @@ void BanDb::SweepBanned()
         if (now > it->second.ban_until()) {
             ban_map_.mutable_map()->erase(it->first);
             dirty_ = true;
-            BTCLOG_MOD(LOG_LEVEL_INFO, Logging::NET) << "Removed banned node ip/subnet from banlist.dat: " << it->first;
+            BTCLOG(LOG_LEVEL_VERBOSE) << "Removed banned node ip/subnet from banlist.dat: " << it->first;
         }
     }
 }
@@ -92,7 +92,20 @@ void BanDb::DumpBanList()
     if (banmap.SerializeToOstream(&fs))
         set_dirty(false);
     
-    BTCLOG_MOD(LOG_LEVEL_INFO, Logging::NET) << "Flushed " << banmap.map().size() << " banned node ips/subnets to banlist.dat";
+    BTCLOG(LOG_LEVEL_INFO) << "Flushed " << banmap.map().size() << " banned node ips/subnets to banlist.dat.";
+}
+
+bool BanDb::LoadBanList()
+{
+    LOCK(cs_ban_map_);
+    if (ban_map_.map().empty()) {
+        std::fstream fs(path_ban_list_, std::ios::in | std::ios::binary);
+        if (!fs)
+            BTCLOG(LOG_LEVEL_INFO) << "Load "<< path_ban_list_  << ", but file not found.";
+        return ban_map_.ParseFromIstream(&fs);
+    }
+    
+    return false;
 }
 
 bool BanDb::IsBanned(btclite::NetAddr addr)
@@ -101,7 +114,6 @@ bool BanDb::IsBanned(btclite::NetAddr addr)
     
     for (auto it = ban_map_.map().begin(); it != ban_map_.map().end(); ++it) {
         if (SubNet(addr).ToString() == it->first && GetTimeSeconds() < it->second.ban_until()) {
-            //std::cout << "map str:" << it->first << " subnet str:" << SubNet(addr).ToString() << '\n';
             return true;
         }
     }

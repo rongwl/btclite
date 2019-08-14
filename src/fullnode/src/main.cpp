@@ -58,7 +58,7 @@ int main(int argc, char **argv)
         }
 
         if (ret) {
-            fullnode.WaitForSignal();    
+            fullnode.WaitForSignal();
         }
         
         fullnode.Interrupt();

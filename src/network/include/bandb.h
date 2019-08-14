@@ -38,6 +38,7 @@ public:
     //-------------------------------------------------------------------------
     void SweepBanned();
     void DumpBanList();
+    bool LoadBanList();
     bool IsBanned(btclite::NetAddr addr);
     
     //-------------------------------------------------------------------------

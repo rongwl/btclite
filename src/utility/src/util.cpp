@@ -245,6 +245,7 @@ void Executor::WaitForSignal()
     while (!sig_int_.IsReceived() && !sig_term_.IsReceived()) {
         std::this_thread::sleep_for(std::chrono::milliseconds(200));
     }
+    BTCLOG(LOG_LEVEL_INFO) << "Caught an interrupt signal.";
 }
 
 void SetupEnvironment()

@@ -15,12 +15,13 @@ public:
         : network_params_(Network::SingletonParams::GetInstance(env)),
           network_args_(), local_network_config_(SingletonLocalNetCfg::GetInstance()), 
           nodes_(SingletonNodes::GetInstance()),
-          ban_db_(SingletonBanDb::GetInstance()), acceptor_() {}
+          ban_db_(SingletonBanDb::GetInstance()), acceptor_(),
+          interrupt_(SingletonNetInterrupt::GetInstance()) {}
     
     bool Init();
     bool Start();
-    bool Interrupt();
-    bool Stop();
+    void Interrupt();
+    void Stop();
     
     //-------------------------------------------------------------------------    
     const NetArgs& network_args() const
@@ -36,7 +37,7 @@ private:
     BanDb& ban_db_;
     Acceptor acceptor_;
     
-    ThreadInterrupt interrupt_;
+    ThreadInterrupt& interrupt_;
     std::thread thread_dns_seeds_;
     std::thread thread_acceptor_loop_;
     std::thread thread_open_connections_;

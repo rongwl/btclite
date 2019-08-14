@@ -17,7 +17,6 @@ public:
     //-------------------------------------------------------------------------
     bool Init();
     bool Start();
-    bool Run();
     void Interrupt();
     void Stop();
     
@@ -25,8 +24,6 @@ private:
     Chain::Params& chain_params_;
     P2P network_;
     BlockChain& block_chain_;
-
-    bool InitNetwork();
 };
 
 
