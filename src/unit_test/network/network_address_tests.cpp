@@ -281,7 +281,7 @@ TEST(NetAddrTest, MethodToSockAddr)
     
     struct sockaddr_in *sock_addr4 = reinterpret_cast<struct sockaddr_in*>(&sock_addr);
     EXPECT_EQ(sock_addr4->sin_family, AF_INET);
-    EXPECT_EQ(sock_addr4->sin_addr.s_addr, addr.GetIpv4());
+    EXPECT_EQ(sock_addr4->sin_addr.s_addr, inet_addr("192.168.1.1"));
     EXPECT_EQ(sock_addr4->sin_port, htons(addr.port()));
     
     

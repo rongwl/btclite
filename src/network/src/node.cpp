@@ -49,11 +49,6 @@ void Node::InactivityTimeoutCb(std::shared_ptr<Node> node)
     SingletonNodes::GetInstance().EraseNode(node);
 }
 
-void Node::Connect()
-{
-
-}
-
 bool Node::ParseMessage(struct evbuffer *buf)
 {
     uint8_t *raw = evbuffer_pullup(buf, MessageHeader::SIZE);
@@ -88,6 +83,52 @@ bool Node::ParseMessage(struct evbuffer *buf)
 size_t Node::Send()
 {
     return 0;
+}
+
+std::shared_ptr<Node> Nodes::GetNode(PeerId id)
+{
+    LOCK(cs_nodes_);
+    for (auto it = list_.begin(); it != list_.end(); ++it)
+        if ((*it)->id() == id)
+            return (*it);
+    
+    return nullptr;
+}
+
+std::shared_ptr<Node> Nodes::GetNode(struct bufferevent *bev)
+{
+    LOCK(cs_nodes_);
+    for (auto it = list_.begin(); it != list_.end(); ++it)
+        if ((*it)->bev() == bev)
+            return (*it);
+    
+    return nullptr;
+}
+
+std::shared_ptr<Node> Nodes::GetNode(const btclite::NetAddr& addr)
+{
+    LOCK(cs_nodes_);
+    for (auto it = list_.begin(); it != list_.end(); ++it)
+        if ((*it)->addr() == addr)
+            return (*it);
+    
+    return nullptr;
+}
+
+void Nodes::EraseNode(std::shared_ptr<Node> node)
+{
+    LOCK(cs_nodes_);
+    auto it = std::find(list_.begin(), list_.end(), node);
+    if (it != list_.end())
+        list_.erase(it);
+}
+
+void Nodes::EraseNode(PeerId id)
+{
+    LOCK(cs_nodes_);
+    for (auto it = list_.begin(); it != list_.end(); ++it)
+        if ((*it)->id() == id)
+            list_.erase(it);
 }
 
 void Nodes::ClearDisconnected()

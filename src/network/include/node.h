@@ -46,7 +46,6 @@ public:
     
     //-------------------------------------------------------------------------
     static void InactivityTimeoutCb(std::shared_ptr<Node> node);
-    void Connect();
     bool ParseMessage(struct evbuffer *buf);
     size_t Send();
     
@@ -120,6 +119,12 @@ public:
     {
         LOCK(cs_host_name_);
         return host_name_;
+    }
+    
+    void set_host_name(const std::string& name)
+    {
+        LOCK(cs_host_name_);
+        host_name_ = name;
     }
     
     const BloomFilter *bloom_filter() const
@@ -230,48 +235,21 @@ public:
         return list_.size();
     }
     
-    std::shared_ptr<Node> GetNode(PeerId id)
-    {
-        LOCK(cs_nodes_);
-        for (auto it = list_.begin(); it != list_.end(); ++it)
-            if ((*it)->id() == id)
-                return (*it);
-        return std::shared_ptr<Node>();
-    }
-    
-    std::shared_ptr<Node> GetNode(struct bufferevent *bev)
-    {
-        LOCK(cs_nodes_);
-        for (auto it = list_.begin(); it != list_.end(); ++it)
-            if ((*it)->bev() == bev)
-                return (*it);
-        return std::shared_ptr<Node>();
-    }
-    
+    //-------------------------------------------------------------------------
     void AddNode(std::shared_ptr<Node> node)
     {
         LOCK(cs_nodes_);
         list_.push_back(node);
     }
     
-    void EraseNode(std::shared_ptr<Node> node)
-    {
-        LOCK(cs_nodes_);
-        auto it = std::find(list_.begin(), list_.end(), node);
-        if (it != list_.end())
-            list_.erase(it);
-    }
+    std::shared_ptr<Node> GetNode(PeerId id);    
+    std::shared_ptr<Node> GetNode(struct bufferevent *bev);    
+    std::shared_ptr<Node> GetNode(const btclite::NetAddr& addr);    
+    void EraseNode(std::shared_ptr<Node> node);    
+    void EraseNode(PeerId id);
     
-    void EraseNode(PeerId id)
-    {
-        LOCK(cs_nodes_);
-        for (auto it = list_.begin(); it != list_.end(); ++it)
-            if ((*it)->id() == id)
-                list_.erase(it);
-    }
-    
-    void ClearDisconnected();
-    
+    //-------------------------------------------------------------------------
+    void ClearDisconnected();    
     void DisconnectBanNode(const SubNet& subnet);
     //bool AttemptToEvictConnection();
     int CountInbound();

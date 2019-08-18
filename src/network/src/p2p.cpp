@@ -16,7 +16,7 @@ bool P2P::Init()
     }
     else {
         BTCLOG(LOG_LEVEL_INFO) << "Invalid or missing banlist.dat; recreating";
-        ban_db_.set_dirty(false); // force write
+        ban_db_.set_dirty(true); // force write
         ban_db_.DumpBanList();
     }
     
@@ -67,13 +67,6 @@ void P2P::ThreadDnsSeeds()
 void P2P::ThreadOpenConnections(const std::vector<std::string> connect)
 {
 
-}
-
-void P2P::ThreadSocketHandler()
-{
-    while (!interrupt_) {
-
-    }
 }
 
 void P2P::ThreadMessageHandler()

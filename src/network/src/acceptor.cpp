@@ -19,7 +19,7 @@ bool Acceptor::InitEvent()
     evthread_use_pthreads();
     
     if (nullptr == (base_ = event_base_new())) {
-        BTCLOG(LOG_LEVEL_ERROR) << "open event_base failed";
+        BTCLOG(LOG_LEVEL_ERROR) << "Acceptor open event_base failed.";
         return false;
     }
     
@@ -28,19 +28,31 @@ bool Acceptor::InitEvent()
                                 SOMAXCONN, (const struct sockaddr*)&sock_addr_,
                                 sizeof(sock_addr_))))
     {
-        BTCLOG(LOG_LEVEL_ERROR) << "create event listener failed";
+        BTCLOG(LOG_LEVEL_ERROR) << "Acceptor create event listener failed.";
         return false;
     }
     
     //Disable Nagle's algorithm
     if (!Socket(evconnlistener_get_fd(listener_)).SetSockNoDelay()) {
-        BTCLOG(LOG_LEVEL_ERROR) << "setting socket to no-delay failed, error:" << std::strerror(errno);
+        BTCLOG(LOG_LEVEL_ERROR) << "Acceptor setting socket to no-delay failed, error:" << std::strerror(errno);
         return false;
     } 
     
     evconnlistener_set_error_cb(listener_, AcceptErrCb);
     
     return true;
+}
+
+void Acceptor::StartEventLoop()
+{
+    BTCLOG(LOG_LEVEL_INFO) << "Dispatching acceptor event loop...";
+
+    if (base_) 
+        event_base_dispatch(base_);
+    else
+        BTCLOG(LOG_LEVEL_ERROR) << "Event base for loop is null.";            
+    
+    BTCLOG(LOG_LEVEL_WARNING) << "Exited acceptor event loop.";
 }
 
 void Acceptor::AcceptConnCb(struct evconnlistener *listener, evutil_socket_t fd,
@@ -52,7 +64,7 @@ void Acceptor::AcceptConnCb(struct evconnlistener *listener, evutil_socket_t fd,
     struct event *ev_timeout;
     
     if (!addr.FromSockAddr(sock_addr))
-        BTCLOG(LOG_LEVEL_WARNING) << "unknown socket family";
+        BTCLOG(LOG_LEVEL_WARNING) << "Accept an unknown socket family address.";
     
     // According to the internet TCP_NODELAY is not carried into accepted sockets
     // on all platforms.  Set it again here just to be sure.
@@ -60,25 +72,25 @@ void Acceptor::AcceptConnCb(struct evconnlistener *listener, evutil_socket_t fd,
     
     if (SingletonBanDb::GetInstance().IsBanned(addr))
     {
-        BTCLOG_MOD(LOG_LEVEL_INFO, Logging::NET) << "connection from " << addr.ToString() << " dropped (banned)";
+        BTCLOG(LOG_LEVEL_WARNING) << "Accept a dropped(banned) addr:" << addr.ToString();
         evutil_closesocket(fd);
         return;
     }
     
     if (SingletonNodes::GetInstance().CountInbound() >= max_inbound_connections) {
-        BTCLOG(LOG_LEVEL_INFO) << "can not accept new connection, inbound connections is full";
+        BTCLOG(LOG_LEVEL_WARNING) << "Can not accept new connection because inbound connections is full";
         evutil_closesocket(fd);
         return;
     }
     
     if (nullptr == (base = evconnlistener_get_base(listener))) {
-        BTCLOG(LOG_LEVEL_WARNING) << "get event base by listener failed";
+        BTCLOG(LOG_LEVEL_WARNING) << "Acceptor get event base by listener failed.";
         evutil_closesocket(fd);
         return;
     }
     
     if (nullptr == (bev = bufferevent_socket_new(base, fd, BEV_OPT_CLOSE_ON_FREE))) {
-        BTCLOG(LOG_LEVEL_WARNING) << "create buffer event for socker fd failed";
+        BTCLOG(LOG_LEVEL_WARNING) << "Acceptor create buffer event for socker fd failed.";
         evutil_closesocket(fd);
         return;
     }
@@ -90,68 +102,23 @@ void Acceptor::AcceptConnCb(struct evconnlistener *listener, evutil_socket_t fd,
     Nodes& nodes = SingletonNodes::GetInstance();
     nodes.AddNode(node);    
     if (!nodes.GetNode(node->id())) {
-        BTCLOG(LOG_LEVEL_WARNING) << "save new node to nodes failed";
+        BTCLOG(LOG_LEVEL_WARNING) << "Acceptor save new node to nodes failed.";
         return;
     }
     
     SingletonBlockSync::GetInstance().AddSyncState(node->id(), node->addr(), node->host_name());
     
-    bufferevent_setcb(bev, ConnReadCb, NULL, ConnEventCb, NULL);
+    bufferevent_setcb(bev, LibEvent::ConnReadCb, NULL, LibEvent::ConnEventCb, NULL);
     bufferevent_enable(bev, EV_READ);
 
-    BTCLOG_MOD(LOG_LEVEL_DEBUG, Logging::NET) << "connection from " << addr.ToString() << " accepted";
+    BTCLOG(LOG_LEVEL_VERBOSE) << "Accept connection from " << addr.ToString() << " successfully.";
 }
 
 void Acceptor::AcceptErrCb(struct evconnlistener *listener, void *arg)
 {
     int err = EVUTIL_SOCKET_ERROR();
 
-    BTCLOG(LOG_LEVEL_WARNING) << "accept new socket failed, error:" << evutil_socket_error_to_string(err);
-}
-
-void Acceptor::ConnReadCb(struct bufferevent *bev, void *ctx)
-{
-    // increase reference count
-    std::shared_ptr<Node> pnode(SingletonNodes::GetInstance().GetNode(bev));
-    assert(pnode != nullptr);
-    
-    if (pnode->timers().no_receiving_timer) {
-        SingletonTimerMng::GetInstance().ResetTimer(pnode->timers().no_msg_timer);
-    }
-    
-    if (pnode->timers().no_msg_timer) {
-        TimerMng& timer_mng = SingletonTimerMng::GetInstance();
-        timer_mng.StopTimer(pnode->timers().no_msg_timer);
-        pnode->mutable_timers()->no_msg_timer.reset();
-        
-        uint32_t timeout = (pnode->version() > bip0031_version) ? no_receiving_timeout_bip31 : no_receiving_timeout;
-        pnode->mutable_timers()->no_receiving_timer = timer_mng.NewTimer(timeout, 0, Node::InactivityTimeoutCb, pnode);
-    }
-    
-    struct evbuffer *input = bufferevent_get_input(bev);    
-    pnode->ParseMessage(input);
-}
-
-void Acceptor::ConnEventCb(struct bufferevent *bev, short events, void *ctx)
-{
-    // increase reference count
-    std::shared_ptr<Node> pnode(SingletonNodes::GetInstance().GetNode(bev));
-    assert(pnode != nullptr);
-    
-    if (events & BEV_EVENT_EOF) {
-        if (!pnode->disconnected())
-            BTCLOG(LOG_LEVEL_WARNING) << "peer " << pnode->id() << " socket closed";
-        bufferevent_free(bev);
-    }
-    else if (events & BEV_EVENT_ERROR) {
-        if (errno != EWOULDBLOCK && errno != EMSGSIZE && errno != EINTR && errno != EINPROGRESS)
-        {
-            if (!pnode->disconnected())
-                BTCLOG(LOG_LEVEL_ERROR) << "peer " << pnode->id() << "socket recv error:"
-                                        << std::string(strerror(errno));
-            bufferevent_free(bev);
-        }
-    }
+    BTCLOG(LOG_LEVEL_WARNING) << "Accept new socket failed, error:" << evutil_socket_error_to_string(err);
 }
 
 void Acceptor::CheckingTimeoutCb(evutil_socket_t fd, short event, void *arg)

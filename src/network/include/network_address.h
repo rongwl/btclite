@@ -57,8 +57,8 @@ public:
     uint8_t GetByte(int n) const;
     void SetByte(int n, uint8_t value);
     void SetNByte(const uint8_t *src, size_t n);
-    uint32_t GetIpv4() const;
-    void SetIpv4(uint32_t ip);
+    uint32_t GetIpv4() const; // return ip in network byte order
+    void SetIpv4(uint32_t net_byte_order_ip);
     int GetIpv6(uint8_t *out) const;
     void SetIpv6(const uint8_t *src);
     

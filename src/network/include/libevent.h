@@ -38,8 +38,6 @@ public:
 
 class LibEvent : public EventInterface, Uncopyable {
 public:
-    /*LibEvent()
-        : ev_base_(nullptr), ev_listener_(nullptr) {}*/
     
     //-------------------------------------------------------------------------
     struct event_base *EventBaseNew();
@@ -62,19 +60,8 @@ public:
     void EvconnlistenerFree(struct evconnlistener *lev);
     
     //-------------------------------------------------------------------------
-    /*const struct event_base *ev_base() const
-    {
-        return ev_base_;
-    }
-    
-    const struct evconnlistener *ev_listener() const
-    {
-        return ev_listener_;
-    }*/
-    
-private:
-    //struct event_base *ev_base_;
-    //struct evconnlistener *ev_listener_;
+    static void ConnReadCb(struct bufferevent *bev, void *ctx);
+    static void ConnEventCb(struct bufferevent *bev, short events, void *ctx);
 };
 
 #endif // BTCLITE_LIBEVENT_H

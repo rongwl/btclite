@@ -12,6 +12,16 @@
 #include "message_types/messages.h"
 
 
+bool LocalNetConfig::IsLocal(const btclite::NetAddr& addr)
+{
+    LOCK(cs_local_net_config_);
+    for (auto it = local_addrs_.begin(); it != local_addrs_.end(); ++it)
+        if (*it == addr)
+            return true;
+    
+    return false;
+}
+
 void LocalNetConfig::LookupLocalAddrs()
 {
     // Get local host ip

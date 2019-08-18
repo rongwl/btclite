@@ -297,6 +297,7 @@ void NetAddr::SetNByte(const uint8_t *src, size_t n)
         SetByte(i, src[i]);
 }
 
+// return ip in network byte order
 uint32_t NetAddr::GetIpv4() const
 {
     ASSERT_SIZE();
@@ -305,12 +306,12 @@ uint32_t NetAddr::GetIpv4() const
     return addr_.ip(3);
 }
 
-void NetAddr::SetIpv4(uint32_t ip)
+void NetAddr::SetIpv4(uint32_t net_byte_order_ip)
 {
     ASSERT_SIZE();
     if (!IsIpv4())
         SetNByte(pch_ipv4, sizeof(pch_ipv4));
-    addr_.set_ip(3, ip);
+    addr_.set_ip(3, net_byte_order_ip);
 }
 
 int NetAddr::GetIpv6(uint8_t *out) const

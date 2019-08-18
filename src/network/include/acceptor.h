@@ -19,22 +19,12 @@ public:
     }
     
     bool InitEvent();
-    void StartEventLoop()
-    {
-        BTCLOG(LOG_LEVEL_INFO) << "Dispatching acceptor event loop...";
-
-        if (base_) 
-            event_base_dispatch(base_);
-        else
-            BTCLOG(LOG_LEVEL_ERROR) << "event base is null";            
-        
-        BTCLOG(LOG_LEVEL_WARNING) << "Exited acceptor event loop";
-    }
+    void StartEventLoop();
     
     void ExitEventLoop()
     {
         struct timeval delay = {2, 0};
-        BTCLOG(LOG_LEVEL_INFO) << "Exit acceptor event loop in 2s";
+        BTCLOG(LOG_LEVEL_INFO) << "Exit acceptor event loop in 2s...";
         event_base_loopexit(base_, &delay);
     }
     
@@ -52,8 +42,6 @@ private:
     struct sockaddr_in6 sock_addr_;    
     
     static void AcceptErrCb(struct evconnlistener *listener, void *arg);
-    static void ConnReadCb(struct bufferevent *bev, void *ctx);
-    static void ConnEventCb(struct bufferevent *bev, short events, void *ctx);
     static void CheckingTimeoutCb(evutil_socket_t fd, short event, void *arg);
 };
 

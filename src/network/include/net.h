@@ -18,6 +18,7 @@ public:
         : local_services_(ServiceFlags(NODE_NETWORK | NODE_NETWORK_LIMITED)), local_addrs_() {}
     
     void LookupLocalAddrs();
+    bool IsLocal(const btclite::NetAddr& addr);
     
     ServiceFlags local_services() const
     {
