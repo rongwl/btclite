@@ -7,6 +7,8 @@
 #include <botan/system_rng.h>
 
 #include "arithmetic.h"
+#include "serialize.h"
+
 
 using Hash256 = Uint256;
 
@@ -14,6 +16,37 @@ using Hash256 = Uint256;
 void DoubleSha256(const uint8_t in[], size_t length, Hash256 *out);
 void DoubleSha256(const std::vector<uint8_t> &in, Hash256 *out);
 void DoubleSha256(const std::string &in, Hash256 *out);
+
+
+// A writer stream (for serialization) that computes a 256-bit hash.
+class HashWStream {
+public:
+    using Container = std::vector<uint8_t>;
+    using ByteSinkType = ByteSink<Container>;
+    
+    HashWStream()
+        : vec_(), byte_sink_(vec_) {}
+    
+    void Sha256(Hash256 *out);
+    void DoubleSha256(Hash256 *out);
+    
+    template <typename T>
+    HashWStream& operator<<(const T& obj)
+    {
+        Serializer<ByteSinkType> serial(byte_sink_);
+        serial.SerialWrite(obj);
+        return *this;
+    }
+    
+    void Clear()
+    {
+        vec_.clear();
+    }
+    
+private:
+    Container vec_;
+    ByteSinkType byte_sink_;
+};
 
 
 // SipHash-2-4

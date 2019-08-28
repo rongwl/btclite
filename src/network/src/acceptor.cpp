@@ -126,7 +126,7 @@ void Acceptor::CheckingTimeoutCb(evutil_socket_t fd, short event, void *arg)
     // increase reference count
     std::shared_ptr<Node> pnode(*(reinterpret_cast<std::shared_ptr<Node>*>(arg)));
     
-    int64_t now = GetTimeSeconds();
+    int64_t now = Time::GetTimeSeconds();
     if (pnode->time_last_recv() == 0 || pnode->time_last_send() == 0)
     {
         BTCLOG(LOG_LEVEL_INFO) << "socket no message in first 60 seconds, "
@@ -147,7 +147,7 @@ void Acceptor::CheckingTimeoutCb(evutil_socket_t fd, short event, void *arg)
         SingletonNodes::GetInstance().EraseNode(pnode);
     }
     else if (pnode->ping_time().ping_nonce_sent &&
-             pnode->ping_time().ping_usec_start + conn_timeout_interval * 1000000 < GetTimeMicros())
+             pnode->ping_time().ping_usec_start + conn_timeout_interval * 1000000 < Time::GetTimeMicros())
     {
         BTCLOG(LOG_LEVEL_INFO) << "ping timeout: " << (now - pnode->ping_time().ping_usec_start / 1000000);
         pnode->set_disconnected(true);

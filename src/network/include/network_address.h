@@ -10,6 +10,16 @@
 
 
 namespace btclite {
+
+enum AddrFamily {
+    AF_UNROUTABLE = 0,
+    AF_IPV4,
+    AF_IPV6,
+    AF_TOR,
+    AF_INTERNAL,
+
+    AF_MAXIMUM,
+};
     
 class NetAddr {
 public:
@@ -17,14 +27,16 @@ public:
     static constexpr size_t ip_uint32_size = 4;
 
     NetAddr()
-        : addr_()
+        : proto_addr_()
     {
-        addr_.mutable_ip()->Resize(ip_uint32_size, 0);
+        proto_addr_.mutable_ip()->Resize(ip_uint32_size, 0);
     }
     
     explicit NetAddr(const struct sockaddr_in& addr);    
     explicit NetAddr(const struct sockaddr_in6& addr6);    
     explicit NetAddr(const struct sockaddr_storage& addr);
+    explicit NetAddr(const proto_netaddr::NetAddr& proto_addr)
+        : proto_addr_(proto_addr) {}
     
     //-------------------------------------------------------------------------
     bool IsIpv4() const;
@@ -61,12 +73,13 @@ public:
     void SetIpv4(uint32_t net_byte_order_ip);
     int GetIpv6(uint8_t *out) const;
     void SetIpv6(const uint8_t *src);
+    void GetGroup(std::vector<uint8_t> *out) const;
     
     //-------------------------------------------------------------------------
     bool operator==(const NetAddr& b) const
     {
-        return (std::memcmp(this->addr_.ip().data(), b.addr().ip().data(), ip_byte_size) == 0 &&
-                this->addr_.port() == b.addr().port());
+        return (std::memcmp(this->proto_addr_.ip().data(), b.proto_addr().ip().data(), ip_byte_size) == 0 &&
+                this->proto_addr_.port() == b.proto_addr().port());
     }
     
     bool operator!=(const NetAddr& b) const
@@ -75,12 +88,17 @@ public:
     }
     
     //-------------------------------------------------------------------------
-    const proto_netaddr::NetAddr& addr() const
+    const proto_netaddr::NetAddr& proto_addr() const
     {
-        return addr_;
+        return proto_addr_;
     }
     
-    uint32_t port() const
+    proto_netaddr::NetAddr *mutable_proto_addr()
+    {
+        return &proto_addr_;
+    }
+    
+    /*uint32_t port() const
     {
         return addr_.port();
     } 
@@ -118,12 +136,12 @@ public:
     void set_timestamp(uint32_t time)
     {
         addr_.set_timestamp(time);
-    }
+    }*/
 
 private:
-    proto_netaddr::NetAddr addr_;
+    proto_netaddr::NetAddr proto_addr_;
     
-#define ASSERT_SIZE() assert(addr_.ip().size() == 4)
+#define ASSERT_SIZE() assert(proto_addr_.ip().size() == 4)
 #define ASSERT_RANGE(N) assert(N >= 0 && N <= 15)
 #define ASSERT_VALID_BYTE(N) ASSERT_SIZE(); \
                              ASSERT_RANGE(N)
@@ -176,8 +194,8 @@ public:
     //-------------------------------------------------------------------------
     friend bool operator==(const SubNet& a, const SubNet& b)
     {
-        return (std::memcmp(a.net_addr().addr().ip().data(),
-                            b.net_addr().addr().ip().data(),
+        return (std::memcmp(a.net_addr().proto_addr().ip().data(),
+                            b.net_addr().proto_addr().ip().data(),
                             btclite::NetAddr::ip_byte_size) == 0);
     }
     

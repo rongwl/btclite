@@ -3,7 +3,7 @@
 
 void TimerMng::ResetTimer(TimerPtr timer, uint32_t timeout, uint32_t interval)
 {
-    int64_t now = GetTimeMillis();
+    int64_t now = Time::GetTimeMillis();
     if (timeout == 0)
         timer->expire_ms = now + timer->timeout;
     else {
@@ -21,7 +21,7 @@ void TimerMng::StopTimer(TimerPtr timer)
 void TimerMng::CheckTimers()
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    uint64_t now = GetTimeMillis();
+    uint64_t now = Time::GetTimeMillis();
     for (auto it = timers_.begin(); it != timers_.end(); ++it) {
         if ((*it)->suspended == false && now >= (*it)->expire_ms) {
             (*it)->suspended = true;
@@ -35,7 +35,7 @@ void TimerMng::InvokeTimerCb(TimerPtr timer)
 {
     timer->cb();
     if (timer->interval > 0) {
-        timer->expire_ms = GetTimeMillis() + timer->interval;
+        timer->expire_ms = Time::GetTimeMillis() + timer->interval;
     }
     else {
         std::lock_guard<std::mutex> lock(mutex_);

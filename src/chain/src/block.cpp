@@ -7,12 +7,9 @@
 const Hash256& BlockHeader::Hash() const
 {
     if (hash_cache_.IsNull()) {
-        std::vector<uint8_t> v;
-        ByteSink<std::vector<uint8_t> > byte_sink(v);
-        Serialize(byte_sink);
-        DoubleSha256(v, &hash_cache_);
-        // Botan hash output is big endian, Hash256 is little endian
-        ReverseEndian(hash_cache_.begin(), hash_cache_.end());
+        HashWStream hs;
+        hs << *this;
+        hs.DoubleSha256(&hash_cache_);
     }
     
     return hash_cache_;
@@ -63,7 +60,7 @@ std::string Block::ToString() const
        << "hashPrevBlock=" << header_.hashPrevBlock().ToString().substr(0,10) << ", "
        << "hashMerkleRoot=" << header_.hashMerkleRoot().ToString().substr(0,10) << ", "
        << "nTime=" << std::dec << header_.time() << ", "
-       << "nBits=" << std::hex << std::setw(8) << std::setfill('0') << header_.bits() << ", "
+       << "bits=" << std::hex << std::setw(8) << std::setfill('0') << header_.bits() << ", "
        << "nNonce=" << std::dec << header_.nonce() << ", "
        << "tx.size=" << transactions_.size() << ")\n";
 
@@ -131,7 +128,7 @@ Block CreateGenesisBlock(const std::string& coinbase, const Script& output_scrip
  * transaction cannot be spent since it did not originally exist in the
  * database.
  *
- * Block(hash=0000000000, ver=0x00000001, hashPrevBlock=0000000000, hashMerkleRoot=4a5e1e4baa, nTime=1231006505, nBits=1d00ffff, nNonce=2083236893, tx.size=1)
+ * Block(hash=0000000000, ver=0x00000001, hashPrevBlock=0000000000, hashMerkleRoot=4a5e1e4baa, nTime=1231006505, bits=1d00ffff, nNonce=2083236893, tx.size=1)
  *   Transaction(hash=4a5e1e4baa, ver=1, inputs.size=1, outputs.size=1, lock_time=0)
  *     TxIn(OutPoint(0000000000, 4294967295), coinbase 04ffff001d0104455468652054696d65732030332f4a616e2f32303039204368616e63656c6c6f72206f6e206272696e6b206f66207365636f6e64206261696c6f757420666f722062616e6b73)
  *     TxOut(value=50.00000000, scriptPubKey=4104678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5fac)

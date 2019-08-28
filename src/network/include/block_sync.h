@@ -133,14 +133,14 @@ struct DownloadState {
 };
 
 // Maintain validation-specific state about block sync
-class PeerSyncState {
+class BlockSyncState {
 public:
-    PeerSyncState(const btclite::NetAddr& addr, const std::string& addr_name)
-        : addr_(addr), name_(addr_name) {}
+    BlockSyncState(const btclite::NetAddr& addr, const std::string& addr_name)
+        : node_addr_(addr), node_name_(addr_name) {}
     
-    const btclite::NetAddr& addr() const
+    const btclite::NetAddr& node_addr() const
     {
-        return addr_;
+        return node_addr_;
     }
     
     const SyncBasicState& basic_state() const
@@ -204,8 +204,8 @@ public:
     }
     
 private:    
-    const btclite::NetAddr addr_;    
-    const std::string name_;    
+    const btclite::NetAddr node_addr_;    
+    const std::string node_name_;    
     SyncBasicState basic_state_;    
     SyncStats stats_;    
     SyncTimeState time_state_;    
@@ -216,10 +216,10 @@ private:
 
 class BlockSync : Uncopyable {
 public:
-    using MapPeerSyncState = std::map<PeerId, PeerSyncState>;
-    using MapBlockInFlight = std::map<Hash256, std::pair<PeerId, BlocksInFlight::iterator> >;
+    using MapPeerSyncState = std::map<NodeId, BlockSyncState>;
+    using MapBlockInFlight = std::map<Hash256, std::pair<NodeId, BlocksInFlight::iterator> >;
     
-    void AddSyncState(PeerId id, const btclite::NetAddr& addr, const std::string& addr_name)
+    void AddSyncState(NodeId id, const btclite::NetAddr& addr, const std::string& addr_name)
     {
         LOCK(cs_block_sync_);
         map_sync_state_.emplace_hint(map_sync_state_.end(), std::piecewise_construct,
@@ -227,7 +227,7 @@ public:
     }
     
     // not thread safe, just for unit test
-    const PeerSyncState* const GetSyncState(PeerId id) const
+    const BlockSyncState* const GetSyncState(NodeId id) const
     {
         LOCK(cs_block_sync_);
         auto it = map_sync_state_.find(id);
@@ -236,7 +236,8 @@ public:
         return nullptr;
     }
     
-    void ErasePeerSyncState(PeerId id);
+    void EraseSyncState(NodeId id);
+    bool ShouldUpdateTime(NodeId id);
 
 private:
     mutable CriticalSection cs_block_sync_;
@@ -283,7 +284,7 @@ struct OrphanTx {
     
     // When modifying, adapt the copy of this definition in unit tests.
     TxSharedPtr tx;
-    PeerId from_peer;
+    NodeId from_peer;
     int64_t time_expire;
 };
 
@@ -292,8 +293,8 @@ public:
     using MapOrphanTxs = std::map<Hash256, OrphanTx>;
     using MapPrevOrphanTxs = std::map<OutPoint, std::set<MapOrphanTxs::iterator, IterLess<MapOrphanTxs::iterator> > >;
     
-    bool AddOrphanTx(OrphanTx::TxSharedPtr tx, PeerId id);
-    void EraseOrphansFor(PeerId id);
+    bool AddOrphanTx(OrphanTx::TxSharedPtr tx, NodeId id);
+    void EraseOrphansFor(NodeId id);
     uint32_t LimitOrphanTxSize(uint32_t max_orphans);
     
 private:

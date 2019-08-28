@@ -7,6 +7,7 @@
 #include "sync.h"
 #include "utility/include/logging.h"
 
+#include <algorithm>
 #include <csignal>
 #include <cstdlib>
 #include <exception>
@@ -26,6 +27,8 @@
 #define GLOBAL_OPTION_TESTNET  "testnet"
 #define GLOBAL_OPTION_REGTEST  "regtest"
 
+
+void SetupEnvironment();
 
 class SigMonitor {
 public:
@@ -134,7 +137,67 @@ private:
     SigMonitor sig_term_;
 };
 
+/* Merge from bitcoin core 0.16.3. 
+ * Median filter over a stream of values.
+ * Returns the median of the last N numbers
+ */
+template <typename T>
+class MedianFilter
+{
+public:
+    MedianFilter(unsigned int size, T initial_value)
+        : size_(size)
+    {
+        values_.reserve(size);
+        values_.push_back(initial_value);
+        sorted_ = values_;
+    }
 
-void SetupEnvironment();
+    void Input(T value);
+    T Median() const;
+
+    int Size() const
+    {
+        return values_.size();
+    }
+
+    std::vector<T> sorted() const
+    {
+        return sorted_;
+    }
+    
+private:
+    std::vector<T> values_;
+    std::vector<T> sorted_;
+    unsigned int size_;
+};
+
+template <typename T>
+void MedianFilter<T>::Input(T value)
+{
+    if (values_.size() == size_) {
+        values_.erase(values_.begin());
+    }
+    values_.push_back(value);
+
+    sorted_.resize(values_.size());
+    std::copy(values_.begin(), values_.end(), sorted_.begin());
+    std::sort(sorted_.begin(), sorted_.end());
+}
+
+template <typename T>
+T MedianFilter<T>::Median() const
+{
+    int sorted_size = sorted_.size();
+    assert(sorted_size > 0);
+    if (sorted_size & 1) // Odd number of elements
+    {
+        return sorted_[sorted_size / 2];
+    } else // Even number of elements
+    {
+        return (sorted_[sorted_size / 2 - 1] + sorted_[sorted_size / 2]) / 2;
+    }
+}
+
 
 #endif // BTCLITE_UTIL_H

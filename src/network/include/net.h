@@ -10,7 +10,7 @@
 #include "util.h"
 
 
-using PeerId = int64_t;
+using NodeId = int64_t;
 
 class LocalNetConfig {
 public:

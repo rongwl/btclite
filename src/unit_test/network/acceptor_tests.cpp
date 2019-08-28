@@ -50,9 +50,9 @@ TEST(AcceptorTest, MethordAcceptConnCb)
         ASSERT_NE(pnode, nullptr);
         ASSERT_EQ(pnode->addr(), addr);
         
-        const PeerSyncState* const pstate = SingletonBlockSync::GetInstance().GetSyncState(i-1);
+        const BlockSyncState* const pstate = SingletonBlockSync::GetInstance().GetSyncState(i-1);
         ASSERT_NE(pstate, nullptr);
-        ASSERT_EQ(pstate->addr(), addr);
+        ASSERT_EQ(pstate->node_addr(), addr);
     }
     
     inet_pton(AF_INET6, "::ffff:1.2.3.250", client_addr.sin6_addr.s6_addr);
@@ -67,9 +67,9 @@ TEST(AcceptorTest, MethordAcceptConnCb)
     std::shared_ptr<Node> pnode = SingletonNodes::GetInstance().GetNode(count-1);
     ASSERT_NE(pnode, nullptr);
     EXPECT_EQ(pnode->addr(), addr);
-    const PeerSyncState* const pstate = SingletonBlockSync::GetInstance().GetSyncState(count-1);
+    const BlockSyncState* const pstate = SingletonBlockSync::GetInstance().GetSyncState(count-1);
     ASSERT_NE(pstate, nullptr);
-    ASSERT_EQ(pstate->addr(), addr);
+    ASSERT_EQ(pstate->node_addr(), addr);
     
     inet_pton(AF_INET6, "::ffff:1.2.3.251", client_addr.sin6_addr.s6_addr);
     acceptor.AcceptConnCb(listener, fd, (struct sockaddr*)&client_addr, sizeof(client_addr), nullptr);

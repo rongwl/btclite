@@ -10,43 +10,43 @@
 namespace btclite {
 
 NetAddr::NetAddr(const struct sockaddr_in& addr)
-    : addr_()
+    : proto_addr_()
 {
-    addr_.mutable_ip()->Resize(ip_uint32_size, 0);
+    proto_addr_.mutable_ip()->Resize(ip_uint32_size, 0);
     SetIpv4(addr.sin_addr.s_addr);
-    set_port(ntohs(addr.sin_port));
+    proto_addr_.set_port(ntohs(addr.sin_port));
 }
 
 NetAddr::NetAddr(const struct sockaddr_in6& addr6)
-    : addr_()
+    : proto_addr_()
 {
-    addr_.mutable_ip()->Resize(ip_uint32_size, 0);
+    proto_addr_.mutable_ip()->Resize(ip_uint32_size, 0);
     SetIpv6(addr6.sin6_addr.s6_addr);
-    set_port(ntohs(addr6.sin6_port));
-    set_scope_id(addr6.sin6_scope_id);
+    proto_addr_.set_port(ntohs(addr6.sin6_port));
+    proto_addr_.set_scope_id(addr6.sin6_scope_id);
 }
 
 NetAddr::NetAddr(const struct sockaddr_storage& addr)
-    : addr_()
+    : proto_addr_()
 {
-    addr_.mutable_ip()->Resize(ip_uint32_size, 0);
+    proto_addr_.mutable_ip()->Resize(ip_uint32_size, 0);
     if (addr.ss_family == AF_INET) {
         const struct sockaddr_in *addr4 = reinterpret_cast<const struct sockaddr_in*>(&addr);
         SetIpv4(addr4->sin_addr.s_addr);
-        set_port(ntohs(addr4->sin_port));
+        proto_addr_.set_port(ntohs(addr4->sin_port));
     }
     else {
         const struct sockaddr_in6 *addr6 = reinterpret_cast<const struct sockaddr_in6*>(&addr);
         SetIpv6(addr6->sin6_addr.s6_addr);
-        set_port(ntohs(addr6->sin6_port));
-        set_scope_id(addr6->sin6_scope_id);
+        proto_addr_.set_port(ntohs(addr6->sin6_port));
+        proto_addr_.set_scope_id(addr6->sin6_scope_id);
     }
 }
 
 bool NetAddr::IsIpv4() const
 {
     ASSERT_SIZE();
-    return (std::memcmp(addr_.ip().data(), pch_ipv4, sizeof(pch_ipv4)) == 0);
+    return (std::memcmp(proto_addr_.ip().data(), pch_ipv4, sizeof(pch_ipv4)) == 0);
 }
 
 bool NetAddr::IsIpv6() const
@@ -114,17 +114,17 @@ bool NetAddr::IsRFC4843() const
 
 bool NetAddr::IsRFC4862() const
 {
-    return IsIpv6() && (addr_.ip(0) == 0x80FE && addr_.ip(1) == 0);
+    return IsIpv6() && (proto_addr_.ip(0) == 0x80FE && proto_addr_.ip(1) == 0);
 }
 
 bool NetAddr::IsRFC6052() const
 {
-    return IsIpv6() && (addr_.ip(0) == 0x9BFF6400 && addr_.ip(1) == 0);
+    return IsIpv6() && (proto_addr_.ip(0) == 0x9BFF6400 && proto_addr_.ip(1) == 0);
 }
 
 bool NetAddr::IsRFC6145() const
 {
-    return IsIpv6() && (addr_.ip(0) == 0 && addr_.ip(1) == 0 && addr_.ip(2)  == 0xFFFF);
+    return IsIpv6() && (proto_addr_.ip(0) == 0 && proto_addr_.ip(1) == 0 && proto_addr_.ip(2)  == 0xFFFF);
 }
 
 bool NetAddr::IsLocal() const
@@ -134,8 +134,8 @@ bool NetAddr::IsLocal() const
         return true;
 
     // IPv6 loopback (::1/128)
-    if (IsIpv6() && (addr_.ip(0) == 0 && addr_.ip(1) == 0 && addr_.ip(2) == 0 &&
-                     addr_.ip(3) == 0x1000000))
+    if (IsIpv6() && (proto_addr_.ip(0) == 0 && proto_addr_.ip(1) == 0 && proto_addr_.ip(2) == 0 &&
+                     proto_addr_.ip(3) == 0x1000000))
         return true;
 
     return false;
@@ -159,7 +159,7 @@ bool NetAddr::IsRoutable() const
 bool NetAddr::IsInternal() const
 {
     ASSERT_SIZE();
-    return (std::memcmp(addr_.ip().data(), btc_ip_prefix, sizeof(btc_ip_prefix)) == 0);
+    return (std::memcmp(proto_addr_.ip().data(), btc_ip_prefix, sizeof(btc_ip_prefix)) == 0);
 }
 
 bool NetAddr::IsValid() const
@@ -170,12 +170,12 @@ bool NetAddr::IsValid() const
     // header20 vectorlen3 addr26 addr26 addr26 header20 vectorlen3 addr26 addr26 addr26...
     // so if the first length field is garbled, it reads the second batch
     // of addr misaligned by 3 bytes.
-    if (std::memcmp(addr_.ip().data(), pch_ipv4+3, sizeof(pch_ipv4)-3) == 0)
+    if (std::memcmp(proto_addr_.ip().data(), pch_ipv4+3, sizeof(pch_ipv4)-3) == 0)
         return false;
 
     // unspecified IPv6 address (::/128)
     unsigned char ip6_none[ip_byte_size] = {};
-    if (std::memcmp(addr_.ip().data(), ip6_none, ip_byte_size) == 0)
+    if (std::memcmp(proto_addr_.ip().data(), ip6_none, ip_byte_size) == 0)
         return false;
 
     // documentation IPv6 address
@@ -188,11 +188,11 @@ bool NetAddr::IsValid() const
     if (IsIpv4())
     {
         // INADDR_NONE
-        if (addr_.ip(3) == INADDR_NONE)
+        if (proto_addr_.ip(3) == INADDR_NONE)
             return false;
 
         // 0
-        if (addr_.ip(3) == 0)
+        if (proto_addr_.ip(3) == 0)
             return false;
     }
 
@@ -204,7 +204,7 @@ std::string NetAddr::ToString() const
     std::stringstream ss;
     
     if (IsInternal())
-        return Botan::base32_encode(reinterpret_cast<const uint8_t*>(addr_.ip().data()) + sizeof(btc_ip_prefix),
+        return Botan::base32_encode(reinterpret_cast<const uint8_t*>(proto_addr_.ip().data()) + sizeof(btc_ip_prefix),
                                     ip_byte_size - sizeof(btc_ip_prefix)) + ".internal";
 
     if (IsIpv4())
@@ -229,7 +229,7 @@ bool NetAddr::ToSockAddr(struct sockaddr* out, socklen_t *len) const
         std::memset(paddrin, 0, *len);
         paddrin->sin_family = AF_INET;
         paddrin->sin_addr.s_addr = GetIpv4();
-        paddrin->sin_port = htons(addr_.port());
+        paddrin->sin_port = htons(proto_addr_.port());
         
         return true;
     }
@@ -243,8 +243,8 @@ bool NetAddr::ToSockAddr(struct sockaddr* out, socklen_t *len) const
         std::memset(paddrin6, 0, *len);
         paddrin6->sin6_family = AF_INET6;
         GetIpv6(paddrin6->sin6_addr.s6_addr);
-        paddrin6->sin6_port = htons(addr_.port());
-        paddrin6->sin6_scope_id = addr_.scope_id();
+        paddrin6->sin6_port = htons(proto_addr_.port());
+        paddrin6->sin6_scope_id = proto_addr_.scope_id();
         
         return true;
     }
@@ -268,17 +268,17 @@ bool NetAddr::FromSockAddr(const struct sockaddr *in)
 
 void NetAddr::Clear()
 {
-    addr_.clear_timestamp();
-    addr_.clear_services();
-    for (int i = 0; i < addr_.ip_size(); i++)
-        addr_.set_ip(i, 0);
-    addr_.clear_port();
+    proto_addr_.clear_timestamp();
+    proto_addr_.clear_services();
+    for (int i = 0; i < proto_addr_.ip_size(); i++)
+        proto_addr_.set_ip(i, 0);
+    proto_addr_.clear_port();
 }
 
 uint8_t NetAddr::GetByte(int n) const
 {
     ASSERT_VALID_BYTE(n);
-    const uint8_t *byte = reinterpret_cast<const uint8_t*>(addr_.ip().data());
+    const uint8_t *byte = reinterpret_cast<const uint8_t*>(proto_addr_.ip().data());
     
     return byte[n];
 }
@@ -286,7 +286,7 @@ uint8_t NetAddr::GetByte(int n) const
 void NetAddr::SetByte(int n, uint8_t value)
 {
     ASSERT_VALID_BYTE(n);
-    uint8_t *byte = const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(addr_.ip().data()));
+    uint8_t *byte = const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(proto_addr_.ip().data()));
     byte[n] = value;
 }
 
@@ -303,7 +303,7 @@ uint32_t NetAddr::GetIpv4() const
     ASSERT_SIZE();
     if (!IsIpv4())
         return INADDR_NONE;
-    return addr_.ip(3);
+    return proto_addr_.ip(3);
 }
 
 void NetAddr::SetIpv4(uint32_t net_byte_order_ip)
@@ -311,7 +311,7 @@ void NetAddr::SetIpv4(uint32_t net_byte_order_ip)
     ASSERT_SIZE();
     if (!IsIpv4())
         SetNByte(pch_ipv4, sizeof(pch_ipv4));
-    addr_.set_ip(3, net_byte_order_ip);
+    proto_addr_.set_ip(3, net_byte_order_ip);
 }
 
 int NetAddr::GetIpv6(uint8_t *out) const
@@ -320,7 +320,7 @@ int NetAddr::GetIpv6(uint8_t *out) const
     if (!IsIpv6())
         return -1;
     
-    std::memcpy(out, addr_.ip().data(), ip_byte_size);
+    std::memcpy(out, proto_addr_.ip().data(), ip_byte_size);
     
     return 0;
 }
@@ -330,6 +330,71 @@ void NetAddr::SetIpv6(const uint8_t *src)
     ASSERT_SIZE();
     for (int i = 0; i < ip_byte_size; i++)
         SetByte(i, src[i]);
+}
+
+void NetAddr::GetGroup(std::vector<uint8_t> *out) const
+{
+    ASSERT_SIZE();
+    int af = AF_IPV6;
+    int start_byte = 0;
+    int bits = 16;
+
+    // all local addresses belong to the same group
+    if (IsLocal())
+    {
+        af = 255;
+        bits = 0;
+    }
+    // all internal-usage addresses get their own group
+    if (IsInternal())
+    {
+        af = AF_INTERNAL;
+        start_byte = sizeof(btc_ip_prefix);
+        bits = (ip_byte_size - sizeof(btc_ip_prefix)) * 8;
+    }
+    // all other unroutable addresses belong to the same group
+    else if (!IsRoutable())
+    {
+        af = AF_UNROUTABLE;
+        bits = 0;
+    }
+    // for IPv4 addresses, '1' + the 16 higher-order bits of the IP
+    // includes mapped IPv4, SIIT translated IPv4, and the well-known prefix
+    else if (IsIpv4() || IsRFC6145() || IsRFC6052())
+    {
+        af = AF_IPV4;
+        start_byte = 12;
+    }
+    // for 6to4 tunnelled addresses, use the encapsulated IPv4 address
+    else if (IsRFC3964())
+    {
+        af = AF_IPV4;
+        start_byte = 2;
+    }
+    // for Teredo-tunnelled IPv6 addresses, use the encapsulated IPv4 address
+    else if (IsRFC4380())
+    {
+        out->push_back(AF_IPV4);
+        out->push_back(GetByte(12) ^ 0xFF);
+        out->push_back(GetByte(13) ^ 0xFF);
+        return;
+    }
+    // for he.net, use /36 groups
+    else if (GetByte(0) == 0x20 && GetByte(1) == 0x01 && GetByte(2) == 0x04 && GetByte(3) == 0x70)
+        bits = 36;
+    // for the rest of the IPv6 network, use /32 groups
+    else
+        bits = 32;
+
+    out->push_back(af);
+    while (bits >= 8)
+    {
+        out->push_back(GetByte(start_byte));
+        start_byte++;
+        bits -= 8;
+    }
+    if (bits > 0)
+        out->push_back(GetByte(start_byte) | ((1 << (8 - bits)) - 1));
 }
 
 

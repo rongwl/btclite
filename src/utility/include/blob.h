@@ -41,7 +41,7 @@ public:
         std::memset(&this->front(), 0, width_);
     }
     
-    size_t size() const
+    size_t Size() const
     {
         return width_;
     }
@@ -98,7 +98,7 @@ private:
 };
 
 
-// modified from boost.iostreams example
+// merge from boost.iostreams example
 // boost.org/doc/libs/1_55_0/libs/iostreams/doc/tutorial/container_source.html
 template <typename Container, typename SinkType, typename CharType>
 class ContainerSink {

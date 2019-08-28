@@ -55,7 +55,7 @@ public:
         return time_connected_;
     }
     
-    PeerId id() const
+    NodeId id() const
     {
         return id_;
     }
@@ -166,7 +166,7 @@ public:
     
 private:
     const int64_t time_connected_;
-    const PeerId id_;
+    const NodeId id_;
     std::atomic<int> version_;
     const ServiceFlags services_;
     const int start_height_;
@@ -206,7 +206,7 @@ private:
 
 struct NodeEvictionCandidate
 {
-    PeerId id;
+    NodeId id;
     int64_t time_connected;
     int64_t min_ping_usec_time;
     int64_t last_block_time;
@@ -223,9 +223,9 @@ public:
     Nodes()
         : list_() {}
     
-    PeerId GetNewNodeId()
+    NodeId GetNewNodeId()
     {
-        static std::atomic<PeerId> last_node_id = 0;
+        static std::atomic<NodeId> last_node_id = 0;
         return last_node_id.fetch_add(1, std::memory_order_relaxed);
     }
     
@@ -242,11 +242,11 @@ public:
         list_.push_back(node);
     }
     
-    std::shared_ptr<Node> GetNode(PeerId id);    
+    std::shared_ptr<Node> GetNode(NodeId id);    
     std::shared_ptr<Node> GetNode(struct bufferevent *bev);    
     std::shared_ptr<Node> GetNode(const btclite::NetAddr& addr);    
     void EraseNode(std::shared_ptr<Node> node);    
-    void EraseNode(PeerId id);
+    void EraseNode(NodeId id);
     
     //-------------------------------------------------------------------------
     void ClearDisconnected();    

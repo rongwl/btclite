@@ -5,21 +5,28 @@ package proto_peers;
 import "network_address.proto";
 
 message Peer {
-	proto_netaddr.NetAddr addr = 1;
-	
-	// where knowledge about this address first came from
-	proto_netaddr.NetAddr source = 2; 
-	
-	// connection attempts since last successful attempt
-	uint32 attemps = 3; 
-	
-	// is in tried set?
-	//bool tried = 4;
+    proto_netaddr.NetAddr addr = 1;
+    
+    // where knowledge about this address first came from
+    proto_netaddr.NetAddr source = 2;
+    
+    // connection attempts since last successful attempt
+    uint32 attempts = 3; 
+    
+    // last try whatsoever by us 
+    int64 last_try = 4;
+    
+    // last successful connection by us
+    int64 last_success = 5;
 }
 
 message Peers {
-    map<uint32, Peer> new_peers = 1;
-    map<uint32, Peer> tried_peers = 2;
+    map<uint64, Peer> map_peers = 1;
+    map<uint64, uint64> new_tbl = 2;
+    map<uint64, uint64> tried_tbl = 3;
+    
+    // secret key to randomize map key
+    repeated fixed64 key = 4;
 }
 /* Stochastic peers manager, merge from bitcoin0.16.3
  *

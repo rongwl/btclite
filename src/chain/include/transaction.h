@@ -408,8 +408,8 @@ public:
     }
     
     //-------------------------------------------------------------------------
-    template <typename Stream> void Serialize(Stream& os, bool) const;
-    template <typename Stream> void UnSerialize(Stream& is, bool);
+    template <typename Stream> void Serialize(Stream& os, bool witness = false) const;
+    template <typename Stream> void UnSerialize(Stream& is, bool witness = false);
     
     //-------------------------------------------------------------------------
     bool operator==(const Transaction& b) const

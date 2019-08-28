@@ -60,8 +60,8 @@ TEST(BanDbTest, MethodSweepBanned)
     SubNet subnet(addr);
     proto_banmap::BanEntry ban_entry;
     ban_entry.set_version(1);
-    ban_entry.set_create_time(GetTimeSeconds()-2);
-    ban_entry.set_ban_until(GetTimeSeconds()-1);
+    ban_entry.set_create_time(Time::GetTimeSeconds()-2);
+    ban_entry.set_ban_until(Time::GetTimeSeconds()-1);
     ban_entry.set_ban_reason(BanDb::NodeMisbehaving);
     proto_banmap::BanMap ban_map;
     (*ban_map.mutable_map())[subnet.ToString()] = ban_entry;
@@ -99,8 +99,8 @@ TEST(BanDbTest, MethodDumpBanList)
         addr.SetIpv4(inet_addr(buf));
         SubNet subnet(addr);
         ban_entry.set_version(i);
-        ban_entry.set_create_time(GetTimeSeconds());
-        ban_entry.set_ban_until(GetTimeSeconds()+default_misbehaving_bantime);
+        ban_entry.set_create_time(Time::GetTimeSeconds());
+        ban_entry.set_ban_until(Time::GetTimeSeconds()+default_misbehaving_bantime);
         ban_entry.set_ban_reason(BanDb::ManuallyAdded);
         (*ban_map.mutable_map())[subnet.ToString()] = ban_entry;
     }
@@ -134,8 +134,8 @@ TEST(BanDbTest, MethordLoadBanList)
     addr.SetIpv4(inet_addr(buf));
     SubNet subnet(addr);
     ban_entry.set_version(1);
-    ban_entry.set_create_time(GetTimeSeconds());
-    ban_entry.set_ban_until(GetTimeSeconds()+default_misbehaving_bantime);
+    ban_entry.set_create_time(Time::GetTimeSeconds());
+    ban_entry.set_ban_until(Time::GetTimeSeconds()+default_misbehaving_bantime);
     ban_entry.set_ban_reason(BanDb::ManuallyAdded);
     (*ban_map.mutable_map())[subnet.ToString()] = ban_entry;
 
@@ -172,8 +172,8 @@ TEST(BanDbTest, MethodIsBanned)
         std::sprintf(buf, "1.2.3.%d", i);
         addr.SetIpv4(inet_addr(buf));
         ban_entry.set_version(i);
-        ban_entry.set_create_time(GetTimeSeconds());
-        ban_entry.set_ban_until(GetTimeSeconds()+default_misbehaving_bantime);
+        ban_entry.set_create_time(Time::GetTimeSeconds());
+        ban_entry.set_ban_until(Time::GetTimeSeconds()+default_misbehaving_bantime);
         ban_entry.set_ban_reason(BanDb::NodeMisbehaving);
         (*ban_map.mutable_map())[SubNet(addr).ToString()] = ban_entry;
     }

@@ -102,7 +102,7 @@ bool LookupIntern(const char *psz_name, std::vector<btclite::NetAddr> *out,
         {
             assert(aiTrav->ai_addrlen >= sizeof(sockaddr_in6));
             resolved.SetIpv6(((struct sockaddr_in6*)aiTrav->ai_addr)->sin6_addr.s6_addr);
-            resolved.set_scope_id(((struct sockaddr_in6*)aiTrav->ai_addr)->sin6_scope_id);
+            resolved.mutable_proto_addr()->set_scope_id(((struct sockaddr_in6*)aiTrav->ai_addr)->sin6_scope_id);
         }
         /* Never allow resolving to an internal address. Consider any such result invalid */
         if (!resolved.IsInternal()) {

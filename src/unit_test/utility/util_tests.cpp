@@ -36,4 +36,35 @@ TEST(ArgsTest, MethodGetBoolArg)
     EXPECT_TRUE(args.GetBoolArg("test", false));
 }
 
+TEST(MedianFilterTest, Constructor)
+{
+    MedianFilter<int> filter(5, 15);
+    EXPECT_EQ(filter.sorted()[0], 15);
+}
+
+TEST(MedianFilterTest, MethordMedian)
+{
+    MedianFilter<int> filter(5, 15);
+    
+    EXPECT_EQ(filter.Median(), 15);
+
+    filter.Input(20); // [15 20]
+    EXPECT_EQ(filter.Median(), 17);
+
+    filter.Input(30); // [15 20 30]
+    EXPECT_EQ(filter.Median(), 20);
+
+    filter.Input(3); // [3 15 20 30]
+    EXPECT_EQ(filter.Median(), 17);
+
+    filter.Input(7); // [3 7 15 20 30]
+    EXPECT_EQ(filter.Median(), 15);
+
+    filter.Input(18); // [3 7 18 20 30]
+    EXPECT_EQ(filter.Median(), 18);
+
+    filter.Input(0); // [0 3 7 18 30]
+    EXPECT_EQ(filter.Median(), 7);
+}
+
 

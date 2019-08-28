@@ -32,7 +32,7 @@ std::string HexEncode(Iterator rbegin, Iterator rend, bool fSpaces=false)
 }
 
 template <typename Iterator>
-void HexDecode(const std::string& in, Iterator begin, Iterator end) // little endian storage
+void HexDecode(const std::string& in, Iterator begin, Iterator end)
 {
     auto first = std::find_if_not(in.begin(), in.end(), isspace);
     if (first == in.end())
@@ -55,17 +55,6 @@ void HexDecode(const std::string& in, Iterator begin, Iterator end) // little en
 }
 
 void HexDecode(const std::string&, std::vector<uint8_t>*);
-
-template <typename Iterator>
-void ReverseEndian(Iterator begin, Iterator end)
-{    
-    end--;
-    while (begin < end) {
-        std::swap(*begin, *end);
-        begin++;
-        end--;
-    }
-}
 
 
 #endif // BTCLITE_UTILSTRENCODINGS_H

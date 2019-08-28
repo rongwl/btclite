@@ -52,4 +52,19 @@ constexpr int conn_timeout_interval = 20 * 60;
 //! BIP 0031, pong message, is enabled for all versions AFTER this one
 constexpr int bip0031_version = 60000;
 
+constexpr uint32_t max_timedata_samples = 200;
+
+// how old addresses can maximally be
+constexpr uint16_t peer_horizon_days = 30;
+// after how many failed attempts we give up on a new node
+constexpr uint16_t peer_retries = 3;
+// how many successive failures are allowed ...
+constexpr uint16_t max_peer_failures = 10;
+// in at least this many days
+constexpr uint16_t min_peer_fail_days = 7;
+//! the maximum percentage of nodes to return in a getaddr call
+constexpr uint16_t max_getaddr_pct = 23;
+//! the maximum number of nodes to return in a getaddr call
+constexpr uint32_t max_getaddr_count = 2500;
+
 #endif // BTCLITE_CONSTANTS_H

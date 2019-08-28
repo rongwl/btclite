@@ -87,7 +87,7 @@ void LibEvent::ConnReadCb(struct bufferevent *bev, void *ctx)
     assert(pnode != nullptr);
     
     if (pnode->timers().no_receiving_timer) {
-        SingletonTimerMng::GetInstance().ResetTimer(pnode->timers().no_msg_timer);
+        SingletonTimerMng::GetInstance().ResetTimer(pnode->timers().no_receiving_timer);
     }
     
     if (pnode->timers().no_msg_timer) {

@@ -3,14 +3,13 @@
 #include <event2/buffer.h>
 
 #include "chain.h"
-#include "random.h"
+#include "peers.h"
 #include "thread.h"
-#include "utiltime.h"
 #include "message_types/messages.h"
 
 
 Node::Node(const struct bufferevent *bev, const btclite::NetAddr& addr, bool is_inbound, std::string host_name)
-    : time_connected_(GetTimeSeconds()),
+    : time_connected_(Time::GetTimeSeconds()),
       id_(SingletonNodes::GetInstance().GetNewNodeId()),
       version_(0),
       services_(SingletonLocalNetCfg::GetInstance().local_services()),
@@ -38,8 +37,11 @@ Node::~Node()
     if (bev_)
         bufferevent_free(bev_);
     if (!SingletonNetInterrupt::GetInstance()) {
-        auto task = std::bind(&BlockSync::ErasePeerSyncState, &(SingletonBlockSync::GetInstance()), std::placeholders::_1);
-        SingletonThreadPool::GetInstance().AddTask(std::function<void(PeerId)>(task), id_);
+        if (SingletonBlockSync::GetInstance().ShouldUpdateTime(id_))
+            SingletonPeers::GetInstance().UpdateTime(addr_);
+        
+        auto task = std::bind(&BlockSync::EraseSyncState, &(SingletonBlockSync::GetInstance()), std::placeholders::_1);
+        SingletonThreadPool::GetInstance().AddTask(std::function<void(NodeId)>(task), id_);
     }
 }
 
@@ -85,7 +87,7 @@ size_t Node::Send()
     return 0;
 }
 
-std::shared_ptr<Node> Nodes::GetNode(PeerId id)
+std::shared_ptr<Node> Nodes::GetNode(NodeId id)
 {
     LOCK(cs_nodes_);
     for (auto it = list_.begin(); it != list_.end(); ++it)
@@ -123,7 +125,7 @@ void Nodes::EraseNode(std::shared_ptr<Node> node)
         list_.erase(it);
 }
 
-void Nodes::EraseNode(PeerId id)
+void Nodes::EraseNode(NodeId id)
 {
     LOCK(cs_nodes_);
     for (auto it = list_.begin(); it != list_.end(); ++it)

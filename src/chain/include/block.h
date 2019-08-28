@@ -18,10 +18,10 @@ public:
         Clear();
     }
     BlockHeader(int32_t version, const Hash256& prev_block_hash, const Hash256& merkle_root_hash,
-                uint32_t time, uint32_t nBits, uint32_t nonce)
+                uint32_t time, uint32_t bits, uint32_t nonce)
         : version_(version), 
           prev_block_hash_(prev_block_hash), merkle_root_hash_(merkle_root_hash),
-          time_(time), nBits_(nBits), nonce_(nonce)
+          time_(time), nBits_(bits), nonce_(nonce)
     {
         Hash();
     }

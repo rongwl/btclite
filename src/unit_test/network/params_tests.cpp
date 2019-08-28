@@ -1,9 +1,11 @@
+#include "network/include/params.h"
+
 #include <gtest/gtest.h>
 #include <vector>
 
 #include "constants.h"
 #include "environment.h"
-#include "network/include/params.h"
+
 
 TEST(NetworkParamsTest, Constructor)
 {

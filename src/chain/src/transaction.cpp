@@ -114,13 +114,11 @@ std::string Transaction::ToString() const
 const Hash256& Transaction::Hash() const
 {
     if (hash_cache_.IsNull()) {
-        std::vector<uint8_t> v;
-        ByteSink<std::vector<uint8_t> > byte_sink(v);
-        Serialize(byte_sink, false);
-        DoubleSha256(v, &hash_cache_);
-        // Botan hash output is big endian, Hash256 is little endian
-        ReverseEndian(hash_cache_.begin(), hash_cache_.end());
+        HashWStream hs;
+        hs << *this;
+        hs.DoubleSha256(&hash_cache_);
     }
+    
     return hash_cache_;
 }
 

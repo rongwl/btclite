@@ -3,21 +3,17 @@
 #include "utiltime.h"
 
 
-void BlockSync::ErasePeerSyncState(PeerId id)
+void BlockSync::EraseSyncState(NodeId id)
 {
     LOCK(cs_block_sync_);
     
     auto it = map_sync_state_.find(id);
     if (it == map_sync_state_.end())
         return;
-    PeerSyncState& state = it->second;
+    BlockSyncState& state = it->second;
     
     if (state.basic_state().sync_started)
         sync_started_count_--;
-    
-    if (state.stats().misbehavior_score == 0 && state.basic_state().connected) {
-        
-    }
     
     for (const QueuedBlock& entry : state.blocks_in_flight().list) {
         map_block_in_flight_.erase(entry.hash);
@@ -41,7 +37,19 @@ void BlockSync::ErasePeerSyncState(PeerId id)
     BTCLOG(LOG_LEVEL_INFO) << "Cleared nodestate for peer=" << id;
 }
 
-bool Orphans::AddOrphanTx(OrphanTx::TxSharedPtr tx, PeerId id)
+bool BlockSync::ShouldUpdateTime(NodeId id)
+{
+    LOCK(cs_block_sync_);
+    auto it = map_sync_state_.find(id);
+    if (it != map_sync_state_.end())
+        if (it->second.stats().misbehavior_score == 0 &&
+            it->second.basic_state().connected)
+            return true;
+    
+    return false;
+}
+
+bool Orphans::AddOrphanTx(OrphanTx::TxSharedPtr tx, NodeId id)
 {
     LOCK(cs_orphans_);
 
@@ -76,7 +84,7 @@ bool Orphans::AddOrphanTx(OrphanTx::TxSharedPtr tx, PeerId id)
     return true;
 }
 
-void Orphans::EraseOrphansFor(PeerId id)
+void Orphans::EraseOrphansFor(NodeId id)
 {
     LOCK(cs_orphans_);
     int erased_count = 0;
@@ -99,7 +107,7 @@ uint32_t Orphans::LimitOrphanTxSize(uint32_t max_orphans)
 
     uint32_t evicted_count = 0;
     static int64_t next_sweep;
-    int64_t now = GetTimeSeconds();
+    int64_t now = Time::GetTimeSeconds();
     if (next_sweep <= now) {
         // Sweep out expired orphan pool entries:
         int erased_count = 0;

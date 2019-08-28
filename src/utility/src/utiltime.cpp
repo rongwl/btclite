@@ -1,35 +1,41 @@
 #include "utiltime.h"
 
-#include <iomanip>
-#include <sys/time.h>
+#include <cstdlib>
+#include <set>
 
-#if defined(HAVE_CONFIG_H)
-#include "config/btclite-config.h"
-#endif
+#include "constants.h"
+#include "util.h"
 
 
-int64_t GetTimeSeconds()
+void Time::AddTimeData(const std::string& ip, int64_t offset_sample)
 {
-    time_t now = time(nullptr);
-    assert(now > 0);
-    return now;
+    // Ignore duplicates
+    static std::set<std::string> set_known;
+    if (set_known.size() == max_timedata_samples)
+        return;
+    if (!set_known.insert(ip).second)
+        return;
+
+    // Add data
+    static MedianFilter<int64_t> time_offsets(max_timedata_samples, 0);
+    time_offsets.Input(offset_sample);
+    BTCLOG(LOG_LEVEL_VERBOSE) << "Added time data, samples " << time_offsets.Size() << ", offset " << offset_sample;
+    
+    if (time_offsets.Size() >= 5 && time_offsets.Size() % 2 == 1)
+    {
+        int64_t median = time_offsets.Median();
+        LOCK(cs_time_offset_);
+        // Only let other nodes change our time by so much
+        if (abs(median) <= 70*60)
+            time_offset_ = median;
+        else
+            time_offset_ = 0;
+        
+        BTCLOG(LOG_LEVEL_VERBOSE) << "Set new btc time offset:" << time_offset_;
+    }    
 }
 
-int64_t GetTimeMillis()
-{
-    struct timeval tv;
-    assert(0 == gettimeofday(&tv, NULL));
-    return tv.tv_sec*1000 + tv.tv_usec/1000;
-}
-
-int64_t GetTimeMicros()
-{
-    struct timeval tv;
-    assert(0 == gettimeofday(&tv, NULL));
-    return tv.tv_sec*1000000+tv.tv_usec;
-}
-
-std::string DateTimeStrFormat()
+/*std::string DateTimeStrFormat()
 {
     struct timeval tv;
     assert(0 == gettimeofday(&tv, NULL));
@@ -44,4 +50,4 @@ std::string DateTimeStrFormat()
        << std::setw(2) << std::setfill('0') << tm.tm_sec << "."
        << tv.tv_usec;
     return ss.str();
-}
+}*/
