@@ -97,46 +97,6 @@ public:
     {
         return &proto_addr_;
     }
-    
-    /*uint32_t port() const
-    {
-        return addr_.port();
-    } 
-    
-    void set_port(uint32_t port)
-    {
-        addr_.set_port(port);
-    }
-    
-    uint32_t scope_id() const
-    {
-        return addr_.scope_id();
-    }
-    
-    void set_scope_id(uint32_t id)
-    {
-        addr_.set_scope_id(id);
-    }
-    
-    uint64_t services() const
-    {
-        return addr_.services();
-    }
-    
-    void set_services(uint64_t s)
-    {
-        addr_.set_services(s);
-    }
-    
-    uint32_t timestamp() const
-    {
-        return addr_.timestamp();
-    }
-    
-    void set_timestamp(uint32_t time)
-    {
-        addr_.set_timestamp(time);
-    }*/
 
 private:
     proto_netaddr::NetAddr proto_addr_;
