@@ -37,7 +37,7 @@ public:
     
     //-------------------------------------------------------------------------
     void SweepBanned();
-    void DumpBanList();
+    bool DumpBanList();
     bool LoadBanList();
     bool IsBanned(btclite::NetAddr addr);
     
@@ -47,7 +47,7 @@ public:
         return path_ban_list_;
     }
     
-    proto_banmap::BanMap ban_map() // thread safe copy
+    proto_banmap::BanMap ban_map() const // thread safe copy
     {
         LOCK(cs_ban_map_);
         return ban_map_;

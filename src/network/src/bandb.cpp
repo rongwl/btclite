@@ -48,9 +48,9 @@ bool BanDb::Erase(const SubNet& sub_net, bool dump_list)
 void BanDb::Clear()
 {
     LOCK(cs_ban_map_);
-    ban_map_.clear_map();
     dirty_ = true;
-    DumpBanList();    
+    DumpBanList(); 
+    ban_map_.clear_map();
 }
 
 bool BanDb::Add_(const SubNet& sub_net, const proto_banmap::BanEntry& ban_entry)
@@ -80,32 +80,39 @@ void BanDb::SweepBanned()
     }
 }
 
-void BanDb::DumpBanList()
+bool BanDb::DumpBanList()
 {
     SweepBanned(); // clean unused entries (if bantime has expired)
     
     if (!dirty())
-        return;
+        return false;
     
     proto_banmap::BanMap banmap = ban_map();
     std::fstream fs(path_ban_list_, std::ios::out | std::ios::trunc | std::ios::binary);
-    if (banmap.SerializeToOstream(&fs))
-        set_dirty(false);
+    if (!banmap.SerializeToOstream(&fs)) {
+        BTCLOG(LOG_LEVEL_ERROR) << "Flushing banned node to banlist.data failed.";
+        return false;
+    }
+    set_dirty(false);
     
     BTCLOG(LOG_LEVEL_INFO) << "Flushed " << banmap.map().size() << " banned node ips/subnets to banlist.dat.";
+    
+    return true;
 }
 
 bool BanDb::LoadBanList()
 {
     LOCK(cs_ban_map_);
-    if (ban_map_.map().empty()) {
-        std::fstream fs(path_ban_list_, std::ios::in | std::ios::binary);
-        if (!fs)
-            BTCLOG(LOG_LEVEL_INFO) << "Load "<< path_ban_list_  << ", but file not found.";
-        return ban_map_.ParseFromIstream(&fs);
-    }
     
-    return false;
+    if (!ban_map_.map().empty())
+        return false;
+    
+    std::fstream fs(path_ban_list_, std::ios::in | std::ios::binary);
+    if (!fs) {
+        BTCLOG(LOG_LEVEL_INFO) << "Load "<< path_ban_list_  << ", but file not found.";
+        return false;
+    }
+    return ban_map_.ParseFromIstream(&fs);
 }
 
 bool BanDb::IsBanned(btclite::NetAddr addr)

@@ -6,6 +6,7 @@
 
 #include "peers.h"
 #include "constants.h"
+#include "util_tests.h"
 
 
 TEST(PeersTest, Constructor)
@@ -18,7 +19,7 @@ TEST(PeersTest, Constructor)
     EXPECT_TRUE(std::memcmp(peers.key().data(), key, sizeof(key)));
 }
 
-TEST(PeersTest, MethordMakeMapKey)
+TEST(PeersTest, MakeMapKey)
 {
     btclite::Peers peers;
     btclite::NetAddr addr1, addr2;
@@ -42,7 +43,7 @@ TEST(PeersTest, MethordMakeMapKey)
     EXPECT_EQ(key1, key2);
 }
 
-TEST(PeersTest, MethordAdd)
+TEST(PeersTest, AddPeer)
 {
     btclite::Peers peers;
     btclite::NetAddr addr, source;
@@ -134,7 +135,7 @@ TEST(PeersTest, MethordAdd)
     EXPECT_EQ(peer.addr().port(), 8333);
 }
 
-TEST(PeersTest, MethordMakeTried)
+TEST(PeersTest, MakePeerTried)
 {
     btclite::Peers peers;
     btclite::NetAddr addr, source;
@@ -169,7 +170,7 @@ TEST(PeersTest, MethordMakeTried)
     EXPECT_FALSE(peers.MakeTried(addr));
 }
 
-TEST(PeersTest, MethordSelect)
+TEST(PeersTest, SelectPeer)
 {
     btclite::Peers peers;
     btclite::NetAddr addr, source;
@@ -190,7 +191,7 @@ TEST(PeersTest, MethordSelect)
     EXPECT_EQ(out, addr);    
 }
 
-TEST(PeersTest, MethordAttempt)
+TEST(PeersTest, AttemptPeer)
 {
     btclite::Peers peers;
     btclite::NetAddr addr, source;
@@ -213,7 +214,7 @@ TEST(PeersTest, MethordAttempt)
     EXPECT_FALSE(peers.Attempt(addr, 2000));
 }
 
-TEST(PeersTest, MethordUpdateTime)
+TEST(PeersTest, UpdatePeerTime)
 {
     btclite::Peers peers;
     btclite::NetAddr addr, source;
@@ -235,7 +236,7 @@ TEST(PeersTest, MethordUpdateTime)
     EXPECT_FALSE(peers.UpdateTime(addr, 3000));
 }
 
-TEST(PeersTest, MethordGetAddrs)
+TEST(PeersTest, GetAddresses)
 {
     btclite::Peers peers;
     btclite::NetAddr addr, source;
@@ -285,7 +286,7 @@ TEST(PeersTest, MethordGetAddrs)
     EXPECT_NE(addrs[0], addrs2[0]); // Whether GetAddrs returns randomized vector
 }
 
-TEST(PeersTest, MethordIsTerrible)
+TEST(PeersTest, PeerIsTerrible)
 {
     proto_peers::Peer peer;
     int64_t now = 10000000;
@@ -317,4 +318,45 @@ TEST(PeersTest, MethordIsTerrible)
     peer.set_last_success(now-min_peer_fail_days*24*60*60-1);
     peer.set_attempts(max_peer_failures-1);
     EXPECT_FALSE(btclite::Peers::IsTerrible(peer, now));
+}
+
+TEST(PeersDbTest, Constructor)
+{
+    TestExecutorConfig::set_path_data_dir(fs::path("/foo"));
+    PeersDb peers_db;
+    EXPECT_EQ(peers_db.path_peers(), fs::path("/foo") / "peers.dat");
+}
+
+TEST(PeersDbTest, DumpAndLoadPeers)
+{
+    btclite::Peers& peers = SingletonPeers::GetInstance();
+    btclite::NetAddr addr, source;
+    int64_t now = SingletonTime::GetInstance().GetAdjustedTime();
+    
+    source.SetIpv4(inet_addr("250.1.2.1"));
+    addr.SetIpv4(inet_addr("250.250.2.1"));
+    addr.mutable_proto_addr()->set_timestamp(now);
+    ASSERT_TRUE(peers.Add(addr, source));
+    ASSERT_TRUE(peers.MakeTried(addr));
+    addr.SetIpv4(inet_addr("250.251.2.2"));
+    ASSERT_TRUE(peers.Add(addr, source));
+    ASSERT_TRUE(peers.MakeTried(addr));
+    addr.SetIpv4(inet_addr("251.252.2.3"));
+    ASSERT_TRUE(peers.Add(addr, source));
+    addr.SetIpv4(inet_addr("252.253.3.4"));
+    ASSERT_TRUE(peers.Add(addr, source));
+    addr.SetIpv4(inet_addr("252.254.4.5"));
+    ASSERT_TRUE(peers.Add(addr, source));
+    
+    TestExecutorConfig::set_path_data_dir(fs::path("/tmp"));
+    PeersDb peers_db;
+    ASSERT_TRUE(peers_db.DumpPeers());
+    ASSERT_FALSE(peers_db.LoadPeers());
+    peers.Clear();
+    ASSERT_TRUE(peers_db.LoadPeers());
+    EXPECT_EQ(peers.Size(), 5);
+    EXPECT_EQ(peers.proto_peers().new_tbl().size(), 3);
+    EXPECT_EQ(peers.proto_peers().tried_tbl().size(), 2);
+    
+    fs::remove(peers_db.path_peers());
 }

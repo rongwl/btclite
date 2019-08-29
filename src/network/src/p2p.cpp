@@ -9,10 +9,19 @@ bool P2P::Init()
     if (!acceptor_.InitEvent())
         return false;
     
+    if (peers_db_.LoadPeers()) {
+        BTCLOG(LOG_LEVEL_INFO) << "Loaded " << peers_db_.Size() << " addresses from peers.dat";
+    }
+    else {
+        BTCLOG(LOG_LEVEL_INFO) << "Invalid or missing peers.dat; recreating";
+        SingletonPeers::GetInstance().Clear();
+        peers_db_.DumpPeers();
+    }
+    
     if (ban_db_.LoadBanList()) {
         ban_db_.set_dirty(false); // no need to write down, just read data
         ban_db_.SweepBanned(); // sweep out unused entries
-        BTCLOG(LOG_LEVEL_INFO) << "Load " << ban_db_.Size() << " banned node ips/subnets from banlist.dat";
+        BTCLOG(LOG_LEVEL_INFO) << "Loaded " << ban_db_.Size() << " banned node ips/subnets from banlist.dat";
     }
     else {
         BTCLOG(LOG_LEVEL_INFO) << "Invalid or missing banlist.dat; recreating";

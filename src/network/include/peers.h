@@ -22,6 +22,7 @@ public:
         std::memcpy(proto_peers_.mutable_key()->mutable_data(), key_.data(), key_.Size());
     }
     
+    //-------------------------------------------------------------------------
     // Add a single address.
     bool Add(const btclite::NetAddr &addr, const btclite::NetAddr& source, int64_t time_penalty = 0);
     
@@ -53,10 +54,35 @@ public:
     static bool IsTerrible(const proto_peers::Peer& peer, 
                     int64_t now = SingletonTime::GetInstance().GetAdjustedTime());
     
+    //-------------------------------------------------------------------------
+    bool SerializeToOstream(std::ostream * output) const
+    {
+        LOCK(cs_peers_);
+        return proto_peers_.SerializeToOstream(output);
+    }
+    
+    bool ParseFromIstream(std::istream * input)
+    {
+        LOCK(cs_peers_);
+        return proto_peers_.ParseFromIstream(input);
+    }
+    
+    //-------------------------------------------------------------------------
     void Clear();
+    size_t Size() const
+    {
+        LOCK(cs_peers_);
+        return proto_peers_.map_peers().size();
+    }
+    
+    bool IsEmpty()
+    {
+        LOCK(cs_peers_);
+        return proto_peers_.map_peers().empty();
+    }
         
     //-------------------------------------------------------------------------
-    proto_peers::Peers proto_peers() const
+    proto_peers::Peers proto_peers() const // thread safe copy
     {
         LOCK(cs_peers_);
         return proto_peers_;
@@ -103,6 +129,32 @@ public:
     
 private:
     SingletonPeers() {}
+};
+
+class PeersDb : Uncopyable {
+public:
+    PeersDb()
+        : path_peers_(ExecutorConfig::path_data_dir() / default_peers_file),
+          peers_(SingletonPeers::GetInstance()) {}
+    
+    bool DumpPeers();
+    bool LoadPeers();
+    
+    size_t Size() const
+    {
+        return peers_.Size();
+    }
+    
+    const fs::path& path_peers() const
+    {
+        return path_peers_;
+    }
+    
+private:
+    const std::string default_peers_file = "peers.dat";
+    
+    fs::path path_peers_;
+    btclite::Peers& peers_;
 };
 
 #endif // BTCLITE_PEERS_H

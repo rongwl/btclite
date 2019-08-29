@@ -16,7 +16,7 @@ TEST(BanDbTest, Constructor)
     EXPECT_FALSE(ban_db.dirty());
 }
 
-TEST(BanDbTest, MethodAdd)
+TEST(BanDbTest, AddBanAddr)
 {
     btclite::NetAddr addr;
     addr.SetIpv4(inet_addr("1.2.3.4"));
@@ -37,7 +37,7 @@ TEST(BanDbTest, MethodAdd)
     EXPECT_FALSE(ban_db.Erase(addr, false));
 }
 
-TEST(BanDbTest, MethordClear)
+TEST(BanDbTest, ClearBanDb)
 {
     TestExecutorConfig::set_path_data_dir(fs::path("/tmp"));
     BanDb ban_db;
@@ -53,7 +53,7 @@ TEST(BanDbTest, MethordClear)
     EXPECT_EQ(ban_db.Size(), 0);
 }
 
-TEST(BanDbTest, MethodSweepBanned)
+TEST(BanDbTest, SweepBannedAddrs)
 {
     btclite::NetAddr addr;
     addr.SetIpv4(inet_addr("1.2.3.4"));
@@ -86,7 +86,7 @@ TEST(BanDbTest, MethodSweepBanned)
     EXPECT_EQ(it->second.ban_reason(), BanDb::NodeMisbehaving);
 }
 
-TEST(BanDbTest, MethodDumpBanList)
+TEST(BanDbTest, DumpAndLoadBanList)
 {    
     btclite::NetAddr addr;
     proto_banmap::BanEntry ban_entry;
@@ -107,60 +107,25 @@ TEST(BanDbTest, MethodDumpBanList)
     
     TestExecutorConfig::set_path_data_dir(fs::path("/tmp"));
     BanDb ban_db(ban_map);
+    ASSERT_EQ(ban_db.Size(), 10);
     ASSERT_TRUE(ban_db.dirty());
-    ban_db.DumpBanList();
-    std::fstream fs(ban_db.path_ban_list(), std::ios::in | std::ios::binary);
-    ASSERT_TRUE(fs.good());
-    ASSERT_FALSE(ban_db.dirty());
-    ban_map.Clear();
-    ASSERT_TRUE(ban_map.ParseFromIstream(&fs));
+    ASSERT_TRUE(ban_db.DumpBanList());
+    ASSERT_FALSE(ban_db.LoadBanList());
+    ban_db.Clear();
+    ASSERT_TRUE(ban_db.LoadBanList());
+    ASSERT_EQ(ban_db.Size(), 10);
+    ban_map = ban_db.ban_map();
     for (int i = 0; i < 10; i++) {
         auto it = ban_map.map().find("1.2.3." + std::to_string(i) + "/32");
         ASSERT_NE(it, ban_map.map().end());
         EXPECT_EQ(it->second.version(), i);
         EXPECT_EQ(it->second.ban_reason(), BanDb::ManuallyAdded);
     }
+
     fs::remove(ban_db.path_ban_list());
 }
 
-TEST(BanDbTest, MethordLoadBanList)
-{
-    btclite::NetAddr addr;
-    proto_banmap::BanEntry ban_entry;
-    proto_banmap::BanMap ban_map;
-    char buf[10];
-    
-    std::sprintf(buf, "1.2.3.4");
-    addr.SetIpv4(inet_addr(buf));
-    SubNet subnet(addr);
-    ban_entry.set_version(1);
-    ban_entry.set_create_time(Time::GetTimeSeconds());
-    ban_entry.set_ban_until(Time::GetTimeSeconds()+default_misbehaving_bantime);
-    ban_entry.set_ban_reason(BanDb::ManuallyAdded);
-    (*ban_map.mutable_map())[subnet.ToString()] = ban_entry;
-
-    TestExecutorConfig::set_path_data_dir(fs::path("/tmp"));
-    BanDb ban_db(ban_map);
-    ASSERT_TRUE(ban_db.dirty());
-    ban_db.DumpBanList();
-    
-    BanDb ban_db2;
-    ASSERT_TRUE(ban_db2.LoadBanList());
-    auto it = ban_db2.ban_map().map().find(subnet.ToString());
-    ASSERT_NE(it, ban_db2.ban_map().map().end());
-    EXPECT_EQ(it->second.version(), ban_entry.version());
-    EXPECT_EQ(it->second.create_time(), ban_entry.create_time());
-    EXPECT_EQ(it->second.ban_reason(), ban_entry.ban_reason());
-    EXPECT_EQ(it->second.ban_until(), ban_entry.ban_until());
-    
-    EXPECT_FALSE(ban_db2.LoadBanList());
-    TestExecutorConfig::set_path_data_dir(fs::path("/foo"));
-    EXPECT_FALSE(ban_db2.LoadBanList());
-    
-    fs::remove(ban_db2.path_ban_list());
-}
-
-TEST(BanDbTest, MethodIsBanned)
+TEST(BanDbTest, AddrIsBanned)
 {
     btclite::NetAddr addr;
     proto_banmap::BanEntry ban_entry;

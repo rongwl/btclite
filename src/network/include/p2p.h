@@ -7,6 +7,7 @@
 #include "bandb.h"
 #include "connector.h"
 #include "network/include/params.h"
+#include "peers.h"
 #include "thread.h"
 
 
@@ -16,7 +17,7 @@ public:
         : network_params_(Network::SingletonParams::GetInstance(env)),
           network_args_(), local_network_config_(SingletonLocalNetCfg::GetInstance()), 
           nodes_(SingletonNodes::GetInstance()),
-          ban_db_(SingletonBanDb::GetInstance()), acceptor_(),
+          ban_db_(SingletonBanDb::GetInstance()), peers_db_(), acceptor_(),
           interrupt_(SingletonNetInterrupt::GetInstance()) {}
     
     bool Init();
@@ -36,6 +37,7 @@ private:
     LocalNetConfig& local_network_config_;
     Nodes& nodes_;
     BanDb& ban_db_;
+    PeersDb peers_db_;
     Acceptor acceptor_;
     
     ThreadInterrupt& interrupt_;
