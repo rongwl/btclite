@@ -67,4 +67,7 @@ constexpr uint16_t max_getaddr_pct = 23;
 //! the maximum number of nodes to return in a getaddr call
 constexpr uint32_t max_getaddr_count = 2500;
 
+constexpr uint32_t outbound_connection_timeout = 500;
+constexpr uint32_t outbound_connection_interval = 500;
+
 #endif // BTCLITE_CONSTANTS_H

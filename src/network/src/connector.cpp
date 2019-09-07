@@ -1,7 +1,10 @@
 #include "connector.h"
-#include "netbase.h"
-#include "random.h"
 
+#include "bandb.h"
+#include "netbase.h"
+#include "peers.h"
+#include "random.h"
+#include <arpa/inet.h>
 
 bool Connector::InitEvent()
 {
@@ -32,6 +35,17 @@ void Connector::StartEventLoop()
     BTCLOG(LOG_LEVEL_WARNING) << "Exited connector event loop.";
 }
 
+void Connector::ExitEventLoop()
+{
+    struct timeval delay = {2, 0};
+    
+    if (!base_)
+        return;
+    
+    BTCLOG(LOG_LEVEL_INFO) << "Exit connector event loop in 2s...";
+    event_base_loopexit(base_, &delay);
+}
+
 struct bufferevent *Connector::NewSocketEvent()
 {
     struct bufferevent *bev;
@@ -47,57 +61,155 @@ struct bufferevent *Connector::NewSocketEvent()
     return bev;
 }
 
-std::shared_ptr<Node> Connector::ConnectNode(const btclite::NetAddr& addr, const std::string& host_name)
+bool Connector::StartOutboundTimer()
 {
-    btclite::NetAddr host_addr;
-    struct bufferevent *bev;
+    auto func = std::bind(&Connector::OutboundTimeOutCb, this);
+    outbound_timer_ = SingletonTimerMng::GetInstance().StartTimer(500, 500, std::function<bool()>(func));
     
-    if (host_name.empty()) {
-        if (SingletonLocalNetCfg::GetInstance().IsLocal(addr))
-            return nullptr;
-
-        // Look for an existing connection
-        if (SingletonNodes::GetInstance().GetNode(addr))
-        {
-            BTCLOG(LOG_LEVEL_WARNING) << "Failed to open new connection because it was already connected.";
-            return nullptr;
-        }
-    }
-    
-    BTCLOG(LOG_LEVEL_INFO) << "Trying to connect to " << (host_name.empty() ? addr.ToString() : host_name);
-    
-    if (!host_name.empty()) {
-        std::vector<btclite::NetAddr> addrs;
-        if (LookupHost(host_name.c_str(), &addrs, 256, true) && !addrs.empty()) {
-            host_addr = addrs[Random::GetUint64(addrs.size()-1)];
-            if (!host_addr.IsValid()) {
-                BTCLOG(LOG_LEVEL_WARNING) << "Invalide address " << host_addr.ToString() << " for " << host_name;
-                return nullptr;
-            }
-            // It is possible that we already have a connection to the IP/port host_name resolved to.
-            // In that case, drop the connection that was just created, and return the existing Node instead.
-            // Also store the name we used to connect in that Node, so that future GetNode() calls to that
-            // name catch this early.
-            auto pnode = SingletonNodes::GetInstance().GetNode(host_addr);
-            if (pnode)
-            {
-                pnode->set_host_name(host_name);
-                BTCLOG(LOG_LEVEL_WARNING) << "Failed to open new connection because it was already connected";
-                return nullptr;
-            }
-        }
-    }
-    
-    if (nullptr == (bev = NewSocketEvent())) {
-        return nullptr;
-    }
-    
-    
-    
-    return nullptr;
+    return (outbound_timer_ != nullptr);
 }
 
-void ConnEventCb(struct bufferevent *bev, short events, void *ctx)
+bool Connector::OutboundTimeOutCb()
 {
+    proto_peers::Peer peer;
+    btclite::NetAddr conn_addr;
+    int tries;
+    int64_t now = SingletonTime::GetInstance().GetAdjustedTime();
+    
+    tries = 0;
+    while (tries <= 100) {
+        if (SingletonNetInterrupt::GetInstance())
+            return false;
+        
+        if (!SingletonPeers::GetInstance().Select(&peer))
+            return false;
+        
+        const btclite::NetAddr& addr = btclite::NetAddr(peer.addr());
+        if (!addr.IsValid() || SingletonLocalNetCfg::GetInstance().IsLocal(addr))
+            return false;
+        
+        tries++;
+        
+        // only consider very recently tried nodes after 30 failed attempts
+        if (now - peer.last_try() < 600 && tries < 30)
+            continue;
+        
+        if (!HasAllDesirableServiceFlags(peer.addr().services()))
+            continue;
+        
+        // do not allow non-default ports, unless after 50 invalid addresses selected already
+        if (peer.addr().port() != Network::SingletonParams::GetInstance().default_port() && tries < 50)
+            continue;
+        
+        conn_addr = std::move(addr);
+        break;
+    }
 
+    if (!conn_addr.IsValid() || !ConnectNode(conn_addr))
+        return false;
+
+    if (SingletonNodes::GetInstance().CountOutbound() >= max_outbound_connections)
+        outbound_timer_->Suspend();
+    
+    return true;
+}
+
+bool Connector::ConnectNodes(const std::vector<btclite::NetAddr>& addrs)
+{
+    bool ret = true;
+    
+    for (const btclite::NetAddr& addr : addrs) {
+        ret &= ConnectNode(addr);
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    }
+    
+    return ret;
+}
+
+bool Connector::ConnectNode(const btclite::NetAddr& addr)
+{
+    struct bufferevent *bev;
+    struct sockaddr_storage sock_addr;
+    socklen_t len;
+
+    if (!base_)
+        return false;
+    
+    if (!addr.IsValid()) {
+        BTCLOG(LOG_LEVEL_WARNING) << "Connecting to invalide address:" << addr.ToString();
+        return false;
+    }
+
+    if (SingletonLocalNetCfg::GetInstance().IsLocal(addr)) {
+        BTCLOG(LOG_LEVEL_WARNING) << "Connecting to local address:" << addr.ToString();
+        return false;
+    }
+
+    // Look for an existing connection
+    if (SingletonNodes::GetInstance().GetNode(addr))
+    {
+        BTCLOG(LOG_LEVEL_WARNING) << "Failed to open new connection because it was already connected.";
+        return false;
+    }
+
+    if (SingletonBanDb::GetInstance().IsBanned(addr))
+    {
+        BTCLOG(LOG_LEVEL_WARNING) << "Connecting to banned address:" << addr.ToString();
+        return false;
+    }
+
+    if (nullptr == (bev = NewSocketEvent())) {
+        return false;
+    }
+
+    BTCLOG(LOG_LEVEL_INFO) << "Trying to connect to " << addr.ToString() << ':' << addr.proto_addr().port();
+    SingletonPeers::GetInstance().Attempt(addr);
+
+    std::memset(&sock_addr, 0, sizeof(sock_addr));
+    addr.ToSockAddr(reinterpret_cast<struct sockaddr*>(&sock_addr));
+    len = (sock_addr.ss_family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6);    
+    if (bufferevent_socket_connect(bev, (struct sockaddr*)&sock_addr, len) < 0) {
+        BTCLOG(LOG_LEVEL_WARNING) << "Connecting to " << addr.ToString() << " failed: " << strerror(errno);
+        bufferevent_free(bev);
+        return false;
+    }
+
+    auto node = SingletonNodes::GetInstance().InitializeNode(bev, addr);
+    if (!node) {
+        BTCLOG(LOG_LEVEL_WARNING) << "Initialize new node failed.";
+        bufferevent_free(bev);
+        return false;
+    }
+    
+    return true;
+}
+
+bool Connector::GetHostAddr(const std::string& host_name, btclite::NetAddr *out)
+{
+    std::vector<btclite::NetAddr> addrs;
+    
+    if (!LookupHost(host_name.c_str(), &addrs, 256, true) || addrs.empty())
+        return false;
+    
+    const btclite::NetAddr& addr = addrs[Random::GetUint64(addrs.size()-1)];
+    if (!addr.IsValid()) {
+        BTCLOG(LOG_LEVEL_WARNING) << "Invalide address " << addr.ToString() << " for " << host_name;
+        return false;
+    }
+    
+    // It is possible that we already have a connection to the IP/port host_name resolved to.
+    // In that case, drop the connection that was just created, and return the existing Node instead.
+    // Also store the name we used to connect in that Node, so that future GetNode() calls to that
+    // name catch this early.
+    auto pnode = SingletonNodes::GetInstance().GetNode(addr);
+    if (pnode)
+    {
+        pnode->set_host_name(host_name);
+        BTCLOG(LOG_LEVEL_WARNING) << "Failed to open new connection because it was already connected";
+        return false;
+    }
+    
+    *out = addr;
+    
+    return true;
 }

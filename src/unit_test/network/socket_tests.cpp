@@ -29,7 +29,6 @@ TEST(BasicSocketTest, MethodGetBindAddr)
     btclite::NetAddr addr;
     struct sockaddr_in sock_addr1, sock_addr2;
     struct sockaddr_in6 sock_addr3, sock_addr4;
-    socklen_t len;
     
     std::memset(&sock_addr1, 0, sizeof(sock_addr1));
     sock_addr1.sin_family = AF_INET;
@@ -41,10 +40,8 @@ TEST(BasicSocketTest, MethodGetBindAddr)
     Socket socket1(sock_fd);
     EXPECT_TRUE(socket1.GetBindAddr(&addr));
     std::memset(&sock_addr2, 0, sizeof(sock_addr2));
-    len = sizeof(sock_addr2);
-    EXPECT_TRUE(addr.ToSockAddr((struct sockaddr*)&sock_addr2, &len));
-    EXPECT_EQ(len, sizeof(sockaddr_in));
-    EXPECT_EQ(std::memcmp(&sock_addr1, &sock_addr2, len), 0);
+    EXPECT_TRUE(addr.ToSockAddr((struct sockaddr*)&sock_addr2));
+    EXPECT_EQ(std::memcmp(&sock_addr1, &sock_addr2, sizeof(sock_addr1)), 0);
     socket1.Close();
 
     std::memset(&sock_addr3, 0, sizeof(sock_addr3));
@@ -58,9 +55,7 @@ TEST(BasicSocketTest, MethodGetBindAddr)
     Socket socket2(sock_fd);
     EXPECT_TRUE(socket2.GetBindAddr(&addr));
     std::memset(&sock_addr4, 0, sizeof(sock_addr4));
-    len = sizeof(sock_addr4);
-    EXPECT_TRUE(addr.ToSockAddr((struct sockaddr*)&sock_addr4, &len));
-    EXPECT_EQ(len, sizeof(sockaddr_in6));
-    EXPECT_EQ(std::memcmp(&sock_addr3, &sock_addr4, sizeof(sockaddr_in6)), 0);
+    EXPECT_TRUE(addr.ToSockAddr((struct sockaddr*)&sock_addr4));
+    EXPECT_EQ(std::memcmp(&sock_addr3, &sock_addr4, sizeof(sock_addr3)), 0);
     socket2.Close();
 }

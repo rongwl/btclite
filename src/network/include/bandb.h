@@ -16,11 +16,13 @@ public:
         ManuallyAdded    = 2
     };
     
-    BanDb()
-        : path_ban_list_(ExecutorConfig::path_data_dir() / default_ban_list), ban_map_(), dirty_(false) {}
+    explicit BanDb(const fs::path& path)
+        : path_ban_list_(path / default_ban_list), 
+          ban_map_(), dirty_(false) {}
     
-    explicit BanDb(const proto_banmap::BanMap& ban_map)
-        : path_ban_list_(ExecutorConfig::path_data_dir() / default_ban_list), ban_map_(ban_map), dirty_(true) {}
+    BanDb(const fs::path& path, const proto_banmap::BanMap& ban_map)
+        : path_ban_list_(path / default_ban_list),
+          ban_map_(ban_map), dirty_(true) {}
     
     //-------------------------------------------------------------------------
     bool Add(const btclite::NetAddr& addr, const BanReason &ban_reason, bool dump_list = true);
@@ -78,9 +80,9 @@ private:
 
 class SingletonBanDb : Uncopyable {
 public:
-    static BanDb& GetInstance()
+    static BanDb& GetInstance(fs::path path = fs::path())
     {
-        static BanDb ban_db;
+        static BanDb ban_db(path);
         return ban_db;
     }
     

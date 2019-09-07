@@ -113,15 +113,10 @@ private:
 
 class SingletonParams : Uncopyable {
 public:
-    static Params& GetInstance(BaseEnv env)
+    static Params& GetInstance(BaseEnv env = BaseEnv::mainnet)
     {
         static Params params(env);
         return params;
-    }
-    
-    static Params& GetInstance()
-    {
-        return GetInstance(BaseEnv::mainnet);
     }
     
 private:

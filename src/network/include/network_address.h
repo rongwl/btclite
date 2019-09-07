@@ -62,7 +62,7 @@ public:
     //-------------------------------------------------------------------------
     void Clear();
     std::string ToString() const;
-    bool ToSockAddr(struct sockaddr* out, socklen_t *len) const;
+    bool ToSockAddr(struct sockaddr* out) const;
     bool FromSockAddr(const struct sockaddr *in);
     
     //-------------------------------------------------------------------------

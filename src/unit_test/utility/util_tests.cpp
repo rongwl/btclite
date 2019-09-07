@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
-#include "util_tests.h"
+#include "util.h"
+
 
 TEST(ArgsTest, MethodSetArg)
 {

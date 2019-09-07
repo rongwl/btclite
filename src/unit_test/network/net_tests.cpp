@@ -2,6 +2,9 @@
 #include <cstdint>
 #include <string>
 #include <vector>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include "constants.h"
 #include "net.h"
@@ -9,7 +12,7 @@
 #include "message_types/version.h"
 
 
-TEST(MessageHeaderTest, MethodGetSet)
+TEST(MessageHeaderTest, GetAndSet)
 {
     MessageHeader header;
     header.set_magic(main_magic);
@@ -26,7 +29,7 @@ TEST(MessageHeaderTest, MethodGetSet)
     EXPECT_EQ("foo", header.command());
 }
 
-TEST(MessageHeaderTest, MethodIsValid)
+TEST(MessageHeaderTest, ValidateHeader)
 {
     MessageHeader header;
     std::vector<uint32_t> magic_vec = { main_magic, testnet_magic, regtest_magic };
@@ -137,9 +140,22 @@ TEST(LocalNetConfigTest, Constructor)
     EXPECT_EQ(config.local_services(), NODE_NETWORK | NODE_NETWORK_LIMITED);
 }
 
-TEST(LocalNetConfigTest, MethodSetLocalServiecs)
+TEST(LocalNetConfigTest, GetAndSetLocalServiecs)
 {
     LocalNetConfig config;
     config.set_local_services(NODE_NETWORK);
     EXPECT_EQ(config.local_services(), NODE_NETWORK);
+}
+
+TEST(LocalNetConfigTest, ValidateLocalAddrs)
+{
+    LocalNetConfig config;
+    btclite::NetAddr addr;
+    
+    ASSERT_TRUE(config.LookupLocalAddrs());
+    EXPECT_TRUE(config.IsLocal(config.local_addrs().front()));
+    EXPECT_TRUE(config.IsLocal(config.local_addrs().back()));
+    
+    addr.SetIpv4(inet_addr("1.2.3.4"));
+    EXPECT_FALSE(config.IsLocal(addr));  
 }

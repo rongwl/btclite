@@ -184,7 +184,7 @@ private:
     const bool is_inbound_;
     std::atomic<bool> conn_established_;
     std::atomic<bool> disconnected_;
-    SemaphoreGrant grant_outbound_;
+    //SemaphoreGrant grant_outbound_;
     
     mutable CriticalSection cs_bloom_filter_;
     std::unique_ptr<BloomFilter> bloom_filter_;
@@ -242,6 +242,7 @@ public:
         list_.push_back(node);
     }
     
+    std::shared_ptr<Node> InitializeNode(const struct bufferevent *bev, const btclite::NetAddr& addr);
     std::shared_ptr<Node> GetNode(NodeId id);    
     std::shared_ptr<Node> GetNode(struct bufferevent *bev);    
     std::shared_ptr<Node> GetNode(const btclite::NetAddr& addr);    
@@ -249,6 +250,12 @@ public:
     void EraseNode(NodeId id);
     
     //-------------------------------------------------------------------------
+    void Clear()
+    {
+        LOCK(cs_nodes_);
+        list_.clear();
+    }
+    
     void ClearDisconnected();    
     void DisconnectBanNode(const SubNet& subnet);
     //bool AttemptToEvictConnection();

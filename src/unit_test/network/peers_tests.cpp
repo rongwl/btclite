@@ -6,7 +6,6 @@
 
 #include "peers.h"
 #include "constants.h"
-#include "util_tests.h"
 
 
 TEST(PeersTest, Constructor)
@@ -180,15 +179,15 @@ TEST(PeersTest, SelectPeer)
     addr.SetIpv4(inet_addr("2.2.2.2"));
     addr.mutable_proto_addr()->set_port(8333);
     ASSERT_TRUE(peers.Add(addr, source));
-    btclite::NetAddr out;
+    proto_peers::Peer out;
     ASSERT_TRUE(peers.Select(&out, true));
-    EXPECT_EQ(out, addr);
+    EXPECT_EQ(btclite::NetAddr(std::move(out.addr())), addr);
     
     // move addr to tried, select from new expected nothing returned.
     ASSERT_TRUE(peers.MakeTried(addr));
     ASSERT_FALSE(peers.Select(&out, true));
     ASSERT_TRUE(peers.Select(&out, false));
-    EXPECT_EQ(out, addr);    
+    EXPECT_EQ(btclite::NetAddr(std::move(out.addr())), addr);
 }
 
 TEST(PeersTest, AttemptPeer)
@@ -322,8 +321,7 @@ TEST(PeersTest, PeerIsTerrible)
 
 TEST(PeersDbTest, Constructor)
 {
-    TestExecutorConfig::set_path_data_dir(fs::path("/foo"));
-    PeersDb peers_db;
+    PeersDb peers_db(fs::path("/foo"));
     EXPECT_EQ(peers_db.path_peers(), fs::path("/foo") / "peers.dat");
 }
 
@@ -348,8 +346,7 @@ TEST(PeersDbTest, DumpAndLoadPeers)
     addr.SetIpv4(inet_addr("252.254.4.5"));
     ASSERT_TRUE(peers.Add(addr, source));
     
-    TestExecutorConfig::set_path_data_dir(fs::path("/tmp"));
-    PeersDb peers_db;
+    PeersDb peers_db(fs::path("/tmp"));
     ASSERT_TRUE(peers_db.DumpPeers());
     ASSERT_FALSE(peers_db.LoadPeers());
     peers.Clear();
@@ -359,4 +356,5 @@ TEST(PeersDbTest, DumpAndLoadPeers)
     EXPECT_EQ(peers.proto_peers().tried_tbl().size(), 2);
     
     fs::remove(peers_db.path_peers());
+    peers.Clear();
 }

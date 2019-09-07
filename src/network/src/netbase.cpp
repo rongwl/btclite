@@ -4,6 +4,7 @@
 #include <sys/socket.h>
 #include <netdb.h>
 
+#include "network/include/params.h"
 #include "string_encoding.h"
 
 
@@ -106,6 +107,7 @@ bool LookupIntern(const char *psz_name, std::vector<btclite::NetAddr> *out,
         }
         /* Never allow resolving to an internal address. Consider any such result invalid */
         if (!resolved.IsInternal()) {
+            resolved.mutable_proto_addr()->set_port(Network::SingletonParams::GetInstance().default_port());
             out->push_back(resolved);
         }
 

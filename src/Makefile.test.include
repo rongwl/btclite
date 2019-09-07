@@ -37,6 +37,7 @@ unit_test_test_fullnode_LDADD += $(GTEST_LIBS) \
 unit_test_test_network_SOURCES = unit_test/network/test_network.cpp \
                                  unit_test/network/acceptor_tests.cpp \
                                  unit_test/network/bandb_tests.cpp \
+                                 unit_test/network/connector_tests.cpp \
                                  unit_test/network/net_tests.cpp \
                                  unit_test/network/network_address_tests.cpp \
                                  unit_test/network/netbase_tests.cpp \

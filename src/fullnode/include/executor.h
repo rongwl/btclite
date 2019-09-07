@@ -10,9 +10,9 @@
 
 class FullNodeMain : public Executor {
 public:
-    FullNodeMain(BaseEnv env)
-        : chain_params_(Chain::SingletonParams::GetInstance(env)),
-          network_(env), block_chain_(SingletonBlockChain::GetInstance()) {}
+    FullNodeMain(const FullNodeConfig& config)
+        : chain_params_(Chain::SingletonParams::GetInstance(config.env())),
+          network_(config), block_chain_(SingletonBlockChain::GetInstance()) {}
 
     //-------------------------------------------------------------------------
     bool Init();

@@ -87,26 +87,37 @@ private:
 
 class ExecutorConfig : Uncopyable {
 public:
-    virtual void Parse(int argc, const char* const argv[]) = 0;
+    virtual void ParseParameters(int argc, const char* const argv[]) = 0;
     virtual bool InitDataDir() = 0;
     virtual bool InitParameters();
     
     bool LockDataDir();
     static fs::path PathHome();
     
-    static const Args& args()
+    BaseEnv env() const
+    {
+        return env_;
+    }
+    
+    void set_env(BaseEnv env)
+    {
+        env_ = env;
+    }
+    
+    const Args& args() const
     {
         return args_;
     }
     
-    static const fs::path& path_data_dir()
+    const fs::path& path_data_dir() const
     {
         return path_data_dir_;
     }
 
 protected:
-    static Args args_;
-    static fs::path path_data_dir_;
+    BaseEnv env_;
+    Args args_;
+    fs::path path_data_dir_;
     std::string config_file_;
     
     virtual void CheckArguments() const;

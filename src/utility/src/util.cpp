@@ -12,8 +12,6 @@
 #include "error.h"
 
 
-Args ExecutorConfig::args_;
-fs::path ExecutorConfig::path_data_dir_;
 volatile std::sig_atomic_t SigMonitor::received_signal_ = 0;
 
 

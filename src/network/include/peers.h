@@ -33,7 +33,7 @@ public:
     bool MakeTried(const btclite::NetAddr& addr, int64_t time = SingletonTime::GetInstance().GetAdjustedTime());
     
     // Choose an address to connect to.
-    bool Select(btclite::NetAddr *out, bool newOnly = false);
+    bool Select(proto_peers::Peer *out, bool newOnly = false);
     
     // Find an entry.
     bool Find(uint64_t map_key, uint64_t group_key, proto_peers::Peer *out, bool *is_new, bool *is_tried);
@@ -133,8 +133,8 @@ private:
 
 class PeersDb : Uncopyable {
 public:
-    PeersDb()
-        : path_peers_(ExecutorConfig::path_data_dir() / default_peers_file),
+    explicit PeersDb(const fs::path& path)
+        : path_peers_(path / default_peers_file),
           peers_(SingletonPeers::GetInstance()) {}
     
     bool DumpPeers();

@@ -95,18 +95,11 @@ void Acceptor::AcceptConnCb(struct evconnlistener *listener, evutil_socket_t fd,
         return;
     }
     
-    auto node = std::make_shared<Node>(bev, addr);
-    node->mutable_timers()->no_msg_timer = SingletonTimerMng::GetInstance().
-                                           NewTimer(no_msg_timeout, 0, Node::InactivityTimeoutCb, node);
-    
-    Nodes& nodes = SingletonNodes::GetInstance();
-    nodes.AddNode(node);    
-    if (!nodes.GetNode(node->id())) {
-        BTCLOG(LOG_LEVEL_WARNING) << "Acceptor save new node to nodes failed.";
+    if (nullptr == SingletonNodes::GetInstance().InitializeNode(bev, addr)) {
+        BTCLOG(LOG_LEVEL_WARNING) << "Initialize new node failed.";
+        bufferevent_free(bev);
         return;
     }
-    
-    SingletonBlockSync::GetInstance().AddSyncState(node->id(), node->addr(), node->host_name());
     
     bufferevent_setcb(bev, LibEvent::ConnReadCb, NULL, LibEvent::ConnEventCb, NULL);
     bufferevent_enable(bev, EV_READ);

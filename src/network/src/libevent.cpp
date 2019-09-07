@@ -84,10 +84,11 @@ void LibEvent::ConnReadCb(struct bufferevent *bev, void *ctx)
 {
     // increase reference count
     std::shared_ptr<Node> pnode(SingletonNodes::GetInstance().GetNode(bev));
-    assert(pnode != nullptr);
+    if (!pnode)
+        return;
     
     if (pnode->timers().no_receiving_timer) {
-        SingletonTimerMng::GetInstance().ResetTimer(pnode->timers().no_receiving_timer);
+        pnode->mutable_timers()->no_receiving_timer->Reset();
     }
     
     if (pnode->timers().no_msg_timer) {
@@ -96,7 +97,7 @@ void LibEvent::ConnReadCb(struct bufferevent *bev, void *ctx)
         pnode->mutable_timers()->no_msg_timer.reset();
         
         uint32_t timeout = (pnode->version() > bip0031_version) ? no_receiving_timeout_bip31 : no_receiving_timeout;
-        pnode->mutable_timers()->no_receiving_timer = timer_mng.NewTimer(timeout, 0, Node::InactivityTimeoutCb, pnode);
+        pnode->mutable_timers()->no_receiving_timer = timer_mng.StartTimer(timeout*1000, 0, Node::InactivityTimeoutCb, pnode);
     }
     
     struct evbuffer *input = bufferevent_get_input(bev);    
@@ -107,10 +108,11 @@ void LibEvent::ConnEventCb(struct bufferevent *bev, short events, void *ctx)
 {
     // increase reference count
     std::shared_ptr<Node> pnode(SingletonNodes::GetInstance().GetNode(bev));
-    assert(pnode != nullptr);
+    if (!pnode)
+        return;
     
     if (events & BEV_EVENT_CONNECTED) {
-    
+        
     }
     else if (events & BEV_EVENT_EOF) {
         if (!pnode->disconnected())
@@ -121,7 +123,7 @@ void LibEvent::ConnEventCb(struct bufferevent *bev, short events, void *ctx)
         if (errno != EWOULDBLOCK && errno != EMSGSIZE && errno != EINTR && errno != EINPROGRESS)
         {
             if (!pnode->disconnected())
-                BTCLOG(LOG_LEVEL_ERROR) << "peer " << pnode->id() << "socket recv error:"
+                BTCLOG(LOG_LEVEL_ERROR) << "peer " << pnode->id() << " socket recv error:"
                                         << std::string(strerror(errno));
             bufferevent_free(bev);
         }

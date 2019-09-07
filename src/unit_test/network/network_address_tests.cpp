@@ -342,19 +342,11 @@ TEST(NetAddrTest, MethodToSockAddr)
 {
     btclite::NetAddr addr;
     struct sockaddr_storage sock_addr;
-    socklen_t len;
-    bool ret;
     
     std::memset(&sock_addr, 0, sizeof(sock_addr));
     addr.SetIpv4(inet_addr("192.168.1.1"));
-    addr.mutable_proto_addr()->set_port(1234);
-    
-    len = 0;
-    ret = addr.ToSockAddr(reinterpret_cast<struct sockaddr*>(&sock_addr), &len);
-    ASSERT_FALSE(ret);
-    len = sizeof(struct sockaddr_in);
-    ret = addr.ToSockAddr(reinterpret_cast<struct sockaddr*>(&sock_addr), &len);
-    ASSERT_TRUE(ret);
+    addr.mutable_proto_addr()->set_port(1234);    
+    ASSERT_TRUE(addr.ToSockAddr(reinterpret_cast<struct sockaddr*>(&sock_addr)));
     
     struct sockaddr_in *sock_addr4 = reinterpret_cast<struct sockaddr_in*>(&sock_addr);
     EXPECT_EQ(sock_addr4->sin_family, AF_INET);
@@ -366,13 +358,8 @@ TEST(NetAddrTest, MethodToSockAddr)
     inet_pton(AF_INET6, "0001:0203:0405:0607:0809:0A0B:0C0D:0E0F", buf);
     addr.SetIpv6(buf);
     addr.mutable_proto_addr()->set_scope_id(3);
-    std::memset(&sock_addr, 0, sizeof(sock_addr));
-    
-    ret = addr.ToSockAddr(reinterpret_cast<struct sockaddr*>(&sock_addr), &len);
-    ASSERT_FALSE(ret);
-    len = sizeof(struct sockaddr_in6);
-    ret = addr.ToSockAddr(reinterpret_cast<struct sockaddr*>(&sock_addr), &len);
-    ASSERT_TRUE(ret);
+    std::memset(&sock_addr, 0, sizeof(sock_addr));    
+    ASSERT_TRUE(addr.ToSockAddr(reinterpret_cast<struct sockaddr*>(&sock_addr)));
     
     uint8_t out[btclite::NetAddr::ip_byte_size];
     addr.GetIpv6(out);

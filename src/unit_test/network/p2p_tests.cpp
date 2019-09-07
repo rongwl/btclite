@@ -2,7 +2,6 @@
 
 #include "fullnode/include/config.h"
 #include "p2p.h"
-#include "util_tests.h"
 
 
 TEST(P2PTest, MethodInitArgs)

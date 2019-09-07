@@ -138,7 +138,7 @@ bool btclite::Peers::MakeTried(const btclite::NetAddr& addr, int64_t time)
     return true;
 }
 
-bool btclite::Peers::Select(btclite::NetAddr *out, bool new_only)
+bool btclite::Peers::Select(proto_peers::Peer *out, bool new_only)
 {
     if (!out)
         return false;
@@ -160,7 +160,7 @@ bool btclite::Peers::Select(btclite::NetAddr *out, bool new_only)
         auto it = proto_peers_.tried_tbl().begin();
         while (rand_pos-- > 0 && it++ != proto_peers_.tried_tbl().end())
             ;
-       *out = std::move(btclite::NetAddr(proto_peers_.map_peers().find(it->second)->second.addr()));
+       *out = proto_peers_.map_peers().find(it->second)->second;
     }
     else {
         // use a new peer
@@ -168,7 +168,7 @@ bool btclite::Peers::Select(btclite::NetAddr *out, bool new_only)
         auto it = proto_peers_.new_tbl().begin();
         while (rand_pos-- > 0 && it++ != proto_peers_.new_tbl().end())
             ;
-        *out = std::move(btclite::NetAddr(proto_peers_.map_peers().find(it->second)->second.addr()));
+        *out = proto_peers_.map_peers().find(it->second)->second;
     }
     
     return true;

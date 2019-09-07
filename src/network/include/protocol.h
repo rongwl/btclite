@@ -58,5 +58,9 @@ static inline bool HasAllDesirableServiceFlags(ServiceFlags services) {
     return !(desirable_service_flags & (~services));
 }
 
+static inline bool HasAllDesirableServiceFlags(uint64_t services) {
+    return !(desirable_service_flags & (~services));
+}
+
 
 #endif // BTCLITE_PROTOCOL_H

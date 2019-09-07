@@ -5,13 +5,11 @@
 
 #include "bandb.h"
 #include "p2p.h"
-#include "util_tests.h"
 #include "utiltime.h"
 
 TEST(BanDbTest, Constructor)
 {
-    TestExecutorConfig::set_path_data_dir(fs::path("/foo"));
-    BanDb ban_db;
+    BanDb ban_db(fs::path("/foo"));
     ASSERT_EQ(ban_db.path_ban_list(), fs::path("/foo") / "banlist.dat");
     EXPECT_FALSE(ban_db.dirty());
 }
@@ -20,8 +18,7 @@ TEST(BanDbTest, AddBanAddr)
 {
     btclite::NetAddr addr;
     addr.SetIpv4(inet_addr("1.2.3.4"));
-    TestExecutorConfig::set_path_data_dir(fs::path("/tmp"));
-    BanDb ban_db;
+    BanDb ban_db(fs::path("/tmp"));
     
     ASSERT_TRUE(ban_db.Add(addr, BanDb::NodeMisbehaving));
     auto it = ban_db.ban_map().map().find(SubNet(addr).ToString());
@@ -39,8 +36,7 @@ TEST(BanDbTest, AddBanAddr)
 
 TEST(BanDbTest, ClearBanDb)
 {
-    TestExecutorConfig::set_path_data_dir(fs::path("/tmp"));
-    BanDb ban_db;
+    BanDb ban_db(fs::path("/tmp"));
     btclite::NetAddr addr;
     
     for (int i = 1; i < 10; i++) {
@@ -66,8 +62,7 @@ TEST(BanDbTest, SweepBannedAddrs)
     proto_banmap::BanMap ban_map;
     (*ban_map.mutable_map())[subnet.ToString()] = ban_entry;
     
-    TestExecutorConfig::set_path_data_dir(fs::path("/tmp"));
-    BanDb ban_db(ban_map);
+    BanDb ban_db(fs::path("/tmp"), ban_map);
     ASSERT_EQ(ban_db.path_ban_list(), fs::path("/tmp") / "banlist.dat");
     auto it = ban_db.ban_map().map().find(subnet.ToString());
     ASSERT_NE(it, ban_db.ban_map().map().end());
@@ -105,8 +100,7 @@ TEST(BanDbTest, DumpAndLoadBanList)
         (*ban_map.mutable_map())[subnet.ToString()] = ban_entry;
     }
     
-    TestExecutorConfig::set_path_data_dir(fs::path("/tmp"));
-    BanDb ban_db(ban_map);
+    BanDb ban_db(fs::path("/tmp"), ban_map);
     ASSERT_EQ(ban_db.Size(), 10);
     ASSERT_TRUE(ban_db.dirty());
     ASSERT_TRUE(ban_db.DumpBanList());
@@ -143,8 +137,7 @@ TEST(BanDbTest, AddrIsBanned)
         (*ban_map.mutable_map())[SubNet(addr).ToString()] = ban_entry;
     }
         
-    TestExecutorConfig::set_path_data_dir(fs::path("/tmp"));
-    BanDb ban_db1(ban_map);
+    BanDb ban_db1(fs::path("/tmp"), ban_map);
     for (int i = 0; i < 10; i++) {
         std::sprintf(buf, "1.2.3.%d", i);
         addr.SetIpv4(inet_addr(buf));
@@ -154,7 +147,7 @@ TEST(BanDbTest, AddrIsBanned)
     ban_entry.set_ban_until(ban_entry.ban_until() - default_misbehaving_bantime);
     addr.SetIpv4(inet_addr("1.2.3.4"));
     (*ban_map.mutable_map())[SubNet(addr).ToString()] = ban_entry;
-    BanDb ban_db2(ban_map);
+    BanDb ban_db2(fs::path("/tmp"), ban_map);
     EXPECT_FALSE(ban_db2.IsBanned(addr));
     
     addr.SetIpv4(inet_addr("1.2.3.10"));

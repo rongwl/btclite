@@ -22,42 +22,45 @@ bool LocalNetConfig::IsLocal(const btclite::NetAddr& addr)
     return false;
 }
 
-void LocalNetConfig::LookupLocalAddrs()
+bool LocalNetConfig::LookupLocalAddrs()
 {
     // Get local host ip
     struct ifaddrs* myaddrs;
-    if (getifaddrs(&myaddrs) == 0)
+    
+    if (getifaddrs(&myaddrs))
+        return false;
+    
+    for (struct ifaddrs* ifa = myaddrs; ifa != nullptr; ifa = ifa->ifa_next)
     {
-        for (struct ifaddrs* ifa = myaddrs; ifa != nullptr; ifa = ifa->ifa_next)
+        if (ifa->ifa_addr == nullptr)
+            continue;
+        if ((ifa->ifa_flags & IFF_UP) == 0)
+            continue;
+        if (strcmp(ifa->ifa_name, "lo") == 0)
+            continue;
+        if (strcmp(ifa->ifa_name, "lo0") == 0)
+            continue;
+        
+        if (ifa->ifa_addr->sa_family == AF_INET)
         {
-            if (ifa->ifa_addr == nullptr)
-                continue;
-            if ((ifa->ifa_flags & IFF_UP) == 0)
-                continue;
-            if (strcmp(ifa->ifa_name, "lo") == 0)
-                continue;
-            if (strcmp(ifa->ifa_name, "lo0") == 0)
-                continue;
-            
-            if (ifa->ifa_addr->sa_family == AF_INET)
-            {
-                struct sockaddr_in* s4 = reinterpret_cast<struct sockaddr_in*>(ifa->ifa_addr);
-                btclite::NetAddr addr;
-                addr.SetIpv4(s4->sin_addr.s_addr);
-                if (AddLocalHost(addr))
-                    BTCLOG(LOG_LEVEL_INFO) << "Add local IPv4 addr " << ifa->ifa_name << ":" << addr.ToString();
-            }
-            else if (ifa->ifa_addr->sa_family == AF_INET6)
-            {
-                struct sockaddr_in6* s6 = reinterpret_cast<struct sockaddr_in6*>(ifa->ifa_addr);
-                btclite::NetAddr addr;
-                addr.SetIpv6(s6->sin6_addr.s6_addr);
-                if (AddLocalHost(addr))
-                    BTCLOG(LOG_LEVEL_INFO) << "Add local IPv6 addr " << ifa->ifa_name << ":" << addr.ToString();
-            }
+            struct sockaddr_in* s4 = reinterpret_cast<struct sockaddr_in*>(ifa->ifa_addr);
+            btclite::NetAddr addr;
+            addr.SetIpv4(s4->sin_addr.s_addr);
+            if (AddLocalHost(addr))
+                BTCLOG(LOG_LEVEL_INFO) << "Add local IPv4 addr " << ifa->ifa_name << ":" << addr.ToString();
         }
-        freeifaddrs(myaddrs);
+        else if (ifa->ifa_addr->sa_family == AF_INET6)
+        {
+            struct sockaddr_in6* s6 = reinterpret_cast<struct sockaddr_in6*>(ifa->ifa_addr);
+            btclite::NetAddr addr;
+            addr.SetIpv6(s6->sin6_addr.s6_addr);
+            if (AddLocalHost(addr))
+                BTCLOG(LOG_LEVEL_INFO) << "Add local IPv6 addr " << ifa->ifa_name << ":" << addr.ToString();
+        }
     }
+    freeifaddrs(myaddrs);
+    
+    return !local_addrs_.empty();  
 }
 
 bool LocalNetConfig::AddLocalHost(const btclite::NetAddr& addr)
@@ -150,12 +153,12 @@ void Message::DataFactory(const uint8_t *data_raw)
         data_.reset();
 }
 
-NetArgs::NetArgs()
-    : is_listen_(ExecutorConfig::args().GetBoolArg(FULLNODE_OPTION_LISTEN, true)),
-      is_discover_(ExecutorConfig::args().GetBoolArg(FULLNODE_OPTION_DISCOVER, true)),
-      is_dnsseed_(ExecutorConfig::args().GetBoolArg(FULLNODE_OPTION_DNSSEED, true)),
+NetArgs::NetArgs(const Args& args)
+    : is_listen_(args.GetBoolArg(FULLNODE_OPTION_LISTEN, true)),
+      is_discover_(args.GetBoolArg(FULLNODE_OPTION_DISCOVER, true)),
+      is_dnsseed_(args.GetBoolArg(FULLNODE_OPTION_DNSSEED, true)),
       specified_outgoing_()
 {
-    if (ExecutorConfig::args().IsArgSet(FULLNODE_OPTION_CONNECT))
-        specified_outgoing_ = ExecutorConfig::args().GetArgs(FULLNODE_OPTION_CONNECT);
+    if (args.IsArgSet(FULLNODE_OPTION_CONNECT))
+        specified_outgoing_ = args.GetArgs(FULLNODE_OPTION_CONNECT);
 }

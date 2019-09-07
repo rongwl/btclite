@@ -17,7 +17,7 @@ public:
     LocalNetConfig()
         : local_services_(ServiceFlags(NODE_NETWORK | NODE_NETWORK_LIMITED)), local_addrs_() {}
     
-    void LookupLocalAddrs();
+    bool LookupLocalAddrs();
     bool IsLocal(const btclite::NetAddr& addr);
     
     ServiceFlags local_services() const
@@ -29,6 +29,12 @@ public:
     {
         LOCK(cs_local_net_config_);
         local_services_ = flags;
+    }
+    
+    std::vector<btclite::NetAddr> local_addrs() const // thread safe copy
+    {
+        LOCK(cs_local_net_config_);
+        return local_addrs_;
     }
     
 private:
@@ -224,7 +230,27 @@ private:
 
 class NetArgs {
 public:
-    NetArgs();
+    explicit NetArgs(const Args& args);
+    
+    bool is_listen() const
+    {
+        return is_listen_;
+    }
+    
+    bool is_discover() const
+    {
+        return is_discover_;
+    }
+    
+    bool is_dnsseed() const
+    {
+        return is_dnsseed_;
+    }
+    
+    const std::vector<std::string>& specified_outgoing() const
+    {
+        return specified_outgoing_;
+    }
     
 private:
     bool is_listen_;

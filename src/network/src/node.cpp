@@ -47,6 +47,9 @@ Node::~Node()
 
 void Node::InactivityTimeoutCb(std::shared_ptr<Node> node)
 {
+    if (SingletonNetInterrupt::GetInstance())
+        return;
+    
     node->set_disconnected(true);
     SingletonNodes::GetInstance().EraseNode(node);
 }
@@ -85,6 +88,23 @@ bool Node::ParseMessage(struct evbuffer *buf)
 size_t Node::Send()
 {
     return 0;
+}
+
+std::shared_ptr<Node> Nodes::InitializeNode(const struct bufferevent *bev, const btclite::NetAddr& addr)
+{
+    auto node = std::make_shared<Node>(bev, addr);
+    node->mutable_timers()->no_msg_timer = SingletonTimerMng::GetInstance().
+                                           StartTimer(no_msg_timeout*1000, 0, Node::InactivityTimeoutCb, node);
+    
+    AddNode(node);    
+    if (!GetNode(node->id())) {
+        BTCLOG(LOG_LEVEL_WARNING) << "Save new node to nodes failed.";
+        return nullptr;
+    }
+    
+    SingletonBlockSync::GetInstance().AddSyncState(node->id(), node->addr(), node->host_name());
+    
+    return node;
 }
 
 std::shared_ptr<Node> Nodes::GetNode(NodeId id)

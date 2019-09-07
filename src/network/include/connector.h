@@ -10,31 +10,33 @@
 class Connector {
 public:
     Connector()
-        : base_(nullptr), bev_(nullptr) {}
+        : base_(nullptr), bev_(nullptr), outbound_timer_(nullptr) {}
     
     ~Connector()
     {
         if (base_)
             event_base_free(base_);
-    }
+    }    
     
+    //-------------------------------------------------------------------------
     bool InitEvent();
     void StartEventLoop();
-    void ExitEventLoop()
-    {
-        struct timeval delay = {2, 0};
-        BTCLOG(LOG_LEVEL_INFO) << "Exit acceptor event loop in 2s...";
-        event_base_loopexit(base_, &delay);
-    }
+    void ExitEventLoop();
     struct bufferevent *NewSocketEvent();
     
-    std::shared_ptr<Node> ConnectNode(const btclite::NetAddr& addr, const std::string& dst_name);
+    //-------------------------------------------------------------------------
+    bool StartOutboundTimer();
+    bool OutboundTimeOutCb();
+    bool ConnectNodes(const std::vector<btclite::NetAddr>& addrs);
+    bool GetHostAddr(const std::string& host_name, btclite::NetAddr *out);
     
 private:
     struct event_base *base_;
     struct bufferevent *bev_;
+    TimerMng::TimerPtr outbound_timer_;
     
-    static void ConnEventCb(struct bufferevent *bev, short events, void *ctx);
+    bool ConnectNode(const btclite::NetAddr& addr);
+    
 };
 
 #endif //BTCLITE_CONNECTOR_H

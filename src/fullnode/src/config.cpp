@@ -7,7 +7,7 @@
 #include "utility/include/logging.h"
 
 
-void FullNodeConfig::Parse(int argc, const char* const argv[])
+void FullNodeConfig::ParseParameters(int argc, const char* const argv[])
 {
     CheckOptions(argc, argv);
 
@@ -119,7 +119,7 @@ void FullNodeHelpInfo::PrintUsage()
 
 bool FullNodeConfig::InitDataDir()
 {
-    path_data_dir_ = path_default_data_path_;
+    path_data_dir_ = path_default_data_;
     if (args_.IsArgSet(GLOBAL_OPTION_DATADIR)) {
         const std::string path = args_.GetArg(GLOBAL_OPTION_DATADIR, DEFAULT_DATA_DIR);
         if (fs::is_directory(path))
@@ -128,7 +128,7 @@ bool FullNodeConfig::InitDataDir()
             BTCLOG(LOG_LEVEL_WARNING) << "Specified data path \"" << path << "\" does not exist. Use default data path.";
     }
     
-    if (path_data_dir_ == path_default_data_path_)
+    if (path_data_dir_ == path_default_data_)
         fs::create_directories(path_data_dir_); // create default data dir if it does not exist
     
     config_file_ = DEFAULT_CONFIG_FILE;

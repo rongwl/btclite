@@ -13,11 +13,12 @@
 
 class P2P : Uncopyable {
 public:
-    P2P(BaseEnv env)
-        : network_params_(Network::SingletonParams::GetInstance(env)),
-          network_args_(), local_network_config_(SingletonLocalNetCfg::GetInstance()), 
+    explicit P2P(const ExecutorConfig& config)
+        : network_params_(Network::SingletonParams::GetInstance(config.env())),
+          network_args_(config.args()), local_network_config_(SingletonLocalNetCfg::GetInstance()), 
           nodes_(SingletonNodes::GetInstance()),
-          ban_db_(SingletonBanDb::GetInstance()), peers_db_(), acceptor_(),
+          ban_db_(SingletonBanDb::GetInstance(config.path_data_dir())),
+          peers_db_(config.path_data_dir()), acceptor_(), connector_(),
           interrupt_(SingletonNetInterrupt::GetInstance()) {}
     
     bool Init();
@@ -39,17 +40,13 @@ private:
     BanDb& ban_db_;
     PeersDb peers_db_;
     Acceptor acceptor_;
+    Connector connector_;
     
     ThreadInterrupt& interrupt_;
     std::thread thread_dns_seeds_;
     std::thread thread_acceptor_loop_;
-    std::thread thread_open_connections_;
+    std::thread thread_connector_loop_;
     std::thread thread_message_handler_;
-    
-    void ThreadDnsSeeds();
-    void ThreadOpenConnections(const std::vector<std::string> connect);
-    void ThreadSocketHandler();
-    void ThreadMessageHandler();
 };
 
 #endif // BTCLITE_P2P_H
