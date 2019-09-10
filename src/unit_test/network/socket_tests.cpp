@@ -4,7 +4,7 @@
 #include <arpa/inet.h>
 
 #include "socket.h"
-
+#if 0
 TEST(BasicSocketTest, Constructor)
 {    
     Socket socket1;
@@ -59,3 +59,4 @@ TEST(BasicSocketTest, MethodGetBindAddr)
     EXPECT_EQ(std::memcmp(&sock_addr3, &sock_addr4, sizeof(sock_addr3)), 0);
     socket2.Close();
 }
+#endif

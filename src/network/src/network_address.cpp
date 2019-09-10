@@ -482,6 +482,17 @@ std::string SubNet::ToString() const
     return net_addr_.ToString() + "/" + os.str();;
 }
 
+/*
+ 0x0  -> 0
+ 0x80 -> 1
+ 0xc0 -> 2
+ 0xe0 -> 3
+ 0xf0 -> 4
+ 0xf8 -> 5
+ 0xfc -> 6
+ 0xfe -> 7
+ 0xff -> 8
+*/
 int SubNet::NetmaskBits(uint8_t x)
 {
     int bits = 0, flag = 0;

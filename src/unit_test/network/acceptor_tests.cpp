@@ -46,11 +46,11 @@ TEST(AcceptorTest, MethordAcceptConnCb)
         ASSERT_EQ(SingletonNodes::GetInstance().CountInbound(), i);
         count = i;
         
-        std::shared_ptr<Node> pnode = SingletonNodes::GetInstance().GetNode(i-1);
+        std::shared_ptr<Node> pnode = SingletonNodes::GetInstance().GetNode(addr);
         ASSERT_NE(pnode, nullptr);
         ASSERT_EQ(pnode->addr(), addr);
         
-        const BlockSyncState* const pstate = SingletonBlockSync::GetInstance().GetSyncState(i-1);
+        const BlockSyncState* const pstate = SingletonBlockSync::GetInstance().GetSyncState(pnode->id());
         ASSERT_NE(pstate, nullptr);
         ASSERT_EQ(pstate->node_addr(), addr);
     }
@@ -64,10 +64,10 @@ TEST(AcceptorTest, MethordAcceptConnCb)
     SingletonBanDb::GetInstance().Erase(addr, false);
     acceptor.AcceptConnCb(listener, fd, (struct sockaddr*)&client_addr, sizeof(client_addr), nullptr);
     EXPECT_EQ(SingletonNodes::GetInstance().CountInbound(), ++count);
-    std::shared_ptr<Node> pnode = SingletonNodes::GetInstance().GetNode(count-1);
+    std::shared_ptr<Node> pnode = SingletonNodes::GetInstance().GetNode(addr);
     ASSERT_NE(pnode, nullptr);
     EXPECT_EQ(pnode->addr(), addr);
-    const BlockSyncState* const pstate = SingletonBlockSync::GetInstance().GetSyncState(count-1);
+    const BlockSyncState* const pstate = SingletonBlockSync::GetInstance().GetSyncState(pnode->id());
     ASSERT_NE(pstate, nullptr);
     ASSERT_EQ(pstate->node_addr(), addr);
     

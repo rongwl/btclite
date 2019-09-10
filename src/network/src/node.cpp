@@ -29,7 +29,7 @@ Node::Node(const struct bufferevent *bev, const btclite::NetAddr& addr, bool is_
       last_tx_time_(0),
       timers_()
 {
-    
+
 }
 
 Node::~Node()
@@ -49,7 +49,8 @@ void Node::InactivityTimeoutCb(std::shared_ptr<Node> node)
 {
     if (SingletonNetInterrupt::GetInstance())
         return;
-    
+
+    BTCLOG(LOG_LEVEL_WARNING) << "Node " << node->id() << " inactive timeout.";
     node->set_disconnected(true);
     SingletonNodes::GetInstance().EraseNode(node);
 }
@@ -90,9 +91,10 @@ size_t Node::Send()
     return 0;
 }
 
-std::shared_ptr<Node> Nodes::InitializeNode(const struct bufferevent *bev, const btclite::NetAddr& addr)
+std::shared_ptr<Node> Nodes::InitializeNode(const struct bufferevent *bev, const btclite::NetAddr& addr,
+                                            bool is_inbound)
 {
-    auto node = std::make_shared<Node>(bev, addr);
+    auto node = std::make_shared<Node>(bev, addr, is_inbound);
     node->mutable_timers()->no_msg_timer = SingletonTimerMng::GetInstance().
                                            StartTimer(no_msg_timeout*1000, 0, Node::InactivityTimeoutCb, node);
     
@@ -164,7 +166,7 @@ void Nodes::ClearDisconnected()
     }
 }
 
-void Nodes::DisconnectBanNode(const SubNet& subnet)
+void Nodes::DisconnectNode(const SubNet& subnet)
 {
     LOCK(cs_nodes_);
     

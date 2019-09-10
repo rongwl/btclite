@@ -3,6 +3,15 @@
 #include "utiltime.h"
 
 
+const BlockSyncState* const BlockSync::GetSyncState(NodeId id) const
+{
+    LOCK(cs_block_sync_);
+    auto it = map_sync_state_.find(id);
+    if (it != map_sync_state_.end())
+        return &(it->second);
+    return nullptr;
+}
+
 void BlockSync::EraseSyncState(NodeId id)
 {
     LOCK(cs_block_sync_);
@@ -19,10 +28,10 @@ void BlockSync::EraseSyncState(NodeId id)
         map_block_in_flight_.erase(entry.hash);
     }    
     SingletonOrphans::GetInstance().EraseOrphansFor(id);
-    preferred_download_count_ -= state.download_state().preferred_download;
-    validated_download_count_ -= (state.blocks_in_flight().valid_headers_count != 0);
+    preferred_download_count_ -= state.download_state().preferred_download ? 1 : 0;
+    validated_download_count_ -= (state.blocks_in_flight().valid_headers_count != 0) ? 1 : 0;
     assert(validated_download_count_ >= 0);
-    protected_outbound_count_ -= state.time_state().timeout_state.protect;
+    protected_outbound_count_ -= state.time_state().timeout_state.protect ? 1 : 0;
     assert(protected_outbound_count_ >= 0);
 
     map_sync_state_.erase(id);

@@ -9,6 +9,9 @@
 
 
 struct BlockReject {
+    BlockReject()
+        : rejec_code(0), reject_reason(), block_hash() {}
+    
     unsigned char rejec_code;
     std::string reject_reason;
     Hash256 block_hash;
@@ -16,6 +19,9 @@ struct BlockReject {
 
 /* Blocks that are in flight, and that are in the queue to be downloaded. */
 struct QueuedBlock {
+    QueuedBlock()
+        : hash(), index(nullptr), validated_headers(false) {}
+    
     Hash256 hash;
     const BlockIndex* index;
     
@@ -27,6 +33,9 @@ struct QueuedBlock {
 };
 
 struct SyncBasicState {
+    SyncBasicState()
+        : connected(false), sync_started(false), should_ban(false) {}
+    
     //! Whether we have a fully established connection.
     bool connected;
     
@@ -38,6 +47,9 @@ struct SyncBasicState {
 };
 
 struct SyncStats {
+    SyncStats()
+        : misbehavior_score(0), unconnecting_headers_len(0), rejects() {}
+    
     //! Accumulated misbehaviour score for this peer.
     int misbehavior_score;
     
@@ -49,6 +61,10 @@ struct SyncStats {
 };
 
 struct SyncTimeoutState {
+    SyncTimeoutState()
+        : timeout(0), work_header(nullptr), 
+          sent_getheaders(false), protect(false) {}
+    
     // A timeout used for checking whether our peer has sufficiently synced
     int64_t timeout;
     
@@ -63,6 +79,10 @@ struct SyncTimeoutState {
 };
 
 struct SyncTimeState {
+    SyncTimeState()
+        : headers_sync_timeout(0), stalling_since(0),
+          last_block_announcement(0), timeout_state() {}
+    
     //! When to potentially disconnect peer for stalling headers download
     int64_t headers_sync_timeout;
     
@@ -76,6 +96,10 @@ struct SyncTimeState {
 };
 
 struct SyncProcessState {
+    SyncProcessState()
+        : best_known_block_index(nullptr), last_common_block_index(nullptr),
+          best_header_sent_index(nullptr), last_unknown_block_hash() {}
+    
     //! The best known block we know this peer has announced.
     const BlockIndex *best_known_block_index;
     
@@ -92,6 +116,9 @@ struct SyncProcessState {
 struct BlocksInFlight {
     using iterator = std::list<QueuedBlock>::iterator;
     
+    BlocksInFlight()
+        : list(), downloading_since(0), valid_headers_count(0) {}
+    
     std::list<QueuedBlock> list;
     
     //! When the first entry in vBlocksInFlight started downloading. Don't care when vBlocksInFlight is empty.
@@ -103,6 +130,12 @@ struct BlocksInFlight {
 };
 
 struct DownloadState {
+    DownloadState()
+        : preferred_download(false), prefer_headers(false),
+          prefer_header_and_ids(false), provides_header_and_ids(false), 
+          is_witness(false), wants_cmpct_witness(false),
+          supports_desired_cmpct_version(false) {}
+    
     //! Whether we consider this a preferred download peer.
     bool preferred_download;
     
@@ -227,15 +260,7 @@ public:
     }
     
     // not thread safe, just for unit test
-    const BlockSyncState* const GetSyncState(NodeId id) const
-    {
-        LOCK(cs_block_sync_);
-        auto it = map_sync_state_.find(id);
-        if (it != map_sync_state_.end())
-            return &(it->second);
-        return nullptr;
-    }
-    
+    const BlockSyncState* const GetSyncState(NodeId id) const;    
     void EraseSyncState(NodeId id);
     bool ShouldUpdateTime(NodeId id);
 

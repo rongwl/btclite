@@ -242,7 +242,8 @@ public:
         list_.push_back(node);
     }
     
-    std::shared_ptr<Node> InitializeNode(const struct bufferevent *bev, const btclite::NetAddr& addr);
+    std::shared_ptr<Node> InitializeNode(const struct bufferevent *bev, const btclite::NetAddr& addr,
+                                         bool is_inbound = true);
     std::shared_ptr<Node> GetNode(NodeId id);    
     std::shared_ptr<Node> GetNode(struct bufferevent *bev);    
     std::shared_ptr<Node> GetNode(const btclite::NetAddr& addr);    
@@ -257,7 +258,7 @@ public:
     }
     
     void ClearDisconnected();    
-    void DisconnectBanNode(const SubNet& subnet);
+    void DisconnectNode(const SubNet& subnet);
     //bool AttemptToEvictConnection();
     int CountInbound();
     int CountOutbound();

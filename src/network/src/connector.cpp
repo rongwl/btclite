@@ -174,7 +174,7 @@ bool Connector::ConnectNode(const btclite::NetAddr& addr)
         return false;
     }
 
-    auto node = SingletonNodes::GetInstance().InitializeNode(bev, addr);
+    auto node = SingletonNodes::GetInstance().InitializeNode(bev, addr, false);
     if (!node) {
         BTCLOG(LOG_LEVEL_WARNING) << "Initialize new node failed.";
         bufferevent_free(bev);
