@@ -96,7 +96,7 @@ bool btclite::Peers::Add(const std::vector<btclite::NetAddr> &vec_addr, const bt
     for (auto it = vec_addr.begin(); it != vec_addr.end(); ++it)
         added += Add(*it, source, time_penalty) ? 1 : 0;
     if (added)
-        BTCLOG(LOG_LEVEL_INFO) << "Added " << added << "addrs from " << source.ToString() 
+        BTCLOG(LOG_LEVEL_INFO) << "Added " << added << " addrs from " << source.ToString() 
                                << ", tried(" << proto_peers_.tried_tbl().size() << ") new("
                                << proto_peers_.new_tbl().size() << ")";
     

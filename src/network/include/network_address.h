@@ -74,6 +74,7 @@ public:
     int GetIpv6(uint8_t *out) const;
     void SetIpv6(const uint8_t *src);
     void GetGroup(std::vector<uint8_t> *out) const;
+    bool SetInternal(const std::string& name);
     
     //-------------------------------------------------------------------------
     bool operator==(const NetAddr& b) const
@@ -129,6 +130,7 @@ public:
     explicit SubNet(btclite::NetAddr&& addr) noexcept
         : net_addr_(std::move(addr)), valid_(addr.IsValid())
     {
+        std::cout << __func__ << ":" << __LINE__ << '\n';
         std::memset(netmask_, 0xff, sizeof(netmask_));
     }
     

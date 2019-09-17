@@ -87,7 +87,7 @@ void ExecutorConfig::CheckArguments() const
 }
 
 bool ExecutorConfig::InitParameters()
-{   
+{    
     // --debug
     if (args_.IsArgSet(GLOBAL_OPTION_DEBUG)) {
         const std::vector<std::string> arg_values = args_.GetArgs(GLOBAL_OPTION_DEBUG);
@@ -116,6 +116,17 @@ bool ExecutorConfig::InitParameters()
     }
     else
         BTCLOG(LOG_LEVEL_INFO) << "default log level: " << DEFAULT_LOG_LEVEL;
+    
+    // chain category
+    env_ = BaseEnv::mainnet;
+    if (args_.IsArgSet(GLOBAL_OPTION_TESTNET)) {
+        env_ = BaseEnv::testnet;
+        BTCLOG(LOG_LEVEL_INFO) << "set chain category: testnet";
+    }
+    else if (args_.IsArgSet(GLOBAL_OPTION_REGTEST)) {
+        env_ = BaseEnv::regtest;
+        BTCLOG(LOG_LEVEL_INFO) << "set chain category: regtest";
+    }
     
     return true;
 }

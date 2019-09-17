@@ -20,18 +20,11 @@ int main(int argc, char **argv)
         exit(e.code().value());
     }
     
-    if (!config.InitDataDir())
-        return EXIT_FAILURE;
-    
     if (!config.InitParameters())
         return EXIT_FAILURE;
     
-    const Args& args = config.args();
-    config.set_env(BaseEnv::mainnet);
-    if (args.IsArgSet(GLOBAL_OPTION_TESTNET))
-        config.set_env(BaseEnv::testnet);
-    else if (args.IsArgSet(GLOBAL_OPTION_REGTEST))
-        config.set_env(BaseEnv::regtest);
+    if (!config.InitDataDir())
+        return EXIT_FAILURE;
     
     FullNodeMain fullnode(config);
     bool ret = false;

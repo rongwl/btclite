@@ -117,7 +117,8 @@ void LibEvent::ConnEventCb(struct bufferevent *bev, short events, void *ctx)
     else if (events & BEV_EVENT_EOF) {
         if (!pnode->disconnected())
             BTCLOG(LOG_LEVEL_WARNING) << "peer " << pnode->id() << " socket closed";
-        bufferevent_free(bev);
+        pnode->set_disconnected(true);
+        SingletonNodes::GetInstance().EraseNode(pnode);
     }
     else if (events & BEV_EVENT_ERROR) {
         if (errno != EWOULDBLOCK && errno != EMSGSIZE && errno != EINTR && errno != EINPROGRESS)
@@ -125,7 +126,8 @@ void LibEvent::ConnEventCb(struct bufferevent *bev, short events, void *ctx)
             if (!pnode->disconnected())
                 BTCLOG(LOG_LEVEL_ERROR) << "peer " << pnode->id() << " socket recv error:"
                                         << std::string(strerror(errno));
-            bufferevent_free(bev);
+            pnode->set_disconnected(true);
+            SingletonNodes::GetInstance().EraseNode(pnode);
         }
     }
 }

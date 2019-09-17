@@ -16,13 +16,15 @@ TEST(NetBaseTest, LookupHost)
     LookupHost("127.0.0.1", &addr, false);
     ASSERT_TRUE(addr.IsIpv4());
     EXPECT_EQ(addr.GetIpv4(), inet_addr("127.0.0.1"));
-    EXPECT_EQ(addr.proto_addr().port(), Network::SingletonParams::GetInstance().default_port());
+    EXPECT_EQ(addr.proto_addr().port(), 
+              Network::SingletonParams::GetInstance(BaseEnv::testnet).default_port());
     
     addr.Clear();
     LookupHost("::FFFF:192.168.1.1", &addr, false);
     ASSERT_TRUE(addr.IsIpv4());
     EXPECT_EQ(addr.GetIpv4(), inet_addr("192.168.1.1"));
-    EXPECT_EQ(addr.proto_addr().port(), Network::SingletonParams::GetInstance().default_port());
+    EXPECT_EQ(addr.proto_addr().port(), 
+              Network::SingletonParams::GetInstance(BaseEnv::testnet).default_port());
     
     addr.Clear();
     memset(buf, 0, sizeof(buf));
@@ -32,7 +34,8 @@ TEST(NetBaseTest, LookupHost)
     ASSERT_TRUE(addr.IsIpv6());
     addr.GetIpv6(out);
     EXPECT_EQ(std::memcmp(buf, out, sizeof(out)), 0);
-    EXPECT_EQ(addr.proto_addr().port(), Network::SingletonParams::GetInstance().default_port());
+    EXPECT_EQ(addr.proto_addr().port(), 
+              Network::SingletonParams::GetInstance(BaseEnv::testnet).default_port());
     
     addr.Clear();
     LookupHost("bitcoin.org", &addr, true);

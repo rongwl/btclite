@@ -32,7 +32,7 @@ TEST(ConnectorTest, ConnectNode)
     SingletonBanDb::GetInstance().Add(addrs[0], BanDb::NodeMisbehaving, false);
     EXPECT_FALSE(connector.ConnectNodes(addrs));
     
-    LookupHost(std::string("x9.seed.bitcoin.sipa.be").c_str(), &addrs[0], true);
+    LookupHost(std::string("x9.seed.tbtc.petertodd.org").c_str(), &addrs[0], true);
     EXPECT_TRUE(connector.ConnectNodes(addrs));
     
     // exist addr
@@ -78,11 +78,20 @@ TEST(ConnectorTest, ConnectOutbound)
     ASSERT_FALSE(connector.OutboundTimeOutCb());
     SingletonPeers::GetInstance().Clear();
     
-    LookupHost(std::string("x9.seed.bitcoin.sipa.be").c_str(), &addr, true);
+    LookupHost(std::string("x9.seed.tbtc.petertodd.org").c_str(), &addr, true);
     addr.mutable_proto_addr()->set_port(8333);
     addr.mutable_proto_addr()->set_services(desirable_service_flags);
     SingletonPeers::GetInstance().Add(addr, source);
     EXPECT_TRUE(connector.OutboundTimeOutCb());
     
     SingletonPeers::GetInstance().Clear();
+}
+
+TEST(ConnectorTest, DnsLookup)
+{
+    const std::vector<Seed>& seeds = Network::SingletonParams::GetInstance(BaseEnv::testnet).seeds();
+    ASSERT_TRUE(SingletonPeers::GetInstance().IsEmpty());
+    ASSERT_TRUE(Connector::DnsLookup(seeds));
+    EXPECT_FALSE(SingletonPeers::GetInstance().IsEmpty());
+    SingletonPeers::GetInstance().Clear();    
 }

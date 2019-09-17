@@ -252,17 +252,12 @@ public:
     using MapPeerSyncState = std::map<NodeId, BlockSyncState>;
     using MapBlockInFlight = std::map<Hash256, std::pair<NodeId, BlocksInFlight::iterator> >;
     
-    void AddSyncState(NodeId id, const btclite::NetAddr& addr, const std::string& addr_name)
-    {
-        LOCK(cs_block_sync_);
-        map_sync_state_.emplace_hint(map_sync_state_.end(), std::piecewise_construct,
-                                     std::forward_as_tuple(id), std::forward_as_tuple(addr, std::move(addr_name)));
-    }
-    
-    // not thread safe, just for unit test
-    const BlockSyncState* const GetSyncState(NodeId id) const;    
+    void AddSyncState(NodeId id, const btclite::NetAddr& addr, const std::string& addr_name);    
     void EraseSyncState(NodeId id);
     bool ShouldUpdateTime(NodeId id);
+    
+    // not thread safe, just for unit test
+    const BlockSyncState* const GetSyncState(NodeId id) const;
 
 private:
     mutable CriticalSection cs_block_sync_;

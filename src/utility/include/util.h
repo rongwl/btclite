@@ -99,11 +99,6 @@ public:
         return env_;
     }
     
-    void set_env(BaseEnv env)
-    {
-        env_ = env;
-    }
-    
     const Args& args() const
     {
         return args_;

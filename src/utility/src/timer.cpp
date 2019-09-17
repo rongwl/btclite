@@ -20,7 +20,7 @@ void TimerCfg::Resume()
 {
     if (interval_ > 0)
         expire_ms_ = Time::GetTimeMillis() + interval_;
-    suspended_ = false;
+    set_suspended(false);
 }
 
 void TimerMng::StopTimer(TimerPtr timer)

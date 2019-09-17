@@ -3,6 +3,14 @@
 #include "utiltime.h"
 
 
+void BlockSync::AddSyncState(NodeId id, const btclite::NetAddr& addr, const std::string& addr_name)
+{
+    LOCK(cs_block_sync_);
+    map_sync_state_.emplace_hint(map_sync_state_.end(), std::piecewise_construct,
+                                 std::forward_as_tuple(id), std::forward_as_tuple(addr, std::move(addr_name)));
+    BTCLOG(LOG_LEVEL_VERBOSE) << "Added node state, peer:" << id << " addr:" << addr.ToString();
+}
+
 const BlockSyncState* const BlockSync::GetSyncState(NodeId id) const
 {
     LOCK(cs_block_sync_);
@@ -43,7 +51,7 @@ void BlockSync::EraseSyncState(NodeId id)
         assert(protected_outbound_count_ == 0);
     }
     
-    BTCLOG(LOG_LEVEL_INFO) << "Cleared nodestate for peer=" << id;
+    BTCLOG(LOG_LEVEL_INFO) << "Cleared node state for peer " << id;
 }
 
 bool BlockSync::ShouldUpdateTime(NodeId id)

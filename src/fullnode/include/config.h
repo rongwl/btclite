@@ -22,17 +22,12 @@
 
 
 class FullNodeConfig : public ExecutorConfig {
-public:
-    FullNodeConfig()
-        : path_default_data_(PathHome() / DEFAULT_DATA_DIR) {}
-    
+public:    
     void ParseParameters(int argc, const char* const argv[]);
     bool InitDataDir();
     bool InitParameters();
     
 private:
-    fs::path path_default_data_;    
-    
     void CheckArguments() const;
 };
 

@@ -5,12 +5,12 @@
 #include "net.h"
 
 struct Seed {
-    std::string host_;
-    uint16_t port_;
+    std::string host;
+    uint16_t port;
     
     bool operator==(const Seed& b) const
     {
-        return (host_ == b.host_ && port_ == b.port_);
+        return (host == b.host && port == b.port);
     }
     
     bool operator!=(const Seed& b) const

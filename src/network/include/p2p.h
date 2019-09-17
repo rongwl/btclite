@@ -43,10 +43,8 @@ private:
     Connector connector_;
     
     ThreadInterrupt& interrupt_;
-    std::thread thread_dns_seeds_;
     std::thread thread_acceptor_loop_;
     std::thread thread_connector_loop_;
-    std::thread thread_message_handler_;
 };
 
 #endif // BTCLITE_P2P_H

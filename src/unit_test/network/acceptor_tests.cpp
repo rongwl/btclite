@@ -10,7 +10,8 @@ TEST(AcceptorTest, Constructor)
     Acceptor acceptor;
     const struct sockaddr_in6& sock_addr = acceptor.sock_addr();
     ASSERT_EQ(sock_addr.sin6_family, AF_INET6);
-    ASSERT_EQ(sock_addr.sin6_port, htons(Network::SingletonParams::GetInstance().default_port()));
+    ASSERT_EQ(sock_addr.sin6_port,
+              htons(Network::SingletonParams::GetInstance(BaseEnv::testnet).default_port()));
     ASSERT_EQ(std::memcmp(sock_addr.sin6_addr.s6_addr, in6addr_any.s6_addr, 16), 0);
     ASSERT_EQ(sock_addr.sin6_scope_id, 0);
 }

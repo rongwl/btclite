@@ -41,7 +41,7 @@ struct NodeTimers {
 class Node {
 public:
     Node(const struct bufferevent *bev, const btclite::NetAddr& addr,
-         bool is_inbound = true, std::string host_name = "");
+         bool is_inbound = true, bool manual = false, std::string host_name = "");
     ~Node();
     
     //-------------------------------------------------------------------------
@@ -88,6 +88,11 @@ public:
     bool is_inbound() const
     {
         return is_inbound_;
+    }
+    
+    bool manual() const
+    {
+        return manual_;
     }
     
     bool conn_established() const
@@ -182,6 +187,7 @@ private:
     std::string host_name_;
     
     const bool is_inbound_;
+    const bool manual_;
     std::atomic<bool> conn_established_;
     std::atomic<bool> disconnected_;
     //SemaphoreGrant grant_outbound_;
@@ -236,14 +242,9 @@ public:
     }
     
     //-------------------------------------------------------------------------
-    void AddNode(std::shared_ptr<Node> node)
-    {
-        LOCK(cs_nodes_);
-        list_.push_back(node);
-    }
-    
+    void AddNode(std::shared_ptr<Node> node);    
     std::shared_ptr<Node> InitializeNode(const struct bufferevent *bev, const btclite::NetAddr& addr,
-                                         bool is_inbound = true);
+                                         bool is_inbound = true, bool manual = false);
     std::shared_ptr<Node> GetNode(NodeId id);    
     std::shared_ptr<Node> GetNode(struct bufferevent *bev);    
     std::shared_ptr<Node> GetNode(const btclite::NetAddr& addr);    
@@ -262,6 +263,7 @@ public:
     //bool AttemptToEvictConnection();
     int CountInbound();
     int CountOutbound();
+    bool ShouldDnsLookup();
     
 private:
     mutable CriticalSection cs_nodes_;

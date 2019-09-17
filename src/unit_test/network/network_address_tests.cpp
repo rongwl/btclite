@@ -84,7 +84,7 @@ TEST(NetAddrTest, OperatorEqual)
     EXPECT_EQ(addr1, addr3);
 }
 
-TEST(NetAddrTest, MethodIsIpv4)
+TEST(NetAddrTest, IsIpv4)
 {
     btclite::NetAddr addr;
     addr.SetByte(10, 0xff);
@@ -94,7 +94,7 @@ TEST(NetAddrTest, MethodIsIpv4)
     EXPECT_FALSE(addr.IsIpv6());    
 }
 
-TEST(NetAddrTest, MethodIsIpv6)
+TEST(NetAddrTest, IsIpv6)
 {
     btclite::NetAddr addr;
     
@@ -104,7 +104,7 @@ TEST(NetAddrTest, MethodIsIpv6)
     EXPECT_TRUE(addr.IsIpv6());
 }
 
-TEST(NetAddrTest, MethodSetByte)
+TEST(NetAddrTest, SetByte)
 {
     btclite::NetAddr addr;
     
@@ -114,7 +114,7 @@ TEST(NetAddrTest, MethodSetByte)
         ASSERT_EQ(addr.GetByte(i), i);
 }
 
-TEST(NetAddrTest, MethodSetNByte)
+TEST(NetAddrTest, SetNByte)
 {
     btclite::NetAddr addr;
     
@@ -122,7 +122,7 @@ TEST(NetAddrTest, MethodSetNByte)
     EXPECT_TRUE(addr.IsIpv4());
 }
 
-TEST(NetAddrTest, MethodSetIpv4)
+TEST(NetAddrTest, SetIpv4)
 {
     btclite::NetAddr addr;
     
@@ -135,7 +135,7 @@ TEST(NetAddrTest, MethodSetIpv4)
     ASSERT_EQ(addr.GetByte(15), 2);
 }
 
-TEST(NetAddrTest, MethodGetIpv4)
+TEST(NetAddrTest, GetIpv4)
 {
     btclite::NetAddr addr;
     
@@ -143,7 +143,7 @@ TEST(NetAddrTest, MethodGetIpv4)
     ASSERT_EQ(addr.GetIpv4(), inet_addr("192.168.1.1"));
 }
 
-TEST(NetAddrTest, MethodSetIpv6)
+TEST(NetAddrTest, SetIpv6)
 {
     btclite::NetAddr addr;
     uint8_t buf[sizeof(struct in6_addr)];
@@ -155,7 +155,7 @@ TEST(NetAddrTest, MethodSetIpv6)
         ASSERT_EQ(addr.GetByte(i), i);
 }
 
-TEST(NetAddrTest, MethodGetIpv6)
+TEST(NetAddrTest, GetIpv6)
 {
     btclite::NetAddr addr;
     uint8_t out[btclite::NetAddr::ip_byte_size];
@@ -170,7 +170,7 @@ TEST(NetAddrTest, MethodGetIpv6)
     ASSERT_EQ(std::memcmp(buf, out, btclite::NetAddr::ip_byte_size), 0);
 }
 
-TEST(NetAddrTest, MethordGetGroup)
+TEST(NetAddrTest, GetGroup)
 {
     btclite::NetAddr addr;
     std::vector<uint8_t> group;
@@ -326,6 +326,9 @@ TEST(NetAddrTest, Properties)
     addr.SetIpv6(buf);
     EXPECT_TRUE(addr.IsInternal());
     EXPECT_FALSE(addr.IsValid());
+    addr.Clear();
+    addr.SetInternal("bar.com");
+    EXPECT_TRUE(addr.IsInternal());
     
     for (int i = 0; i < 7; i++)
         addr.SetByte(i, 0);
@@ -338,7 +341,7 @@ TEST(NetAddrTest, Properties)
     EXPECT_FALSE(addr.IsValid());
 }
 
-TEST(NetAddrTest, MethodToSockAddr)
+TEST(NetAddrTest, ToSockAddr)
 {
     btclite::NetAddr addr;
     struct sockaddr_storage sock_addr;
@@ -370,7 +373,7 @@ TEST(NetAddrTest, MethodToSockAddr)
     EXPECT_EQ(sock_addr6->sin6_scope_id, addr.proto_addr().scope_id());
 }
 
-TEST(NetAddrTest, MethodFromSockAddr)
+TEST(NetAddrTest, FromSockAddr)
 {
     struct sockaddr_in sock_addr;
     sock_addr.sin_family = AF_INET;
@@ -404,7 +407,7 @@ TEST(NetAddrTest, MethodFromSockAddr)
     EXPECT_EQ(addr.GetIpv4(), inet_addr("192.168.1.1"));
 }
 
-TEST(NetAddrTest, MethodToString)
+TEST(NetAddrTest, ToString)
 {
     btclite::NetAddr addr;
     uint8_t buf[sizeof(struct in6_addr)];
@@ -416,7 +419,7 @@ TEST(NetAddrTest, MethodToString)
     EXPECT_EQ(addr.ToString(), "1:2:3:4:5:6:7:8");
 }
 
-TEST(NetAddrTest, MethodClear)
+TEST(NetAddrTest, Clear)
 {
     btclite::NetAddr addr;
     
@@ -428,7 +431,7 @@ TEST(NetAddrTest, MethodClear)
 }
 
 
-TEST(SubNetTest, MethodNetmaskBits)
+TEST(SubNetTest, NetmaskBits)
 {
     EXPECT_EQ(SubNet::NetmaskBits(0), 0);
     EXPECT_EQ(SubNet::NetmaskBits(0x80), 1);
@@ -447,22 +450,23 @@ TEST(SubNetTest, MethodNetmaskBits)
 TEST(SubNetTest, Constructor)
 {
     btclite::NetAddr addr, netmask;
+    SubNet subnet;
     uint8_t mask[16];
-    
+
     std::memset(mask, 0xff, 16);
     addr.SetIpv4(inet_addr("192.168.1.1"));
     SubNet subnet1(addr);
     ASSERT_TRUE(subnet1.IsValid());
     EXPECT_EQ(subnet1.net_addr(), addr);
     EXPECT_EQ(std::memcmp(subnet1.netmask(), mask, 16), 0);
-    
+
     SubNet subnet2(addr, 24);
     addr.SetIpv4(inet_addr("192.168.1.0"));
     mask[15] = 0;
     ASSERT_TRUE(subnet2.IsValid());
     EXPECT_EQ(subnet2.net_addr(), addr);
     EXPECT_EQ(std::memcmp(subnet2.netmask(), mask, 16), 0);
-    
+
     netmask.SetIpv4(inet_addr("255.255.0.0"));
     SubNet subnet3(addr, netmask);
     addr.SetIpv4(inet_addr("192.168.0.0"));
@@ -471,7 +475,7 @@ TEST(SubNetTest, Constructor)
     ASSERT_TRUE(subnet3.IsValid());
     EXPECT_EQ(subnet3.net_addr(), addr);
     EXPECT_EQ(std::memcmp(subnet3.netmask(), mask, 16), 0);
-    
+
     for (int i = 0; i < 16; i++) {
         addr.SetByte(i, i);
         mask[i] = 0xff;
@@ -484,7 +488,7 @@ TEST(SubNetTest, Constructor)
     ASSERT_TRUE(subnet4.IsValid());
     EXPECT_EQ(subnet4.net_addr(), addr);
     EXPECT_EQ(std::memcmp(subnet4.netmask(), mask, 16), 0);
-    
+    std::cout << __LINE__ << '\n';
     for (int i = 0; i < 16; i++) {
         addr.SetByte(i, i);
         if (i < 8) {
@@ -504,7 +508,7 @@ TEST(SubNetTest, Constructor)
     EXPECT_EQ(std::memcmp(subnet5.netmask(), mask, 16), 0);
 }
 
-TEST(SubNetTest, MethodMatch)
+TEST(SubNetTest, Match)
 {
     btclite::NetAddr addr;
     uint8_t buf[sizeof(struct in6_addr)];
@@ -585,7 +589,7 @@ TEST(SubNetTest, MethodMatch)
     EXPECT_FALSE(subnet13.Match(addr));    
 }
 
-TEST(SubNetTest, MethodIsValid)
+TEST(SubNetTest, IsValid)
 {
     btclite::NetAddr addr;
     uint8_t buf[sizeof(struct in6_addr)];
@@ -641,7 +645,7 @@ TEST(SubNetTest, OperatorEqual)
     EXPECT_NE(subnet4, subnet6);
 }
 
-TEST(SubNetTest, MethodToString)
+TEST(SubNetTest, ToString)
 {
     btclite::NetAddr addr, netmask;
     uint8_t buf[sizeof(struct in6_addr)];
@@ -670,3 +674,4 @@ TEST(SubNetTest, MethodToString)
     SubNet subnet8(addr, 0);
     EXPECT_EQ(subnet8.ToString(), "0:0:0:0:0:0:0:0/0");
 }
+

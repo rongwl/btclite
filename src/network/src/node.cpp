@@ -8,7 +8,8 @@
 #include "message_types/messages.h"
 
 
-Node::Node(const struct bufferevent *bev, const btclite::NetAddr& addr, bool is_inbound, std::string host_name)
+Node::Node(const struct bufferevent *bev, const btclite::NetAddr& addr,
+           bool is_inbound, bool manual, std::string host_name)
     : time_connected_(Time::GetTimeSeconds()),
       id_(SingletonNodes::GetInstance().GetNewNodeId()),
       version_(0),
@@ -20,6 +21,7 @@ Node::Node(const struct bufferevent *bev, const btclite::NetAddr& addr, bool is_
       time_last_send_(0),
       time_last_recv_(0),
       is_inbound_(is_inbound),
+      manual_(manual),
       host_name_(host_name),
       conn_established_(false),
       disconnected_(false),
@@ -91,10 +93,17 @@ size_t Node::Send()
     return 0;
 }
 
-std::shared_ptr<Node> Nodes::InitializeNode(const struct bufferevent *bev, const btclite::NetAddr& addr,
-                                            bool is_inbound)
+void Nodes::AddNode(std::shared_ptr<Node> node)
 {
-    auto node = std::make_shared<Node>(bev, addr, is_inbound);
+    LOCK(cs_nodes_);
+    list_.push_back(node);
+    BTCLOG(LOG_LEVEL_VERBOSE) << "Added node, id:" << node->id() << " addr:" << node->addr().ToString();
+}
+
+std::shared_ptr<Node> Nodes::InitializeNode(const struct bufferevent *bev, const btclite::NetAddr& addr,
+                                            bool is_inbound, bool manual)
+{
+    auto node = std::make_shared<Node>(bev, addr, is_inbound, manual);
     node->mutable_timers()->no_msg_timer = SingletonTimerMng::GetInstance().
                                            StartTimer(no_msg_timeout*1000, 0, Node::InactivityTimeoutCb, node);
     
@@ -143,16 +152,20 @@ void Nodes::EraseNode(std::shared_ptr<Node> node)
 {
     LOCK(cs_nodes_);
     auto it = std::find(list_.begin(), list_.end(), node);
-    if (it != list_.end())
+    if (it != list_.end()) {
         list_.erase(it);
+        BTCLOG(LOG_LEVEL_VERBOSE) << "Cleared node " << node->id();
+    }
 }
 
 void Nodes::EraseNode(NodeId id)
 {
     LOCK(cs_nodes_);
     for (auto it = list_.begin(); it != list_.end(); ++it)
-        if ((*it)->id() == id)
+        if ((*it)->id() == id) {
             list_.erase(it);
+            BTCLOG(LOG_LEVEL_VERBOSE) << "Cleared node " << id;
+        }
 }
 
 void Nodes::ClearDisconnected()
@@ -304,6 +317,20 @@ int Nodes::CountOutbound()
     LOCK(cs_nodes_);
     return list_.size() - CountInbound();
 }
+
+bool Nodes::ShouldDnsLookup()
+{
+    int count = 0;
+    
+    LOCK(cs_nodes_);
+    for (auto it = list_.begin(); it != list_.end(); ++it) {
+        if ((*it)->conn_established() && !(*it)->manual() && !(*it)->is_inbound())
+            count++;
+    }
+    
+    return (count < 2);
+}
+
 /*
 void Nodes::MakeEvictionCandidate(std::vector<NodeEvictionCandidate> *out)
 {

@@ -51,14 +51,8 @@ bool P2P::Start()
     thread_connector_loop_ = std::thread(&TraceThread<std::function<void()> >, "connector",
                                          std::function<void()>(std::bind(&Connector::StartEventLoop, &connector_)));
     if (!network_args_.specified_outgoing().empty()) {
-        const std::vector<std::string>& vec = network_args_.specified_outgoing();
-        std::vector<btclite::NetAddr> addrs;
-        for (auto it = vec.begin(); it != vec.end(); it++) {
-            btclite::NetAddr addr;
-            connector_.GetHostAddr(*it, &addr);
-            addrs.push_back(std::move(addr));
-        }
-        connector_.ConnectNodes(addrs);
+        if (!connector_.ConnectNodes(network_args_.specified_outgoing()), true)
+            return false;
     }
     else  {
         if (!connector_.StartOutboundTimer()) {
@@ -93,6 +87,9 @@ void P2P::Stop()
     
     if (thread_connector_loop_.joinable())
         thread_connector_loop_.join();
+    
+    peers_db_.DumpPeers();
+    ban_db_.DumpBanList();
     
     BTCLOG(LOG_LEVEL_INFO) << "Stopped p2p network.";
 }

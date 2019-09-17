@@ -24,9 +24,9 @@ bool Connector::InitEvent()
 }
 
 void Connector::StartEventLoop()
-{
+{    
     BTCLOG(LOG_LEVEL_INFO) << "Dispatching connector event loop...";
-
+    
     if (base_) 
         event_base_dispatch(base_);
     else
@@ -63,6 +63,18 @@ struct bufferevent *Connector::NewSocketEvent()
 
 bool Connector::StartOutboundTimer()
 {
+    const std::vector<Seed>& seeds = Network::SingletonParams::GetInstance().seeds();
+    if (!SingletonPeers::GetInstance().IsEmpty()) {
+        auto func = std::bind(Connector::DnsLookup, std::placeholders::_1);
+        SingletonTimerMng::GetInstance().StartTimer(11000, 0,
+                std::function<bool(const std::vector<Seed>&)>(func), seeds);            
+    }
+    else {
+        auto task = std::bind(Connector::DnsLookup, std::placeholders::_1);
+        SingletonThreadPool::GetInstance().AddTask(
+            std::function<bool(const std::vector<Seed>&)>(task), seeds);
+    }
+    
     auto func = std::bind(&Connector::OutboundTimeOutCb, this);
     outbound_timer_ = SingletonTimerMng::GetInstance().StartTimer(500, 500, std::function<bool()>(func));
     
@@ -74,8 +86,12 @@ bool Connector::OutboundTimeOutCb()
     proto_peers::Peer peer;
     btclite::NetAddr conn_addr;
     int tries;
-    int64_t now = SingletonTime::GetInstance().GetAdjustedTime();
+    int64_t now;
     
+    if (SingletonNodes::GetInstance().CountOutbound() >= max_outbound_connections)
+        return false;
+    
+    now = SingletonTime::GetInstance().GetAdjustedTime();
     tries = 0;
     while (tries <= 100) {
         if (SingletonNetInterrupt::GetInstance())
@@ -107,26 +123,83 @@ bool Connector::OutboundTimeOutCb()
 
     if (!conn_addr.IsValid() || !ConnectNode(conn_addr))
         return false;
-
-    if (SingletonNodes::GetInstance().CountOutbound() >= max_outbound_connections)
-        outbound_timer_->Suspend();
     
     return true;
 }
 
-bool Connector::ConnectNodes(const std::vector<btclite::NetAddr>& addrs)
+bool Connector::ConnectNodes(const std::vector<std::string>& str_addrs, bool manual)
+{
+    if (str_addrs.empty())
+        return false;
+    
+    std::vector<btclite::NetAddr> addrs;
+    for (auto it = str_addrs.begin(); it != str_addrs.end(); it++) {
+        btclite::NetAddr addr;
+        GetHostAddr(*it, &addr);
+        addrs.push_back(std::move(addr));
+    }
+    return ConnectNodes(addrs, manual);
+}
+
+bool Connector::ConnectNodes(const std::vector<btclite::NetAddr>& addrs, bool manual)
 {
     bool ret = true;
     
     for (const btclite::NetAddr& addr : addrs) {
-        ret &= ConnectNode(addr);
+        ret &= ConnectNode(addr, manual);
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
     
     return ret;
 }
 
-bool Connector::ConnectNode(const btclite::NetAddr& addr)
+bool Connector::DnsLookup(const std::vector<Seed>& seeds)
+{    
+    int found = 0;
+    
+    if (!SingletonNodes::GetInstance().ShouldDnsLookup()) {
+        BTCLOG(LOG_LEVEL_INFO) << "P2P peers available. Skipped DNS seeding.";
+        return true;
+    }
+    
+    BTCLOG(LOG_LEVEL_INFO) << "Loading addresses from DNS seeds (could take a while)";
+    
+    for (const Seed& seed : seeds) {
+        if (SingletonNetInterrupt::GetInstance())
+            return false;
+        
+        std::string host = "x" + std::to_string(desirable_service_flags) + "." + seed.host;
+        btclite::NetAddr source;
+        if (!source.SetInternal(host))
+            continue;
+        
+        std::vector<btclite::NetAddr> addrs;
+        // Limits number of addrs learned from a DNS seed
+        if (!LookupHost(host.c_str(), &addrs, 256, true))
+            continue;
+        
+        for (btclite::NetAddr& addr : addrs) {
+            addr.mutable_proto_addr()->set_port(Network::SingletonParams::GetInstance().default_port());
+            addr.mutable_proto_addr()->set_services(desirable_service_flags);
+            // use a random age between 3 and 7 days old
+            int64_t time = Time::GetTimeSeconds() - 3*24*60*60 - Random::GetUint64(4*24*60*60);
+            addr.mutable_proto_addr()->set_timestamp(time);
+            found++;
+        }
+        SingletonPeers::GetInstance().Add(addrs, source); 
+    }
+    
+    if (!found) {
+        BTCLOG(LOG_LEVEL_ERROR) << "No address found from DNS seeds. Maybe the network was down.";
+        return false;
+    }
+    
+    BTCLOG(LOG_LEVEL_INFO) << found << " addresses found from DNS seeds";        
+    
+    return true;
+}
+
+bool Connector::ConnectNode(const btclite::NetAddr& addr, bool manual)
 {
     struct bufferevent *bev;
     struct sockaddr_storage sock_addr;
@@ -174,12 +247,14 @@ bool Connector::ConnectNode(const btclite::NetAddr& addr)
         return false;
     }
 
-    auto node = SingletonNodes::GetInstance().InitializeNode(bev, addr, false);
+    auto node = SingletonNodes::GetInstance().InitializeNode(bev, addr, false, manual);
     if (!node) {
         BTCLOG(LOG_LEVEL_WARNING) << "Initialize new node failed.";
         bufferevent_free(bev);
         return false;
     }
+    
+    BTCLOG(LOG_LEVEL_VERBOSE) << "Connected to " << addr.ToString() << ':' << addr.proto_addr().port();
     
     return true;
 }

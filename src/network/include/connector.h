@@ -27,16 +27,17 @@ public:
     //-------------------------------------------------------------------------
     bool StartOutboundTimer();
     bool OutboundTimeOutCb();
-    bool ConnectNodes(const std::vector<btclite::NetAddr>& addrs);
+    bool ConnectNodes(const std::vector<std::string>& str_addrs, bool manual = false);
+    bool ConnectNodes(const std::vector<btclite::NetAddr>& addrs, bool manual = false);
     bool GetHostAddr(const std::string& host_name, btclite::NetAddr *out);
+    static bool DnsLookup(const std::vector<Seed>& seeds);
     
 private:
     struct event_base *base_;
     struct bufferevent *bev_;
     TimerMng::TimerPtr outbound_timer_;
     
-    bool ConnectNode(const btclite::NetAddr& addr);
-    
+    bool ConnectNode(const btclite::NetAddr& addr, bool manual = false);
 };
 
 #endif //BTCLITE_CONNECTOR_H
