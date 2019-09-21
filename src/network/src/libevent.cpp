@@ -96,12 +96,11 @@ void LibEvent::ConnReadCb(struct bufferevent *bev, void *ctx)
         timer_mng.StopTimer(pnode->timers().no_msg_timer);
         pnode->mutable_timers()->no_msg_timer.reset();
         
-        uint32_t timeout = (pnode->version() > bip0031_version) ? no_receiving_timeout_bip31 : no_receiving_timeout;
+        uint32_t timeout = (pnode->version() > kBip0031Version) ? kNoReceivingTimeoutBip31 : kNoReceivingTimeout;
         pnode->mutable_timers()->no_receiving_timer = timer_mng.StartTimer(timeout*1000, 0, Node::InactivityTimeoutCb, pnode);
     }
     
-    struct evbuffer *input = bufferevent_get_input(bev);    
-    pnode->ParseMessage(input);
+    pnode->ParseMessage();
 }
 
 void LibEvent::ConnEventCb(struct bufferevent *bev, short events, void *ctx)

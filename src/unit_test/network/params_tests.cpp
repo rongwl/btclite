@@ -10,7 +10,7 @@
 TEST(NetworkParamsTest, Constructor)
 {
     Network::Params network_params(BaseEnv::mainnet);
-    EXPECT_EQ(main_magic, network_params.msg_magic());
+    EXPECT_EQ(kMainMagic, network_params.msg_magic());
     EXPECT_EQ(8333, network_params.default_port());    
     std::vector<Seed> vec = { { "seed.bitcoin.sipa.be", 8333 },
                               { "dnsseed.bluematt.me", 8333 },
@@ -23,7 +23,7 @@ TEST(NetworkParamsTest, Constructor)
     EXPECT_EQ(vec, network_params.seeds());
     
     Network::Params network_params2(BaseEnv::testnet);
-    EXPECT_EQ(testnet_magic, network_params2.msg_magic());
+    EXPECT_EQ(kTestnetMagic, network_params2.msg_magic());
     EXPECT_EQ(18333, network_params2.default_port());    
     std::vector<Seed> vec2 = { { "testnet-seed.bitcoin.jonasschnelli.ch", 18333 },
                               { "seed.tbtc.petertodd.org", 18333 },
@@ -32,7 +32,7 @@ TEST(NetworkParamsTest, Constructor)
     EXPECT_EQ(vec2, network_params2.seeds());
     
     Network::Params network_params3(BaseEnv::regtest);
-    EXPECT_EQ(regtest_magic, network_params3.msg_magic());
+    EXPECT_EQ(kRegtestMagic, network_params3.msg_magic());
     EXPECT_EQ(18444, network_params3.default_port());
     EXPECT_EQ(0, network_params3.seeds().size());
     

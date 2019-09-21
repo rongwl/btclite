@@ -11,13 +11,13 @@ void Time::AddTimeData(const std::string& ip, int64_t offset_sample)
 {
     // Ignore duplicates
     static std::set<std::string> set_known;
-    if (set_known.size() == max_timedata_samples)
+    if (set_known.size() == kMaxTimedataSamples)
         return;
     if (!set_known.insert(ip).second)
         return;
 
     // Add data
-    static MedianFilter<int64_t> time_offsets(max_timedata_samples, 0);
+    static MedianFilter<int64_t> time_offsets(kMaxTimedataSamples, 0);
     time_offsets.Input(offset_sample);
     BTCLOG(LOG_LEVEL_VERBOSE) << "Added time data, samples " << time_offsets.Size() << ", offset " << offset_sample;
     

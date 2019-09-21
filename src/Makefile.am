@@ -80,6 +80,7 @@ BTCLITE_HEADER_FILES = \
                        utility/include/thread.h \
                        utility/include/tinyformat.h \
                        utility/include/util.h \
+                       utility/include/stream.h \
                        utility/include/string_encoding.h \
                        utility/include/timer.h \
                        utility/include/utiltime.h 

@@ -1,8 +1,10 @@
 #ifndef BTCLITE_NETWORK_PARAMS_H
 #define BTCLITE_NETWORK_PARAMS_H
 
+
 #include "environment.h"
 #include "net.h"
+
 
 struct Seed {
     std::string host;

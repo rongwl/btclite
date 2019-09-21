@@ -279,9 +279,9 @@ TEST(PeersTest, GetAddresses)
     
     addrs.clear();
     ASSERT_TRUE(peers.GetAddrs(&addrs));
-    EXPECT_EQ(addrs.size(), peers.proto_peers().map_peers().size()*max_getaddr_pct/100);
+    EXPECT_EQ(addrs.size(), peers.proto_peers().map_peers().size()*kMaxGetaddrPct/100);
     ASSERT_TRUE(peers.GetAddrs(&addrs2));
-    EXPECT_EQ(addrs2.size(), peers.proto_peers().map_peers().size()*max_getaddr_pct/100);
+    EXPECT_EQ(addrs2.size(), peers.proto_peers().map_peers().size()*kMaxGetaddrPct/100);
     EXPECT_NE(addrs[0], addrs2[0]); // Whether GetAddrs returns randomized vector
 }
 
@@ -299,23 +299,23 @@ TEST(PeersTest, PeerIsTerrible)
     peer.mutable_addr()->set_timestamp(now+10*60);
     EXPECT_FALSE(btclite::Peers::IsTerrible(peer, now));
     
-    peer.mutable_addr()->set_timestamp(now-peer_horizon_days*24*60*60-1);
+    peer.mutable_addr()->set_timestamp(now-kPeerHorizonDays*24*60*60-1);
     EXPECT_TRUE(btclite::Peers::IsTerrible(peer, now));
-    peer.mutable_addr()->set_timestamp(now-peer_horizon_days*24*60*60);
+    peer.mutable_addr()->set_timestamp(now-kPeerHorizonDays*24*60*60);
     EXPECT_FALSE(btclite::Peers::IsTerrible(peer, now));
     
-    peer.set_attempts(peer_retries);
+    peer.set_attempts(kPeerRetries);
     EXPECT_TRUE(btclite::Peers::IsTerrible(peer, now));
-    peer.set_attempts(peer_retries-1);
+    peer.set_attempts(kPeerRetries-1);
     EXPECT_FALSE(btclite::Peers::IsTerrible(peer, now));
     
-    peer.set_last_success(now-min_peer_fail_days*24*60*60-1);
-    peer.set_attempts(max_peer_failures);
+    peer.set_last_success(now-kMinPeerFailDays*24*60*60-1);
+    peer.set_attempts(kMaxPeerFailures);
     EXPECT_TRUE(btclite::Peers::IsTerrible(peer, now));
-    peer.set_last_success(now-min_peer_fail_days*24*60*60);
+    peer.set_last_success(now-kMinPeerFailDays*24*60*60);
     EXPECT_FALSE(btclite::Peers::IsTerrible(peer, now));
-    peer.set_last_success(now-min_peer_fail_days*24*60*60-1);
-    peer.set_attempts(max_peer_failures-1);
+    peer.set_last_success(now-kMinPeerFailDays*24*60*60-1);
+    peer.set_attempts(kMaxPeerFailures-1);
     EXPECT_FALSE(btclite::Peers::IsTerrible(peer, now));
 }
 

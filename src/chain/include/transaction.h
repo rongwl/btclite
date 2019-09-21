@@ -296,8 +296,8 @@ public:
     std::string ToString() const
     {
         std::stringstream ss;
-        ss << "TxOut(value=" << (value_ / satoshi_per_bitcoin) << "."
-           << std::setw(8) << std::setfill('0') << (value_ % satoshi_per_bitcoin) << ", "
+        ss << "TxOut(value=" << (value_ / kSatoshiPerBitcoin) << "."
+           << std::setw(8) << std::setfill('0') << (value_ % kSatoshiPerBitcoin) << ", "
            << "scriptPubKey=" << HexEncode(script_pub_key_.begin(), script_pub_key_.end()) << ")";
         return ss.str();
     }

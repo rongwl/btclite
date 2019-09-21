@@ -88,7 +88,7 @@ bool Connector::OutboundTimeOutCb()
     int tries;
     int64_t now;
     
-    if (SingletonNodes::GetInstance().CountOutbound() >= max_outbound_connections)
+    if (SingletonNodes::GetInstance().CountOutbound() >= kMaxOutboundConnections)
         return false;
     
     now = SingletonTime::GetInstance().GetAdjustedTime();

@@ -4,14 +4,13 @@
 #include "message_types.h"
 #include "network_address.h"
 #include "protocol.h"
-#include "serialize.h"
 
 
 namespace btc_message {
 
 class Version : public BaseMsgType {
 public:
-    static const std::string command;
+    static const std::string kCommand;
     
     template <size_t N>
     struct RawData {
@@ -79,7 +78,7 @@ public:
     
     //-------------------------------------------------------------------------
     void ReadRawData(const uint8_t *in);
-    void WriteRawData(uint8_t *out);
+    void WriteRawData(VecWStream *out);
     
     //-------------------------------------------------------------------------
     uint32_t value() const

@@ -95,7 +95,7 @@ TEST(BanDbTest, DumpAndLoadBanList)
         SubNet subnet(addr);
         ban_entry.set_version(i);
         ban_entry.set_create_time(Time::GetTimeSeconds());
-        ban_entry.set_ban_until(Time::GetTimeSeconds()+default_misbehaving_bantime);
+        ban_entry.set_ban_until(Time::GetTimeSeconds()+kDefaultMisbehavingBantime);
         ban_entry.set_ban_reason(BanDb::ManuallyAdded);
         (*ban_map.mutable_map())[subnet.ToString()] = ban_entry;
     }
@@ -132,7 +132,7 @@ TEST(BanDbTest, AddrIsBanned)
         addr.SetIpv4(inet_addr(buf));
         ban_entry.set_version(i);
         ban_entry.set_create_time(Time::GetTimeSeconds());
-        ban_entry.set_ban_until(Time::GetTimeSeconds()+default_misbehaving_bantime);
+        ban_entry.set_ban_until(Time::GetTimeSeconds()+kDefaultMisbehavingBantime);
         ban_entry.set_ban_reason(BanDb::NodeMisbehaving);
         (*ban_map.mutable_map())[SubNet(addr).ToString()] = ban_entry;
     }
@@ -144,7 +144,7 @@ TEST(BanDbTest, AddrIsBanned)
         EXPECT_TRUE(ban_db1.IsBanned(addr));
     }
     
-    ban_entry.set_ban_until(ban_entry.ban_until() - default_misbehaving_bantime);
+    ban_entry.set_ban_until(ban_entry.ban_until() - kDefaultMisbehavingBantime);
     addr.SetIpv4(inet_addr("1.2.3.4"));
     (*ban_map.mutable_map())[SubNet(addr).ToString()] = ban_entry;
     BanDb ban_db2(fs::path("/tmp"), ban_map);

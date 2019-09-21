@@ -46,8 +46,8 @@ public:
     
     //-------------------------------------------------------------------------
     static void InactivityTimeoutCb(std::shared_ptr<Node> node);
-    bool ParseMessage(struct evbuffer *buf);
-    size_t Send();
+    bool ParseMessage();
+    bool SendMessage(const BaseMsgType& msg);
     
     //-------------------------------------------------------------------------
     int64_t time_connected() const

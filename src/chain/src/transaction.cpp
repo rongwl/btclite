@@ -68,7 +68,7 @@ uint64_t Transaction::OutputsAmount() const
     uint64_t amount = 0;
     for (auto output : outputs_) {
         amount += output.value();
-        if (output.value() > max_satoshi_amount || amount > max_satoshi_amount)
+        if (output.value() > kMaxSatoshiAmount || amount > kMaxSatoshiAmount)
             throw std::runtime_error(std::string(__func__) + ": value out of range");
     }
     

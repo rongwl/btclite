@@ -2,7 +2,7 @@
 
 namespace btc_message {
 
-const std::string Version::command = "version";
+const std::string Version::kCommand = "version";
 
 bool Version::IsValid()
 {
@@ -64,7 +64,7 @@ void Version::ReadRawData(const uint8_t *in)
 
 }
 
-void Version::WriteRawData(uint8_t *out)
+void Version::WriteRawData(VecWStream *out)
 {
 
 }

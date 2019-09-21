@@ -6,6 +6,8 @@
 #include <memory>
 #include <string>
 
+#include "stream.h"
+
 
 class Node;
 
@@ -34,7 +36,7 @@ struct VarStr {
 class BaseMsgType {
 public:
     virtual void ReadRawData(const uint8_t *in) = 0;
-    virtual void WriteRawData(uint8_t *out) = 0;
+    virtual void WriteRawData(VecWStream *out) = 0;
 };
 
 

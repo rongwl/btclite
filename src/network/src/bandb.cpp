@@ -14,7 +14,7 @@ bool BanDb::Add(const SubNet& sub_net, const BanReason &ban_reason, bool dump_li
     
     ban_entry.set_create_time(Time::GetTimeSeconds());
     ban_entry.set_ban_reason(ban_reason);
-    ban_entry.set_ban_until(Time::GetTimeSeconds() + default_misbehaving_bantime);
+    ban_entry.set_ban_until(Time::GetTimeSeconds() + kDefaultMisbehavingBantime);
     
     if (!Add_(sub_net, ban_entry))
         return false;

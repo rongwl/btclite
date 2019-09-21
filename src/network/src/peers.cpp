@@ -290,8 +290,8 @@ bool btclite::Peers::GetAddrs(std::vector<btclite::NetAddr> *out)
     
     LOCK(cs_peers_);
     
-    uint32_t count = max_getaddr_pct*proto_peers_.map_peers().size()/100 < max_getaddr_count ? 
-                     max_getaddr_pct*proto_peers_.map_peers().size()/100 : max_getaddr_count;
+    uint32_t count = kMaxGetaddrPct*proto_peers_.map_peers().size()/100 < kMaxGetaddrCount ? 
+                     kMaxGetaddrPct*proto_peers_.map_peers().size()/100 : kMaxGetaddrCount;
 
     std::random_shuffle(rand_order_keys_.begin(), rand_order_keys_.end());
     for (int i = 0; i < count; i++) {
@@ -335,15 +335,15 @@ bool btclite::Peers::IsTerrible(const proto_peers::Peer& peer, int64_t now)
         return true;
 
     // not seen in recent history
-    if (peer.addr().timestamp() == 0 || now - peer.addr().timestamp() > peer_horizon_days * 24 * 60 * 60) 
+    if (peer.addr().timestamp() == 0 || now - peer.addr().timestamp() > kPeerHorizonDays * 24 * 60 * 60) 
         return true;
 
     // tried N times and never a success
-    if (peer.last_success() == 0 && peer.attempts() >= peer_retries) 
+    if (peer.last_success() == 0 && peer.attempts() >= kPeerRetries) 
         return true;
 
     // N successive failures in the last week
-    if (now - peer.last_success() > min_peer_fail_days * 24 * 60 * 60 && peer.attempts() >= max_peer_failures) 
+    if (now - peer.last_success() > kMinPeerFailDays * 24 * 60 * 60 && peer.attempts() >= kMaxPeerFailures) 
         return true;
 
     return false;

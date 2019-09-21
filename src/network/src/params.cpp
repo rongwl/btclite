@@ -7,7 +7,7 @@ Network::Params::Params(BaseEnv env)
     switch (env) {
         case BaseEnv::mainnet :
         {
-            msg_magic_ = main_magic;
+            msg_magic_ = kMainMagic;
             default_port_ = 8333;
             seeds_.reserve(8);
             seeds_.push_back({ "seed.bitcoin.sipa.be", 8333 }); // Pieter Wuille, only supports x1, x5, x9, and xd
@@ -23,7 +23,7 @@ Network::Params::Params(BaseEnv env)
         }
         case BaseEnv::testnet :
         {
-            msg_magic_ = testnet_magic;
+            msg_magic_ = kTestnetMagic;
             default_port_ = 18333;
             seeds_.reserve(4);
             seeds_.push_back({ "testnet-seed.bitcoin.jonasschnelli.ch", 18333 });
@@ -35,7 +35,7 @@ Network::Params::Params(BaseEnv env)
         }
         case BaseEnv::regtest : 
         {
-            msg_magic_ = regtest_magic;
+            msg_magic_ = kRegtestMagic;
             default_port_ = 18444;
             seeds_.clear(); // Regtest mode doesn't have any DNS seeds.
             

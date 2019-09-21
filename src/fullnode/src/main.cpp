@@ -50,7 +50,7 @@ int main(int argc, char **argv)
     fullnode.Interrupt();
     fullnode.Stop();
     
-    //Block genesis = CreateGenesisBlock(1231006505, 2083236893, 0x1d00ffff, 1, 50*satoshi_per_bitcoin);
+    //Block genesis = CreateGenesisBlock(1231006505, 2083236893, 0x1d00ffff, 1, 50*kSatoshiPerBitcoin);
     //std::cout << genesis.ToString() << std::endl;
     
     return EXIT_SUCCESS;

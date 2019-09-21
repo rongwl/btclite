@@ -84,7 +84,7 @@ bool MessageHeader::IsValid() const
         return false;
     }
     
-    if (command_ != btc_message::Version::command &&
+    if (command_ != btc_message::Version::kCommand &&
             command_ != "verack" &&
             command_ != "addr" &&
             command_ != "inv" &&
@@ -114,7 +114,7 @@ bool MessageHeader::IsValid() const
         return false;
     }
     
-    if (payload_length_ > max_message_size) {
+    if (payload_length_ > kMaxMessageSize) {
         BTCLOG(LOG_LEVEL_WARNING) << "MessageHeader::payload_length_(" << payload_length_ << ") is invalid";
         return false;
     }
@@ -131,8 +131,8 @@ void MessageHeader::ReadRawData(const uint8_t *in)
     in += sizeof(magic_);
     
     const char *command = reinterpret_cast<const char*>(in);
-    command_ = std::move(std::string(command, command + strnlen(command, COMMAND_SIZE)));
-    in += COMMAND_SIZE;
+    command_ = std::move(std::string(command, command + strnlen(command, kCommandSize)));
+    in += kCommandSize;
     
     payload_length_ = *reinterpret_cast<const uint32_t*>(in);
     in += sizeof(payload_length_);
@@ -147,7 +147,7 @@ void MessageHeader::WriteRawData(uint8_t *cout)
 
 void Message::DataFactory(const uint8_t *data_raw)
 {
-    if (header_.command() == btc_message::Version::command)
+    if (header_.command() == btc_message::Version::kCommand)
         data_ = std::make_shared<btc_message::Version>(data_raw);
     else
         data_.reset();

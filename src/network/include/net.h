@@ -72,11 +72,11 @@ private:
 
 class MessageHeader {
 public:
-    static constexpr size_t MESSAGE_START_SIZE = 4;
-    static constexpr size_t COMMAND_SIZE = 12;
-    static constexpr size_t PAYLOAD_SIZE = 4;
-    static constexpr size_t CHECKSUM_SIZE = 4;
-    static constexpr size_t SIZE = MESSAGE_START_SIZE + COMMAND_SIZE + PAYLOAD_SIZE + CHECKSUM_SIZE;
+    static constexpr size_t kMessageStartSize = 4;
+    static constexpr size_t kCommandSize = 12;
+    static constexpr size_t kPayloadSize = 4;
+    static constexpr size_t kChecksumSize = 4;
+    static constexpr size_t kSize = kMessageStartSize + kCommandSize + kPayloadSize + kChecksumSize;
     
     using MsgMagic = uint32_t;
     
@@ -107,7 +107,7 @@ public:
 
     
     //-------------------------------------------------------------------------
-    template <typename Stream> void Serialize(Stream& os) const
+    /*template <typename Stream> void Serialize(Stream& os) const
     {
         Serializer<Stream> serial(os);
         serial.SerialWrite(magic_);
@@ -122,7 +122,7 @@ public:
         serial.SerialRead(&command_);
         serial.SerialRead(&payload_length_);
         serial.SerialRead(&checksum_);
-    }
+    }*/
     
     //-------------------------------------------------------------------------
     bool IsValid() const;    
@@ -211,7 +211,7 @@ public:
     explicit Message(const uint8_t *raw)
         : header_(std::move(MessageHeader(raw)))
     {
-        DataFactory(raw+MessageHeader::SIZE);
+        DataFactory(raw+MessageHeader::kSize);
     }
     
     //-------------------------------------------------------------------------

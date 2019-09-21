@@ -118,7 +118,7 @@ TEST(NetAddrTest, SetNByte)
 {
     btclite::NetAddr addr;
     
-    addr.SetNByte(pch_ipv4, sizeof(pch_ipv4));
+    addr.SetNByte(kPchIpv4, sizeof(kPchIpv4));
     EXPECT_TRUE(addr.IsIpv4());
 }
 

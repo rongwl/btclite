@@ -190,7 +190,7 @@ std::enable_if_t<std::is_arithmetic<T>::value> Serializer<Stream>::UnSerialize(s
 {
     // Limit size per read so bogus size value won't cause out of memory
     uint64_t count = SerReadVarInt();
-    if (count*sizeof(T) > max_block_size)
+    if (count*sizeof(T) > kMaxBlockSize)
         throw std::ios_base::failure("vector size larger than max block size");
     out->clear();
     out->resize(count);
@@ -208,7 +208,7 @@ std::enable_if_t<std::is_class<T>::value> Serializer<Stream>::UnSerialize(std::v
     for (uint64_t i = 0; i < count; i++) {
         UnSerialize(&(out->at(i)));
         size += out->at(i).Size(true);
-        if (size > max_block_size)
+        if (size > kMaxBlockSize)
             throw std::ios_base::failure("vector size larger than max block size");
     }
 }
@@ -216,19 +216,19 @@ std::enable_if_t<std::is_class<T>::value> Serializer<Stream>::UnSerialize(std::v
 template <typename Stream>
 void Serializer<Stream>::SerWriteVarInt(const uint64_t count)
 {
-    if (count < varint_16bits) {
+    if (count < kVarint16bits) {
         SerWriteData(static_cast<uint8_t>(count));
     }
     else if (count <= std::numeric_limits<uint16_t>::max()) {
-        SerWriteData(varint_16bits);
+        SerWriteData(kVarint16bits);
         SerWriteData(static_cast<uint16_t>(count));
     }
     else if (count <= std::numeric_limits<uint32_t>::max()) {
-        SerWriteData(varint_32bits);
+        SerWriteData(kVarint32bits);
         SerWriteData(static_cast<uint32_t>(count));
     }
     else {
-        SerWriteData(varint_64bits);
+        SerWriteData(kVarint64bits);
         SerWriteData(count);
     }
 }
@@ -240,15 +240,15 @@ uint64_t Serializer<Stream>::SerReadVarInt()
     uint64_t varint;
     
     SerReadData(&count);
-    if (count < varint_16bits) {
+    if (count < kVarint16bits) {
         varint = count;
     }
-    else if (count == varint_16bits) {
+    else if (count == kVarint16bits) {
         SerReadData(reinterpret_cast<uint16_t*>(&varint));
-        if (varint < varint_16bits)
+        if (varint < kVarint16bits)
             throw std::ios_base::failure("non-canonical SerReadVarInt()");
     }
-    else if (count == varint_32bits) {
+    else if (count == kVarint32bits) {
         SerReadData(reinterpret_cast<uint32_t*>(&varint));
         if (varint <= std::numeric_limits<uint16_t>::max())
             throw std::ios_base::failure("non-canonical SerReadVarInt()");
@@ -258,7 +258,7 @@ uint64_t Serializer<Stream>::SerReadVarInt()
         if (varint <= std::numeric_limits<uint32_t>::max())
             throw std::ios_base::failure("non-canonical SerReadVarInt()");
     }
-    if (varint > max_vardata_size)
+    if (varint > kMaxVardataSize)
         throw std::ios_base::failure("SerReadVarInt(): size too large");
     
     return varint;

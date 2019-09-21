@@ -6,6 +6,7 @@
 #include "peers.h"
 #include "thread.h"
 #include "message_types/messages.h"
+#include "network/include/params.h"
 
 
 Node::Node(const struct bufferevent *bev, const btclite::NetAddr& addr,
@@ -57,13 +58,21 @@ void Node::InactivityTimeoutCb(std::shared_ptr<Node> node)
     SingletonNodes::GetInstance().EraseNode(node);
 }
 
-bool Node::ParseMessage(struct evbuffer *buf)
+bool Node::ParseMessage()
 {
-    uint8_t *raw = evbuffer_pullup(buf, MessageHeader::SIZE);
+    struct evbuffer *buf;
+    uint8_t *raw;
+    
+    if (!bev_)
+        return false;
+    
+    if (nullptr == (buf = bufferevent_get_input(bev_)))
+        return false;
     
     if (disconnected_)
         return false;
     
+    raw = evbuffer_pullup(buf, MessageHeader::kSize);
     while (raw) {
         MessageHeader header(raw);
         
@@ -82,15 +91,18 @@ bool Node::ParseMessage(struct evbuffer *buf)
         auto task = std::bind(MsgHandler::HandleMessage, pmessage, pnode, handler.data_handler());
         SingletonThreadPool::GetInstance().AddTask(std::function<bool()>(task));
         
-        raw = evbuffer_pullup(buf, MessageHeader::SIZE);
+        raw = evbuffer_pullup(buf, MessageHeader::kSize);
     }
     
     return true;
 }
 
-size_t Node::Send()
+bool Node::SendMessage(const BaseMsgType& msg)
 {
-    return 0;
+    //MessageHeader header(Network::SingletonParams::GetInstance().msg_magic(),
+    //                     btc_message::Version::KCommand, );
+    
+    return true;
 }
 
 void Nodes::AddNode(std::shared_ptr<Node> node)
@@ -105,7 +117,7 @@ std::shared_ptr<Node> Nodes::InitializeNode(const struct bufferevent *bev, const
 {
     auto node = std::make_shared<Node>(bev, addr, is_inbound, manual);
     node->mutable_timers()->no_msg_timer = SingletonTimerMng::GetInstance().
-                                           StartTimer(no_msg_timeout*1000, 0, Node::InactivityTimeoutCb, node);
+                                           StartTimer(kNoMsgTimeout*1000, 0, Node::InactivityTimeoutCb, node);
     
     AddNode(node);    
     if (!GetNode(node->id())) {
@@ -353,7 +365,7 @@ void Nodes::MakeEvictionCandidate(std::vector<NodeEvictionCandidate> *out)
 
 void MsgHandler::Factory(std::shared_ptr<Message> msg, std::shared_ptr<Node> src_node)
 {
-    if (msg->header().command() == btc_message::Version::command) {
+    if (msg->header().command() == btc_message::Version::kCommand) {
         data_handler_ = std::move(std::function<bool()>(std::bind(HandleRecvVersion, msg, src_node)));
     }
 }

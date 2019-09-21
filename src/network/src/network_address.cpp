@@ -47,7 +47,7 @@ NetAddr::NetAddr(const struct sockaddr_storage& addr)
 bool NetAddr::IsIpv4() const
 {
     ASSERT_SIZE();
-    return (std::memcmp(proto_addr_.ip().data(), pch_ipv4, sizeof(pch_ipv4)) == 0);
+    return (std::memcmp(proto_addr_.ip().data(), kPchIpv4, sizeof(kPchIpv4)) == 0);
 }
 
 bool NetAddr::IsIpv6() const
@@ -160,7 +160,7 @@ bool NetAddr::IsRoutable() const
 bool NetAddr::IsInternal() const
 {
     ASSERT_SIZE();
-    return (std::memcmp(proto_addr_.ip().data(), btc_ip_prefix, sizeof(btc_ip_prefix)) == 0);
+    return (std::memcmp(proto_addr_.ip().data(), kBtcIpPrefix, sizeof(kBtcIpPrefix)) == 0);
 }
 
 bool NetAddr::IsValid() const
@@ -171,7 +171,7 @@ bool NetAddr::IsValid() const
     // header20 vectorlen3 addr26 addr26 addr26 header20 vectorlen3 addr26 addr26 addr26...
     // so if the first length field is garbled, it reads the second batch
     // of addr misaligned by 3 bytes.
-    if (std::memcmp(proto_addr_.ip().data(), pch_ipv4+3, sizeof(pch_ipv4)-3) == 0)
+    if (std::memcmp(proto_addr_.ip().data(), kPchIpv4+3, sizeof(kPchIpv4)-3) == 0)
         return false;
 
     // unspecified IPv6 address (::/128)
@@ -205,8 +205,8 @@ std::string NetAddr::ToString() const
     std::stringstream ss;
     
     if (IsInternal())
-        return Botan::base32_encode(reinterpret_cast<const uint8_t*>(proto_addr_.ip().data()) + sizeof(btc_ip_prefix),
-                                    ip_byte_size - sizeof(btc_ip_prefix)) + ".internal";
+        return Botan::base32_encode(reinterpret_cast<const uint8_t*>(proto_addr_.ip().data()) + sizeof(kBtcIpPrefix),
+                                    ip_byte_size - sizeof(kBtcIpPrefix)) + ".internal";
 
     if (IsIpv4())
         ss << +GetByte(12) << "." << +GetByte(13) << "." << +GetByte(14) << "." << +GetByte(15);
@@ -303,7 +303,7 @@ void NetAddr::SetIpv4(uint32_t net_byte_order_ip)
 {
     ASSERT_SIZE();
     if (!IsIpv4())
-        SetNByte(pch_ipv4, sizeof(pch_ipv4));
+        SetNByte(kPchIpv4, sizeof(kPchIpv4));
     proto_addr_.set_ip(3, net_byte_order_ip);
 }
 
@@ -342,8 +342,8 @@ void NetAddr::GetGroup(std::vector<uint8_t> *out) const
     if (IsInternal())
     {
         af = AF_INTERNAL;
-        start_byte = sizeof(btc_ip_prefix);
-        bits = (ip_byte_size - sizeof(btc_ip_prefix)) * 8;
+        start_byte = sizeof(kBtcIpPrefix);
+        bits = (ip_byte_size - sizeof(kBtcIpPrefix)) * 8;
     }
     // all other unroutable addresses belong to the same group
     else if (!IsRoutable())
@@ -401,8 +401,8 @@ bool NetAddr::SetInternal(const std::string& name)
     hash_func->update(reinterpret_cast<const uint8_t*>(name.data()), name.size());
     hash_func->final(hash);
     uint8_t *data = reinterpret_cast<uint8_t*>(proto_addr_.mutable_ip()->mutable_data());
-    std::memcpy(data, btc_ip_prefix, sizeof(btc_ip_prefix));
-    std::memcpy(data + sizeof(btc_ip_prefix), hash, ip_byte_size - sizeof(btc_ip_prefix));
+    std::memcpy(data, kBtcIpPrefix, sizeof(kBtcIpPrefix));
+    std::memcpy(data + sizeof(kBtcIpPrefix), hash, ip_byte_size - sizeof(kBtcIpPrefix));
     
     return true;
 }

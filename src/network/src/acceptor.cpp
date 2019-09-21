@@ -77,7 +77,7 @@ void Acceptor::AcceptConnCb(struct evconnlistener *listener, evutil_socket_t fd,
         return;
     }
     
-    if (SingletonNodes::GetInstance().CountInbound() >= max_inbound_connections) {
+    if (SingletonNodes::GetInstance().CountInbound() >= kMaxInboundConnections) {
         BTCLOG(LOG_LEVEL_WARNING) << "Can not accept new connection because inbound connections is full";
         evutil_closesocket(fd);
         return;
@@ -127,20 +127,20 @@ void Acceptor::CheckingTimeoutCb(evutil_socket_t fd, short event, void *arg)
         pnode->set_disconnected(true);
         SingletonNodes::GetInstance().EraseNode(pnode);
     }
-    else if (now - pnode->time_last_send() > conn_timeout_interval)
+    else if (now - pnode->time_last_send() > kConnTimeoutInterval)
     {
         BTCLOG(LOG_LEVEL_INFO) << "socket sending timeout: " << (now - pnode->time_last_send());
         pnode->set_disconnected(true);
         SingletonNodes::GetInstance().EraseNode(pnode);
     }
-    else if (now - pnode->time_last_recv() > (pnode->version() > bip0031_version ? conn_timeout_interval : 90*60))
+    else if (now - pnode->time_last_recv() > (pnode->version() > kBip0031Version ? kConnTimeoutInterval : 90*60))
     {
         BTCLOG(LOG_LEVEL_INFO) << "socket receive timeout: " << (now - pnode->time_last_recv());
         pnode->set_disconnected(true);
         SingletonNodes::GetInstance().EraseNode(pnode);
     }
     else if (pnode->ping_time().ping_nonce_sent &&
-             pnode->ping_time().ping_usec_start + conn_timeout_interval * 1000000 < Time::GetTimeMicros())
+             pnode->ping_time().ping_usec_start + kConnTimeoutInterval * 1000000 < Time::GetTimeMicros())
     {
         BTCLOG(LOG_LEVEL_INFO) << "ping timeout: " << (now - pnode->ping_time().ping_usec_start / 1000000);
         pnode->set_disconnected(true);

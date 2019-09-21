@@ -128,7 +128,7 @@ uint32_t Orphans::LimitOrphanTxSize(uint32_t max_orphans)
     if (next_sweep <= now) {
         // Sweep out expired orphan pool entries:
         int erased_count = 0;
-        int64_t min_expire_time = now + orphan_tx_expire_time - orphan_tx_expire_interval;
+        int64_t min_expire_time = now + kBrphanTxExpireTime - kOrphanTxExpireInterval;
         auto it = map_orphan_txs_.begin();
         while (it != map_orphan_txs_.end())
         {
@@ -140,7 +140,7 @@ uint32_t Orphans::LimitOrphanTxSize(uint32_t max_orphans)
             }
         }
         // Sweep again 5 minutes after the next entry that expires in order to batch the linear scan.
-        next_sweep = min_expire_time + orphan_tx_expire_interval;
+        next_sweep = min_expire_time + kOrphanTxExpireInterval;
         if (erased_count > 0)
             BTCLOG(LOG_LEVEL_INFO) << "Erased " << erased_count << "orphan tx due to expiration";
     }

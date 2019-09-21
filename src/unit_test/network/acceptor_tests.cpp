@@ -39,7 +39,7 @@ TEST(AcceptorTest, MethordAcceptConnCb)
     client_addr.sin6_family = AF_INET6;
     client_addr.sin6_port = htons(8333);
     int count = 0;
-    for (int i = 1; i < max_inbound_connections; i++) {
+    for (int i = 1; i < kMaxInboundConnections; i++) {
         std::string str_addr = "::ffff:1.2.3." + std::to_string(i);
         inet_pton(AF_INET6, str_addr.c_str(), client_addr.sin6_addr.s6_addr);
         btclite::NetAddr addr(client_addr);
