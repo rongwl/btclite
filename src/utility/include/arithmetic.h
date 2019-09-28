@@ -18,11 +18,10 @@ public:
         std::memcpy(this->data()+sizeof(uint64_t), &high, sizeof(uint64_t));
     }
     
-    // Return low 64 bits in little endian
-    uint64_t GetLowLe64()
+    uint64_t GetLow64()
     {
         uint64_t *x = reinterpret_cast<uint64_t*>(data());
-        return le64toh(*x);
+        return *x;
     }
     
     friend bool operator==(const Uint128& a, const Uint128& b)
@@ -56,11 +55,10 @@ public:
         std::memcpy(this->data()+low.size(), high.data(), high.size());
     }
     
-    // Return low 64 bits in little endian
-    uint64_t GetLowLe64()
+    uint64_t GetLow64()
     {
         uint64_t *x = reinterpret_cast<uint64_t*>(data());
-        return le64toh(*x);
+        return *x;
     }
     
     friend bool operator==(const Uint256& a, const Uint256& b)

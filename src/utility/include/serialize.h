@@ -70,33 +70,40 @@ public:
     template <typename T>
     void SerialRead(T *obj)
     {
-        Unserialize(obj);
+        UnSerialize(obj);
     }
     
 private:
     Stream& stream_;
     
     //-------------------------------------------------------------------------
-    // for double type
+    // for double
     void Serialize(const double& in) 
     {
         SerWriteData(DoubleToBinary(in));
     }
     
-    // for float type
+    // for float
     void Serialize(const float& in)
     {
         SerWriteData(FloatToBinary(in));
     }
-    
-    //for char type array
-    template <size_t N>
-    void Serialize(const std::array<char, N>& in)
+        
+    //for string
+    void Serialize(const std::string& in)
     {
-        stream_.write(reinterpret_cast<const char*>(in.data()), N);
+        SerWriteVarInt(in.size());
+        stream_.write(reinterpret_cast<const char*>(in.data()), in.size());
     }
     
-    // for arithmetic type vector
+    //for arithmetic std::array
+    template <typename T, size_t N>
+    std::enable_if_t<std::is_arithmetic<T>::value> Serialize(const std::array<T, N>& in)
+    {
+        stream_.write(reinterpret_cast<const char*>(in.data()), N*sizeof(T));
+    }
+    
+    // for arithmetic vector
     template <typename T>
     std::enable_if_t<std::is_arithmetic<T>::value> Serialize(const std::vector<T>& in)
     {
@@ -105,21 +112,29 @@ private:
             stream_.write(reinterpret_cast<const char*>(in.data()), in.size()*sizeof(T));
     }
     
-    // for class type vector
-    template <typename T>
-    std::enable_if_t<std::is_class<T>::value> Serialize(const std::vector<T>& in)
+    // for string vector
+    void Serialize(const std::vector<std::string>& in)
     {
         SerWriteVarInt(in.size());
         for (auto it = in.begin(); it != in.end(); it++)
             Serialize(*it);
     }
     
-    // for integral type
+    // for class vector
+    template <typename T>
+    std::enable_if_t<std::is_class<T>::value> Serialize(const std::vector<T>& in)
+    {
+        SerWriteVarInt(in.size());
+        for (auto it = in.begin(); it != in.end(); it++)
+            it->Serialize(stream_);
+    }
+    
+    // for integral
     template <typename T>
     std::enable_if_t<std::is_integral<T>::value> Serialize(const T& in) 
     {
         SerWriteData(in);
-    }
+    }    
     
     // default to calling member function 
     template <typename T>
@@ -128,7 +143,7 @@ private:
         obj.Serialize(stream_);
     }
     
-    // for double type
+    // for double
     void UnSerialize(double *out) 
     {
         uint64_t i;
@@ -136,7 +151,7 @@ private:
         *out = BinaryToDouble(i);        
     }
     
-    // for float type
+    // for float
     void UnSerialize(float *out) 
     {
         uint32_t i;
@@ -144,20 +159,27 @@ private:
         *out = BinaryToFloat(i);
     }
     
-    // for char type array
-    template <size_t N>
-    void UnSerialize(std::array<char, N> *out)
+    // for string
+    void UnSerialize(std::string *out);
+    
+    // for arithmetic std::array
+    template <typename T, size_t N>
+    std::enable_if_t<std::is_arithmetic<T>::value> UnSerialize(std::array<T, N> *out)
     {
-        stream_.read(reinterpret_cast<char*>(out->data()), N);
+        for (auto it = out->begin(); it != out->end(); it++)
+            UnSerialize(&(*it));
     }
     
-    // for arithmetic type vector
+    // for arithmetic vector
     template <typename T> 
-    std::enable_if_t<std::is_arithmetic<T>::value> UnSerialize(std::vector<T>*); 
+    std::enable_if_t<std::is_arithmetic<T>::value> UnSerialize(std::vector<T> *out); 
     
-    // for class type vector
+    // for string vector
+    void UnSerialize(std::vector<std::string> *out);
+    
+    // for class vector
     template <typename T> 
-    std::enable_if_t<std::is_class<T>::value> UnSerialize(std::vector<T>*); 
+    std::enable_if_t<std::is_class<T>::value> UnSerialize(std::vector<T> *out); 
     
     // for integral type
     template <typename T>
@@ -185,6 +207,22 @@ private:
 };
 
 template <typename Stream>
+void Serializer<Stream>::UnSerialize(std::string *out)
+{
+    size_t size = SerReadVarInt();
+    char c;
+    
+    // Read all size characters, pushing all non-null (may be many).
+    out->reserve(size);
+    for (size_t i = 0; i < size; i++) {
+        stream_.read(&c, 1);
+        if (c == '\0')
+            break;
+        out->push_back(c);
+    }
+}
+
+template <typename Stream>
 template <typename T>
 std::enable_if_t<std::is_arithmetic<T>::value> Serializer<Stream>::UnSerialize(std::vector<T> *out)
 {
@@ -194,7 +232,23 @@ std::enable_if_t<std::is_arithmetic<T>::value> Serializer<Stream>::UnSerialize(s
         throw std::ios_base::failure("vector size larger than max block size");
     out->clear();
     out->resize(count);
-    stream_.read(reinterpret_cast<char*>(out->data()), count*sizeof(T));
+    for (auto it = out->begin(); it != out->end(); it++)
+        UnSerialize(&(*it));
+}
+
+template <typename Stream>
+void Serializer<Stream>::UnSerialize(std::vector<std::string> *out)
+{
+    uint64_t count = SerReadVarInt();
+    size_t size = 0;    
+    out->clear();
+    out->resize(count);
+    for (auto it = out->begin(); it != out->end(); it++) {
+        UnSerialize(&(*it));
+        size += it->size();
+        if (size > kMaxBlockSize)
+            throw std::ios_base::failure("vector size larger than max block size");
+    }
 }
 
 template <typename Stream>
@@ -205,9 +259,9 @@ std::enable_if_t<std::is_class<T>::value> Serializer<Stream>::UnSerialize(std::v
     size_t size = 0;    
     out->clear();
     out->resize(count);
-    for (uint64_t i = 0; i < count; i++) {
-        UnSerialize(&(out->at(i)));
-        size += out->at(i).Size(true);
+    for (auto it = out->begin(); it != out->end(); it++) {
+        it->UnSerialize(stream_);
+        size += it->Size(true);
         if (size > kMaxBlockSize)
             throw std::ios_base::failure("vector size larger than max block size");
     }

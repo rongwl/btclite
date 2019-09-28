@@ -21,7 +21,7 @@ TEST(PeersTest, Constructor)
 TEST(PeersTest, MakeMapKey)
 {
     btclite::Peers peers;
-    btclite::NetAddr addr1, addr2;
+    btclite::network::NetAddr addr1, addr2;
     
     addr1.SetIpv4(inet_addr("1.2.3.4"));
     addr2.SetIpv4(inet_addr("1.2.5.6"));
@@ -45,7 +45,7 @@ TEST(PeersTest, MakeMapKey)
 TEST(PeersTest, AddPeer)
 {
     btclite::Peers peers;
-    btclite::NetAddr addr, source;
+    btclite::network::NetAddr addr, source;
     bool is_new, is_tried;
     proto_peers::Peer peer;
     std::vector<uint64_t> rand_order_keys;
@@ -58,7 +58,7 @@ TEST(PeersTest, AddPeer)
     ASSERT_TRUE(peers.Find(addr, &peer, &is_new, &is_tried));
     EXPECT_TRUE(is_new);
     EXPECT_FALSE(is_tried);
-    EXPECT_EQ(btclite::NetAddr(peer.addr()), addr);
+    EXPECT_EQ(btclite::network::NetAddr(peer.addr()), addr);
     EXPECT_EQ(peer.addr().timestamp(), now-4000);
     uint64_t key = peers.MakeMapKey(addr);
     EXPECT_EQ(peers.rand_order_keys()[0], key);
@@ -68,7 +68,7 @@ TEST(PeersTest, AddPeer)
     ASSERT_FALSE(peers.Add(addr, source, 100));
     ASSERT_TRUE(peers.Find(addr, &peer, &is_new, &is_tried));
     EXPECT_EQ(peer.addr().timestamp(), now-100); 
-    EXPECT_EQ(btclite::NetAddr(peer.addr()), addr);
+    EXPECT_EQ(btclite::network::NetAddr(peer.addr()), addr);
     
     // delete exist terrible peer
     addr.SetIpv4(inet_addr("1.3.1.1"));
@@ -109,18 +109,18 @@ TEST(PeersTest, AddPeer)
     
 
     // add mutiple addrs
-    std::vector<btclite::NetAddr> vec;
-    vec.push_back(btclite::NetAddr());
+    std::vector<btclite::network::NetAddr> vec;
+    vec.push_back(btclite::network::NetAddr());
     vec[0].SetIpv4(inet_addr("1.1.1.1"));
-    vec.push_back(btclite::NetAddr());
+    vec.push_back(btclite::network::NetAddr());
     vec[1].SetIpv4(inet_addr("2.2.2.2"));
     ASSERT_TRUE(peers.Add(vec, source));
     ASSERT_TRUE(peers.Find(vec[0], &peer, &is_new, &is_tried));
-    EXPECT_EQ(btclite::NetAddr(peer.addr()), vec[0]);
+    EXPECT_EQ(btclite::network::NetAddr(peer.addr()), vec[0]);
     EXPECT_TRUE(is_new);
     EXPECT_FALSE(is_tried);
     EXPECT_TRUE(peers.Find(vec[1], &peer, &is_new, &is_tried));
-    EXPECT_EQ(btclite::NetAddr(peer.addr()), vec[1]);
+    EXPECT_EQ(btclite::network::NetAddr(peer.addr()), vec[1]);
     EXPECT_TRUE(is_new);
     EXPECT_FALSE(is_tried);
     
@@ -137,7 +137,7 @@ TEST(PeersTest, AddPeer)
 TEST(PeersTest, MakePeerTried)
 {
     btclite::Peers peers;
-    btclite::NetAddr addr, source;
+    btclite::network::NetAddr addr, source;
     bool is_new, is_tried;
     proto_peers::Peer peer;
     
@@ -172,7 +172,7 @@ TEST(PeersTest, MakePeerTried)
 TEST(PeersTest, SelectPeer)
 {
     btclite::Peers peers;
-    btclite::NetAddr addr, source;
+    btclite::network::NetAddr addr, source;
     
     // Select from new with 1 addr in new.
     source.SetIpv4(inet_addr("1.1.1.1"));
@@ -181,19 +181,19 @@ TEST(PeersTest, SelectPeer)
     ASSERT_TRUE(peers.Add(addr, source));
     proto_peers::Peer out;
     ASSERT_TRUE(peers.Select(&out, true));
-    EXPECT_EQ(btclite::NetAddr(std::move(out.addr())), addr);
+    EXPECT_EQ(btclite::network::NetAddr(std::move(out.addr())), addr);
     
     // move addr to tried, select from new expected nothing returned.
     ASSERT_TRUE(peers.MakeTried(addr));
     ASSERT_FALSE(peers.Select(&out, true));
     ASSERT_TRUE(peers.Select(&out, false));
-    EXPECT_EQ(btclite::NetAddr(std::move(out.addr())), addr);
+    EXPECT_EQ(btclite::network::NetAddr(std::move(out.addr())), addr);
 }
 
 TEST(PeersTest, AttemptPeer)
 {
     btclite::Peers peers;
-    btclite::NetAddr addr, source;
+    btclite::network::NetAddr addr, source;
     bool is_new, is_tried;
     proto_peers::Peer peer;
     
@@ -216,7 +216,7 @@ TEST(PeersTest, AttemptPeer)
 TEST(PeersTest, UpdatePeerTime)
 {
     btclite::Peers peers;
-    btclite::NetAddr addr, source;
+    btclite::network::NetAddr addr, source;
     bool is_new, is_tried;
     proto_peers::Peer peer;
     
@@ -238,9 +238,9 @@ TEST(PeersTest, UpdatePeerTime)
 TEST(PeersTest, GetAddresses)
 {
     btclite::Peers peers;
-    btclite::NetAddr addr, source;
+    btclite::network::NetAddr addr, source;
     int64_t now = SingletonTime::GetInstance().GetAdjustedTime();
-    std::vector<btclite::NetAddr> addrs, addrs2;
+    std::vector<btclite::network::NetAddr> addrs, addrs2;
     
     ASSERT_TRUE(peers.GetAddrs(&addrs));
     EXPECT_TRUE(addrs.empty());
@@ -269,7 +269,7 @@ TEST(PeersTest, GetAddresses)
         int octet1 = i % 256;
         int octet2 = i >> 8 % 256;
         std::string str_addr = std::to_string(octet1) + "." + std::to_string(octet2) + ".1.23";
-        btclite::NetAddr addr;
+        btclite::network::NetAddr addr;
         addr.SetIpv4(inet_addr(str_addr.c_str()));
         addr.mutable_proto_addr()->set_timestamp(now);
         peers.Add(addr, source);
@@ -328,7 +328,7 @@ TEST(PeersDbTest, Constructor)
 TEST(PeersDbTest, DumpAndLoadPeers)
 {
     btclite::Peers& peers = SingletonPeers::GetInstance();
-    btclite::NetAddr addr, source;
+    btclite::network::NetAddr addr, source;
     int64_t now = SingletonTime::GetInstance().GetAdjustedTime();
     
     source.SetIpv4(inet_addr("250.1.2.1"));

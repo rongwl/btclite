@@ -16,12 +16,12 @@ TEST(MessageHeaderTest, GetAndSet)
 {
     MessageHeader header;
     header.set_magic(kMainMagic);
-    header.set_command(btc_message::Version::kCommand);
+    header.set_command(kMsgVersion);
     header.set_payload_length(kMaxMessageSize);
     header.set_checksum(0x12345678);
     
     EXPECT_EQ(kMainMagic, header.magic());
-    EXPECT_EQ(btc_message::Version::kCommand, header.command());
+    EXPECT_EQ(kMsgVersion, header.command());
     EXPECT_EQ(kMaxMessageSize, header.payload_length());
     EXPECT_EQ(0x12345678, header.checksum());
     
@@ -33,7 +33,7 @@ TEST(MessageHeaderTest, ValidateHeader)
 {
     MessageHeader header;
     std::vector<uint32_t> magic_vec = { kMainMagic, kTestnetMagic, kRegtestMagic };
-    std::vector<std::string> command_vec = { btc_message::Version::kCommand };
+    std::vector<std::string> command_vec = { kMsgVersion };
     
     for (auto command : command_vec) {
         header.set_magic(kMainMagic);
@@ -55,7 +55,7 @@ TEST(MessageHeaderTest, ValidateHeader)
     EXPECT_FALSE(header.IsValid());
     
     header.set_magic(kMainMagic);
-    header.set_command(btc_message::Version::kCommand);
+    header.set_command(kMsgVersion);
     header.set_payload_length(kMaxMessageSize+1);
     EXPECT_FALSE(header.IsValid());
 }
@@ -76,10 +76,10 @@ TEST(MessageHeaderTest, Constructor2)
 
 TEST(TestMessageHeader, Constructor3)
 {
-    MessageHeader header1(kMainMagic, btc_message::Version::kCommand, kMaxMessageSize, 0x12345678);
+    MessageHeader header1(kMainMagic, kMsgVersion, kMaxMessageSize, 0x12345678);
     ASSERT_TRUE(header1.IsValid());
     EXPECT_EQ(kMainMagic, header1.magic());
-    EXPECT_EQ(btc_message::Version::kCommand, header1.command());
+    EXPECT_EQ(kMsgVersion, header1.command());
     EXPECT_EQ(kMaxMessageSize, header1.payload_length());
     EXPECT_EQ(0x12345678, header1.checksum());
     
@@ -90,11 +90,11 @@ TEST(TestMessageHeader, Constructor3)
 
 TEST(MessageHeaderTest, Constructor4)
 {
-    const MessageHeader header1(kMainMagic, btc_message::Version::kCommand, kMaxMessageSize, 0x12345678);
+    const MessageHeader header1(kMainMagic, kMsgVersion, kMaxMessageSize, 0x12345678);
     MessageHeader header2(header1);
     ASSERT_TRUE(header2.IsValid());
     EXPECT_EQ(kMainMagic, header2.magic());
-    EXPECT_EQ(btc_message::Version::kCommand, header2.command());
+    EXPECT_EQ(kMsgVersion, header2.command());
     EXPECT_EQ(kMaxMessageSize, header2.payload_length());
     EXPECT_EQ(0x12345678, header2.checksum());
     EXPECT_TRUE(header1 == header2);
@@ -102,18 +102,18 @@ TEST(MessageHeaderTest, Constructor4)
 
 TEST(MessageHeaderTest, Constructor5)
 {
-    MessageHeader header1(kMainMagic, btc_message::Version::kCommand, kMaxMessageSize, 0x12345678);
+    MessageHeader header1(kMainMagic, kMsgVersion, kMaxMessageSize, 0x12345678);
     MessageHeader header2(std::move(header1));
     ASSERT_TRUE(header2.IsValid());
     EXPECT_EQ(kMainMagic, header2.magic());
-    EXPECT_EQ(btc_message::Version::kCommand, header2.command());
+    EXPECT_EQ(kMsgVersion, header2.command());
     EXPECT_EQ(kMaxMessageSize, header2.payload_length());
     EXPECT_EQ(0x12345678, header2.checksum());
 }
 
 TEST(MessageHeaderTest, OperatorEqual)
 {
-    MessageHeader header1(kMainMagic, btc_message::Version::kCommand, kMaxMessageSize, 0x12345678);
+    MessageHeader header1(kMainMagic, kMsgVersion, kMaxMessageSize, 0x12345678);
     MessageHeader header2(header1);
     EXPECT_TRUE(header1 == header2);
     
@@ -137,20 +137,20 @@ TEST(MessageHeaderTest, OperatorEqual)
 TEST(LocalNetConfigTest, Constructor)
 {
     LocalNetConfig config;
-    EXPECT_EQ(config.local_services(), NODE_NETWORK | NODE_NETWORK_LIMITED);
+    EXPECT_EQ(config.local_services(), kNodeNetwork | kNodeNetworkLimited);
 }
 
 TEST(LocalNetConfigTest, GetAndSetLocalServiecs)
 {
     LocalNetConfig config;
-    config.set_local_services(NODE_NETWORK);
-    EXPECT_EQ(config.local_services(), NODE_NETWORK);
+    config.set_local_services(kNodeNetwork);
+    EXPECT_EQ(config.local_services(), kNodeNetwork);
 }
 
 TEST(LocalNetConfigTest, ValidateLocalAddrs)
 {
     LocalNetConfig config;
-    btclite::NetAddr addr;
+    btclite::network::NetAddr addr;
     
     ASSERT_TRUE(config.LookupLocalAddrs());
     EXPECT_TRUE(config.IsLocal(config.local_addrs().front()));

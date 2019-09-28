@@ -63,7 +63,7 @@ struct bufferevent *Connector::NewSocketEvent()
 
 bool Connector::StartOutboundTimer()
 {
-    const std::vector<Seed>& seeds = Network::SingletonParams::GetInstance().seeds();
+    const std::vector<Seed>& seeds = btclite::network::SingletonParams::GetInstance().seeds();
     if (!SingletonPeers::GetInstance().IsEmpty()) {
         auto func = std::bind(Connector::DnsLookup, std::placeholders::_1);
         SingletonTimerMng::GetInstance().StartTimer(11000, 0,
@@ -84,7 +84,7 @@ bool Connector::StartOutboundTimer()
 bool Connector::OutboundTimeOutCb()
 {
     proto_peers::Peer peer;
-    btclite::NetAddr conn_addr;
+    btclite::network::NetAddr conn_addr;
     int tries;
     int64_t now;
     
@@ -100,7 +100,7 @@ bool Connector::OutboundTimeOutCb()
         if (!SingletonPeers::GetInstance().Select(&peer))
             return false;
         
-        const btclite::NetAddr& addr = btclite::NetAddr(peer.addr());
+        const btclite::network::NetAddr& addr = btclite::network::NetAddr(peer.addr());
         if (!addr.IsValid() || SingletonLocalNetCfg::GetInstance().IsLocal(addr))
             return false;
         
@@ -114,7 +114,7 @@ bool Connector::OutboundTimeOutCb()
             continue;
         
         // do not allow non-default ports, unless after 50 invalid addresses selected already
-        if (peer.addr().port() != Network::SingletonParams::GetInstance().default_port() && tries < 50)
+        if (peer.addr().port() != btclite::network::SingletonParams::GetInstance().default_port() && tries < 50)
             continue;
         
         conn_addr = std::move(addr);
@@ -132,20 +132,20 @@ bool Connector::ConnectNodes(const std::vector<std::string>& str_addrs, bool man
     if (str_addrs.empty())
         return false;
     
-    std::vector<btclite::NetAddr> addrs;
+    std::vector<btclite::network::NetAddr> addrs;
     for (auto it = str_addrs.begin(); it != str_addrs.end(); it++) {
-        btclite::NetAddr addr;
+        btclite::network::NetAddr addr;
         GetHostAddr(*it, &addr);
         addrs.push_back(std::move(addr));
     }
     return ConnectNodes(addrs, manual);
 }
 
-bool Connector::ConnectNodes(const std::vector<btclite::NetAddr>& addrs, bool manual)
+bool Connector::ConnectNodes(const std::vector<btclite::network::NetAddr>& addrs, bool manual)
 {
     bool ret = true;
     
-    for (const btclite::NetAddr& addr : addrs) {
+    for (const btclite::network::NetAddr& addr : addrs) {
         ret &= ConnectNode(addr, manual);
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
@@ -169,17 +169,17 @@ bool Connector::DnsLookup(const std::vector<Seed>& seeds)
             return false;
         
         std::string host = "x" + std::to_string(desirable_service_flags) + "." + seed.host;
-        btclite::NetAddr source;
+        btclite::network::NetAddr source;
         if (!source.SetInternal(host))
             continue;
         
-        std::vector<btclite::NetAddr> addrs;
+        std::vector<btclite::network::NetAddr> addrs;
         // Limits number of addrs learned from a DNS seed
         if (!LookupHost(host.c_str(), &addrs, 256, true))
             continue;
         
-        for (btclite::NetAddr& addr : addrs) {
-            addr.mutable_proto_addr()->set_port(Network::SingletonParams::GetInstance().default_port());
+        for (btclite::network::NetAddr& addr : addrs) {
+            addr.mutable_proto_addr()->set_port(btclite::network::SingletonParams::GetInstance().default_port());
             addr.mutable_proto_addr()->set_services(desirable_service_flags);
             // use a random age between 3 and 7 days old
             int64_t time = Time::GetTimeSeconds() - 3*24*60*60 - Random::GetUint64(4*24*60*60);
@@ -199,7 +199,7 @@ bool Connector::DnsLookup(const std::vector<Seed>& seeds)
     return true;
 }
 
-bool Connector::ConnectNode(const btclite::NetAddr& addr, bool manual)
+bool Connector::ConnectNode(const btclite::network::NetAddr& addr, bool manual)
 {
     struct bufferevent *bev;
     struct sockaddr_storage sock_addr;
@@ -259,14 +259,14 @@ bool Connector::ConnectNode(const btclite::NetAddr& addr, bool manual)
     return true;
 }
 
-bool Connector::GetHostAddr(const std::string& host_name, btclite::NetAddr *out)
+bool Connector::GetHostAddr(const std::string& host_name, btclite::network::NetAddr *out)
 {
-    std::vector<btclite::NetAddr> addrs;
+    std::vector<btclite::network::NetAddr> addrs;
     
     if (!LookupHost(host_name.c_str(), &addrs, 256, true) || addrs.empty())
         return false;
     
-    const btclite::NetAddr& addr = addrs[Random::GetUint64(addrs.size()-1)];
+    const btclite::network::NetAddr& addr = addrs[Random::GetUint64(addrs.size()-1)];
     if (!addr.IsValid()) {
         BTCLOG(LOG_LEVEL_WARNING) << "Invalide address " << addr.ToString() << " for " << host_name;
         return false;

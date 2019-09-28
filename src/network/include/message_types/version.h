@@ -1,75 +1,112 @@
-#ifndef BTCLITE_MESSAGE_VERSION_H
-#define BTCLITE_MESSAGE_VERSION_H
+#ifndef BTCLITE_MESSAGE_TYPES_VERSION_H
+#define BTCLITE_MESSAGE_TYPES_VERSION_H
 
-#include "message_types.h"
-#include "network_address.h"
+
+#include "address.h"
 #include "protocol.h"
+#include "serialize.h"
+#include "stream.h"
 
 
-namespace btc_message {
+namespace btclite {
+namespace network {
+namespace message_types {
 
-class Version : public BaseMsgType {
-public:
-    static const std::string kCommand;
-    
-    template <size_t N>
+constexpr uint32_t kProtocolVersion = 70015;
+
+//! initial proto version, to be increased after version/verack negotiation
+constexpr uint32_t kInitProtoVersion = 209;
+
+//! In this version, 'getheaders' was introduced.
+constexpr uint32_t kGetheadersVersion = 31800;
+
+//! disconnect from peers older than this proto version
+constexpr uint32_t kMinPeerProtoVersion = kGetheadersVersion;
+
+//! timestamp field added to NetAddr, starting with this version;
+//! if possible, avoid requesting addresses nodes older than this
+constexpr uint32_t kAddrTimeVersion = 31402;
+
+//! BIP 0031, pong message, is enabled for all versions AFTER this one
+constexpr uint32_t kBip31Version = 60000;
+
+//! "filter*" commands are disabled without kNodeBloom after and including this version
+constexpr uint32_t kNoBloomVersion = 70011;
+
+//! "sendheaders" command and announcing blocks with headers starts with this version
+constexpr uint32_t kSendheadersVersion = 70012;
+
+//! "feefilter" tells peers to filter invs to you by fee starts with this version
+constexpr uint32_t kFeefilterVersion = 70013;
+
+//! short-id-based block download starts with this version
+constexpr uint32_t kShortIdsBlocksVersion = 70014;
+
+//! not banning for invalid compact blocks starts with this version
+constexpr uint32_t kInvalidCbNoBanVersion = 70015;
+
+
+class Version {
+public:    
+    /*template <size_t N>
     struct RawData {
-        int32_t value_;
+        int32_t version_;
         uint64_t services_;
         int64_t timestamp_;
         btc_message::NetAddr addr_recv_;
         btc_message::NetAddr addr_from_;
         uint64_t nonce_;
-        VarStr<N, VarIntSize> user_agent_;
+        btc_message::VarStr<N, VarIntSize> user_agent_;
         int32_t start_height_;
         bool relay_;
-    };
+    };*/
+    static const std::string kCommand;
     
     //-------------------------------------------------------------------------
     Version()
-        : value_(0), services_(0), timestamp_(0), address_receiver_(),
-          address_from_(), nonce_(0), user_agent_(), start_height_(0),
+        : version_(0), services_(0), timestamp_(0), addr_recv_(),
+          addr_from_(), nonce_(0), user_agent_(), start_height_(0),
           relay_(false) {}
     
-    Version(uint32_t value, uint64_t services, uint64_t timestamp,
-            const btclite::NetAddr& address_receiver,
-            const btclite::NetAddr& address_from, uint64_t nonce,
+    Version(uint32_t version, uint64_t services, uint64_t timestamp,
+            const NetAddr& address_receiver,
+            const NetAddr& address_from, uint64_t nonce,
             const std::string& user_agent, uint32_t start_height, bool relay)
-        : value_(value), services_(services), timestamp_(timestamp),
-          address_receiver_(address_receiver), address_from_(address_from),
+        : version_(version), services_(services), timestamp_(timestamp),
+          addr_recv_(address_receiver), addr_from_(address_from),
           nonce_(nonce), user_agent_(user_agent), start_height_(start_height),
           relay_(relay) {}
     
-    Version(uint32_t value, uint64_t services, uint64_t timestamp,
-            btclite::NetAddr&& address_receiver, btclite::NetAddr&& address_from,
+    Version(uint32_t version, uint64_t services, uint64_t timestamp,
+            NetAddr&& address_receiver, NetAddr&& address_from,
             uint64_t nonce, std::string&& user_agent, uint32_t start_height,
             bool relay)
-        : value_(value), services_(services), timestamp_(timestamp),
-          address_receiver_(std::move(address_receiver)),
-          address_from_(std::move(address_from)),
+        : version_(version), services_(services), timestamp_(timestamp),
+          addr_recv_(std::move(address_receiver)),
+          addr_from_(std::move(address_from)),
           nonce_(nonce), user_agent_(std::move(user_agent)),
           start_height_(start_height), relay_(relay) {}
     
     explicit Version(const Version& version)
-        : Version(version.value_, version.services_, version.timestamp_,
-                  version.address_receiver_, version.address_from_, version.nonce_,
+        : Version(version.version_, version.services_, version.timestamp_,
+                  version.addr_recv_, version.addr_from_, version.nonce_,
                   version.user_agent_, version.start_height_, version.relay_) {}
     
     explicit Version(Version&& version) noexcept
-        : Version(version.value_, version.services_, version.timestamp_,
-                  std::move(version.address_receiver_),
-                  std::move(version.address_from_), version.nonce_,
+        : Version(version.version_, version.services_, version.timestamp_,
+                  std::move(version.addr_recv_),
+                  std::move(version.addr_from_), version.nonce_,
                   std::move(version.user_agent_), version.start_height_,
                   version.relay_) {}
     
     explicit Version(const uint8_t *raw)
         : Version()
     {
-        ReadRawData(raw);
+        //UnSerialize(raw);
     }
     
     //-------------------------------------------------------------------------
-    bool IsValid();
+    bool IsValid() const;
     void Clear();
     
     //-------------------------------------------------------------------------
@@ -77,17 +114,19 @@ public:
     Version& operator=(Version&& b) noexcept;
     
     //-------------------------------------------------------------------------
-    void ReadRawData(const uint8_t *in);
-    void WriteRawData(VecWStream *out);
+    template <typename Stream>
+    void Serialize(Stream& out) const;
+    template <typename Stream>
+    void UnSerialize(Stream& in);
     
     //-------------------------------------------------------------------------
-    uint32_t value() const
+    uint32_t version() const
     {
-        return value_;
+        return version_;
     }
-    void set_value(uint32_t value)
+    void set_version(uint32_t version)
     {
-        value_ = value;
+        version_ = version;
     }
 
     uint64_t services() const
@@ -108,30 +147,30 @@ public:
         timestamp_ = timestamp;
     }
     
-    const btclite::NetAddr& address_receiver() const
+    const NetAddr& addr_recv() const
     {
-        return address_receiver_;
+        return addr_recv_;
     }
-    void set_address_receiver(const btclite::NetAddr& addr)
+    void set_addr_recv(const NetAddr& addr)
     {
-        address_receiver_ = addr;
+        addr_recv_ = addr;
     }
-    void set_address_receiver(btclite::NetAddr&& addr) noexcept
+    void set_addr_recv(NetAddr&& addr) noexcept
     {
-        address_receiver_ = std::move(addr);
+        addr_recv_ = std::move(addr);
     }
 
-    const btclite::NetAddr& address_from() const
+    const NetAddr& addr_from() const
     {
-        return address_from_;
+        return addr_from_;
     }
-    void set_address_from(const btclite::NetAddr& addr)
+    void set_addr_from(const NetAddr& addr)
     {
-        address_from_ = addr;
+        addr_from_ = addr;
     }
-    void set_address_from(btclite::NetAddr&& addr) noexcept
+    void set_addr_from(NetAddr&& addr) noexcept
     {
-        address_from_ = std::move(addr);
+        addr_from_ = std::move(addr);
     }
     
     uint64_t nonce() const
@@ -175,13 +214,13 @@ public:
     }
 
 private:
-    uint32_t value_;
+    uint32_t version_;
     uint64_t services_;
     uint64_t timestamp_;
-    btclite::NetAddr address_receiver_;
+    NetAddr addr_recv_;
     
     // Fields below require version ≥ 106
-    btclite::NetAddr address_from_;
+    NetAddr addr_from_;
     uint64_t nonce_;
     std::string user_agent_;
     uint32_t start_height_;
@@ -190,6 +229,33 @@ private:
     bool relay_;
 };
 
-} // namespace btc_message
+template <typename Stream>
+void Version::Serialize(Stream& out) const
+{
+    Serializer<Stream> serial(out);
+    
+    serial.SerialWrite(version_);
+    serial.SerialWrite(services_);
+    serial.SerialWrite(timestamp_);
+    serial.SerialWrite(addr_recv_);
+    serial.SerialWrite(addr_from_);
+    serial.SerialWrite(nonce_);
+    serial.SerialWrite(addr_recv_);
+    serial.SerialWrite(addr_from_);
+    serial.SerialWrite(nonce_);
+    serial.SerialWrite(user_agent_);
+    serial.SerialWrite(start_height_);
+    serial.SerialWrite(relay_);
+}
+
+template <typename Stream>
+void Version::UnSerialize(Stream& in)
+{
+
+}
+
+} // namespace message_types
+} // namespace network
+} // namespace btclite
 
 #endif // BTCLITE_MESSAGE_VERSION_H

@@ -7,43 +7,45 @@
 #include "network_address.h"
 #include "constants.h"
 
+
+using namespace btclite::network;
+
 TEST(NetAddrTest, Constructor)
 {
-    btclite::NetAddr addr1;
-    uint8_t ip_none[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-    EXPECT_EQ(addr1.proto_addr().ip().size(), btclite::NetAddr::ip_uint32_size);
-    EXPECT_EQ(std::memcmp(addr1.proto_addr().ip().data(), ip_none, btclite::NetAddr::ip_byte_size), 0);
+    btclite::network::NetAddr addr1;
+    EXPECT_EQ(addr1.proto_addr().ip().size(), btclite::network::NetAddr::ip_uint32_size);
+    EXPECT_EQ(std::memcmp(addr1.proto_addr().ip().data(), kNullIp.data(), kIpByteSize), 0);
     
-    for (uint8_t i = 1; i <= btclite::NetAddr::ip_uint32_size; i++)
+    for (uint8_t i = 1; i <= btclite::network::NetAddr::ip_uint32_size; i++)
         addr1.SetByte(i, i);
     addr1.mutable_proto_addr()->set_port(1234);
     addr1.mutable_proto_addr()->set_scope_id(1);
     addr1.mutable_proto_addr()->set_services(2);
     addr1.mutable_proto_addr()->set_timestamp(3);
       
-    btclite::NetAddr addr2(addr1);
+    btclite::network::NetAddr addr2(addr1);
     ASSERT_EQ(addr1, addr2);
     
-    btclite::NetAddr addr3(std::move(addr1));
+    btclite::network::NetAddr addr3(std::move(addr1));
     ASSERT_EQ(addr2, addr3);
     
     struct sockaddr_in sock_addr;
     sock_addr.sin_family = AF_INET;
     sock_addr.sin_addr.s_addr = inet_addr("192.168.1.1");
     sock_addr.sin_port = htons(1234);
-    btclite::NetAddr addr4(sock_addr);
+    btclite::network::NetAddr addr4(sock_addr);
     ASSERT_TRUE(addr4.IsIpv4());
     EXPECT_EQ(addr4.GetIpv4(), sock_addr.sin_addr.s_addr);
     EXPECT_EQ(addr4.proto_addr().port(), ntohs(sock_addr.sin_port));
     
     struct sockaddr_in6 sock_addr6;
-    uint8_t out[btclite::NetAddr::ip_byte_size];
+    uint8_t out[kIpByteSize];
     sock_addr6.sin6_family = AF_INET6;
-    for (uint8_t i = 1; i <= btclite::NetAddr::ip_uint32_size; i++)
+    for (uint8_t i = 1; i <= btclite::network::NetAddr::ip_uint32_size; i++)
         sock_addr6.sin6_addr.s6_addr[i] = i;
     sock_addr6.sin6_port = htons(1234);
     sock_addr6.sin6_scope_id = 1;
-    btclite::NetAddr addr5(sock_addr6);
+    btclite::network::NetAddr addr5(sock_addr6);
     ASSERT_TRUE(addr5.IsIpv6());
     addr5.GetIpv6(out);
     EXPECT_EQ(std::memcmp(sock_addr6.sin6_addr.s6_addr, out, sizeof(out)), 0);
@@ -51,13 +53,13 @@ TEST(NetAddrTest, Constructor)
     EXPECT_EQ(addr5.proto_addr().scope_id(), sock_addr6.sin6_scope_id);
     
     struct sockaddr_storage *storage_addr = reinterpret_cast<struct sockaddr_storage*>(&sock_addr);
-    btclite::NetAddr addr6(*storage_addr);
+    btclite::network::NetAddr addr6(*storage_addr);
     ASSERT_TRUE(addr6.IsIpv4());
     EXPECT_EQ(addr6.GetIpv4(), sock_addr.sin_addr.s_addr);
     EXPECT_EQ(addr6.proto_addr().port(), ntohs(sock_addr.sin_port));
     
     storage_addr = reinterpret_cast<struct sockaddr_storage*>(&sock_addr6);
-    btclite::NetAddr addr7(*storage_addr);
+    btclite::network::NetAddr addr7(*storage_addr);
     ASSERT_TRUE(addr7.IsIpv6());
     addr7.GetIpv6(out);
     EXPECT_EQ(std::memcmp(sock_addr6.sin6_addr.s6_addr, out, sizeof(out)), 0);
@@ -65,28 +67,46 @@ TEST(NetAddrTest, Constructor)
     EXPECT_EQ(addr7.proto_addr().scope_id(), sock_addr6.sin6_scope_id);
     
     inet_pton(AF_INET6, "::ffff:192.168.1.1", sock_addr6.sin6_addr.s6_addr);
-    btclite::NetAddr addr8(sock_addr6);
+    btclite::network::NetAddr addr8(sock_addr6);
     ASSERT_TRUE(addr8.IsIpv4());
     EXPECT_EQ(addr8.GetIpv4(), inet_addr("192.168.1.1"));
+    
+    btclite::network::message_types::NetAddr msg_addr;
+    std::memcpy(msg_addr.ip.data(), kPchIpv4, sizeof(kPchIpv4));
+    msg_addr.ip[12] = 192;
+    msg_addr.ip[13] = 168;
+    msg_addr.ip[14] = 1;
+    msg_addr.ip[15] = 1;
+    btclite::network::NetAddr addr9(msg_addr);
+    ASSERT_TRUE(addr9.IsIpv4());
+    EXPECT_EQ(addr9.GetIpv4(), inet_addr("192.168.1.1"));
+    
+    msg_addr.Clear();
+    inet_pton(AF_INET6, "0001:0203:0405:0607:0809:0A0B:0C0D:0E0F", msg_addr.ip.data());
+    btclite::network::NetAddr addr10(msg_addr);
+    ASSERT_TRUE(addr10.IsIpv6());
+    uint8_t buf[16];
+    addr10.GetIpv6(buf);
+    EXPECT_EQ(std::memcmp(buf, msg_addr.ip.data(), kIpByteSize), 0);
 }
 
 TEST(NetAddrTest, OperatorEqual)
 {
-    btclite::NetAddr addr1, addr2;
-    for (uint8_t i = 1; i <= btclite::NetAddr::ip_uint32_size; i++)
+    btclite::network::NetAddr addr1, addr2;
+    for (uint8_t i = 1; i <= btclite::network::NetAddr::ip_uint32_size; i++)
         addr1.SetByte(i, i);
     addr1.mutable_proto_addr()->set_port(1234);
     addr2 = addr1;
     EXPECT_EQ(addr1, addr2);
     
-    btclite::NetAddr addr3;
+    btclite::network::NetAddr addr3;
     addr3 = std::move(addr2);
     EXPECT_EQ(addr1, addr3);
 }
 
 TEST(NetAddrTest, IsIpv4)
 {
-    btclite::NetAddr addr;
+    btclite::network::NetAddr addr;
     addr.SetByte(10, 0xff);
     addr.SetByte(11, 0xff);
 
@@ -96,9 +116,9 @@ TEST(NetAddrTest, IsIpv4)
 
 TEST(NetAddrTest, IsIpv6)
 {
-    btclite::NetAddr addr;
+    btclite::network::NetAddr addr;
     
-    for (uint8_t i = 1; i <= btclite::NetAddr::ip_uint32_size; i++)
+    for (uint8_t i = 1; i <= btclite::network::NetAddr::ip_uint32_size; i++)
         addr.SetByte(i, i);   
     EXPECT_FALSE(addr.IsIpv4());
     EXPECT_TRUE(addr.IsIpv6());
@@ -106,17 +126,17 @@ TEST(NetAddrTest, IsIpv6)
 
 TEST(NetAddrTest, SetByte)
 {
-    btclite::NetAddr addr;
+    btclite::network::NetAddr addr;
     
-    for (int i = 0; i < btclite::NetAddr::ip_byte_size; i++)
+    for (int i = 0; i < kIpByteSize; i++)
         addr.SetByte(i, i);
-    for (int i = 0; i < btclite::NetAddr::ip_byte_size; i++)
+    for (int i = 0; i < kIpByteSize; i++)
         ASSERT_EQ(addr.GetByte(i), i);
 }
 
 TEST(NetAddrTest, SetNByte)
 {
-    btclite::NetAddr addr;
+    btclite::network::NetAddr addr;
     
     addr.SetNByte(kPchIpv4, sizeof(kPchIpv4));
     EXPECT_TRUE(addr.IsIpv4());
@@ -124,7 +144,7 @@ TEST(NetAddrTest, SetNByte)
 
 TEST(NetAddrTest, SetIpv4)
 {
-    btclite::NetAddr addr;
+    btclite::network::NetAddr addr;
     
     addr.SetIpv4(inet_addr("192.168.1.2"));
     ASSERT_TRUE(addr.IsValid());
@@ -137,7 +157,7 @@ TEST(NetAddrTest, SetIpv4)
 
 TEST(NetAddrTest, GetIpv4)
 {
-    btclite::NetAddr addr;
+    btclite::network::NetAddr addr;
     
     addr.SetIpv4(inet_addr("192.168.1.1"));
     ASSERT_EQ(addr.GetIpv4(), inet_addr("192.168.1.1"));
@@ -145,20 +165,20 @@ TEST(NetAddrTest, GetIpv4)
 
 TEST(NetAddrTest, SetIpv6)
 {
-    btclite::NetAddr addr;
+    btclite::network::NetAddr addr;
     uint8_t buf[sizeof(struct in6_addr)];
     
     inet_pton(AF_INET6, "0001:0203:0405:0607:0809:0A0B:0C0D:0E0F", buf);
     addr.SetIpv6(buf);
     ASSERT_TRUE(addr.IsValid());
-    for (int i = 0; i < btclite::NetAddr::ip_byte_size; i++)
+    for (int i = 0; i < kIpByteSize; i++)
         ASSERT_EQ(addr.GetByte(i), i);
 }
 
 TEST(NetAddrTest, GetIpv6)
 {
-    btclite::NetAddr addr;
-    uint8_t out[btclite::NetAddr::ip_byte_size];
+    btclite::network::NetAddr addr;
+    uint8_t out[kIpByteSize];
     
     addr.SetIpv4(inet_addr("192.168.1.1"));
     ASSERT_EQ(addr.GetIpv6(out), -1);
@@ -167,12 +187,12 @@ TEST(NetAddrTest, GetIpv6)
     inet_pton(AF_INET6, "0001:0203:0405:0607:0809:0A0B:0C0D:0E0F", buf);
     addr.SetIpv6(buf);
     addr.GetIpv6(out);
-    ASSERT_EQ(std::memcmp(buf, out, btclite::NetAddr::ip_byte_size), 0);
+    ASSERT_EQ(std::memcmp(buf, out, kIpByteSize), 0);
 }
 
 TEST(NetAddrTest, GetGroup)
 {
-    btclite::NetAddr addr;
+    btclite::network::NetAddr addr;
     std::vector<uint8_t> group;
     uint8_t buf[sizeof(struct in6_addr)];
     
@@ -202,54 +222,54 @@ TEST(NetAddrTest, GetGroup)
     group.clear();
     addr.SetIpv4(inet_addr("1.2.3.4"));
     addr.GetGroup(&group);
-    EXPECT_EQ(group, std::vector<uint8_t>({btclite::AF_IPV4, 1, 2})); // IPv4
+    EXPECT_EQ(group, std::vector<uint8_t>({AF_IPV4, 1, 2})); // IPv4
     
     addr.Clear();
     group.clear();
     inet_pton(AF_INET6, "::FFFF:0:102:304", buf);
     addr.SetIpv6(buf);
     addr.GetGroup(&group);
-    EXPECT_EQ(group, std::vector<uint8_t>({btclite::AF_IPV4, 1, 2})); // RFC6145
+    EXPECT_EQ(group, std::vector<uint8_t>({AF_IPV4, 1, 2})); // RFC6145
     
     addr.Clear();
     group.clear();
     inet_pton(AF_INET6, "64:FF9B::102:304", buf);
     addr.SetIpv6(buf);
     addr.GetGroup(&group);
-    EXPECT_EQ(group, std::vector<uint8_t>({btclite::AF_IPV4, 1, 2})); // RFC6052
+    EXPECT_EQ(group, std::vector<uint8_t>({AF_IPV4, 1, 2})); // RFC6052
     
     addr.Clear();
     group.clear();
     inet_pton(AF_INET6, "2002:102:304:9999:9999:9999:9999:9999", buf); 
     addr.SetIpv6(buf);
     addr.GetGroup(&group);
-    EXPECT_EQ(group, std::vector<uint8_t>({btclite::AF_IPV4, 1, 2})); // RFC3964
+    EXPECT_EQ(group, std::vector<uint8_t>({AF_IPV4, 1, 2})); // RFC3964
     
     addr.Clear();
     group.clear();
     inet_pton(AF_INET6, "2001:0:9999:9999:9999:9999:FEFD:FCFB", buf);
     addr.SetIpv6(buf);
     addr.GetGroup(&group);
-    EXPECT_EQ(group, std::vector<uint8_t>({btclite::AF_IPV4, 1, 2})); // RFC4380
+    EXPECT_EQ(group, std::vector<uint8_t>({AF_IPV4, 1, 2})); // RFC4380
     
     addr.Clear();
     group.clear();
     inet_pton(AF_INET6, "2001:470:abcd:9999:9999:9999:9999:9999", buf);
     addr.SetIpv6(buf);
     addr.GetGroup(&group);
-    EXPECT_EQ(group, std::vector<uint8_t>({btclite::AF_IPV6, 32, 1, 4, 112, 175})); //he.net
+    EXPECT_EQ(group, std::vector<uint8_t>({AF_IPV6, 32, 1, 4, 112, 175})); //he.net
     
     addr.Clear();
     group.clear();
     inet_pton(AF_INET6, "2001:2001:9999:9999:9999:9999:9999:9999", buf);
     addr.SetIpv6(buf);
     addr.GetGroup(&group);
-    EXPECT_EQ(group, std::vector<uint8_t>({btclite::AF_IPV6, 32, 1, 32, 1})); //IPv6
+    EXPECT_EQ(group, std::vector<uint8_t>({AF_IPV6, 32, 1, 32, 1})); //IPv6
 }
 
 TEST(NetAddrTest, Properties)
 {
-    btclite::NetAddr addr;
+    btclite::network::NetAddr addr;
     
     EXPECT_FALSE(addr.IsValid());
     
@@ -343,7 +363,7 @@ TEST(NetAddrTest, Properties)
 
 TEST(NetAddrTest, ToSockAddr)
 {
-    btclite::NetAddr addr;
+    btclite::network::NetAddr addr;
     struct sockaddr_storage sock_addr;
     
     std::memset(&sock_addr, 0, sizeof(sock_addr));
@@ -364,11 +384,11 @@ TEST(NetAddrTest, ToSockAddr)
     std::memset(&sock_addr, 0, sizeof(sock_addr));    
     ASSERT_TRUE(addr.ToSockAddr(reinterpret_cast<struct sockaddr*>(&sock_addr)));
     
-    uint8_t out[btclite::NetAddr::ip_byte_size];
+    uint8_t out[kIpByteSize];
     addr.GetIpv6(out);
     struct sockaddr_in6 *sock_addr6 = reinterpret_cast<struct sockaddr_in6*>(&sock_addr);
     EXPECT_EQ(sock_addr6->sin6_family, AF_INET6);
-    EXPECT_EQ(std::memcmp(sock_addr6->sin6_addr.s6_addr, out, btclite::NetAddr::ip_byte_size), 0);
+    EXPECT_EQ(std::memcmp(sock_addr6->sin6_addr.s6_addr, out, kIpByteSize), 0);
     EXPECT_EQ(sock_addr6->sin6_port, htons(addr.proto_addr().port()));
     EXPECT_EQ(sock_addr6->sin6_scope_id, addr.proto_addr().scope_id());
 }
@@ -379,16 +399,16 @@ TEST(NetAddrTest, FromSockAddr)
     sock_addr.sin_family = AF_INET;
     sock_addr.sin_addr.s_addr = inet_addr("192.168.1.1");
     sock_addr.sin_port = htons(1234);
-    btclite::NetAddr addr;
+    btclite::network::NetAddr addr;
     addr.FromSockAddr(reinterpret_cast<const struct sockaddr*>(&sock_addr));
     ASSERT_TRUE(addr.IsIpv4());
     EXPECT_EQ(addr.GetIpv4(), sock_addr.sin_addr.s_addr);
     EXPECT_EQ(addr.proto_addr().port(), ntohs(sock_addr.sin_port));
     
     struct sockaddr_in6 sock_addr6;
-    uint8_t out[btclite::NetAddr::ip_byte_size];
+    uint8_t out[kIpByteSize];
     sock_addr6.sin6_family = AF_INET6;
-    for (uint8_t i = 1; i <= btclite::NetAddr::ip_uint32_size; i++)
+    for (uint8_t i = 1; i <= btclite::network::NetAddr::ip_uint32_size; i++)
         sock_addr6.sin6_addr.s6_addr[i] = i;
     sock_addr6.sin6_port = htons(1234);
     sock_addr6.sin6_scope_id = 1;
@@ -409,7 +429,7 @@ TEST(NetAddrTest, FromSockAddr)
 
 TEST(NetAddrTest, ToString)
 {
-    btclite::NetAddr addr;
+    btclite::network::NetAddr addr;
     uint8_t buf[sizeof(struct in6_addr)];
     
     addr.SetIpv4(inet_addr("192.168.1.1"));
@@ -421,12 +441,12 @@ TEST(NetAddrTest, ToString)
 
 TEST(NetAddrTest, Clear)
 {
-    btclite::NetAddr addr;
+    btclite::network::NetAddr addr;
     
     addr.SetIpv4(inet_addr("192.168.1.1"));
     addr.Clear();
-    ASSERT_EQ(addr.proto_addr().ip_size(), btclite::NetAddr::ip_uint32_size);
-    for (int i = 0; i < btclite::NetAddr::ip_byte_size; i++)
+    ASSERT_EQ(addr.proto_addr().ip_size(), btclite::network::NetAddr::ip_uint32_size);
+    for (int i = 0; i < kIpByteSize; i++)
         ASSERT_EQ(addr.GetByte(i), 0);
 }
 
@@ -449,7 +469,7 @@ TEST(SubNetTest, NetmaskBits)
 
 TEST(SubNetTest, Constructor)
 {
-    btclite::NetAddr addr, netmask;
+    btclite::network::NetAddr addr, netmask;
     SubNet subnet;
     uint8_t mask[16];
 
@@ -510,7 +530,7 @@ TEST(SubNetTest, Constructor)
 
 TEST(SubNetTest, Match)
 {
-    btclite::NetAddr addr;
+    btclite::network::NetAddr addr;
     uint8_t buf[sizeof(struct in6_addr)];
     
     addr.SetIpv4(inet_addr("1.2.3.4"));
@@ -591,7 +611,7 @@ TEST(SubNetTest, Match)
 
 TEST(SubNetTest, IsValid)
 {
-    btclite::NetAddr addr;
+    btclite::network::NetAddr addr;
     uint8_t buf[sizeof(struct in6_addr)];
     
     addr.SetIpv4(inet_addr("1.2.3.0"));
@@ -620,7 +640,7 @@ TEST(SubNetTest, IsValid)
 
 TEST(SubNetTest, OperatorEqual)
 {
-    btclite::NetAddr addr, netmask;
+    btclite::network::NetAddr addr, netmask;
     uint8_t buf[sizeof(struct in6_addr)];
     
     addr.SetIpv4(inet_addr("1.2.3.0"));
@@ -647,7 +667,7 @@ TEST(SubNetTest, OperatorEqual)
 
 TEST(SubNetTest, ToString)
 {
-    btclite::NetAddr addr, netmask;
+    btclite::network::NetAddr addr, netmask;
     uint8_t buf[sizeof(struct in6_addr)];
     
     addr.SetIpv4(inet_addr("1.2.3.4"));

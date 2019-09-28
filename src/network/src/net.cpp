@@ -12,7 +12,9 @@
 #include "message_types/messages.h"
 
 
-bool LocalNetConfig::IsLocal(const btclite::NetAddr& addr)
+using namespace btclite::network;
+
+bool LocalNetConfig::IsLocal(const btclite::network::NetAddr& addr)
 {
     LOCK(cs_local_net_config_);
     for (auto it = local_addrs_.begin(); it != local_addrs_.end(); ++it)
@@ -44,7 +46,7 @@ bool LocalNetConfig::LookupLocalAddrs()
         if (ifa->ifa_addr->sa_family == AF_INET)
         {
             struct sockaddr_in* s4 = reinterpret_cast<struct sockaddr_in*>(ifa->ifa_addr);
-            btclite::NetAddr addr;
+            btclite::network::NetAddr addr;
             addr.SetIpv4(s4->sin_addr.s_addr);
             if (AddLocalHost(addr))
                 BTCLOG(LOG_LEVEL_INFO) << "Add local IPv4 addr " << ifa->ifa_name << ":" << addr.ToString();
@@ -52,7 +54,7 @@ bool LocalNetConfig::LookupLocalAddrs()
         else if (ifa->ifa_addr->sa_family == AF_INET6)
         {
             struct sockaddr_in6* s6 = reinterpret_cast<struct sockaddr_in6*>(ifa->ifa_addr);
-            btclite::NetAddr addr;
+            btclite::network::NetAddr addr;
             addr.SetIpv6(s6->sin6_addr.s6_addr);
             if (AddLocalHost(addr))
                 BTCLOG(LOG_LEVEL_INFO) << "Add local IPv6 addr " << ifa->ifa_name << ":" << addr.ToString();
@@ -63,7 +65,7 @@ bool LocalNetConfig::LookupLocalAddrs()
     return !local_addrs_.empty();  
 }
 
-bool LocalNetConfig::AddLocalHost(const btclite::NetAddr& addr)
+bool LocalNetConfig::AddLocalHost(const btclite::network::NetAddr& addr)
 {
     if (!addr.IsRoutable())
         return false;
@@ -79,38 +81,39 @@ bool LocalNetConfig::AddLocalHost(const btclite::NetAddr& addr)
 
 bool MessageHeader::IsValid() const
 {
-    if (magic_ != Network::SingletonParams::GetInstance().msg_magic()) {
+    if (magic_ != btclite::network::SingletonParams::GetInstance().msg_magic()) {
         BTCLOG(LOG_LEVEL_WARNING) << "MessageHeader::magic_(" << magic_ << ") is invalid";
         return false;
     }
     
-    if (command_ != btc_message::Version::kCommand &&
-            command_ != "verack" &&
-            command_ != "addr" &&
-            command_ != "inv" &&
-            command_ != "getdata" &&
-            command_ != "merkleblock" &&
-            command_ != "getblocks" &&
-            command_ != "getheaders" &&
-            command_ != "tx" &&
-            command_ != "headers" &&
-            command_ != "block" &&
-            command_ != "getaddr" &&
-            command_ != "mempool" &&
-            command_ != "ping" &&
-            command_ != "pong" &&
-            command_ != "notfound" &&
-            command_ != "filterload" &&
-            command_ != "filteradd" &&
-            command_ != "filterclear" &&
-            command_ != "reject" &&
-            command_ != "sendheaders" &&
-            command_ != "feefilter" &&
-            command_ != "sendcmpct" &&
-            command_ != "cmpctblock" &&
-            command_ != "getblocktxn" &&
-            command_ != "blocktxn") {
-        BTCLOG(LOG_LEVEL_WARNING) << "MessageHeader::command_(" << command_ << ") is invalid";
+    std::string cmd = command();
+    if (cmd != kMsgVersion &&
+            cmd != kMsgVerack &&
+            cmd != kMsgAddr &&
+            cmd != kMsgInv &&
+            cmd != kMsgGetData &&
+            cmd != kMsgMerkleBlock &&
+            cmd != kMsgGetBlocks &&
+            cmd != kMsgGetHeaders &&
+            cmd != kMsgTx &&
+            cmd != kMsgHeaders &&
+            cmd != kMsgBlock &&
+            cmd != kMsgGetAddr &&
+            cmd != kMsgMempool &&
+            cmd != kMsgPing &&
+            cmd != kMsgPong &&
+            cmd != kMsgNotFound &&
+            cmd != kMsgFilterLoad &&
+            cmd != kMsgFilterAdd &&
+            cmd != kMsgFilterClear &&
+            cmd != kMsgReject &&
+            cmd != kMsgSendHeaders &&
+            cmd != kMsgFeeFilter &&
+            cmd != kMsgSendCmpct &&
+            cmd != kMsgCmpctBlock &&
+            cmd != kMsgGetBlockTxn &&
+            cmd != kMsgBlockTxn) {
+        BTCLOG(LOG_LEVEL_WARNING) << "MessageHeader::command_(" << cmd << ") is invalid";
         return false;
     }
     
@@ -122,33 +125,10 @@ bool MessageHeader::IsValid() const
     return true;
 }
 
-void MessageHeader::ReadRawData(const uint8_t *in)
-{
-    if (!in)
-        return;
-    
-    magic_ = *reinterpret_cast<const uint32_t*>(in);
-    in += sizeof(magic_);
-    
-    const char *command = reinterpret_cast<const char*>(in);
-    command_ = std::move(std::string(command, command + strnlen(command, kCommandSize)));
-    in += kCommandSize;
-    
-    payload_length_ = *reinterpret_cast<const uint32_t*>(in);
-    in += sizeof(payload_length_);
-    
-    checksum_ = *reinterpret_cast<const uint32_t*>(in);
-}
-
-void MessageHeader::WriteRawData(uint8_t *cout)
-{
-
-}
-
 void Message::DataFactory(const uint8_t *data_raw)
 {
-    if (header_.command() == btc_message::Version::kCommand)
-        data_ = std::make_shared<btc_message::Version>(data_raw);
+    if (header_.command() == kMsgVersion)
+        data_ = std::make_shared<message_types::Version>(data_raw);
     else
         data_.reset();
 }

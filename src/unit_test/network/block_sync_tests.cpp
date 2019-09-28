@@ -9,7 +9,7 @@
 TEST(BlockSyncTest, Modify)
 {
     BlockSync block_sync;
-    btclite::NetAddr addr;
+    btclite::network::NetAddr addr;
     
     addr.SetIpv4(inet_addr("1.1.1.1"));
     block_sync.AddSyncState(1, addr, "");

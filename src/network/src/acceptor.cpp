@@ -9,7 +9,7 @@ Acceptor::Acceptor()
 {
     memset(&sock_addr_, 0, sizeof(sock_addr_));
     sock_addr_.sin6_family = AF_INET6;
-    sock_addr_.sin6_port = htons(Network::SingletonParams::GetInstance().default_port());
+    sock_addr_.sin6_port = htons(btclite::network::SingletonParams::GetInstance().default_port());
     sock_addr_.sin6_addr = in6addr_any;
     sock_addr_.sin6_scope_id = 0;
 }
@@ -58,7 +58,7 @@ void Acceptor::StartEventLoop()
 void Acceptor::AcceptConnCb(struct evconnlistener *listener, evutil_socket_t fd,
                            struct sockaddr *sock_addr, int socklen, void *arg)
 {
-    btclite::NetAddr addr;
+    btclite::network::NetAddr addr;
     struct event_base *base;
     struct bufferevent *bev;
     struct event *ev_timeout;

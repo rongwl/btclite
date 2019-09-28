@@ -11,14 +11,14 @@
 
 TEST(ConnectorTest, ConnectNode)
 {
-    std::vector<btclite::NetAddr> addrs;
+    std::vector<btclite::network::NetAddr> addrs;
     Connector connector;
     
     // init libevent
     ASSERT_TRUE(connector.InitEvent());
     
     // valid addr
-    addrs.emplace_back(btclite::NetAddr());
+    addrs.emplace_back(btclite::network::NetAddr());
     EXPECT_FALSE(connector.ConnectNodes(addrs));
     
     // local addr
@@ -44,7 +44,7 @@ TEST(ConnectorTest, ConnectNode)
 TEST(ConnectorTest, GetHostAddr)
 {
     Connector connector;
-    btclite::NetAddr addr;
+    btclite::network::NetAddr addr;
     
     ASSERT_TRUE(connector.GetHostAddr("1.2.3.1", &addr));
     EXPECT_EQ(addr.GetIpv4(), inet_addr("1.2.3.1"));
@@ -62,7 +62,7 @@ TEST(ConnectorTest, GetHostAddr)
 TEST(ConnectorTest, ConnectOutbound)
 {
     Connector connector;
-    btclite::NetAddr addr, source;
+    btclite::network::NetAddr addr, source;
     
     // init libevent
     ASSERT_TRUE(connector.InitEvent());
@@ -89,7 +89,7 @@ TEST(ConnectorTest, ConnectOutbound)
 
 TEST(ConnectorTest, DnsLookup)
 {
-    const std::vector<Seed>& seeds = Network::SingletonParams::GetInstance(BaseEnv::testnet).seeds();
+    const std::vector<Seed>& seeds = btclite::network::SingletonParams::GetInstance(BaseEnv::testnet).seeds();
     ASSERT_TRUE(SingletonPeers::GetInstance().IsEmpty());
     ASSERT_TRUE(Connector::DnsLookup(seeds));
     EXPECT_FALSE(SingletonPeers::GetInstance().IsEmpty());

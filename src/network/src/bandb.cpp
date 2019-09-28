@@ -3,7 +3,7 @@
 #include "utiltime.h"
 
 
-bool BanDb::Add(const btclite::NetAddr& addr, const BanReason &ban_reason, bool dump_list)
+bool BanDb::Add(const btclite::network::NetAddr& addr, const BanReason &ban_reason, bool dump_list)
 {
     return Add(SubNet(addr), ban_reason, dump_list);
 }
@@ -27,7 +27,7 @@ bool BanDb::Add(const SubNet& sub_net, const BanReason &ban_reason, bool dump_li
     return true;
 }
 
-bool BanDb::Erase(const btclite::NetAddr& addr, bool dump_list)
+bool BanDb::Erase(const btclite::network::NetAddr& addr, bool dump_list)
 {
     return Erase(SubNet(addr), dump_list);
 }
@@ -115,7 +115,7 @@ bool BanDb::LoadBanList()
     return ban_map_.ParseFromIstream(&fs);
 }
 
-bool BanDb::IsBanned(btclite::NetAddr addr)
+bool BanDb::IsBanned(btclite::network::NetAddr addr)
 {
     LOCK(cs_ban_map_);
     

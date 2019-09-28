@@ -102,7 +102,7 @@ bool Socket::SetSockNonBlocking()
     return true;
 }
 
-bool Socket::GetBindAddr(btclite::NetAddr *out)
+bool Socket::GetBindAddr(btclite::network::NetAddr *out)
 {
     struct sockaddr_storage sockaddr_bind;
     socklen_t len = sizeof(sockaddr_bind);

@@ -11,7 +11,7 @@ TEST(AcceptorTest, Constructor)
     const struct sockaddr_in6& sock_addr = acceptor.sock_addr();
     ASSERT_EQ(sock_addr.sin6_family, AF_INET6);
     ASSERT_EQ(sock_addr.sin6_port,
-              htons(Network::SingletonParams::GetInstance(BaseEnv::testnet).default_port()));
+              htons(btclite::network::SingletonParams::GetInstance(BaseEnv::testnet).default_port()));
     ASSERT_EQ(std::memcmp(sock_addr.sin6_addr.s6_addr, in6addr_any.s6_addr, 16), 0);
     ASSERT_EQ(sock_addr.sin6_scope_id, 0);
 }
@@ -42,7 +42,7 @@ TEST(AcceptorTest, MethordAcceptConnCb)
     for (int i = 1; i < kMaxInboundConnections; i++) {
         std::string str_addr = "::ffff:1.2.3." + std::to_string(i);
         inet_pton(AF_INET6, str_addr.c_str(), client_addr.sin6_addr.s6_addr);
-        btclite::NetAddr addr(client_addr);
+        btclite::network::NetAddr addr(client_addr);
         acceptor.AcceptConnCb(listener, fd, (struct sockaddr*)&client_addr, sizeof(client_addr), nullptr);
         ASSERT_EQ(SingletonNodes::GetInstance().CountInbound(), i);
         count = i;
@@ -57,7 +57,7 @@ TEST(AcceptorTest, MethordAcceptConnCb)
     }
     
     inet_pton(AF_INET6, "::ffff:1.2.3.250", client_addr.sin6_addr.s6_addr);
-    btclite::NetAddr addr(client_addr);
+    btclite::network::NetAddr addr(client_addr);
     SingletonBanDb::GetInstance().Add(addr, BanDb::NodeMisbehaving);
     acceptor.AcceptConnCb(listener, fd, (struct sockaddr*)&client_addr, sizeof(client_addr), nullptr);
     EXPECT_EQ(SingletonNodes::GetInstance().CountInbound(), count);  

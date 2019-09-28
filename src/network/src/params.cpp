@@ -2,7 +2,10 @@
 #include "constants.h"
 
 
-Network::Params::Params(BaseEnv env)
+namespace btclite {
+namespace network {
+
+Params::Params(BaseEnv env)
 {
     switch (env) {
         case BaseEnv::mainnet :
@@ -49,3 +52,6 @@ Network::Params::Params(BaseEnv env)
             break;
     }
 }
+
+} // namespace network
+} // namespace btclite

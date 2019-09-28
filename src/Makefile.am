@@ -54,6 +54,7 @@ BTCLITE_HEADER_FILES = \
                        network/include/libevent.h \
                        network/include/message_types.h \
                        network/include/messages.h \
+                       network/include/message_types/address.h \
                        network/include/message_types/version.h \
                        network/include/node.h \
                        network/include/p2p.h \
@@ -73,7 +74,6 @@ BTCLITE_HEADER_FILES = \
                        utility/include/error.h \
                        utility/include/fs.h \
                        utility/include/logging.h \
-                       utility/include/network_address.h \
                        utility/include/random.h \
                        utility/include/serialize.h \
                        utility/include/sync.h \
@@ -111,6 +111,7 @@ utility_src_libbtclite_util_a_SOURCES = utility/src/error.cpp \
                                         utility/src/logging.cpp \
                                         utility/src/random.cpp \
                                         utility/src/serialize.cpp \
+                                        utility/src/stream.cpp \
                                         utility/src/string_encoding.cpp \
                                         utility/src/sync.cpp \
                                         utility/src/thread.cpp \
@@ -151,6 +152,7 @@ network_src_libbtclite_network_a_SOURCES = network/proto/banmap.pb.cc \
                                            network/src/block_sync.cpp \
                                            network/src/connector.cpp \
                                            network/src/libevent.cpp \
+                                           network/src/message_types/address.cpp \
                                            network/src/message_types/version.cpp \
                                            network/src/netbase.cpp \
                                            network/src/network_address.cpp \

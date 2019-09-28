@@ -4,7 +4,7 @@
 #include "protocol.h"
 
 
-bool btclite::Peers::Add(const btclite::NetAddr &addr, const btclite::NetAddr& source, int64_t time_penalty)
+bool btclite::Peers::Add(const btclite::network::NetAddr &addr, const btclite::network::NetAddr& source, int64_t time_penalty)
 {
     proto_peers::Peer exist_peer;
     bool is_new, is_tried;
@@ -89,7 +89,7 @@ bool btclite::Peers::Add(const btclite::NetAddr &addr, const btclite::NetAddr& s
     return true;
 }
 
-bool btclite::Peers::Add(const std::vector<btclite::NetAddr> &vec_addr, const btclite::NetAddr& source, int64_t time_penalty)
+bool btclite::Peers::Add(const std::vector<btclite::network::NetAddr> &vec_addr, const btclite::network::NetAddr& source, int64_t time_penalty)
 {
     int added = 0;
     
@@ -103,7 +103,7 @@ bool btclite::Peers::Add(const std::vector<btclite::NetAddr> &vec_addr, const bt
     return added > 0;
 }
 
-bool btclite::Peers::MakeTried(const btclite::NetAddr& addr, int64_t time)
+bool btclite::Peers::MakeTried(const btclite::network::NetAddr& addr, int64_t time)
 {
     proto_peers::Peer exist_peer;
     bool is_new, is_tried;
@@ -114,8 +114,8 @@ bool btclite::Peers::MakeTried(const btclite::NetAddr& addr, int64_t time)
     if (!Find(map_key, group_key, &exist_peer, &is_new, &is_tried))
         return false;
     
-    // check whether we are talking about the exact same btclite::NetAddr (including same port)
-    if (btclite::NetAddr(exist_peer.addr()) != addr)
+    // check whether we are talking about the exact same btclite::network::NetAddr (including same port)
+    if (btclite::network::NetAddr(exist_peer.addr()) != addr)
         return false;
     
     // update info
@@ -202,7 +202,7 @@ bool btclite::Peers::Find(uint64_t map_key, uint64_t group_key, proto_peers::Pee
     return false;
 }
 
-bool btclite::Peers::Find(const btclite::NetAddr& addr, proto_peers::Peer *out, bool *is_new, bool *is_tried)
+bool btclite::Peers::Find(const btclite::network::NetAddr& addr, proto_peers::Peer *out, bool *is_new, bool *is_tried)
 {
     if (!out || !is_tried)
         return false;
@@ -241,7 +241,7 @@ bool btclite::Peers::FindSameGroup(uint64_t group_key, proto_peers::Peer *out, b
     return false;
 }
 
-bool btclite::Peers::Attempt(const btclite::NetAddr &addr, int64_t time)
+bool btclite::Peers::Attempt(const btclite::network::NetAddr &addr, int64_t time)
 {
     proto_peers::Peer exist_peer;
     bool is_new, is_tried;
@@ -252,8 +252,8 @@ bool btclite::Peers::Attempt(const btclite::NetAddr &addr, int64_t time)
     if (!Find(map_key, group_key, &exist_peer, &is_new, &is_tried))
         return false;
     
-    // check whether we are talking about the exact same btclite::NetAddr (including same port)
-    if (btclite::NetAddr(exist_peer.addr()) != addr)
+    // check whether we are talking about the exact same btclite::network::NetAddr (including same port)
+    if (btclite::network::NetAddr(exist_peer.addr()) != addr)
         return false;
     
     proto_peers_.mutable_map_peers()->find(map_key)->second.set_last_try(time);
@@ -262,7 +262,7 @@ bool btclite::Peers::Attempt(const btclite::NetAddr &addr, int64_t time)
     return true;
 }
 
-bool btclite::Peers::UpdateTime(const btclite::NetAddr &addr, int64_t time)
+bool btclite::Peers::UpdateTime(const btclite::network::NetAddr &addr, int64_t time)
 {
     proto_peers::Peer exist_peer;
     bool is_new, is_tried;
@@ -273,8 +273,8 @@ bool btclite::Peers::UpdateTime(const btclite::NetAddr &addr, int64_t time)
     if (!Find(map_key, group_key, &exist_peer, &is_new, &is_tried))
         return false;
     
-    // check whether we are talking about the exact same btclite::NetAddr (including same port)
-    if (btclite::NetAddr(exist_peer.addr()) != addr)
+    // check whether we are talking about the exact same btclite::network::NetAddr (including same port)
+    if (btclite::network::NetAddr(exist_peer.addr()) != addr)
         return false;
     
     if (time - exist_peer.addr().timestamp() > 20*60)
@@ -283,7 +283,7 @@ bool btclite::Peers::UpdateTime(const btclite::NetAddr &addr, int64_t time)
     return true;
 }
 
-bool btclite::Peers::GetAddrs(std::vector<btclite::NetAddr> *out)
+bool btclite::Peers::GetAddrs(std::vector<btclite::network::NetAddr> *out)
 {
     if (!out)
         return false;
@@ -303,7 +303,7 @@ bool btclite::Peers::GetAddrs(std::vector<btclite::NetAddr> *out)
     return true;
 }
 
-uint64_t btclite::Peers::MakeMapKey(const btclite::NetAddr& addr, bool by_group)
+uint64_t btclite::Peers::MakeMapKey(const btclite::network::NetAddr& addr, bool by_group)
 {
     HashWStream hs;
     Uint256 out;
@@ -315,13 +315,13 @@ uint64_t btclite::Peers::MakeMapKey(const btclite::NetAddr& addr, bool by_group)
     }
     else {
         std::vector<uint32_t> vec_addr;
-        for (int i = 0; i < btclite::NetAddr::ip_uint32_size; i++)
+        for (int i = 0; i < btclite::network::NetAddr::ip_uint32_size; i++)
             vec_addr.push_back(addr.proto_addr().ip()[i]);
         hs << key_ << vec_addr;
     }
     hs.Sha256(&out);
     
-    return out.GetLowLe64();
+    return out.GetLow64();
 }
 
 bool btclite::Peers::IsTerrible(const proto_peers::Peer& peer, int64_t now)

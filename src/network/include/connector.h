@@ -28,8 +28,8 @@ public:
     bool StartOutboundTimer();
     bool OutboundTimeOutCb();
     bool ConnectNodes(const std::vector<std::string>& str_addrs, bool manual = false);
-    bool ConnectNodes(const std::vector<btclite::NetAddr>& addrs, bool manual = false);
-    bool GetHostAddr(const std::string& host_name, btclite::NetAddr *out);
+    bool ConnectNodes(const std::vector<btclite::network::NetAddr>& addrs, bool manual = false);
+    bool GetHostAddr(const std::string& host_name, btclite::network::NetAddr *out);
     static bool DnsLookup(const std::vector<Seed>& seeds);
     
 private:
@@ -37,7 +37,7 @@ private:
     struct bufferevent *bev_;
     TimerMng::TimerPtr outbound_timer_;
     
-    bool ConnectNode(const btclite::NetAddr& addr, bool manual = false);
+    bool ConnectNode(const btclite::network::NetAddr& addr, bool manual = false);
 };
 
 #endif //BTCLITE_CONNECTOR_H

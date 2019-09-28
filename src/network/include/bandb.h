@@ -25,9 +25,9 @@ public:
           ban_map_(ban_map), dirty_(true) {}
     
     //-------------------------------------------------------------------------
-    bool Add(const btclite::NetAddr& addr, const BanReason &ban_reason, bool dump_list = true);
+    bool Add(const btclite::network::NetAddr& addr, const BanReason &ban_reason, bool dump_list = true);
     bool Add(const SubNet& sub_net, const BanReason &ban_reason, bool dump_list = true);
-    bool Erase(const btclite::NetAddr& addr, bool dump_list = true);
+    bool Erase(const btclite::network::NetAddr& addr, bool dump_list = true);
     bool Erase(const SubNet& sub_net, bool dump_list = true);
     void Clear();
     
@@ -41,7 +41,7 @@ public:
     void SweepBanned();
     bool DumpBanList();
     bool LoadBanList();
-    bool IsBanned(btclite::NetAddr addr);
+    bool IsBanned(btclite::network::NetAddr addr);
     
     //-------------------------------------------------------------------------
     const fs::path& path_ban_list() const

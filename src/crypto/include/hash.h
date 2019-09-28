@@ -13,9 +13,14 @@
 using Hash256 = Uint256;
 
 
-void DoubleSha256(const uint8_t in[], size_t length, Hash256 *out);
-void DoubleSha256(const std::vector<uint8_t> &in, Hash256 *out);
-void DoubleSha256(const std::string &in, Hash256 *out);
+class Hash {
+public:
+    static void Sha256(const uint8_t in[], size_t length, Hash256 *out);
+    static void Sha256(const std::vector<uint8_t>& in, Hash256 *out);
+    static void DoubleSha256(const uint8_t in[], size_t length, Hash256 *out);
+    static void DoubleSha256(const std::vector<uint8_t>& in, Hash256 *out);
+    static void DoubleSha256(const std::string& in, Hash256 *out);
+};
 
 
 // A writer stream (for serialization) that computes a 256-bit hash.
@@ -36,6 +41,16 @@ public:
         Serializer<ByteSinkType> serial(byte_sink_);
         serial.SerialWrite(obj);
         return *this;
+    }
+    
+    size_t Size() const
+    {
+        return vec_.size();
+    }
+    
+    const uint8_t *Data() const
+    {
+        return vec_.data();
     }
     
     void Clear()

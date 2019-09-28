@@ -2,7 +2,6 @@
 #define BTCLITE_NET_H
 
 
-#include "message_types.h"
 #include "network_address.h"
 #include "protocol.h"
 #include "serialize.h"
@@ -15,10 +14,10 @@ using NodeId = int64_t;
 class LocalNetConfig {
 public:
     LocalNetConfig()
-        : local_services_(ServiceFlags(NODE_NETWORK | NODE_NETWORK_LIMITED)), local_addrs_() {}
+        : local_services_(ServiceFlags(kNodeNetwork | kNodeNetworkLimited)), local_addrs_() {}
     
     bool LookupLocalAddrs();
-    bool IsLocal(const btclite::NetAddr& addr);
+    bool IsLocal(const btclite::network::NetAddr& addr);
     
     ServiceFlags local_services() const
     {
@@ -31,7 +30,7 @@ public:
         local_services_ = flags;
     }
     
-    std::vector<btclite::NetAddr> local_addrs() const // thread safe copy
+    std::vector<btclite::network::NetAddr> local_addrs() const // thread safe copy
     {
         LOCK(cs_local_net_config_);
         return local_addrs_;
@@ -40,9 +39,9 @@ public:
 private:
     mutable CriticalSection cs_local_net_config_;
     ServiceFlags local_services_;
-    std::vector<btclite::NetAddr> local_addrs_;
+    std::vector<btclite::network::NetAddr> local_addrs_;
     
-    bool AddLocalHost(const btclite::NetAddr& addr);
+    bool AddLocalHost(const btclite::network::NetAddr& addr);
 };
 
 class SingletonLocalNetCfg : Uncopyable {
@@ -82,52 +81,48 @@ public:
     
     //-------------------------------------------------------------------------
     MessageHeader()
-        : magic_(0), command_(), payload_length_(0), checksum_(0) {}
+        : magic_(0), command_(), payload_length_(0), checksum_(0)
+    {
+        std::memset(command_.data(), 0, kCommandSize);
+    }
     
     explicit MessageHeader(uint32_t magic)
-        : magic_(magic), command_(), payload_length_(0), checksum_(0) {}
+        : magic_(magic), command_(), payload_length_(0), checksum_(0) 
+    {
+        std::memset(command_.data(), 0, kCommandSize);
+    }
     
     explicit MessageHeader(const uint8_t *raw_data)
         : magic_(0), command_(), payload_length_(0), checksum_(0)
     {
-        ReadRawData(raw_data);
+        std::memset(command_.data(), 0, kCommandSize);
+        UnSerialize(raw_data);
     }
     
-    MessageHeader(uint32_t magic, const std::string& command, uint32_t payload_length, uint32_t checksum)
-        : magic_(magic), command_(command), payload_length_(payload_length), checksum_(checksum) {}
-    
-    MessageHeader(uint32_t magic, std::string&& command, uint32_t payload_length, uint32_t checksum) noexcept
-        : magic_(magic), command_(std::move(command)), payload_length_(payload_length), checksum_(checksum) {}
+    MessageHeader(uint32_t magic, const std::string& command,
+                  uint32_t payload_length, uint32_t checksum)
+        : magic_(magic), command_(), payload_length_(payload_length), checksum_(checksum) 
+    {
+        std::memset(command_.data(), 0, kCommandSize);
+        set_command(command);
+    }
     
     MessageHeader(const MessageHeader& header)
-        : MessageHeader(header.magic_, header.command_, header.payload_length_, header.checksum_) {}
+        : magic_(header.magic_), command_(header.command_),
+          payload_length_(header.payload_length_), checksum_(header.checksum_) {}
     
     MessageHeader(MessageHeader&& header) noexcept
-        : MessageHeader(header.magic_, std::move(header.command_), header.payload_length_, header.checksum_) {}
-
+        : magic_(header.magic_), command_(std::move(header.command_)),
+          payload_length_(header.payload_length_), checksum_(header.checksum_) {}
     
     //-------------------------------------------------------------------------
-    /*template <typename Stream> void Serialize(Stream& os) const
-    {
-        Serializer<Stream> serial(os);
-        serial.SerialWrite(magic_);
-        serial.SerialWrite(command_);
-        serial.SerialWrite(payload_length_);
-        serial.SerialWrite(checksum_);
-    }
-    template <typename Stream> void UnSerialize(Stream& is)
-    {
-        Serializer<Stream> serial(is);
-        serial.SerialRead(&magic_);
-        serial.SerialRead(&command_);
-        serial.SerialRead(&payload_length_);
-        serial.SerialRead(&checksum_);
-    }*/
+    template <typename Stream>
+    void Serialize(Stream& out) const;
+    template <typename Stream>
+    void UnSerialize(Stream& in);
     
     //-------------------------------------------------------------------------
-    bool IsValid() const;    
-    void ReadRawData(const uint8_t *in);
-    void WriteRawData(uint8_t *cout);
+    bool IsValid() const;
     
     //-------------------------------------------------------------------------
     bool operator==(const MessageHeader& b) const
@@ -153,17 +148,16 @@ public:
         magic_ = magic;
     }
 
-    const std::string& command() const
+    std::string command() const
     {
-        return command_;
+        const char *end = (const char*)std::memchr(command_.data(), '\0', kCommandSize);
+        size_t size = end ? (end - command_.data()) : kCommandSize;
+        return std::string(command_.data(), size);
     }
+    
     void set_command(const std::string& command)
     {
-        command_ = command;
-    }
-    void set_command(const std::string&& command) noexcept
-    {
-        command_ = std::move(command);
+        std::strncpy(command_.data(), command.data(), kCommandSize);
     }
 
     uint32_t payload_length() const
@@ -186,10 +180,38 @@ public:
     
 private:    
     uint32_t magic_;
-    std::string command_;
+    std::array<char, kCommandSize> command_;
     uint32_t payload_length_;
     uint32_t checksum_;
 };
+
+template <typename Stream>
+void MessageHeader::Serialize(Stream& out) const
+{
+    Serializer<Stream> serial(out);
+    serial.SerialWrite(magic_);
+    serial.SerialWrite(command_);
+    serial.SerialWrite(payload_length_);
+    serial.SerialWrite(checksum_);
+}
+
+template <typename Stream>
+void MessageHeader::UnSerialize(Stream& in)
+{
+    /*if (!in)
+        return;
+    
+    magic_ = *reinterpret_cast<const uint32_t*>(in);
+    in += sizeof(magic_);
+    
+    std::memcpy(command_.data(), in, kCommandSize);
+    in += kCommandSize;
+    
+    payload_length_ = *reinterpret_cast<const uint32_t*>(in);
+    in += sizeof(payload_length_);
+    
+    checksum_ = *reinterpret_cast<const uint32_t*>(in);*/
+}
 
 class Message {
 public:

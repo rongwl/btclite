@@ -3,7 +3,7 @@
 #include "utiltime.h"
 
 
-void BlockSync::AddSyncState(NodeId id, const btclite::NetAddr& addr, const std::string& addr_name)
+void BlockSync::AddSyncState(NodeId id, const btclite::network::NetAddr& addr, const std::string& addr_name)
 {
     LOCK(cs_block_sync_);
     map_sync_state_.emplace_hint(map_sync_state_.end(), std::piecewise_construct,
@@ -115,7 +115,7 @@ void Orphans::EraseOrphansFor(NodeId id)
         }
     }
     if (erased_count > 0)
-        BTCLOG(LOG_LEVEL_INFO) << "Erased " << erased_count << "orphan tx from peer=" << id;
+        BTCLOG(LOG_LEVEL_INFO) << "Erased " << erased_count << "orphan tx from peer " << id;
 }
 
 uint32_t Orphans::LimitOrphanTxSize(uint32_t max_orphans)

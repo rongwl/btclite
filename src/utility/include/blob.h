@@ -99,23 +99,21 @@ private:
 
 
 // merge from boost.iostreams example
-// boost.org/doc/libs/1_55_0/libs/iostreams/doc/tutorial/container_source.html
+// boost.org/doc/libs/1_55_0/libs/iostreams/doc/tutorial/container_sink.html
 template <typename Container, typename SinkType, typename CharType>
 class ContainerSink {
 public:
-    typedef CharType char_type;
-
     ContainerSink(Container& container)
       : container_(container)
     {
         static_assert(sizeof(SinkType) == sizeof(CharType), "invalid size");
     }
 
-    std::streamsize write(const char_type* buffer, std::streamsize size)
+    ContainerSink& write(const CharType* buffer, std::streamsize size)
     {
         const auto safe_sink = reinterpret_cast<const SinkType*>(buffer);
         container_.insert(container_.end(), safe_sink, safe_sink + size);
-        return size;
+        return *this;
     }
 
 private:
@@ -124,5 +122,44 @@ private:
 
 template <typename Container>
 using ByteSink = ContainerSink<Container, uint8_t, char>;
+
+// merge from boost.iostreams example
+// boost.org/doc/libs/1_55_0/libs/iostreams/doc/tutorial/container_source.html
+template <typename Container, typename SourceType, typename CharType>
+class ContainerSource
+{
+public:
+    ContainerSource(const Container& container)
+        : container_(container), position_(0)
+    {
+        static_assert(sizeof(SourceType) == sizeof(CharType), "invalid size");
+    }
+
+    std::streamsize read(CharType *buffer, std::streamsize size);
+
+private:
+    const Container& container_;
+    typename Container::size_type position_;
+};
+
+template <typename Container, typename SourceType, typename CharType>
+std::streamsize ContainerSource<Container, SourceType, CharType>::read(CharType *buffer, std::streamsize size)
+{        
+    if (position_ > container_.size())
+        throw std::overflow_error("container source overflow");
+    else if (position_ == container_.size())
+        return -1;
+    
+    auto amount = container_.size() - position_;
+    auto result = std::min(size, static_cast<std::streamsize>(amount));
+    const auto value = static_cast<typename Container::size_type>(result);
+    std::copy_n(container_.begin() + position_, value, buffer);
+    position_ += value;
+    
+    return result;
+}
+
+template <typename Container>
+using ByteSource = ContainerSource<Container, uint8_t, char>;
 
 #endif // BTCLITE_BLOB_H

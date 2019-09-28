@@ -9,22 +9,22 @@
 
 TEST(NetBaseTest, LookupHost)
 {
-    btclite::NetAddr addr;
+    btclite::network::NetAddr addr;
     uint8_t buf[sizeof(struct in6_addr)];
-    uint8_t out[btclite::NetAddr::ip_byte_size];
+    uint8_t out[kIpByteSize];
     
     LookupHost("127.0.0.1", &addr, false);
     ASSERT_TRUE(addr.IsIpv4());
     EXPECT_EQ(addr.GetIpv4(), inet_addr("127.0.0.1"));
     EXPECT_EQ(addr.proto_addr().port(), 
-              Network::SingletonParams::GetInstance(BaseEnv::testnet).default_port());
+              btclite::network::SingletonParams::GetInstance(BaseEnv::testnet).default_port());
     
     addr.Clear();
     LookupHost("::FFFF:192.168.1.1", &addr, false);
     ASSERT_TRUE(addr.IsIpv4());
     EXPECT_EQ(addr.GetIpv4(), inet_addr("192.168.1.1"));
     EXPECT_EQ(addr.proto_addr().port(), 
-              Network::SingletonParams::GetInstance(BaseEnv::testnet).default_port());
+              btclite::network::SingletonParams::GetInstance(BaseEnv::testnet).default_port());
     
     addr.Clear();
     memset(buf, 0, sizeof(buf));
@@ -35,7 +35,7 @@ TEST(NetBaseTest, LookupHost)
     addr.GetIpv6(out);
     EXPECT_EQ(std::memcmp(buf, out, sizeof(out)), 0);
     EXPECT_EQ(addr.proto_addr().port(), 
-              Network::SingletonParams::GetInstance(BaseEnv::testnet).default_port());
+              btclite::network::SingletonParams::GetInstance(BaseEnv::testnet).default_port());
     
     addr.Clear();
     LookupHost("bitcoin.org", &addr, true);

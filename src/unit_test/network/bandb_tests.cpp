@@ -16,7 +16,7 @@ TEST(BanDbTest, Constructor)
 
 TEST(BanDbTest, AddBanAddr)
 {
-    btclite::NetAddr addr;
+    btclite::network::NetAddr addr;
     addr.SetIpv4(inet_addr("1.2.3.4"));
     BanDb ban_db(fs::path("/tmp"));
     
@@ -37,7 +37,7 @@ TEST(BanDbTest, AddBanAddr)
 TEST(BanDbTest, ClearBanDb)
 {
     BanDb ban_db(fs::path("/tmp"));
-    btclite::NetAddr addr;
+    btclite::network::NetAddr addr;
     
     for (int i = 1; i < 10; i++) {
         std::string ip = "1.2.3." + std::to_string(i);
@@ -51,7 +51,7 @@ TEST(BanDbTest, ClearBanDb)
 
 TEST(BanDbTest, SweepBannedAddrs)
 {
-    btclite::NetAddr addr;
+    btclite::network::NetAddr addr;
     addr.SetIpv4(inet_addr("1.2.3.4"));
     SubNet subnet(addr);
     proto_banmap::BanEntry ban_entry;
@@ -83,7 +83,7 @@ TEST(BanDbTest, SweepBannedAddrs)
 
 TEST(BanDbTest, DumpAndLoadBanList)
 {    
-    btclite::NetAddr addr;
+    btclite::network::NetAddr addr;
     proto_banmap::BanEntry ban_entry;
     proto_banmap::BanMap ban_map;
     char buf[10];
@@ -121,7 +121,7 @@ TEST(BanDbTest, DumpAndLoadBanList)
 
 TEST(BanDbTest, AddrIsBanned)
 {
-    btclite::NetAddr addr;
+    btclite::network::NetAddr addr;
     proto_banmap::BanEntry ban_entry;
     proto_banmap::BanMap ban_map;
     char buf[10];

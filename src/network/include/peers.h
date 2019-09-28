@@ -24,32 +24,32 @@ public:
     
     //-------------------------------------------------------------------------
     // Add a single address.
-    bool Add(const btclite::NetAddr &addr, const btclite::NetAddr& source, int64_t time_penalty = 0);
+    bool Add(const btclite::network::NetAddr &addr, const btclite::network::NetAddr& source, int64_t time_penalty = 0);
     
     //! Add multiple addresses.
-    bool Add(const std::vector<btclite::NetAddr> &vAddr, const btclite::NetAddr& source, int64_t time_penalty = 0);
+    bool Add(const std::vector<btclite::network::NetAddr> &vAddr, const btclite::network::NetAddr& source, int64_t time_penalty = 0);
     
     // Move address to the tried table.
-    bool MakeTried(const btclite::NetAddr& addr, int64_t time = SingletonTime::GetInstance().GetAdjustedTime());
+    bool MakeTried(const btclite::network::NetAddr& addr, int64_t time = SingletonTime::GetInstance().GetAdjustedTime());
     
     // Choose an address to connect to.
     bool Select(proto_peers::Peer *out, bool newOnly = false);
     
     // Find an entry.
     bool Find(uint64_t map_key, uint64_t group_key, proto_peers::Peer *out, bool *is_new, bool *is_tried);
-    bool Find(const btclite::NetAddr& addr, proto_peers::Peer *out, bool *is_new, bool *is_tried);
+    bool Find(const btclite::network::NetAddr& addr, proto_peers::Peer *out, bool *is_new, bool *is_tried);
     bool FindSameGroup(uint64_t group_key, proto_peers::Peer *out, bool *is_tried, uint64_t *key = nullptr);
     
     // Mark an entry as connection attempted to.
-    bool Attempt(const btclite::NetAddr &addr, int64_t time = SingletonTime::GetInstance().GetAdjustedTime());
+    bool Attempt(const btclite::network::NetAddr &addr, int64_t time = SingletonTime::GetInstance().GetAdjustedTime());
     
     //! Update time of the address.
-    bool UpdateTime(const btclite::NetAddr &addr, int64_t time = SingletonTime::GetInstance().GetAdjustedTime());
+    bool UpdateTime(const btclite::network::NetAddr &addr, int64_t time = SingletonTime::GetInstance().GetAdjustedTime());
     
     // Return a bunch of addresses, selected at random.
-    bool GetAddrs(std::vector<btclite::NetAddr> *out);
+    bool GetAddrs(std::vector<btclite::network::NetAddr> *out);
     
-    uint64_t MakeMapKey(const btclite::NetAddr& addr, bool by_group = false);
+    uint64_t MakeMapKey(const btclite::network::NetAddr& addr, bool by_group = false);
     
     static bool IsTerrible(const proto_peers::Peer& peer, 
                     int64_t now = SingletonTime::GetInstance().GetAdjustedTime());

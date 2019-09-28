@@ -39,7 +39,7 @@ public:
     bool Close();    
     bool SetSockNoDelay();
     bool SetSockNonBlocking();
-    bool GetBindAddr(btclite::NetAddr *out);
+    bool GetBindAddr(btclite::network::NetAddr *out);
     
     //-------------------------------------------------------------------------
     Fd sock_fd() const

@@ -9,7 +9,7 @@
 TEST(NodesTest, InitializeNode)
 {
     Nodes nodes;
-    btclite::NetAddr addr;
+    btclite::network::NetAddr addr;
     
     addr.SetIpv4(inet_addr("1.1.1.1"));
     std::shared_ptr<Node> node = nodes.InitializeNode(nullptr, addr);
@@ -23,7 +23,7 @@ TEST(NodesTest, InitializeNode)
 TEST(NodesTest, ModifyNode)
 {
     Nodes nodes;
-    btclite::NetAddr addr;
+    btclite::network::NetAddr addr;
     addr.SetIpv4(inet_addr("1.1.1.1"));
     std::shared_ptr<Node> node = std::make_shared<Node>(nullptr, addr);
     
@@ -53,7 +53,7 @@ TEST(NodesTest, ModifyNode)
 TEST(NodesTest, DisconnectNode)
 {
     Nodes nodes;
-    btclite::NetAddr addr, netmask;
+    btclite::network::NetAddr addr, netmask;
     
     addr.SetIpv4(inet_addr("1.1.1.1"));
     nodes.InitializeNode(nullptr, addr);
@@ -88,7 +88,7 @@ TEST(NodesTest, DisconnectNode)
 TEST(NodesTest, InboundCount)
 {
     Nodes nodes;
-    btclite::NetAddr addr;
+    btclite::network::NetAddr addr;
     
     addr.SetIpv4(inet_addr("1.1.1.1"));
     nodes.InitializeNode(nullptr, addr);
@@ -107,7 +107,7 @@ TEST(NodesTest, InboundCount)
 
 TEST(NodeTest, HandleInactiveTimeout)
 {
-    btclite::NetAddr addr;
+    btclite::network::NetAddr addr;
     Nodes& nodes = SingletonNodes::GetInstance();
     
     addr.SetIpv4(inet_addr("1.1.1.1"));
@@ -123,7 +123,7 @@ TEST(NodeTest, HandleInactiveTimeout)
 
 TEST(NodeTest, destructor)
 {
-    btclite::NetAddr addr;
+    btclite::network::NetAddr addr;
     Nodes& nodes = SingletonNodes::GetInstance();
     BlockSync& block_sync = SingletonBlockSync::GetInstance();
     NodeId id;

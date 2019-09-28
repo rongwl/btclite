@@ -9,6 +9,7 @@
 
 
 namespace btclite {
+namespace network {
 
 NetAddr::NetAddr(const struct sockaddr_in& addr)
     : proto_addr_()
@@ -42,6 +43,26 @@ NetAddr::NetAddr(const struct sockaddr_storage& addr)
         proto_addr_.set_port(ntohs(addr6->sin6_port));
         proto_addr_.set_scope_id(addr6->sin6_scope_id);
     }
+}
+
+NetAddr::NetAddr(const message_types::NetAddr& addr)
+    : proto_addr_()
+{
+    proto_addr_.mutable_ip()->Resize(ip_uint32_size, 0);
+    std::memcpy(proto_addr_.mutable_ip()->mutable_data(), addr.ip.data(), kIpByteSize);
+    proto_addr_.set_port(ntohs(addr.port));
+    proto_addr_.set_services(addr.services);
+    proto_addr_.set_timestamp(addr.timestamp);
+}
+
+NetAddr::NetAddr(message_types::NetAddr&& addr) noexcept
+    : proto_addr_()
+{
+    proto_addr_.mutable_ip()->Resize(ip_uint32_size, 0);
+    std::memmove(proto_addr_.mutable_ip()->mutable_data(), addr.ip.data(), kIpByteSize);
+    proto_addr_.set_port(ntohs(addr.port));
+    proto_addr_.set_services(addr.services);
+    proto_addr_.set_timestamp(addr.timestamp);
 }
 
 bool NetAddr::IsIpv4() const
@@ -175,8 +196,8 @@ bool NetAddr::IsValid() const
         return false;
 
     // unspecified IPv6 address (::/128)
-    unsigned char ip6_none[ip_byte_size] = {};
-    if (std::memcmp(proto_addr_.ip().data(), ip6_none, ip_byte_size) == 0)
+    unsigned char ip6_none[kIpByteSize] = {};
+    if (std::memcmp(proto_addr_.ip().data(), ip6_none, kIpByteSize) == 0)
         return false;
 
     // documentation IPv6 address
@@ -206,7 +227,7 @@ std::string NetAddr::ToString() const
     
     if (IsInternal())
         return Botan::base32_encode(reinterpret_cast<const uint8_t*>(proto_addr_.ip().data()) + sizeof(kBtcIpPrefix),
-                                    ip_byte_size - sizeof(kBtcIpPrefix)) + ".internal";
+                                    kIpByteSize - sizeof(kBtcIpPrefix)) + ".internal";
 
     if (IsIpv4())
         ss << +GetByte(12) << "." << +GetByte(13) << "." << +GetByte(14) << "." << +GetByte(15);
@@ -313,7 +334,7 @@ int NetAddr::GetIpv6(uint8_t *out) const
     if (!IsIpv6())
         return -1;
     
-    std::memcpy(out, proto_addr_.ip().data(), ip_byte_size);
+    std::memcpy(out, proto_addr_.ip().data(), kIpByteSize);
     
     return 0;
 }
@@ -321,7 +342,7 @@ int NetAddr::GetIpv6(uint8_t *out) const
 void NetAddr::SetIpv6(const uint8_t *src)
 {
     ASSERT_SIZE();
-    for (int i = 0; i < ip_byte_size; i++)
+    for (int i = 0; i < kIpByteSize; i++)
         SetByte(i, src[i]);
 }
 
@@ -343,7 +364,7 @@ void NetAddr::GetGroup(std::vector<uint8_t> *out) const
     {
         af = AF_INTERNAL;
         start_byte = sizeof(kBtcIpPrefix);
-        bits = (ip_byte_size - sizeof(kBtcIpPrefix)) * 8;
+        bits = (kIpByteSize - sizeof(kBtcIpPrefix)) * 8;
     }
     // all other unroutable addresses belong to the same group
     else if (!IsRoutable())
@@ -402,14 +423,15 @@ bool NetAddr::SetInternal(const std::string& name)
     hash_func->final(hash);
     uint8_t *data = reinterpret_cast<uint8_t*>(proto_addr_.mutable_ip()->mutable_data());
     std::memcpy(data, kBtcIpPrefix, sizeof(kBtcIpPrefix));
-    std::memcpy(data + sizeof(kBtcIpPrefix), hash, ip_byte_size - sizeof(kBtcIpPrefix));
+    std::memcpy(data + sizeof(kBtcIpPrefix), hash, kIpByteSize - sizeof(kBtcIpPrefix));
     
     return true;
 }
 
+} // namespace network
 } // namespace btclite
 
-SubNet::SubNet(const btclite::NetAddr& addr, int32_t mask)
+SubNet::SubNet(const btclite::network::NetAddr& addr, int32_t mask)
     : net_addr_(addr), valid_(true)
 {
     // Default to /32 (IPv4) or /128 (IPv6), i.e. match single address
@@ -433,7 +455,7 @@ SubNet::SubNet(const btclite::NetAddr& addr, int32_t mask)
         net_addr_.SetByte(x, (net_addr_.GetByte(x) & netmask_[x]));
 }
 
-SubNet::SubNet(const btclite::NetAddr &addr, const btclite::NetAddr &mask)
+SubNet::SubNet(const btclite::network::NetAddr &addr, const btclite::network::NetAddr &mask)
     : net_addr_(addr), valid_(true)
 {
     // Default to /32 (IPv4) or /128 (IPv6), i.e. match single address
@@ -450,7 +472,7 @@ SubNet::SubNet(const btclite::NetAddr &addr, const btclite::NetAddr &mask)
         net_addr_.SetByte(x, (net_addr_.GetByte(x) & netmask_[x]));
 }
 
-bool SubNet::Match(const btclite::NetAddr& addr) const
+bool SubNet::Match(const btclite::network::NetAddr& addr) const
 {
     if (!valid_ || !addr.IsValid())
         return false;

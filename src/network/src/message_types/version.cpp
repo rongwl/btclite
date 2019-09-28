@@ -1,16 +1,19 @@
 #include "message_types/version.h"
 
-namespace btc_message {
 
-const std::string Version::kCommand = "version";
+namespace btclite {
+namespace network {
+namespace message_types{
 
-bool Version::IsValid()
+const std::string Version::kCommand = kMsgVersion;
+
+bool Version::IsValid() const
 {
-    return (value_ != 0) ||
+    return (version_ != 0) ||
            (services_ != 0) ||
            (timestamp_ != 0) ||
-           (address_receiver_.IsValid()) ||
-           (address_from_.IsValid()) ||
+           (addr_recv_.IsValid()) ||
+           (addr_from_.IsValid()) ||
            (nonce_ != 0) ||
            (user_agent_.empty()) ||
            (start_height_ != 0) ||
@@ -19,11 +22,11 @@ bool Version::IsValid()
 
 void Version::Clear()
 {
-    value_ = 0;
+    version_ = 0;
     services_ = 0;
     timestamp_ = 0;
-    address_receiver_.Clear();
-    address_from_.Clear();
+    addr_recv_.Clear();
+    addr_from_.Clear();
     nonce_ = 0;
     user_agent_.clear();
     user_agent_.shrink_to_fit();
@@ -33,11 +36,11 @@ void Version::Clear()
 
 Version& Version::operator=(const Version& b)
 {
-    value_ = b.value_;
+    version_ = b.version_;
     services_ = b.services_;
     timestamp_ = b.timestamp_;
-    address_receiver_ = b.address_receiver_;
-    address_from_ = b.address_from_;
+    addr_recv_ = b.addr_recv_;
+    addr_from_ = b.addr_from_;
     nonce_ = b.nonce_;
     user_agent_ = b.user_agent_;
     start_height_ = b.start_height_;
@@ -47,11 +50,11 @@ Version& Version::operator=(const Version& b)
 
 Version& Version::operator=(Version&& b) noexcept
 {
-    value_ = b.value_;
+    version_ = b.version_;
     services_ = b.services_;
     timestamp_ = b.timestamp_;
-    address_receiver_ = std::move(b.address_receiver_);
-    address_from_ = std::move(b.address_from_);
+    addr_recv_ = std::move(b.addr_recv_);
+    addr_from_ = std::move(b.addr_from_);
     nonce_ = b.nonce_;
     user_agent_ = b.user_agent_;
     start_height_ = b.start_height_;
@@ -59,14 +62,7 @@ Version& Version::operator=(Version&& b) noexcept
     return *this;
 }
 
-void Version::ReadRawData(const uint8_t *in)
-{
 
-}
-
-void Version::WriteRawData(VecWStream *out)
-{
-
-}
-
-} // namespace btc_message
+} // namespace message_types
+} // namespace network
+} // namespace btclite

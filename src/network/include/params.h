@@ -21,7 +21,8 @@ struct Seed {
     }
 };
 
-namespace Network {
+namespace btclite {
+namespace network {
 
 class Params {
 public:
@@ -61,6 +62,7 @@ private:
     SingletonParams() {}        
 };
 
-} // namespace Network
+} // namespace btclite
+} // namespace network
 
 #endif // BTCLITE_NETWORK_PARAMS_H

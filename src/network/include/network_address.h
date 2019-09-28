@@ -7,9 +7,11 @@
 #include <netinet/ip.h> 
 
 #include "network_address.pb.h"
+#include "message_types/address.h"
 
 
 namespace btclite {
+namespace network {
 
 enum AddrFamily {
     AF_UNROUTABLE = 0,
@@ -23,7 +25,6 @@ enum AddrFamily {
     
 class NetAddr {
 public:
-    static constexpr size_t ip_byte_size = 16;
     static constexpr size_t ip_uint32_size = 4;
 
     NetAddr()
@@ -35,8 +36,14 @@ public:
     explicit NetAddr(const struct sockaddr_in& addr);    
     explicit NetAddr(const struct sockaddr_in6& addr6);    
     explicit NetAddr(const struct sockaddr_storage& addr);
+    
     explicit NetAddr(const proto_netaddr::NetAddr& proto_addr)
         : proto_addr_(proto_addr) {}
+    explicit NetAddr(proto_netaddr::NetAddr&& proto_addr) noexcept
+        : proto_addr_(std::move(proto_addr)) {}
+    
+    explicit NetAddr(const message_types::NetAddr& addr);
+    explicit NetAddr(message_types::NetAddr&& addr) noexcept;
     
     //-------------------------------------------------------------------------
     bool IsIpv4() const;
@@ -79,7 +86,7 @@ public:
     //-------------------------------------------------------------------------
     bool operator==(const NetAddr& b) const
     {
-        return (std::memcmp(this->proto_addr_.ip().data(), b.proto_addr().ip().data(), ip_byte_size) == 0 &&
+        return (std::memcmp(this->proto_addr_.ip().data(), b.proto_addr().ip().data(), kIpByteSize) == 0 &&
                 this->proto_addr_.port() == b.proto_addr().port());
     }
     
@@ -108,6 +115,7 @@ private:
                              ASSERT_RANGE(N)
 };
 
+} // namespace network
 } // namespace btclite
 
 class SubNet {
@@ -121,21 +129,21 @@ public:
         std::memset(netmask_, 0, sizeof(netmask_));
     }
     
-    explicit SubNet(const btclite::NetAddr& addr)
+    explicit SubNet(const btclite::network::NetAddr& addr)
         : net_addr_(addr), valid_(addr.IsValid())
     {
         std::memset(netmask_, 0xff, sizeof(netmask_));
     }
     
-    explicit SubNet(btclite::NetAddr&& addr) noexcept
+    explicit SubNet(btclite::network::NetAddr&& addr) noexcept
         : net_addr_(std::move(addr)), valid_(addr.IsValid())
     {
         std::cout << __func__ << ":" << __LINE__ << '\n';
         std::memset(netmask_, 0xff, sizeof(netmask_));
     }
     
-    SubNet(const btclite::NetAddr& addr, int32_t mask);
-    SubNet(const btclite::NetAddr &addr, const btclite::NetAddr &mask);
+    SubNet(const btclite::network::NetAddr& addr, int32_t mask);
+    SubNet(const btclite::network::NetAddr &addr, const btclite::network::NetAddr &mask);
     
     //-------------------------------------------------------------------------
     bool IsValid() const
@@ -150,7 +158,7 @@ public:
         valid_ = false;
     }
     
-    bool Match(const btclite::NetAddr& addr) const;
+    bool Match(const btclite::network::NetAddr& addr) const;
     std::string ToString() const;
     
     //-------------------------------------------------------------------------
@@ -158,7 +166,7 @@ public:
     {
         return (std::memcmp(a.net_addr().proto_addr().ip().data(),
                             b.net_addr().proto_addr().ip().data(),
-                            btclite::NetAddr::ip_byte_size) == 0);
+                            kIpByteSize) == 0);
     }
     
     friend bool operator!=(const SubNet& a, const SubNet& b)
@@ -167,7 +175,7 @@ public:
     }
     
     //-------------------------------------------------------------------------
-    const btclite::NetAddr& net_addr() const
+    const btclite::network::NetAddr& net_addr() const
     {
         return net_addr_;
     }
@@ -178,7 +186,7 @@ public:
     }
     
 private:
-    btclite::NetAddr net_addr_;
+    btclite::network::NetAddr net_addr_;
     uint8_t netmask_[netmask_byte_size];
     bool valid_;
 };

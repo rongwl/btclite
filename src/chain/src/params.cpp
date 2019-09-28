@@ -6,12 +6,15 @@ void Bip9Params::UpdateVersionBitsParameters(Bip9Deployment::Deployment d, int64
 
 }
 
-Consensus::Params::Params(BaseEnv env)
+namespace btclite {
+namespace consensus {
+
+Params::Params(BaseEnv env)
 {
 
 }
 
-void Consensus::Params::CreateGenesisBlock(const std::string& coinbase, const Script& output_script,
+void Params::CreateGenesisBlock(const std::string& coinbase, const Script& output_script,
                          uint32_t time, uint32_t nonce, uint32_t bits, int32_t version,
                          uint64_t reward)
 {
@@ -47,7 +50,7 @@ void Consensus::Params::CreateGenesisBlock(const std::string& coinbase, const Sc
  *     TxOut(value=50.00000000, scriptPubKey=4104678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5fac)
  *   vMerkleTree: 4a5e1e
  */
-void Consensus::Params::CreateGenesisBlock(uint32_t time, uint32_t nonce, uint32_t bits, int32_t version, uint64_t reward)
+void Params::CreateGenesisBlock(uint32_t time, uint32_t nonce, uint32_t bits, int32_t version, uint64_t reward)
 {
     const std::string coinbase = "The Times 03/Jan/2009 Chancellor on brink of second bailout for banks";
     Script output_script;
@@ -59,8 +62,16 @@ void Consensus::Params::CreateGenesisBlock(uint32_t time, uint32_t nonce, uint32
     CreateGenesisBlock(coinbase, output_script, time, nonce, bits, version, reward);
 }
 
-Chain::Params::Params(BaseEnv env)
-    : consensus_(Consensus::SingletonParams::GetInstance(env))
+} // namespace consensus
+
+namespace chain {
+
+Params::Params(BaseEnv env)
+    : consensus_params_(consensus::SingletonParams::GetInstance(env))
 {
 
 }
+
+} // namespace chain
+
+} // namespace btclite

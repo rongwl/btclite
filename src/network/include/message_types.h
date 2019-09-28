@@ -6,10 +6,10 @@
 #include <memory>
 #include <string>
 
-#include "stream.h"
+#include "hash.h"
 
 
-class Node;
+//class Node;
 
 namespace btc_message {
 
@@ -35,8 +35,16 @@ struct VarStr {
 
 class BaseMsgType {
 public:
-    virtual void ReadRawData(const uint8_t *in) = 0;
-    virtual void WriteRawData(VecWStream *out) = 0;
+    virtual void Serialize(ByteSink<std::vector<uint8_t> >& out) const = 0;
+    virtual void UnSerialize(const uint8_t *in) = 0;
+    
+    const std::string& command() const
+    {
+        return command_;
+    }
+    
+protected:
+    std::string command_;
 };
 
 

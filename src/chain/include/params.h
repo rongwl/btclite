@@ -76,7 +76,8 @@ int64_t DifficultyAdjustmentInterval() const
 };
 */
 
-namespace Consensus {
+namespace btclite {
+namespace consensus {
 
 /**
 * Parameters that influence chain consensus.
@@ -123,10 +124,10 @@ private:
     SingletonParams() {}
 };
 
-} // namespace Consensus
+} // namespace consensus
 
 
-namespace Chain {
+namespace chain {
 
 /**
  * ChainParams defines various tweakable parameters of a given instance of the
@@ -151,9 +152,9 @@ public:
     Params(BaseEnv env);
 
     //-------------------------------------------------------------------------
-    const Consensus::Params& consensus() const
+    const consensus::Params& consensus_params() const
     { 
-        return consensus_;
+        return consensus_params_;
     }
     
     uint64_t prune_after_height() const
@@ -182,7 +183,7 @@ public:
     }
     
 private:
-    Consensus::Params& consensus_;
+    consensus::Params& consensus_params_;
     uint64_t prune_after_height_;
     std::vector<unsigned char> base58_prefixes_[MAX_BASE58_TYPES];
     std::string bech32_hrp_;
@@ -207,7 +208,8 @@ private:
     SingletonParams() {}    
 };
 
-} // namespace Chain
+} // namespace chain
 
+} // namespace btclite
 
 #endif // BTCLITE_CHAIN_PARAMS_H

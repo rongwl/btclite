@@ -1,7 +1,23 @@
 #include "hash.h"
 
 
-void DoubleSha256(const uint8_t in[], size_t length, Hash256 *out)
+void Hash::Sha256(const uint8_t in[], size_t length, Hash256 *out)
+{
+    std::unique_ptr<Botan::HashFunction> hash_func(Botan::HashFunction::create("SHA-256"));
+    hash_func->update(in, length);
+    out->Clear();
+    hash_func->final(reinterpret_cast<uint8_t*>(out));
+}
+
+void Hash::Sha256(const std::vector<uint8_t>& in, Hash256 *out)
+{
+    std::unique_ptr<Botan::HashFunction> hash_func(Botan::HashFunction::create("SHA-256"));
+    hash_func->update(in);
+    out->Clear();
+    hash_func->final(reinterpret_cast<uint8_t*>(out));
+}
+
+void Hash::DoubleSha256(const uint8_t in[], size_t length, Hash256 *out)
 {
     std::unique_ptr<Botan::HashFunction> hash_func(Botan::HashFunction::create("SHA-256"));
     hash_func->update(in, length);
@@ -13,7 +29,7 @@ void DoubleSha256(const uint8_t in[], size_t length, Hash256 *out)
     hash_func->final(reinterpret_cast<uint8_t*>(out));
 }
 
-void DoubleSha256(const std::vector<uint8_t> &in, Hash256 *out)
+void Hash::DoubleSha256(const std::vector<uint8_t> &in, Hash256 *out)
 {
     std::unique_ptr<Botan::HashFunction> hash_func(Botan::HashFunction::create("SHA-256"));
     hash_func->update(in);
@@ -25,7 +41,7 @@ void DoubleSha256(const std::vector<uint8_t> &in, Hash256 *out)
     hash_func->final(reinterpret_cast<uint8_t*>(out));
 }
 
-void DoubleSha256(const std::string &in, Hash256 *out)
+void Hash::DoubleSha256(const std::string &in, Hash256 *out)
 {
     std::unique_ptr<Botan::HashFunction> hash_func(Botan::HashFunction::create("SHA-256"));
     hash_func->update(in);

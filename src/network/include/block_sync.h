@@ -159,7 +159,7 @@ struct DownloadState {
     bool wants_cmpct_witness;
     
     /*
-     * If we've announced NODE_WITNESS to this peer: whether the peer sends witnesses in cmpctblocks/blocktxns,
+     * If we've announced kNodeWitness to this peer: whether the peer sends witnesses in cmpctblocks/blocktxns,
      * otherwise: whether this peer sends non-witnesses in cmpctblocks/blocktxns.
      */
     bool supports_desired_cmpct_version;
@@ -168,10 +168,10 @@ struct DownloadState {
 // Maintain validation-specific state about block sync
 class BlockSyncState {
 public:
-    BlockSyncState(const btclite::NetAddr& addr, const std::string& addr_name)
+    BlockSyncState(const btclite::network::NetAddr& addr, const std::string& addr_name)
         : node_addr_(addr), node_name_(addr_name) {}
     
-    const btclite::NetAddr& node_addr() const
+    const btclite::network::NetAddr& node_addr() const
     {
         return node_addr_;
     }
@@ -237,7 +237,7 @@ public:
     }
     
 private:    
-    const btclite::NetAddr node_addr_;    
+    const btclite::network::NetAddr node_addr_;    
     const std::string node_name_;    
     SyncBasicState basic_state_;    
     SyncStats stats_;    
@@ -252,7 +252,11 @@ public:
     using MapPeerSyncState = std::map<NodeId, BlockSyncState>;
     using MapBlockInFlight = std::map<Hash256, std::pair<NodeId, BlocksInFlight::iterator> >;
     
-    void AddSyncState(NodeId id, const btclite::NetAddr& addr, const std::string& addr_name);    
+    BlockSync()
+        : sync_started_count_(0), preferred_download_count_(0),
+          validated_download_count_(0), protected_outbound_count_(0) {}
+    
+    void AddSyncState(NodeId id, const btclite::network::NetAddr& addr, const std::string& addr_name);    
     void EraseSyncState(NodeId id);
     bool ShouldUpdateTime(NodeId id);
     

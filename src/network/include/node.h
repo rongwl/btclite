@@ -8,6 +8,7 @@
 
 #include "block_sync.h"
 #include "bloom.h"
+#include "network/include/params.h"
 #include "timer.h"
 
 
@@ -40,14 +41,15 @@ struct NodeTimers {
 /* Information about a connected peer */
 class Node {
 public:
-    Node(const struct bufferevent *bev, const btclite::NetAddr& addr,
+    Node(const struct bufferevent *bev, const btclite::network::NetAddr& addr,
          bool is_inbound = true, bool manual = false, std::string host_name = "");
     ~Node();
     
     //-------------------------------------------------------------------------
     static void InactivityTimeoutCb(std::shared_ptr<Node> node);
     bool ParseMessage();
-    bool SendMessage(const BaseMsgType& msg);
+    template <typename Message>
+    bool SendMessage(const Message& msg);
     
     //-------------------------------------------------------------------------
     int64_t time_connected() const
@@ -75,7 +77,7 @@ public:
         return bev_;
     }
     
-    const btclite::NetAddr& addr() const
+    const btclite::network::NetAddr& addr() const
     {
         return addr_;
     }
@@ -176,7 +178,7 @@ private:
     const ServiceFlags services_;
     const int start_height_;
     struct bufferevent *bev_;
-    const btclite::NetAddr addr_;
+    const btclite::network::NetAddr addr_;
     //const uint64_t keyed_net_group_;
     const uint64_t local_host_nonce_;
     
@@ -210,6 +212,45 @@ private:
     NodeTimers timers_;
 };
 
+template <typename Message>
+bool Node::SendMessage(const Message& msg)
+{
+    MessageHeader header(btclite::network::SingletonParams::GetInstance().msg_magic());
+    std::vector<uint8_t> vec_msg, vec_header;
+    ByteSink<std::vector<uint8_t> > byte_sink_msg(vec_msg), byte_sink_header(vec_header);
+    Hash256 hash256;
+    
+    if (!bev_)
+        return false;
+    
+    msg.Serialize(byte_sink_msg);
+    Hash::Sha256(vec_msg, &hash256);
+    header.set_command(msg.kCommand);
+    header.set_payload_length(vec_msg.size());
+    header.set_checksum(hash256.GetLow64());
+    header.Serialize(byte_sink_header);
+    
+    if (vec_header.size() != MessageHeader::kSize) {
+        BTCLOG(LOG_LEVEL_ERROR) << "Wrong message header size:" << vec_header.size()
+                                << ", message type:" << msg.kCommand;
+        return false;
+    }
+    
+    // write header data
+    if (bufferevent_write(bev_, vec_header.data(), MessageHeader::kSize)) {
+        BTCLOG(LOG_LEVEL_ERROR) << "Writing header to bufferevent failed, peer:" << id_;
+        return false;
+    }
+    
+    // write message data
+    if (bufferevent_write(bev_, vec_msg.data(), vec_msg.size())) {
+        BTCLOG(LOG_LEVEL_ERROR) << "Writing message data to bufferevent failed, peer:" << id_;
+        return false;
+    }
+    
+    return true;
+}
+
 struct NodeEvictionCandidate
 {
     NodeId id;
@@ -220,7 +261,7 @@ struct NodeEvictionCandidate
     bool relevant_services;
     bool relay_txes;
     bool bloom_filter;
-    btclite::NetAddr addr;
+    btclite::network::NetAddr addr;
     uint64_t keyed_net_group;
 };
 
@@ -243,11 +284,11 @@ public:
     
     //-------------------------------------------------------------------------
     void AddNode(std::shared_ptr<Node> node);    
-    std::shared_ptr<Node> InitializeNode(const struct bufferevent *bev, const btclite::NetAddr& addr,
+    std::shared_ptr<Node> InitializeNode(const struct bufferevent *bev, const btclite::network::NetAddr& addr,
                                          bool is_inbound = true, bool manual = false);
     std::shared_ptr<Node> GetNode(NodeId id);    
     std::shared_ptr<Node> GetNode(struct bufferevent *bev);    
-    std::shared_ptr<Node> GetNode(const btclite::NetAddr& addr);    
+    std::shared_ptr<Node> GetNode(const btclite::network::NetAddr& addr);    
     void EraseNode(std::shared_ptr<Node> node);    
     void EraseNode(NodeId id);
     
