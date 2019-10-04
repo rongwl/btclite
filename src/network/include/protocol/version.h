@@ -46,19 +46,7 @@ constexpr uint32_t kInvalidCbNoBanVersion = 70015;
 
 
 class VersionBase : public MessageData {
-public:    
-    /*template <size_t N>
-    struct RawData {
-        int32_t version_;
-        uint64_t services_;
-        int64_t timestamp_;
-        btc_message::NetAddr addr_recv_;
-        btc_message::NetAddr addr_from_;
-        uint64_t nonce_;
-        btc_message::VarStr<N, VarIntSize> user_agent_;
-        int32_t start_height_;
-        bool relay_;
-    };*/
+public:
     static const std::string kCommand;
     
     //-------------------------------------------------------------------------
