@@ -1,10 +1,12 @@
 #include "connector.h"
 
 #include "bandb.h"
+#include "net.h"
 #include "netbase.h"
 #include "peers.h"
 #include "random.h"
 #include <arpa/inet.h>
+
 
 bool Connector::InitEvent()
 {
@@ -110,7 +112,7 @@ bool Connector::OutboundTimeOutCb()
         if (now - peer.last_try() < 600 && tries < 30)
             continue;
         
-        if (!HasAllDesirableServiceFlags(peer.addr().services()))
+        if (!btclite::network::serviceflags::IsDesirable(peer.addr().services()))
             continue;
         
         // do not allow non-default ports, unless after 50 invalid addresses selected already

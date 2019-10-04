@@ -59,7 +59,7 @@ public:
     }
     
     template <typename Stream>
-    void UnSerialize(Stream& s)
+    void Deserialize(Stream& s)
     {
         s.read(reinterpret_cast<char*>(&this->front()), this->size());
     }
@@ -153,7 +153,7 @@ std::streamsize ContainerSource<Container, SourceType, CharType>::read(CharType 
     auto amount = container_.size() - position_;
     auto result = std::min(size, static_cast<std::streamsize>(amount));
     const auto value = static_cast<typename Container::size_type>(result);
-    std::copy_n(container_.begin() + position_, value, buffer);
+    std::memcpy(buffer, container_.data() + position_, value);
     position_ += value;
     
     return result;

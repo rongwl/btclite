@@ -19,7 +19,7 @@ public:
         : key_(std::move(Random::GetUint256()))
     {
         proto_peers_.mutable_key()->Resize(4, 0);
-        std::memcpy(proto_peers_.mutable_key()->mutable_data(), key_.data(), key_.Size());
+        std::memcpy(proto_peers_.mutable_key()->begin(), key_.begin(), key_.Size());
     }
     
     //-------------------------------------------------------------------------

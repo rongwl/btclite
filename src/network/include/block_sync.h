@@ -5,8 +5,10 @@
 #include <list>
 
 #include "chain.h"
-#include "net.h"
+#include "network_address.h"
 
+
+using NodeId = int64_t;
 
 struct BlockReject {
     BlockReject()

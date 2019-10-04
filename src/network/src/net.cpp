@@ -9,7 +9,6 @@
 #include "config.h"
 #include "constants.h"
 #include "network/include/params.h"
-#include "message_types/messages.h"
 
 
 using namespace btclite::network;
@@ -79,60 +78,15 @@ bool LocalNetConfig::AddLocalHost(const btclite::network::NetAddr& addr)
     return true;
 }
 
-bool MessageHeader::IsValid() const
-{
-    if (magic_ != btclite::network::SingletonParams::GetInstance().msg_magic()) {
-        BTCLOG(LOG_LEVEL_WARNING) << "MessageHeader::magic_(" << magic_ << ") is invalid";
-        return false;
-    }
-    
-    std::string cmd = command();
-    if (cmd != kMsgVersion &&
-            cmd != kMsgVerack &&
-            cmd != kMsgAddr &&
-            cmd != kMsgInv &&
-            cmd != kMsgGetData &&
-            cmd != kMsgMerkleBlock &&
-            cmd != kMsgGetBlocks &&
-            cmd != kMsgGetHeaders &&
-            cmd != kMsgTx &&
-            cmd != kMsgHeaders &&
-            cmd != kMsgBlock &&
-            cmd != kMsgGetAddr &&
-            cmd != kMsgMempool &&
-            cmd != kMsgPing &&
-            cmd != kMsgPong &&
-            cmd != kMsgNotFound &&
-            cmd != kMsgFilterLoad &&
-            cmd != kMsgFilterAdd &&
-            cmd != kMsgFilterClear &&
-            cmd != kMsgReject &&
-            cmd != kMsgSendHeaders &&
-            cmd != kMsgFeeFilter &&
-            cmd != kMsgSendCmpct &&
-            cmd != kMsgCmpctBlock &&
-            cmd != kMsgGetBlockTxn &&
-            cmd != kMsgBlockTxn) {
-        BTCLOG(LOG_LEVEL_WARNING) << "MessageHeader::command_(" << cmd << ") is invalid";
-        return false;
-    }
-    
-    if (payload_length_ > kMaxMessageSize) {
-        BTCLOG(LOG_LEVEL_WARNING) << "MessageHeader::payload_length_(" << payload_length_ << ") is invalid";
-        return false;
-    }
-    
-    return true;
-}
-
+/*
 void Message::DataFactory(const uint8_t *data_raw)
 {
     if (header_.command() == kMsgVersion)
-        data_ = std::make_shared<message_types::Version>(data_raw);
+        data_ = std::make_shared<protocol::Version>(data_raw);
     else
         data_.reset();
 }
-
+*/
 NetArgs::NetArgs(const Args& args)
     : is_listen_(args.GetBoolArg(FULLNODE_OPTION_LISTEN, true)),
       is_discover_(args.GetBoolArg(FULLNODE_OPTION_DISCOVER, true)),

@@ -6,6 +6,7 @@
 #include "acceptor.h"
 #include "bandb.h"
 #include "connector.h"
+#include "net.h"
 #include "network/include/params.h"
 #include "peers.h"
 #include "thread.h"

@@ -1,7 +1,7 @@
 #include "peers.h"
 
 #include "hash.h"
-#include "protocol.h"
+#include "protocol/message.h"
 
 
 bool btclite::Peers::Add(const btclite::network::NetAddr &addr, const btclite::network::NetAddr& source, int64_t time_penalty)

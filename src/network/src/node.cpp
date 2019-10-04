@@ -1,8 +1,8 @@
 #include "node.h"
 
-#include <event2/buffer.h>
 
 #include "chain.h"
+#include "net.h"
 #include "peers.h"
 #include "thread.h"
 
@@ -56,41 +56,19 @@ void Node::InactivityTimeoutCb(std::shared_ptr<Node> node)
     SingletonNodes::GetInstance().EraseNode(node);
 }
 
-bool Node::ParseMessage()
+bool Node::BevThreadSafeWrite(const std::vector<uint8_t> vec)
 {
-    struct evbuffer *buf;
-    uint8_t *raw;
-    
+    return BevThreadSafeWrite(vec.data(), vec.size());
+}
+
+bool Node::BevThreadSafeWrite(const uint8_t *data, size_t size)
+{
     if (!bev_)
         return false;
     
-    if (nullptr == (buf = bufferevent_get_input(bev_)))
+    LOCK(cs_write_bev_);
+    if (bufferevent_write(bev_, data, size))
         return false;
-    
-    if (disconnected_)
-        return false;
-    
-    raw = evbuffer_pullup(buf, MessageHeader::kSize);
-    while (raw) {
-        MessageHeader header(raw);
-        
-        if (!header.IsValid()) {
-            BTCLOG(LOG_LEVEL_ERROR) << "Received invalid message header from peer " << id_;
-            return false;
-        }
-        
-        raw = evbuffer_pullup(buf, header.payload_length());
-        auto pmessage = std::make_shared<Message>(std::move(header), raw);
-        
-        std::shared_ptr<Node> pnode = SingletonNodes::GetInstance().GetNode(id_);
-        assert(pnode != nullptr);
-        
-        MsgHandler handler(pmessage, pnode);
-        auto task = std::bind(MsgHandler::HandleMessage, pmessage, pnode, handler.data_handler());
-        SingletonThreadPool::GetInstance().AddTask(std::function<bool()>(task));
-        
-        raw = evbuffer_pullup(buf, MessageHeader::kSize);
-    }
     
     return true;
 }
@@ -352,7 +330,7 @@ void Nodes::MakeEvictionCandidate(std::vector<NodeEvictionCandidate> *out)
     }
 }
 */
-
+/*
 void MsgHandler::Factory(std::shared_ptr<Message> msg, std::shared_ptr<Node> src_node)
 {
     if (msg->header().command() == kMsgVersion) {
@@ -397,3 +375,4 @@ bool MsgHandler::HandleRecvVersion(std::shared_ptr<Message> msg, std::shared_ptr
     
     return ret;
 }
+*/

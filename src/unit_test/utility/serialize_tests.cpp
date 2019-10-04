@@ -7,7 +7,7 @@ TEST(SerializerTest, SerializeArithmetic)
 {
     double dinput = 1.23456789, doutput;
     float finput = 1.234, foutput;
-    int iinput = 123, ioutput;
+    uint64_t iinput = 0x1122334455667788, ioutput;
     MemOstream ostream;
     std::vector<uint8_t> vec;
     ByteSource<std::vector<uint8_t> > byte_source(vec);

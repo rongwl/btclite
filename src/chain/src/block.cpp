@@ -85,7 +85,7 @@ Hash256 Block::ComputeMerkleRoot() const
             leaves.push_back(leaves.back());
         for (auto it = leaves.begin(); it != leaves.end(); it += 2) {
             Hash256 hash;
-            Hash::DoubleSha256(it[0].ToString()+it[1].ToString(), &hash);
+            btclite::crypto::hash::DoubleSha256(it[0].ToString()+it[1].ToString(), &hash);
             swap.push_back(hash);
         }
         std::swap(leaves, swap);

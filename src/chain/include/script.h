@@ -6,7 +6,6 @@
 #include <utility>
 
 #include "arithmetic.h"
-#include "protocol.h"
 #include "serialize.h"
 
 
@@ -197,14 +196,14 @@ public:
     template <typename Stream>
     void Serialize(Stream& os) const
     {
-        Serializer<Stream> serial(os);
-        serial.SerialWrite(data_);
+        Serializer<Stream> serializer(os);
+        serializer.SerialWrite(data_);
     }
     template <typename Stream>
-    void UnSerialize(Stream& is)
+    void Deserialize(Stream& is)
     {
-        Serializer<Stream> serial(is);
-        serial.SerialRead(&data_);
+        Deserializer<Stream> deserializer(is);
+        deserializer.SerialRead(&data_);
     }
     
     //-------------------------------------------------------------------------
@@ -271,7 +270,7 @@ public:
     {
         size_t result = data_.size();
         if (serialized)
-            result += VarIntSize(result);
+            result += btclite::util::serialize::VarIntSize(result);
         return result;
     }
     

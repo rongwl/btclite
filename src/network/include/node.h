@@ -8,9 +8,72 @@
 
 #include "block_sync.h"
 #include "bloom.h"
-#include "network/include/params.h"
 #include "timer.h"
 
+
+/* Services flags */
+enum ServiceFlags : uint64_t {
+    // Nothing
+    kNodeNone = 0,
+    
+    // kNodeNetwork means that the node is capable of serving the complete block chain. It is currently
+    // set by all Bitcoin Core non pruned nodes, and is unset by SPV clients or other light clients.
+    kNodeNetwork = (1 << 0),
+    
+    // kNodeGetutxo means the node is capable of responding to the getutxo protocol request.
+    // Bitcoin Core does not support this but a patch set called Bitcoin XT does.
+    // See BIP 64 for details on how this is implemented.
+    kNodeGetutxo = (1 << 1),
+    
+    // kNodeBloom means the node is capable and willing to handle bloom-filtered connections.
+    // Bitcoin Core nodes used to support this by default, without advertising this bit,
+    // but no longer do as of protocol version 70011 (= NO_BLOOM_VERSION)
+    kNodeBloom = (1 << 2),
+    
+    // kNodeWitness indicates that a node can be asked for blocks and transactions including
+    // witness data.
+    kNodeWitness = (1 << 3),
+    
+    // kNodeXthin means the node supports Xtreme Thinblocks
+    // If this is turned off then the node will not service nor make xthin requests
+    kNodeXthin = (1 << 4),
+    
+    // kNodeNetworkLimited means the same as kNodeNetwork with the limitation of only
+    // serving the last 288 (2 day) blocks
+    // See BIP159 for details on how this is implemented.
+    kNodeNetworkLimited = (1 << 10),
+
+    // Bits 24-31 are reserved for temporary experiments. Just pick a bit that
+    // isn't getting used, or one not being used much, and notify the
+    // bitcoin-development mailing list. Remember that service bits are just
+    // unauthenticated advertisements, so your code must be robust against
+    // collisions and other cases where nodes may be advertising a service they
+    // do not actually support. Other service bits should be allocated via the
+    // BIP process.
+};
+
+constexpr ServiceFlags desirable_service_flags = ServiceFlags(kNodeNetwork | kNodeWitness);
+
+namespace btclite {
+namespace network {
+namespace serviceflags {
+
+/**
+ * A shortcut for (services & desirable_service_flags)
+ * == desirable_service_flags, ie determines whether the given
+ * set of service flags are sufficient for a peer to be "relevant".
+ */
+static inline bool IsDesirable(ServiceFlags services) {
+    return !(desirable_service_flags & (~services));
+}
+
+static inline bool IsDesirable(uint64_t services) {
+    return !(desirable_service_flags & (~services));
+}
+
+} // namespace serviceflags
+} // namespace network
+} // namespace btclite
 
 // Ping time measurement
 struct PingTime {
@@ -47,9 +110,8 @@ public:
     
     //-------------------------------------------------------------------------
     static void InactivityTimeoutCb(std::shared_ptr<Node> node);
-    bool ParseMessage();
-    template <typename Message>
-    bool SendMessage(const Message& msg);
+    bool BevThreadSafeWrite(const std::vector<uint8_t> vec);
+    bool BevThreadSafeWrite(const uint8_t *data, size_t size);
     
     //-------------------------------------------------------------------------
     int64_t time_connected() const
@@ -73,6 +135,11 @@ public:
     }
     
     const struct bufferevent* const bev() const
+    {
+        return bev_;
+    }
+    
+    struct bufferevent *mutable_bev()
     {
         return bev_;
     }
@@ -177,7 +244,10 @@ private:
     std::atomic<int> version_;
     const ServiceFlags services_;
     const int start_height_;
+    
     struct bufferevent *bev_;
+    mutable CriticalSection cs_write_bev_;
+    
     const btclite::network::NetAddr addr_;
     //const uint64_t keyed_net_group_;
     const uint64_t local_host_nonce_;
@@ -211,45 +281,6 @@ private:
     
     NodeTimers timers_;
 };
-
-template <typename Message>
-bool Node::SendMessage(const Message& msg)
-{
-    MessageHeader header(btclite::network::SingletonParams::GetInstance().msg_magic());
-    std::vector<uint8_t> vec_msg, vec_header;
-    ByteSink<std::vector<uint8_t> > byte_sink_msg(vec_msg), byte_sink_header(vec_header);
-    Hash256 hash256;
-    
-    if (!bev_)
-        return false;
-    
-    msg.Serialize(byte_sink_msg);
-    Hash::Sha256(vec_msg, &hash256);
-    header.set_command(msg.kCommand);
-    header.set_payload_length(vec_msg.size());
-    header.set_checksum(hash256.GetLow64());
-    header.Serialize(byte_sink_header);
-    
-    if (vec_header.size() != MessageHeader::kSize) {
-        BTCLOG(LOG_LEVEL_ERROR) << "Wrong message header size:" << vec_header.size()
-                                << ", message type:" << msg.kCommand;
-        return false;
-    }
-    
-    // write header data
-    if (bufferevent_write(bev_, vec_header.data(), MessageHeader::kSize)) {
-        BTCLOG(LOG_LEVEL_ERROR) << "Writing header to bufferevent failed, peer:" << id_;
-        return false;
-    }
-    
-    // write message data
-    if (bufferevent_write(bev_, vec_msg.data(), vec_msg.size())) {
-        BTCLOG(LOG_LEVEL_ERROR) << "Writing message data to bufferevent failed, peer:" << id_;
-        return false;
-    }
-    
-    return true;
-}
 
 struct NodeEvictionCandidate
 {
@@ -325,7 +356,7 @@ public:
 private:
     SingletonNodes() {}    
 };
-
+/*
 class MsgHandler {
 public:
     using MsgDataHandler = std::function<bool()>;
@@ -351,6 +382,6 @@ private:
     static bool VerifyMsgHeader(const MessageHeader& header);
     static bool HandleRecvVersion(std::shared_ptr<Message> msg, std::shared_ptr<Node> src_node);
 };
-
+*/
 
 #endif // BTCLITE_NODE_H

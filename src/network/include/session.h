@@ -7,7 +7,7 @@
 #include "node.h"
 #include "util.h"
 
-
+/*
 class OutboundNode : public Node {
 public:
 private:
@@ -39,5 +39,5 @@ public:
 private:
     //InboundNode node_;
 };
-
+*/
 #endif // BTCLITE_SESSION_H

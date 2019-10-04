@@ -3,7 +3,7 @@
 
 
 #include "environment.h"
-#include "net.h"
+#include "protocol/message.h"
 
 
 struct Seed {

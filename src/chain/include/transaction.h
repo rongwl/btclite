@@ -6,6 +6,7 @@
 #include "script_witness.h"
 #include "serialize.h"
 
+
 /** An outpoint - a combination of a transaction hash and an index n into its vout */
 class OutPoint {
 public:
@@ -79,16 +80,16 @@ public:
     template <typename Stream>
     void Serialize(Stream& os) const
     {
-        Serializer<Stream> serial(os);
-        serial.SerialWrite(prev_hash_);
-        serial.SerialWrite(index_);
+        Serializer<Stream> serializer(os);
+        serializer.SerialWrite(prev_hash_);
+        serializer.SerialWrite(index_);
     }
     template <typename Stream>
-    void UnSerialize(Stream& is)
+    void Deserialize(Stream& is)
     {
-        Serializer<Stream> serial(is);
-        serial.SerialRead(&prev_hash_);
-        serial.SerialRead(&index_);
+        Deserializer<Stream> deserializer(is);
+        deserializer.SerialRead(&prev_hash_);
+        deserializer.SerialRead(&index_);
     }
     
     //-------------------------------------------------------------------------
@@ -153,18 +154,18 @@ public:
     template <typename Stream>
     void Serialize(Stream& os) const
     {
-        Serializer<Stream> serial(os);
-        serial.SerialWrite(prevout_);
-        serial.SerialWrite(script_sig_);
-        serial.SerialWrite(sequence_no_);
+        Serializer<Stream> serializer(os);
+        serializer.SerialWrite(prevout_);
+        serializer.SerialWrite(script_sig_);
+        serializer.SerialWrite(sequence_no_);
     }
     template <typename Stream>
-    void UnSerialize(Stream& is)
+    void Deserialize(Stream& is)
     {
-        Serializer<Stream> serial(is);
-        serial.SerialRead(&prevout_);
-        serial.SerialRead(&script_sig_);
-        serial.SerialRead(&sequence_no_);
+        Deserializer<Stream> deserializer(is);
+        deserializer.SerialRead(&prevout_);
+        deserializer.SerialRead(&script_sig_);
+        deserializer.SerialRead(&sequence_no_);
     }
     
     //-------------------------------------------------------------------------
@@ -310,16 +311,16 @@ public:
     template <typename Stream>
     void Serialize(Stream& os) const
     {
-        Serializer<Stream> serial(os);
-        serial.SerialWrite(value_);
-        serial.SerialWrite(script_pub_key_);
+        Serializer<Stream> serializer(os);
+        serializer.SerialWrite(value_);
+        serializer.SerialWrite(script_pub_key_);
     }
     template <typename Stream>
-    void UnSerialize(Stream& is)
+    void Deserialize(Stream& is)
     {
-        Serializer<Stream> serial(is);
-        serial.SerialRead(&value_);
-        serial.SerialRead(&script_pub_key_);
+        Deserializer<Stream> deserializer(is);
+        deserializer.SerialRead(&value_);
+        deserializer.SerialRead(&script_pub_key_);
     }
     
     //-------------------------------------------------------------------------
@@ -409,7 +410,7 @@ public:
     
     //-------------------------------------------------------------------------
     template <typename Stream> void Serialize(Stream& os, bool witness = false) const;
-    template <typename Stream> void UnSerialize(Stream& is, bool witness = false);
+    template <typename Stream> void Deserialize(Stream& is, bool witness = false);
     
     //-------------------------------------------------------------------------
     bool operator==(const Transaction& b) const

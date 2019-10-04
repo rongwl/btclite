@@ -3,14 +3,13 @@
 
 
 #include "address.h"
-#include "protocol.h"
-#include "serialize.h"
+#include "message.h"
 #include "stream.h"
 
 
 namespace btclite {
 namespace network {
-namespace message_types {
+namespace protocol {
 
 constexpr uint32_t kProtocolVersion = 70015;
 
@@ -46,7 +45,7 @@ constexpr uint32_t kShortIdsBlocksVersion = 70014;
 constexpr uint32_t kInvalidCbNoBanVersion = 70015;
 
 
-class Version {
+class VersionBase : public MessageData {
 public:    
     /*template <size_t N>
     struct RawData {
@@ -63,61 +62,61 @@ public:
     static const std::string kCommand;
     
     //-------------------------------------------------------------------------
-    Version()
+    VersionBase()
         : version_(0), services_(0), timestamp_(0), addr_recv_(),
           addr_from_(), nonce_(0), user_agent_(), start_height_(0),
-          relay_(false) {}
+          relay_(false), hash_() {}
     
-    Version(uint32_t version, uint64_t services, uint64_t timestamp,
-            const NetAddr& address_receiver,
-            const NetAddr& address_from, uint64_t nonce,
-            const std::string& user_agent, uint32_t start_height, bool relay)
+    VersionBase(uint32_t version, uint64_t services, uint64_t timestamp,
+                const NetAddr& address_receiver,
+                const NetAddr& address_from, uint64_t nonce,
+                const std::string& user_agent, uint32_t start_height, bool relay)
         : version_(version), services_(services), timestamp_(timestamp),
           addr_recv_(address_receiver), addr_from_(address_from),
           nonce_(nonce), user_agent_(user_agent), start_height_(start_height),
-          relay_(relay) {}
+          relay_(relay), hash_() {}
     
-    Version(uint32_t version, uint64_t services, uint64_t timestamp,
-            NetAddr&& address_receiver, NetAddr&& address_from,
-            uint64_t nonce, std::string&& user_agent, uint32_t start_height,
-            bool relay)
+    VersionBase(uint32_t version, uint64_t services, uint64_t timestamp,
+                NetAddr&& address_receiver, NetAddr&& address_from,
+                uint64_t nonce, std::string&& user_agent, uint32_t start_height,
+                bool relay)
         : version_(version), services_(services), timestamp_(timestamp),
           addr_recv_(std::move(address_receiver)),
           addr_from_(std::move(address_from)),
           nonce_(nonce), user_agent_(std::move(user_agent)),
-          start_height_(start_height), relay_(relay) {}
+          start_height_(start_height), relay_(relay), hash_() {}
     
-    explicit Version(const Version& version)
-        : Version(version.version_, version.services_, version.timestamp_,
-                  version.addr_recv_, version.addr_from_, version.nonce_,
-                  version.user_agent_, version.start_height_, version.relay_) {}
+    explicit VersionBase(const VersionBase& version)
+        : VersionBase(version.version_, version.services_, version.timestamp_,
+                      version.addr_recv_, version.addr_from_, version.nonce_,
+                      version.user_agent_, version.start_height_, version.relay_) {}
     
-    explicit Version(Version&& version) noexcept
-        : Version(version.version_, version.services_, version.timestamp_,
-                  std::move(version.addr_recv_),
-                  std::move(version.addr_from_), version.nonce_,
-                  std::move(version.user_agent_), version.start_height_,
-                  version.relay_) {}
+    explicit VersionBase(VersionBase&& version) noexcept
+        : VersionBase(version.version_, version.services_, version.timestamp_,
+                      std::move(version.addr_recv_),
+                      std::move(version.addr_from_), version.nonce_,
+                      std::move(version.user_agent_), version.start_height_,
+                      version.relay_) {}
     
-    explicit Version(const uint8_t *raw)
-        : Version()
-    {
-        //UnSerialize(raw);
-    }
+    VersionBase(const uint8_t *raw, size_t size);
     
     //-------------------------------------------------------------------------
+    bool RecvHandler(std::shared_ptr<Node> src_node) const;
     bool IsValid() const;
     void Clear();
+    size_t SerializedSize() const;
     
     //-------------------------------------------------------------------------
-    Version& operator=(const Version& b);
-    Version& operator=(Version&& b) noexcept;
+    VersionBase& operator=(const VersionBase& b);
+    VersionBase& operator=(VersionBase&& b) noexcept;
+    bool operator==(const VersionBase& b) const;
+    bool operator!=(const VersionBase& b) const;
     
     //-------------------------------------------------------------------------
     template <typename Stream>
     void Serialize(Stream& out) const;
     template <typename Stream>
-    void UnSerialize(Stream& in);
+    void Deserialize(Stream& in);
     
     //-------------------------------------------------------------------------
     uint32_t version() const
@@ -227,34 +226,45 @@ private:
     
     // Fields below require version ≥ 70001
     bool relay_;
+    
+    Hash256 hash_;
 };
 
 template <typename Stream>
-void Version::Serialize(Stream& out) const
+void VersionBase::Serialize(Stream& out) const
 {
-    Serializer<Stream> serial(out);
+    Serializer<Stream> serializer(out);
     
-    serial.SerialWrite(version_);
-    serial.SerialWrite(services_);
-    serial.SerialWrite(timestamp_);
-    serial.SerialWrite(addr_recv_);
-    serial.SerialWrite(addr_from_);
-    serial.SerialWrite(nonce_);
-    serial.SerialWrite(addr_recv_);
-    serial.SerialWrite(addr_from_);
-    serial.SerialWrite(nonce_);
-    serial.SerialWrite(user_agent_);
-    serial.SerialWrite(start_height_);
-    serial.SerialWrite(relay_);
+    serializer.SerialWrite(version_);
+    serializer.SerialWrite(services_);
+    serializer.SerialWrite(timestamp_);
+    serializer.SerialWrite(addr_recv_);
+    serializer.SerialWrite(addr_from_);
+    serializer.SerialWrite(nonce_);
+    serializer.SerialWrite(user_agent_);
+    serializer.SerialWrite(start_height_);
+    serializer.SerialWrite(relay_);
 }
 
 template <typename Stream>
-void Version::UnSerialize(Stream& in)
+void VersionBase::Deserialize(Stream& in)
 {
-
+    Deserializer<Stream> deserializer(in);
+    
+    deserializer.SerialRead(&version_);
+    deserializer.SerialRead(&services_);
+    deserializer.SerialRead(&timestamp_);
+    deserializer.SerialRead(&addr_recv_);
+    deserializer.SerialRead(&addr_from_);
+    deserializer.SerialRead(&nonce_);
+    deserializer.SerialRead(&user_agent_);
+    deserializer.SerialRead(&start_height_);
+    deserializer.SerialRead(&relay_);
 }
 
-} // namespace message_types
+using Version = MsgHashable<VersionBase>;
+
+} // namespace protocol
 } // namespace network
 } // namespace btclite
 

@@ -6,6 +6,7 @@
 
 #include "network_address.h"
 #include "constants.h"
+#include "node.h"
 
 
 using namespace btclite::network;
@@ -71,23 +72,21 @@ TEST(NetAddrTest, Constructor)
     ASSERT_TRUE(addr8.IsIpv4());
     EXPECT_EQ(addr8.GetIpv4(), inet_addr("192.168.1.1"));
     
-    btclite::network::message_types::NetAddr msg_addr;
-    std::memcpy(msg_addr.ip.data(), kPchIpv4, sizeof(kPchIpv4));
-    msg_addr.ip[12] = 192;
-    msg_addr.ip[13] = 168;
-    msg_addr.ip[14] = 1;
-    msg_addr.ip[15] = 1;
-    btclite::network::NetAddr addr9(msg_addr);
+    IpAddr ip = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 1, 2, 3, 4 };
+    btclite::network::NetAddr addr9(0x1234, kNodeNetwork, ip, 8333);
     ASSERT_TRUE(addr9.IsIpv4());
-    EXPECT_EQ(addr9.GetIpv4(), inet_addr("192.168.1.1"));
+    EXPECT_EQ(addr9.GetIpv4(), inet_addr("1.2.3.4"));
+    EXPECT_EQ(addr9.proto_addr().timestamp(), 0x1234);
+    EXPECT_EQ(addr9.proto_addr().services(), kNodeNetwork);
+    EXPECT_EQ(addr9.proto_addr().port(), 8333);
     
-    msg_addr.Clear();
-    inet_pton(AF_INET6, "0001:0203:0405:0607:0809:0A0B:0C0D:0E0F", msg_addr.ip.data());
-    btclite::network::NetAddr addr10(msg_addr);
+    std::memset(ip.begin(), 0, ip.size());
+    inet_pton(AF_INET6, "0001:0203:0405:0607:0809:0A0B:0C0D:0E0F", ip.begin());
+    btclite::network::NetAddr addr10(0x1234, kNodeNetwork, ip, 8333);
     ASSERT_TRUE(addr10.IsIpv6());
-    uint8_t buf[16];
+    uint8_t buf[kIpByteSize];
     addr10.GetIpv6(buf);
-    EXPECT_EQ(std::memcmp(buf, msg_addr.ip.data(), kIpByteSize), 0);
+    EXPECT_EQ(std::memcmp(buf, ip.begin(), kIpByteSize), 0);    
 }
 
 TEST(NetAddrTest, OperatorEqual)

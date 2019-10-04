@@ -36,7 +36,7 @@ struct VarStr {
 class BaseMsgType {
 public:
     virtual void Serialize(ByteSink<std::vector<uint8_t> >& out) const = 0;
-    virtual void UnSerialize(const uint8_t *in) = 0;
+    virtual void Deserialize(const uint8_t *in) = 0;
     
     const std::string& command() const
     {

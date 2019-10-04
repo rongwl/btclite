@@ -11,6 +11,10 @@
 #include "Endian.h"
 
 
+namespace btclite {
+namespace util {
+namespace serialize {
+
 size_t VarIntSize(size_t vec_size);
 
 inline uint64_t DoubleToBinary(double d)
@@ -53,6 +57,9 @@ inline float BinaryToFloat(uint32_t i)
     return tmp.f;
 }
 
+} // namespace serialize
+} // namespace util
+} // namespace btclite
 
 template <typename Stream>
 class Serializer {
@@ -66,27 +73,20 @@ public:
     {
         Serialize(obj);
     }
-    // interface for unserialize
-    template <typename T>
-    void SerialRead(T *obj)
-    {
-        UnSerialize(obj);
-    }
     
 private:
     Stream& stream_;
     
-    //-------------------------------------------------------------------------
     // for double
     void Serialize(const double& in) 
     {
-        SerWriteData(DoubleToBinary(in));
+        SerWriteData(btclite::util::serialize::DoubleToBinary(in));
     }
     
     // for float
     void Serialize(const float& in)
     {
-        SerWriteData(FloatToBinary(in));
+        SerWriteData(btclite::util::serialize::FloatToBinary(in));
     }
         
     //for string
@@ -143,129 +143,12 @@ private:
         obj.Serialize(stream_);
     }
     
-    // for double
-    void UnSerialize(double *out) 
-    {
-        uint64_t i;
-        SerReadData(&i);
-        *out = BinaryToDouble(i);        
-    }
-    
-    // for float
-    void UnSerialize(float *out) 
-    {
-        uint32_t i;
-        SerReadData(&i);
-        *out = BinaryToFloat(i);
-    }
-    
-    // for string
-    void UnSerialize(std::string *out);
-    
-    // for arithmetic std::array
-    template <typename T, size_t N>
-    std::enable_if_t<std::is_arithmetic<T>::value> UnSerialize(std::array<T, N> *out)
-    {
-        for (auto it = out->begin(); it != out->end(); it++)
-            UnSerialize(&(*it));
-    }
-    
-    // for arithmetic vector
-    template <typename T> 
-    std::enable_if_t<std::is_arithmetic<T>::value> UnSerialize(std::vector<T> *out); 
-    
-    // for string vector
-    void UnSerialize(std::vector<std::string> *out);
-    
-    // for class vector
-    template <typename T> 
-    std::enable_if_t<std::is_class<T>::value> UnSerialize(std::vector<T> *out); 
-    
-    // for integral type
-    template <typename T>
-    std::enable_if_t<std::is_integral<T>::value> UnSerialize(T *out) 
-    {
-        SerReadData(out);
-    }
-    
-    // default to calling member function
-    template <typename T>
-    std::enable_if_t<std::is_class<T>::value> UnSerialize(T *obj) 
-    {
-        obj->UnSerialize(stream_);
-    }
-    
     // serialize variable length integer
-    //-------------------------------------------------------------------------
     void SerWriteVarInt(const uint64_t);
-    uint64_t SerReadVarInt();
     
     // Lowest-level serialization and conversion.
-    //-------------------------------------------------------------------------
     template <typename T> void SerWriteData(const T&);
-    template <typename T> void SerReadData(T*);        
 };
-
-template <typename Stream>
-void Serializer<Stream>::UnSerialize(std::string *out)
-{
-    size_t size = SerReadVarInt();
-    char c;
-    
-    // Read all size characters, pushing all non-null (may be many).
-    out->reserve(size);
-    for (size_t i = 0; i < size; i++) {
-        stream_.read(&c, 1);
-        if (c == '\0')
-            break;
-        out->push_back(c);
-    }
-}
-
-template <typename Stream>
-template <typename T>
-std::enable_if_t<std::is_arithmetic<T>::value> Serializer<Stream>::UnSerialize(std::vector<T> *out)
-{
-    // Limit size per read so bogus size value won't cause out of memory
-    uint64_t count = SerReadVarInt();
-    if (count*sizeof(T) > kMaxBlockSize)
-        throw std::ios_base::failure("vector size larger than max block size");
-    out->clear();
-    out->resize(count);
-    for (auto it = out->begin(); it != out->end(); it++)
-        UnSerialize(&(*it));
-}
-
-template <typename Stream>
-void Serializer<Stream>::UnSerialize(std::vector<std::string> *out)
-{
-    uint64_t count = SerReadVarInt();
-    size_t size = 0;    
-    out->clear();
-    out->resize(count);
-    for (auto it = out->begin(); it != out->end(); it++) {
-        UnSerialize(&(*it));
-        size += it->size();
-        if (size > kMaxBlockSize)
-            throw std::ios_base::failure("vector size larger than max block size");
-    }
-}
-
-template <typename Stream>
-template <typename T> 
-std::enable_if_t<std::is_class<T>::value> Serializer<Stream>::UnSerialize(std::vector<T> *out)
-{
-    uint64_t count = SerReadVarInt();
-    size_t size = 0;    
-    out->clear();
-    out->resize(count);
-    for (auto it = out->begin(); it != out->end(); it++) {
-        it->UnSerialize(stream_);
-        size += it->Size(true);
-        if (size > kMaxBlockSize)
-            throw std::ios_base::failure("vector size larger than max block size");
-    }
-}
 
 template <typename Stream>
 void Serializer<Stream>::SerWriteVarInt(const uint64_t count)
@@ -288,7 +171,153 @@ void Serializer<Stream>::SerWriteVarInt(const uint64_t count)
 }
 
 template <typename Stream>
-uint64_t Serializer<Stream>::SerReadVarInt()
+template <typename T>
+void Serializer<Stream>::SerWriteData(const T& obj)
+{
+    Bytes<sizeof(T)> data;
+    ToLittleEndian(obj, &data);
+    stream_.write(reinterpret_cast<const char*>(&data[0]), sizeof data);
+}
+
+template <typename Stream>
+class Deserializer {
+public:
+    Deserializer(Stream& s)
+        : stream_(s) {}
+    
+    // interface for unserialize
+    template <typename T>
+    void SerialRead(T *obj)
+    {
+        Deserialize(obj);
+    }
+    
+private:
+    Stream& stream_;
+    
+    //-------------------------------------------------------------------------
+    // for double
+    void Deserialize(double *out) 
+    {
+        uint64_t i;
+        SerReadData(&i);
+        *out = btclite::util::serialize::BinaryToDouble(i);        
+    }
+    
+    // for float
+    void Deserialize(float *out) 
+    {
+        uint32_t i;
+        SerReadData(&i);
+        *out = btclite::util::serialize::BinaryToFloat(i);
+    }
+    
+    // for string
+    void Deserialize(std::string *out);
+    
+    // for arithmetic std::array
+    template <typename T, size_t N>
+    std::enable_if_t<std::is_arithmetic<T>::value> Deserialize(std::array<T, N> *out)
+    {
+        for (auto it = out->begin(); it != out->end(); it++)
+            Deserialize(&(*it));
+    }
+    
+    // for arithmetic vector
+    template <typename T> 
+    std::enable_if_t<std::is_arithmetic<T>::value> Deserialize(std::vector<T> *out); 
+    
+    // for string vector
+    void Deserialize(std::vector<std::string> *out);
+    
+    // for class vector
+    template <typename T> 
+    std::enable_if_t<std::is_class<T>::value> Deserialize(std::vector<T> *out); 
+    
+    // for integral type
+    template <typename T>
+    std::enable_if_t<std::is_integral<T>::value> Deserialize(T *out) 
+    {
+        SerReadData(out);
+    }
+    
+    // default to calling member function
+    template <typename T>
+    std::enable_if_t<std::is_class<T>::value> Deserialize(T *obj) 
+    {
+        obj->Deserialize(stream_);
+    }
+    
+    // deserialize variable length integer
+    uint64_t SerReadVarInt();
+    
+    // Lowest-level deserialization and conversion.
+    template <typename T> void SerReadData(T*);
+};
+
+template <typename Stream>
+void Deserializer<Stream>::Deserialize(std::string *out)
+{
+    size_t size = SerReadVarInt();
+    char c;
+    
+    // Read all size characters, pushing all non-null (may be many).
+    out->reserve(size);
+    for (size_t i = 0; i < size; i++) {
+        stream_.read(&c, 1);
+        if (c == '\0')
+            break;
+        out->push_back(c);
+    }
+}
+
+template <typename Stream>
+template <typename T>
+std::enable_if_t<std::is_arithmetic<T>::value> Deserializer<Stream>::Deserialize(std::vector<T> *out)
+{
+    // Limit size per read so bogus size value won't cause out of memory
+    uint64_t count = SerReadVarInt();
+    if (count*sizeof(T) > kMaxBlockSize)
+        throw std::ios_base::failure("vector size larger than max block size");
+    out->clear();
+    out->resize(count);
+    for (auto it = out->begin(); it != out->end(); it++)
+        Deserialize(&(*it));
+}
+
+template <typename Stream>
+void Deserializer<Stream>::Deserialize(std::vector<std::string> *out)
+{
+    uint64_t count = SerReadVarInt();
+    size_t size = 0;    
+    out->clear();
+    out->resize(count);
+    for (auto it = out->begin(); it != out->end(); it++) {
+        Deserialize(&(*it));
+        size += it->size();
+        if (size > kMaxBlockSize)
+            throw std::ios_base::failure("vector size larger than max block size");
+    }
+}
+
+template <typename Stream>
+template <typename T> 
+std::enable_if_t<std::is_class<T>::value> Deserializer<Stream>::Deserialize(std::vector<T> *out)
+{
+    uint64_t count = SerReadVarInt();
+    size_t size = 0;    
+    out->clear();
+    out->resize(count);
+    for (auto it = out->begin(); it != out->end(); it++) {
+        it->Deserialize(stream_);
+        size += it->Size(true);
+        if (size > kMaxBlockSize)
+            throw std::ios_base::failure("vector size larger than max block size");
+    }
+}
+
+template <typename Stream>
+uint64_t Deserializer<Stream>::SerReadVarInt()
 {
     uint8_t count;
     uint64_t varint;
@@ -320,16 +349,7 @@ uint64_t Serializer<Stream>::SerReadVarInt()
 
 template <typename Stream>
 template <typename T>
-void Serializer<Stream>::SerWriteData(const T& obj)
-{
-    Bytes<sizeof(T)> data;
-    ToLittleEndian(obj, &data);
-    stream_.write(reinterpret_cast<const char*>(&data[0]), sizeof data);
-}
-
-template <typename Stream>
-template <typename T>
-void Serializer<Stream>::SerReadData(T *obj)
+void Deserializer<Stream>::SerReadData(T *obj)
 {
     Bytes<sizeof(T)> data;
     stream_.read(reinterpret_cast<char*>(&data[0]), sizeof data);

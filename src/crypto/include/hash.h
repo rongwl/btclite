@@ -12,16 +12,19 @@
 
 using Hash256 = Uint256;
 
+namespace btclite {
+namespace crypto {
+namespace hash {
 
-class Hash {
-public:
-    static void Sha256(const uint8_t in[], size_t length, Hash256 *out);
-    static void Sha256(const std::vector<uint8_t>& in, Hash256 *out);
-    static void DoubleSha256(const uint8_t in[], size_t length, Hash256 *out);
-    static void DoubleSha256(const std::vector<uint8_t>& in, Hash256 *out);
-    static void DoubleSha256(const std::string& in, Hash256 *out);
-};
+void Sha256(const uint8_t in[], size_t length, Hash256 *out);
+void Sha256(const std::vector<uint8_t>& in, Hash256 *out);
+void DoubleSha256(const uint8_t in[], size_t length, Hash256 *out);
+void DoubleSha256(const std::vector<uint8_t>& in, Hash256 *out);
+void DoubleSha256(const std::string& in, Hash256 *out);
 
+} // namespace hash
+} // namespace crypto
+} // namespace btclite
 
 // A writer stream (for serialization) that computes a 256-bit hash.
 class HashWStream {
@@ -38,8 +41,8 @@ public:
     template <typename T>
     HashWStream& operator<<(const T& obj)
     {
-        Serializer<ByteSinkType> serial(byte_sink_);
-        serial.SerialWrite(obj);
+        Serializer<ByteSinkType> serializer(byte_sink_);
+        serializer.SerialWrite(obj);
         return *this;
     }
     
@@ -48,9 +51,9 @@ public:
         return vec_.size();
     }
     
-    const uint8_t *Data() const
+    const Container& vec() const
     {
-        return vec_.data();
+        return vec_;
     }
     
     void Clear()

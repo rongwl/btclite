@@ -22,21 +22,21 @@ std::string TxIn::ToString() const
 template <typename Stream>
 void Transaction::Serialize(Stream& os, bool witness) const
 {
-    Serializer<Stream> serial(os);
-    serial.SerialWrite(version_);
-    serial.SerialWrite(inputs_);
-    serial.SerialWrite(outputs_);
-    serial.SerialWrite(lock_time_);
+    Serializer<Stream> serializer(os);
+    serializer.SerialWrite(version_);
+    serializer.SerialWrite(inputs_);
+    serializer.SerialWrite(outputs_);
+    serializer.SerialWrite(lock_time_);
 }
 
 template <typename Stream>
-void Transaction::UnSerialize(Stream& is, bool witness)
+void Transaction::Deserialize(Stream& is, bool witness)
 {
-    Serializer<Stream> serial(is);
-    serial.SerialRead(&version_);
-    serial.SerialRead(&inputs_);
-    serial.SerialRead(&outputs_);
-    serial.SerialRead(&lock_time_);
+    Deserializer<Stream> deserializer(is);
+    deserializer.SerialRead(&version_);
+    deserializer.SerialRead(&inputs_);
+    deserializer.SerialRead(&outputs_);
+    deserializer.SerialRead(&lock_time_);
 }
 
 Transaction& Transaction::operator=(const Transaction& b)
@@ -87,9 +87,9 @@ size_t Transaction::Size(bool serialized = false) const
     };
     
     return sizeof(version_) + sizeof(lock_time_)
-           + VarIntSize(inputs_.size())
+           + btclite::util::serialize::VarIntSize(inputs_.size())
            + std::accumulate(inputs_.begin(), inputs_.end(), size_t{0}, ins)
-           + VarIntSize(outputs_.size())
+           + btclite::util::serialize::VarIntSize(outputs_.size())
            + std::accumulate(outputs_.begin(), outputs_.end(), size_t{0}, outs);
 }
 

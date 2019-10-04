@@ -52,15 +52,14 @@ BTCLITE_HEADER_FILES = \
                        network/include/bloom.h \
                        network/include/connector.h \
                        network/include/libevent.h \
-                       network/include/message_types.h \
-                       network/include/messages.h \
-                       network/include/message_types/address.h \
-                       network/include/message_types/version.h \
+                       network/include/protocol/message.h \
+                       network/include/protocol/address.h \
+                       network/include/protocol/version.h \
+                       network/include/msg_process.h \
                        network/include/node.h \
                        network/include/p2p.h \
                        network/include/params.h \
                        network/include/peers.h \
-                       network/include/protocol.h \
                        network/include/net.h \
                        network/include/netbase.h \
                        network/include/network_address.h \
@@ -152,14 +151,15 @@ network_src_libbtclite_network_a_SOURCES = network/proto/banmap.pb.cc \
                                            network/src/block_sync.cpp \
                                            network/src/connector.cpp \
                                            network/src/libevent.cpp \
-                                           network/src/message_types/address.cpp \
-                                           network/src/message_types/version.cpp \
+                                           network/src/protocol/message.cpp \
+                                           network/src/protocol/address.cpp \
+                                           network/src/protocol/version.cpp \
+                                           network/src/msg_process.cpp \
                                            network/src/netbase.cpp \
                                            network/src/network_address.cpp \
                                            network/src/params.cpp \
                                            network/src/peers.cpp \
                                            network/src/p2p.cpp \
-                                           network/src/protocol.cpp \
                                            network/src/net.cpp \
                                            network/src/node.cpp \
                                            network/src/session.cpp \

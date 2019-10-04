@@ -6,9 +6,12 @@
 #include <netinet/in.h>
 #include <netinet/ip.h> 
 
+#include "blob.h"
+#include "constants.h"
 #include "network_address.pb.h"
-#include "message_types/address.h"
 
+
+using IpAddr = Bytes<kIpByteSize>;
 
 namespace btclite {
 namespace network {
@@ -42,8 +45,8 @@ public:
     explicit NetAddr(proto_netaddr::NetAddr&& proto_addr) noexcept
         : proto_addr_(std::move(proto_addr)) {}
     
-    explicit NetAddr(const message_types::NetAddr& addr);
-    explicit NetAddr(message_types::NetAddr&& addr) noexcept;
+    NetAddr(uint32_t timestamp, uint64_t services, IpAddr& ip, uint16_t port);
+    NetAddr(uint32_t timestamp, uint64_t services, IpAddr&& ip, uint16_t port) noexcept;
     
     //-------------------------------------------------------------------------
     bool IsIpv4() const;

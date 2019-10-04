@@ -14,8 +14,8 @@ public:
 
     Uint128(uint64_t low, uint64_t high) 
     { 
-        std::memcpy(this->data(), &low, sizeof(uint64_t));
-        std::memcpy(this->data()+sizeof(uint64_t), &high, sizeof(uint64_t));
+        std::memcpy(this->begin(), &low, sizeof(uint64_t));
+        std::memcpy(this->begin()+sizeof(uint64_t), &high, sizeof(uint64_t));
     }
     
     uint64_t GetLow64()
@@ -51,8 +51,8 @@ public:
     
     Uint256(const Uint128& low, const Uint128& high)
     {
-        std::memcpy(this->data(), low.data(), low.size());
-        std::memcpy(this->data()+low.size(), high.data(), high.size());
+        std::memcpy(this->begin(), low.begin(), low.size());
+        std::memcpy(this->begin()+low.size(), high.begin(), high.size());
     }
     
     uint64_t GetLow64()

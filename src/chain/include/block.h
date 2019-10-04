@@ -59,7 +59,7 @@ public:
     
     //-------------------------------------------------------------------------
     template <typename Stream> void Serialize(Stream& os) const;
-    template <typename Stream> void UnSerialize(Stream& is);
+    template <typename Stream> void Deserialize(Stream& is);
     
     //-------------------------------------------------------------------------
     const Hash256& Hash() const;
@@ -154,25 +154,25 @@ private:
 template <typename Stream>
 void BlockHeader::Serialize(Stream& os) const
 {
-    Serializer<Stream> serial(os);
-    serial.SerialWrite(static_cast<uint32_t>(version_));
-    serial.SerialWrite(prev_block_hash_);
-    serial.SerialWrite(merkle_root_hash_);
-    serial.SerialWrite(time_);
-    serial.SerialWrite(nBits_);
-    serial.SerialWrite(nonce_);
+    Serializer<Stream> serializer(os);
+    serializer.SerialWrite(static_cast<uint32_t>(version_));
+    serializer.SerialWrite(prev_block_hash_);
+    serializer.SerialWrite(merkle_root_hash_);
+    serializer.SerialWrite(time_);
+    serializer.SerialWrite(nBits_);
+    serializer.SerialWrite(nonce_);
 }
 
 template <typename Stream>
-void BlockHeader::UnSerialize(Stream& is)
+void BlockHeader::Deserialize(Stream& is)
 {
-    Serializer<Stream> serial(is);
-    serial.SerialRead(&version_);
-    serial.SerialRead(&prev_block_hash_);
-    serial.SerialRead(&merkle_root_hash_);
-    serial.SerialRead(&time_);
-    serial.SerialRead(&nBits_);
-    serial.SerialRead(&nonce_);
+    Deserializer<Stream> deserializer(is);
+    deserializer.SerialRead(&version_);
+    deserializer.SerialRead(&prev_block_hash_);
+    deserializer.SerialRead(&merkle_root_hash_);
+    deserializer.SerialRead(&time_);
+    deserializer.SerialRead(&nBits_);
+    deserializer.SerialRead(&nonce_);
 }
 
 class Block {
@@ -210,16 +210,16 @@ public:
     template <typename Stream>
     void Serialize(Stream& os) const
     {
-        Serializer<Stream> serial(os);
-        serial.SerialWrite(header_);
-        serial.SerialWrite(transactions_);
+        Serializer<Stream> serializer(os);
+        serializer.SerialWrite(header_);
+        serializer.SerialWrite(transactions_);
     }
     template <typename Stream>
-    void UnSerialize(Stream& is)
+    void Deserialize(Stream& is)
     {
-        Serializer<Stream> serial(is);
-        serial.SerialRead(&header_);
-        serial.SerialRead(&transactions_);
+        Deserializer<Stream> deserializer(is);
+        deserializer.SerialRead(&header_);
+        deserializer.SerialRead(&transactions_);
     }
     
     //-------------------------------------------------------------------------

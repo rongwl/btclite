@@ -45,24 +45,24 @@ NetAddr::NetAddr(const struct sockaddr_storage& addr)
     }
 }
 
-NetAddr::NetAddr(const message_types::NetAddr& addr)
+NetAddr::NetAddr(uint32_t timestamp, uint64_t services, IpAddr& ip, uint16_t port)
     : proto_addr_()
 {
     proto_addr_.mutable_ip()->Resize(ip_uint32_size, 0);
-    std::memcpy(proto_addr_.mutable_ip()->mutable_data(), addr.ip.data(), kIpByteSize);
-    proto_addr_.set_port(ntohs(addr.port));
-    proto_addr_.set_services(addr.services);
-    proto_addr_.set_timestamp(addr.timestamp);
+    std::memcpy(proto_addr_.mutable_ip()->begin(), ip.begin(), kIpByteSize);
+    proto_addr_.set_port(port);
+    proto_addr_.set_services(services);
+    proto_addr_.set_timestamp(timestamp);
 }
 
-NetAddr::NetAddr(message_types::NetAddr&& addr) noexcept
+NetAddr::NetAddr(uint32_t timestamp, uint64_t services, IpAddr&& ip, uint16_t port) noexcept
     : proto_addr_()
 {
     proto_addr_.mutable_ip()->Resize(ip_uint32_size, 0);
-    std::memmove(proto_addr_.mutable_ip()->mutable_data(), addr.ip.data(), kIpByteSize);
-    proto_addr_.set_port(ntohs(addr.port));
-    proto_addr_.set_services(addr.services);
-    proto_addr_.set_timestamp(addr.timestamp);
+    std::memmove(proto_addr_.mutable_ip()->begin(), ip.begin(), kIpByteSize);
+    proto_addr_.set_port(port);
+    proto_addr_.set_services(services);
+    proto_addr_.set_timestamp(timestamp);
 }
 
 bool NetAddr::IsIpv4() const
@@ -334,7 +334,7 @@ int NetAddr::GetIpv6(uint8_t *out) const
     if (!IsIpv6())
         return -1;
     
-    std::memcpy(out, proto_addr_.ip().data(), kIpByteSize);
+    std::memcpy(out, proto_addr_.ip().begin(), kIpByteSize);
     
     return 0;
 }

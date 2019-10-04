@@ -1,7 +1,11 @@
 #include "hash.h"
 
 
-void Hash::Sha256(const uint8_t in[], size_t length, Hash256 *out)
+namespace btclite {
+namespace crypto {
+namespace hash {
+
+void Sha256(const uint8_t in[], size_t length, Hash256 *out)
 {
     std::unique_ptr<Botan::HashFunction> hash_func(Botan::HashFunction::create("SHA-256"));
     hash_func->update(in, length);
@@ -9,7 +13,7 @@ void Hash::Sha256(const uint8_t in[], size_t length, Hash256 *out)
     hash_func->final(reinterpret_cast<uint8_t*>(out));
 }
 
-void Hash::Sha256(const std::vector<uint8_t>& in, Hash256 *out)
+void Sha256(const std::vector<uint8_t>& in, Hash256 *out)
 {
     std::unique_ptr<Botan::HashFunction> hash_func(Botan::HashFunction::create("SHA-256"));
     hash_func->update(in);
@@ -17,7 +21,7 @@ void Hash::Sha256(const std::vector<uint8_t>& in, Hash256 *out)
     hash_func->final(reinterpret_cast<uint8_t*>(out));
 }
 
-void Hash::DoubleSha256(const uint8_t in[], size_t length, Hash256 *out)
+void DoubleSha256(const uint8_t in[], size_t length, Hash256 *out)
 {
     std::unique_ptr<Botan::HashFunction> hash_func(Botan::HashFunction::create("SHA-256"));
     hash_func->update(in, length);
@@ -29,7 +33,7 @@ void Hash::DoubleSha256(const uint8_t in[], size_t length, Hash256 *out)
     hash_func->final(reinterpret_cast<uint8_t*>(out));
 }
 
-void Hash::DoubleSha256(const std::vector<uint8_t> &in, Hash256 *out)
+void DoubleSha256(const std::vector<uint8_t> &in, Hash256 *out)
 {
     std::unique_ptr<Botan::HashFunction> hash_func(Botan::HashFunction::create("SHA-256"));
     hash_func->update(in);
@@ -41,7 +45,7 @@ void Hash::DoubleSha256(const std::vector<uint8_t> &in, Hash256 *out)
     hash_func->final(reinterpret_cast<uint8_t*>(out));
 }
 
-void Hash::DoubleSha256(const std::string &in, Hash256 *out)
+void DoubleSha256(const std::string &in, Hash256 *out)
 {
     std::unique_ptr<Botan::HashFunction> hash_func(Botan::HashFunction::create("SHA-256"));
     hash_func->update(in);
@@ -52,6 +56,10 @@ void Hash::DoubleSha256(const std::string &in, Hash256 *out)
     out->Clear();
     hash_func->final(reinterpret_cast<uint8_t*>(out));
 }
+
+} // namespace hash
+} // namespace crypto
+} // namespace btclite
 
 void HashWStream::Sha256(Hash256 *out)
 {

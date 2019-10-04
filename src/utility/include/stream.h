@@ -20,8 +20,8 @@ public:
     template <typename T>
     MemOstream& operator<<(const T& obj)
     {
-        Serializer<ByteSinkType> serial(byte_sink_);
-        serial.SerialWrite(obj);
+        Serializer<ByteSinkType> serializer(byte_sink_);
+        serializer.SerialWrite(obj);
         return *this;
     }
     
@@ -50,8 +50,8 @@ public:
     template <typename T>
     MemIstream& operator>>(T& obj)
     {
-        Serializer<ByteSource> serial(byte_source_);
-        serial.SerialRead(&obj);
+        Deserializer<ByteSource> deserializer(byte_source_);
+        deserializer.SerialRead(&obj);
         return *this;
     }
     

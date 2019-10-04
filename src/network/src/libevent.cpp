@@ -1,5 +1,6 @@
 #include "libevent.h"
-#include "node.h"
+
+#include "msg_process.h"
 
 
 struct event_base *LibEvent::EventBaseNew()
@@ -100,7 +101,8 @@ void LibEvent::ConnReadCb(struct bufferevent *bev, void *ctx)
         pnode->mutable_timers()->no_receiving_timer = timer_mng.StartTimer(timeout*1000, 0, Node::InactivityTimeoutCb, pnode);
     }
     
-    pnode->ParseMessage();
+    auto task = std::bind(btclite::network::msgprocess::ParseMsg, pnode);
+    SingletonThreadPool::GetInstance().AddTask(std::function<bool()>(task));
 }
 
 void LibEvent::ConnEventCb(struct bufferevent *bev, short events, void *ctx)
