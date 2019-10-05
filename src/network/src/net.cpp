@@ -78,15 +78,6 @@ bool LocalNetConfig::AddLocalHost(const btclite::network::NetAddr& addr)
     return true;
 }
 
-/*
-void Message::DataFactory(const uint8_t *data_raw)
-{
-    if (header_.command() == kMsgVersion)
-        data_ = std::make_shared<protocol::Version>(data_raw);
-    else
-        data_.reset();
-}
-*/
 NetArgs::NetArgs(const Args& args)
     : is_listen_(args.GetBoolArg(FULLNODE_OPTION_LISTEN, true)),
       is_discover_(args.GetBoolArg(FULLNODE_OPTION_DISCOVER, true)),

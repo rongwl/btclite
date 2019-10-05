@@ -66,44 +66,6 @@ private:
     SingletonNetInterrupt() {}
 };
 
-/*
-class Message {
-public:
-    Message()
-        : header_(), data_(nullptr) {}
-    
-    Message(const MessageHeader& header, const uint8_t *data_raw)
-        : header_(header)
-    {
-        DataFactory(data_raw);
-    }
-    
-    Message(MessageHeader&& header, const uint8_t *data_raw) noexcept
-        : header_(std::move(header))
-    {
-        DataFactory(data_raw);
-    }
-    
-    explicit Message(const uint8_t *raw)
-        : header_(std::move(MessageHeader(raw)))
-    {
-        DataFactory(raw+MessageHeader::kSize);
-    }
-    
-    //-------------------------------------------------------------------------
-    void DataFactory(const uint8_t *raw);
-    
-    //-------------------------------------------------------------------------
-    const MessageHeader& header() const
-    {
-        return header_;
-    }
-    
-private:
-    MessageHeader header_;
-    std::shared_ptr<void> data_;
-};
-*/
 class NetArgs {
 public:
     explicit NetArgs(const Args& args);
