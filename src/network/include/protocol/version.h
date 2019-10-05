@@ -1,5 +1,5 @@
-#ifndef BTCLITE_MESSAGE_TYPES_VERSION_H
-#define BTCLITE_MESSAGE_TYPES_VERSION_H
+#ifndef BTCLITE_PROTOCOL_VERSION_H
+#define BTCLITE_PROTOCOL_VERSION_H
 
 
 #include "address.h"
@@ -45,17 +45,17 @@ constexpr uint32_t kShortIdsBlocksVersion = 70014;
 constexpr uint32_t kInvalidCbNoBanVersion = 70015;
 
 
-class VersionBase : public MessageData {
+class Version : public MessageData {
 public:
     static const std::string kCommand;
     
     //-------------------------------------------------------------------------
-    VersionBase()
+    Version()
         : version_(0), services_(0), timestamp_(0), addr_recv_(),
           addr_from_(), nonce_(0), user_agent_(), start_height_(0),
           relay_(false), hash_() {}
     
-    VersionBase(uint32_t version, uint64_t services, uint64_t timestamp,
+    Version(uint32_t version, uint64_t services, uint64_t timestamp,
                 const NetAddr& address_receiver,
                 const NetAddr& address_from, uint64_t nonce,
                 const std::string& user_agent, uint32_t start_height, bool relay)
@@ -64,7 +64,7 @@ public:
           nonce_(nonce), user_agent_(user_agent), start_height_(start_height),
           relay_(relay), hash_() {}
     
-    VersionBase(uint32_t version, uint64_t services, uint64_t timestamp,
+    Version(uint32_t version, uint64_t services, uint64_t timestamp,
                 NetAddr&& address_receiver, NetAddr&& address_from,
                 uint64_t nonce, std::string&& user_agent, uint32_t start_height,
                 bool relay)
@@ -74,19 +74,19 @@ public:
           nonce_(nonce), user_agent_(std::move(user_agent)),
           start_height_(start_height), relay_(relay), hash_() {}
     
-    explicit VersionBase(const VersionBase& version)
-        : VersionBase(version.version_, version.services_, version.timestamp_,
+    Version(const Version& version)
+        : Version(version.version_, version.services_, version.timestamp_,
                       version.addr_recv_, version.addr_from_, version.nonce_,
                       version.user_agent_, version.start_height_, version.relay_) {}
     
-    explicit VersionBase(VersionBase&& version) noexcept
-        : VersionBase(version.version_, version.services_, version.timestamp_,
+    Version(Version&& version) noexcept
+        : Version(version.version_, version.services_, version.timestamp_,
                       std::move(version.addr_recv_),
                       std::move(version.addr_from_), version.nonce_,
                       std::move(version.user_agent_), version.start_height_,
                       version.relay_) {}
     
-    VersionBase(const uint8_t *raw, size_t size);
+    Version(const uint8_t *raw, size_t size);
     
     //-------------------------------------------------------------------------
     bool RecvHandler(std::shared_ptr<Node> src_node) const;
@@ -95,10 +95,10 @@ public:
     size_t SerializedSize() const;
     
     //-------------------------------------------------------------------------
-    VersionBase& operator=(const VersionBase& b);
-    VersionBase& operator=(VersionBase&& b) noexcept;
-    bool operator==(const VersionBase& b) const;
-    bool operator!=(const VersionBase& b) const;
+    Version& operator=(const Version& b);
+    Version& operator=(Version&& b) noexcept;
+    bool operator==(const Version& b) const;
+    bool operator!=(const Version& b) const;
     
     //-------------------------------------------------------------------------
     template <typename Stream>
@@ -219,7 +219,7 @@ private:
 };
 
 template <typename Stream>
-void VersionBase::Serialize(Stream& out) const
+void Version::Serialize(Stream& out) const
 {
     Serializer<Stream> serializer(out);
     
@@ -235,7 +235,7 @@ void VersionBase::Serialize(Stream& out) const
 }
 
 template <typename Stream>
-void VersionBase::Deserialize(Stream& in)
+void Version::Deserialize(Stream& in)
 {
     Deserializer<Stream> deserializer(in);
     
@@ -250,10 +250,8 @@ void VersionBase::Deserialize(Stream& in)
     deserializer.SerialRead(&relay_);
 }
 
-using Version = MsgHashable<VersionBase>;
-
 } // namespace protocol
 } // namespace network
 } // namespace btclite
 
-#endif // BTCLITE_MESSAGE_VERSION_H
+#endif // BTCLITE_PROTOCOL_VERSION_H

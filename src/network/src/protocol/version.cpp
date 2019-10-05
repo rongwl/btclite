@@ -5,10 +5,10 @@ namespace btclite {
 namespace network {
 namespace protocol{
 
-const std::string VersionBase::kCommand = kMsgVersion;
+const std::string Version::kCommand = kMsgVersion;
 
-VersionBase::VersionBase(const uint8_t *raw, size_t size)
-    : VersionBase()
+Version::Version(const uint8_t *raw, size_t size)
+    : Version()
 {
     std::vector<uint8_t> vec;
     ByteSource<std::vector<uint8_t> > byte_source(vec);
@@ -18,12 +18,12 @@ VersionBase::VersionBase(const uint8_t *raw, size_t size)
     Deserialize(byte_source);
 }
 
-bool VersionBase::RecvHandler(std::shared_ptr<Node> src_node) const
+bool Version::RecvHandler(std::shared_ptr<Node> src_node) const
 {
     return true;
 }
 
-bool VersionBase::IsValid() const
+bool Version::IsValid() const
 {
     return (version_ != 0) ||
            (services_ != 0) ||
@@ -36,7 +36,7 @@ bool VersionBase::IsValid() const
            (relay_ != false);
 }
 
-void VersionBase::Clear()
+void Version::Clear()
 {
     version_ = 0;
     services_ = 0;
@@ -50,7 +50,7 @@ void VersionBase::Clear()
     relay_ = false;
 }
 
-VersionBase& VersionBase::operator=(const VersionBase& b)
+Version& Version::operator=(const Version& b)
 {
     version_ = b.version_;
     services_ = b.services_;
@@ -64,7 +64,7 @@ VersionBase& VersionBase::operator=(const VersionBase& b)
     return *this;
 }
 
-size_t VersionBase::SerializedSize() const
+size_t Version::SerializedSize() const
 {
     return sizeof(version_) + sizeof(services_) + sizeof(timestamp_) +
            addr_recv_.SerializedSize() + addr_from_.SerializedSize() +
@@ -72,7 +72,7 @@ size_t VersionBase::SerializedSize() const
            user_agent_.size() + sizeof(start_height_) + sizeof(uint8_t);
 }
 
-VersionBase& VersionBase::operator=(VersionBase&& b) noexcept
+Version& Version::operator=(Version&& b) noexcept
 {
     version_ = b.version_;
     services_ = b.services_;
@@ -86,7 +86,7 @@ VersionBase& VersionBase::operator=(VersionBase&& b) noexcept
     return *this;
 }
 
-bool VersionBase::operator==(const VersionBase& b) const
+bool Version::operator==(const Version& b) const
 {
     return (version_ == b.version_) && 
            (services_ == b.services_) &&
@@ -99,7 +99,7 @@ bool VersionBase::operator==(const VersionBase& b) const
            (relay_ == b.relay_);
 }
 
-bool VersionBase::operator!=(const VersionBase& b) const
+bool Version::operator!=(const Version& b) const
 {
     return !(*this == b);
 }

@@ -7,7 +7,7 @@
 const Hash256& BlockHeader::Hash() const
 {
     if (hash_cache_.IsNull()) {
-        HashWStream hs;
+        HashOStream hs;
         hs << *this;
         hs.DoubleSha256(&hash_cache_);
     }

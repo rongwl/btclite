@@ -114,7 +114,7 @@ std::string Transaction::ToString() const
 const Hash256& Transaction::Hash() const
 {
     if (hash_cache_.IsNull()) {
-        HashWStream hs;
+        HashOStream hs;
         hs << *this;
         hs.DoubleSha256(&hash_cache_);
     }

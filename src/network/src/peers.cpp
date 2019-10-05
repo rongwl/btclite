@@ -305,7 +305,7 @@ bool btclite::Peers::GetAddrs(std::vector<btclite::network::NetAddr> *out)
 
 uint64_t btclite::Peers::MakeMapKey(const btclite::network::NetAddr& addr, bool by_group)
 {
-    HashWStream hs;
+    HashOStream hs;
     Uint256 out;
     
     if (by_group) {

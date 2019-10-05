@@ -2,6 +2,9 @@
 
 #include <event2/buffer.h>
 
+#include "protocol/ping.h"
+#include "protocol/version.h"
+
 
 using namespace btclite::network::protocol;
 
@@ -13,6 +16,9 @@ MessageData *MsgDataFactory(const MessageHeader& header, const uint8_t *raw)
 {
     if (header.command() == kMsgVersion) {
         return new Version(raw, header.payload_length());
+    }
+    else if (header.command() == kMsgPing) {
+        return new Ping(raw);
     }
     
     return nullptr;
@@ -49,10 +55,16 @@ bool ParseMsg(std::shared_ptr<Node> src_node)
         }
         
         message->RecvHandler(src_node);
+        delete message;
         
         raw = evbuffer_pullup(buf, MessageHeader::kSize);
     }
     
+    return true;
+}
+
+bool PushVersion(std::shared_ptr<Node> dst_node)
+{
     return true;
 }
 

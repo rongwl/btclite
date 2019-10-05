@@ -99,6 +99,7 @@ struct NodeTimers {
     TimerMng::TimerPtr no_receiving_timer;
     TimerMng::TimerPtr no_ping_timer;
     TimerMng::TimerPtr no_connection_timer;
+    TimerMng::TimerPtr ping_timer;
 };
 
 /* Information about a connected peer */
@@ -110,8 +111,7 @@ public:
     
     //-------------------------------------------------------------------------
     static void InactivityTimeoutCb(std::shared_ptr<Node> node);
-    bool BevThreadSafeWrite(const std::vector<uint8_t> vec);
-    bool BevThreadSafeWrite(const uint8_t *data, size_t size);
+    static void PingTimeoutCb(std::shared_ptr<Node> node);
     
     //-------------------------------------------------------------------------
     int64_t time_connected() const
@@ -167,6 +167,11 @@ public:
     bool conn_established() const
     {
         return conn_established_;
+    }
+    
+    void set_conn_established(bool established)
+    {
+        conn_established_ = established;
     }
     
     bool disconnected() const
@@ -244,10 +249,7 @@ private:
     std::atomic<int> version_;
     const ServiceFlags services_;
     const int start_height_;
-    
-    struct bufferevent *bev_;
-    mutable CriticalSection cs_write_bev_;
-    
+    struct bufferevent *bev_;    
     const btclite::network::NetAddr addr_;
     //const uint64_t keyed_net_group_;
     const uint64_t local_host_nonce_;

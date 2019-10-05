@@ -1,5 +1,5 @@
-#ifndef BTCLITE_MESSAGE_TYPES_ADDRESS_H
-#define BTCLITE_MESSAGE_TYPES_ADDRESS_H
+#ifndef BTCLITE_PROTOCOL_ADDRESS_H
+#define BTCLITE_PROTOCOL_ADDRESS_H
 
 
 #include "blob.h"
@@ -64,4 +64,4 @@ void NetAddr::Deserialize(Stream& in)
 } // namespace network
 } // namespace btclite
 
-#endif // BTCLITE_MESSAGE_TYPES_ADDRESS_H
+#endif // BTCLITE_PROTOCOL_ADDRESS_H

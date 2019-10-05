@@ -27,19 +27,19 @@ void DoubleSha256(const std::string& in, Hash256 *out);
 } // namespace btclite
 
 // A writer stream (for serialization) that computes a 256-bit hash.
-class HashWStream {
+class HashOStream {
 public:
     using Container = std::vector<uint8_t>;
     using ByteSinkType = ByteSink<Container>;
     
-    HashWStream()
+    HashOStream()
         : vec_(), byte_sink_(vec_) {}
     
     void Sha256(Hash256 *out);
     void DoubleSha256(Hash256 *out);
     
     template <typename T>
-    HashWStream& operator<<(const T& obj)
+    HashOStream& operator<<(const T& obj)
     {
         Serializer<ByteSinkType> serializer(byte_sink_);
         serializer.SerialWrite(obj);

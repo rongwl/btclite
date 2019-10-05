@@ -24,7 +24,7 @@ bool Acceptor::InitEvent()
     }
     
     if (nullptr == (listener_ = evconnlistener_new_bind(base_, AcceptConnCb, NULL,
-                                LEV_OPT_CLOSE_ON_FREE|LEV_OPT_REUSEABLE,
+                                LEV_OPT_CLOSE_ON_FREE | LEV_OPT_REUSEABLE,
                                 SOMAXCONN, (const struct sockaddr*)&sock_addr_,
                                 sizeof(sock_addr_))))
     {
@@ -89,7 +89,7 @@ void Acceptor::AcceptConnCb(struct evconnlistener *listener, evutil_socket_t fd,
         return;
     }
     
-    if (nullptr == (bev = bufferevent_socket_new(base, fd, BEV_OPT_CLOSE_ON_FREE))) {
+    if (nullptr == (bev = bufferevent_socket_new(base, fd, BEV_OPT_THREADSAFE | BEV_OPT_CLOSE_ON_FREE))) {
         BTCLOG(LOG_LEVEL_WARNING) << "Acceptor create buffer event for socker fd failed.";
         evutil_closesocket(fd);
         return;

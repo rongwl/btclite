@@ -24,6 +24,7 @@ TEST(AcceptorTest, MethordAcceptConnCb)
     struct bufferevent *bev;
     Socket::Fd fd;
     
+    evthread_use_pthreads();
     base = event_base_new();
     ASSERT_NE(base, nullptr);
     listener = evconnlistener_new_bind(base, NULL, NULL, LEV_OPT_CLOSE_ON_FREE|LEV_OPT_REUSEABLE,

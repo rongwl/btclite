@@ -61,7 +61,7 @@ void DoubleSha256(const std::string &in, Hash256 *out)
 } // namespace crypto
 } // namespace btclite
 
-void HashWStream::Sha256(Hash256 *out)
+void HashOStream::Sha256(Hash256 *out)
 {
     std::unique_ptr<Botan::HashFunction> hash_func(Botan::HashFunction::create("SHA-256"));
     hash_func->update(vec_);
@@ -69,7 +69,7 @@ void HashWStream::Sha256(Hash256 *out)
     hash_func->final(reinterpret_cast<uint8_t*>(out));
 }
 
-void HashWStream::DoubleSha256(Hash256 *out)
+void HashOStream::DoubleSha256(Hash256 *out)
 {
     std::unique_ptr<Botan::HashFunction> hash_func(Botan::HashFunction::create("SHA-256"));
     hash_func->update(vec_);

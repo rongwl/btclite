@@ -54,6 +54,7 @@ BTCLITE_HEADER_FILES = \
                        network/include/libevent.h \
                        network/include/protocol/message.h \
                        network/include/protocol/address.h \
+                       network/include/protocol/ping.h \
                        network/include/protocol/version.h \
                        network/include/msg_process.h \
                        network/include/node.h \
@@ -153,6 +154,7 @@ network_src_libbtclite_network_a_SOURCES = network/proto/banmap.pb.cc \
                                            network/src/libevent.cpp \
                                            network/src/protocol/message.cpp \
                                            network/src/protocol/address.cpp \
+                                           network/src/protocol/ping.cpp \
                                            network/src/protocol/version.cpp \
                                            network/src/msg_process.cpp \
                                            network/src/netbase.cpp \

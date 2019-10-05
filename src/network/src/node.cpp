@@ -56,21 +56,17 @@ void Node::InactivityTimeoutCb(std::shared_ptr<Node> node)
     SingletonNodes::GetInstance().EraseNode(node);
 }
 
-bool Node::BevThreadSafeWrite(const std::vector<uint8_t> vec)
+void Node::PingTimeoutCb(std::shared_ptr<Node> node)
 {
-    return BevThreadSafeWrite(vec.data(), vec.size());
-}
-
-bool Node::BevThreadSafeWrite(const uint8_t *data, size_t size)
-{
-    if (!bev_)
-        return false;
+    if (SingletonNetInterrupt::GetInstance())
+        return;
     
-    LOCK(cs_write_bev_);
-    if (bufferevent_write(bev_, data, size))
-        return false;
+    if (node->disconnected() || !node->conn_established()) {
+        SingletonTimerMng::GetInstance().StopTimer(node->timers().ping_timer);
+        return;
+    }
     
-    return true;
+    
 }
 
 void Nodes::AddNode(std::shared_ptr<Node> node)
