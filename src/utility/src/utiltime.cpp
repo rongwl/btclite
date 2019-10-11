@@ -34,20 +34,3 @@ void Time::AddTimeData(const std::string& ip, int64_t offset_sample)
         BTCLOG(LOG_LEVEL_VERBOSE) << "Set new btc time offset:" << time_offset_;
     }    
 }
-
-/*std::string DateTimeStrFormat()
-{
-    struct timeval tv;
-    assert(0 == gettimeofday(&tv, NULL));
-    struct tm tm;
-    assert(NULL != gmtime_r(&tv.tv_sec, &tm));
-    std::stringstream ss;
-    ss << tm.tm_year+1900 << "-" 
-       << std::setw(2) << std::setfill('0') << tm.tm_mon+1 << "-"
-       << std::setw(2) << std::setfill('0') << tm.tm_mday << " "
-       << std::setw(2) << std::setfill('0') << tm.tm_hour << ":" 
-       << std::setw(2) << std::setfill('0') << tm.tm_min << ":"
-       << std::setw(2) << std::setfill('0') << tm.tm_sec << "."
-       << tv.tv_usec;
-    return ss.str();
-}*/

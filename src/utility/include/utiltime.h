@@ -8,7 +8,6 @@
 
 #include "util.h"
 
-//std::string DateTimeStrFormat();
 
 class Time {
 public:
