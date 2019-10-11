@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "protocol/version.h"
+#include "network_address.h"
 #include "stream.h"
 
 
@@ -12,12 +13,12 @@ TEST(VersionTest, Serialize)
     ByteSink<std::vector<uint8_t> > byte_sink(vec);
     ByteSource<std::vector<uint8_t> > byte_source(vec);
     MessageHeader header1(0x12345678, std::string(kMsgVersion), 1000, 0x12345678), header2;
-    NetAddr addr_recv = { 0x1234, kNodeNetwork, 
+    btclite::network::NetAddr addr_recv(0x1234, kNodeNetwork, 
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 0x1, 0x2, 0x3, 0x4},
-    8333 };
-    NetAddr addr_from = { 0x5678, kNodeNetwork, 
+    8333);
+    btclite::network::NetAddr addr_from(0x5678, kNodeNetwork, 
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 0x1, 0x2, 0x3, 0x5},
-    8333 };
+    8333);
     Version msg_version1(kProtocolVersion, kNodeNetwork, 0x1234, addr_recv,
                          addr_from, 0x5678, "/btclite:0.1.0/", 1000, true);
     Version msg_version2;
@@ -29,23 +30,23 @@ TEST(VersionTest, Serialize)
     header2.Deserialize(byte_source);
     msg_version2.Deserialize(byte_source);
     EXPECT_EQ(header1, header2);
-    EXPECT_EQ(msg_version1, msg_version2);    
+    EXPECT_EQ(msg_version1, msg_version2);
 }
 
 TEST(VersionTest, ConstructFromRaw)
 {
     std::vector<uint8_t> vec;
     ByteSink<std::vector<uint8_t> > byte_sink(vec);    
-    NetAddr addr_recv = { 0x1234, kNodeNetwork, 
+    btclite::network::NetAddr addr_recv(0x1234, kNodeNetwork, 
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 0x1, 0x2, 0x3, 0x4},
-    8333 };
-    NetAddr addr_from = { 0x5678, kNodeNetwork, 
+    8333);
+    btclite::network::NetAddr addr_from(0x5678, kNodeNetwork, 
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 0x1, 0x2, 0x3, 0x5},
-    8333 };
+    8333);
     Version msg_version1(kProtocolVersion, kNodeNetwork, 0x1234, addr_recv,
                          addr_from, 0x5678, "/btclite:0.1.0/", 1000, true);
     
     msg_version1.Serialize(byte_sink);
     Version msg_version2(vec.data(), msg_version1.SerializedSize());
-    EXPECT_EQ(msg_version1, msg_version2);
+    EXPECT_EQ(msg_version1, msg_version2);    
 }

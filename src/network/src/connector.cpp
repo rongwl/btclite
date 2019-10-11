@@ -1,6 +1,7 @@
 #include "connector.h"
 
 #include "bandb.h"
+#include "msg_process.h"
 #include "net.h"
 #include "netbase.h"
 #include "peers.h"
@@ -257,6 +258,8 @@ bool Connector::ConnectNode(const btclite::network::NetAddr& addr, bool manual)
     }
     
     BTCLOG(LOG_LEVEL_VERBOSE) << "Connected to " << addr.ToString() << ':' << addr.proto_addr().port();
+    
+    btclite::network::msgprocess::SendVerMsg(node);
     
     return true;
 }

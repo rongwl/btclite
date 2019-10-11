@@ -63,8 +63,13 @@ bool ParseMsg(std::shared_ptr<Node> src_node)
     return true;
 }
 
-bool PushVersion(std::shared_ptr<Node> dst_node)
+bool SendVerMsg(std::shared_ptr<Node> dst_node)
 {
+    ServiceFlags services = dst_node->services();
+    uint64_t nonce = dst_node->local_host_nonce();
+    int nNodeStartingHeight = dst_node->start_height();
+    
+    
     return true;
 }
 

@@ -91,8 +91,14 @@ bool Version::operator==(const Version& b) const
     return (version_ == b.version_) && 
            (services_ == b.services_) &&
            (timestamp_ == b.timestamp_) &&
-           (addr_recv_ == b.addr_recv_) &&
-           (addr_from_ == b.addr_from_) &&
+           (addr_recv_.proto_addr().timestamp() == b.addr_recv_.proto_addr().timestamp()) &&
+           (addr_recv_.proto_addr().services() == b.addr_recv_.proto_addr().services()) &&
+           !std::memcmp(addr_recv_.proto_addr().ip().begin(), b.addr_recv_.proto_addr().ip().begin(), kIpByteSize) &&
+           (addr_recv_.proto_addr().port() == b.addr_recv_.proto_addr().port()) &&
+           (addr_from_.proto_addr().timestamp() == b.addr_from_.proto_addr().timestamp()) &&
+           (addr_from_.proto_addr().services() == b.addr_from_.proto_addr().services()) &&
+           !std::memcmp(addr_from_.proto_addr().ip().begin(), b.addr_from_.proto_addr().ip().begin(), kIpByteSize) &&
+           (addr_from_.proto_addr().port() == b.addr_from_.proto_addr().port()) &&
            (nonce_ == b.nonce_) && 
            (user_agent_ == b.user_agent_) &&
            (start_height_ == b.start_height_) &&

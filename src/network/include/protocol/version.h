@@ -2,8 +2,8 @@
 #define BTCLITE_PROTOCOL_VERSION_H
 
 
-#include "address.h"
 #include "message.h"
+#include "network_address.h"
 #include "stream.h"
 
 
@@ -56,8 +56,8 @@ public:
           relay_(false), hash_() {}
     
     Version(uint32_t version, uint64_t services, uint64_t timestamp,
-                const NetAddr& address_receiver,
-                const NetAddr& address_from, uint64_t nonce,
+                const btclite::network::NetAddr& address_receiver,
+                const btclite::network::NetAddr& address_from, uint64_t nonce,
                 const std::string& user_agent, uint32_t start_height, bool relay)
         : version_(version), services_(services), timestamp_(timestamp),
           addr_recv_(address_receiver), addr_from_(address_from),
@@ -65,9 +65,9 @@ public:
           relay_(relay), hash_() {}
     
     Version(uint32_t version, uint64_t services, uint64_t timestamp,
-                NetAddr&& address_receiver, NetAddr&& address_from,
-                uint64_t nonce, std::string&& user_agent, uint32_t start_height,
-                bool relay)
+                btclite::network::NetAddr&& address_receiver, 
+                btclite::network::NetAddr&& address_from, uint64_t nonce,
+                std::string&& user_agent, uint32_t start_height, bool relay)
         : version_(version), services_(services), timestamp_(timestamp),
           addr_recv_(std::move(address_receiver)),
           addr_from_(std::move(address_from)),
@@ -134,28 +134,28 @@ public:
         timestamp_ = timestamp;
     }
     
-    const NetAddr& addr_recv() const
+    const btclite::network::NetAddr& addr_recv() const
     {
         return addr_recv_;
     }
-    void set_addr_recv(const NetAddr& addr)
+    void set_addr_recv(const btclite::network::NetAddr& addr)
     {
         addr_recv_ = addr;
     }
-    void set_addr_recv(NetAddr&& addr) noexcept
+    void set_addr_recv(btclite::network::NetAddr&& addr) noexcept
     {
         addr_recv_ = std::move(addr);
     }
 
-    const NetAddr& addr_from() const
+    const btclite::network::NetAddr& addr_from() const
     {
         return addr_from_;
     }
-    void set_addr_from(const NetAddr& addr)
+    void set_addr_from(const btclite::network::NetAddr& addr)
     {
         addr_from_ = addr;
     }
-    void set_addr_from(NetAddr&& addr) noexcept
+    void set_addr_from(btclite::network::NetAddr&& addr) noexcept
     {
         addr_from_ = std::move(addr);
     }
@@ -204,10 +204,10 @@ private:
     uint32_t version_;
     uint64_t services_;
     uint64_t timestamp_;
-    NetAddr addr_recv_;
+    btclite::network::NetAddr addr_recv_;
     
     // Fields below require version ≥ 106
-    NetAddr addr_from_;
+    btclite::network::NetAddr addr_from_;
     uint64_t nonce_;
     std::string user_agent_;
     uint32_t start_height_;

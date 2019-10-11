@@ -134,6 +134,11 @@ public:
         return services_;
     }
     
+    int start_height() const
+    {
+        return start_height_;
+    }
+    
     const struct bufferevent* const bev() const
     {
         return bev_;
@@ -147,6 +152,11 @@ public:
     const btclite::network::NetAddr& addr() const
     {
         return addr_;
+    }
+    
+    uint64_t local_host_nonce() const
+    {
+        return local_host_nonce_;
     }
     
     /*uint64_t keyed_net_group() const

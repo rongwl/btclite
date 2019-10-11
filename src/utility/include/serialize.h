@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <cstring>
+#include <google/protobuf/repeated_field.h>
 #include <map>
 
 #include "constants.h"
@@ -96,6 +97,13 @@ private:
         stream_.write(reinterpret_cast<const char*>(in.data()), in.size());
     }
     
+    // for integral
+    template <typename T>
+    std::enable_if_t<std::is_integral<T>::value> Serialize(const T& in) 
+    {
+        SerWriteData(in);
+    }
+    
     //for arithmetic std::array
     template <typename T, size_t N>
     std::enable_if_t<std::is_arithmetic<T>::value> Serialize(const std::array<T, N>& in)
@@ -129,12 +137,12 @@ private:
             it->Serialize(stream_);
     }
     
-    // for integral
+    // for integral RepeatedField
     template <typename T>
-    std::enable_if_t<std::is_integral<T>::value> Serialize(const T& in) 
+    std::enable_if_t<std::is_integral<T>::value> Serialize(const ::google::protobuf::RepeatedField<T>& in)
     {
-        SerWriteData(in);
-    }    
+        stream_.write(reinterpret_cast<const char*>(in.data()), in.size()*sizeof(T));
+    }
     
     // default to calling member function 
     template <typename T>
@@ -215,6 +223,13 @@ private:
     // for string
     void Deserialize(std::string *out);
     
+    // for integral type
+    template <typename T>
+    std::enable_if_t<std::is_integral<T>::value> Deserialize(T *out) 
+    {
+        SerReadData(out);
+    }
+    
     // for arithmetic std::array
     template <typename T, size_t N>
     std::enable_if_t<std::is_arithmetic<T>::value> Deserialize(std::array<T, N> *out)
@@ -234,11 +249,12 @@ private:
     template <typename T> 
     std::enable_if_t<std::is_class<T>::value> Deserialize(std::vector<T> *out); 
     
-    // for integral type
+    // for integral RepeatedField
     template <typename T>
-    std::enable_if_t<std::is_integral<T>::value> Deserialize(T *out) 
+    std::enable_if_t<std::is_integral<T>::value> Deserialize(::google::protobuf::RepeatedField<T> *out)
     {
-        SerReadData(out);
+        for (uint8_t *p = reinterpret_cast<uint8_t*>(out->begin()); p != reinterpret_cast<uint8_t*>(out->end()); p++)
+            Deserialize(p);
     }
     
     // default to calling member function

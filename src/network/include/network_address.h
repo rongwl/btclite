@@ -9,6 +9,7 @@
 #include "blob.h"
 #include "constants.h"
 #include "network_address.pb.h"
+#include "serialize.h"
 
 
 using IpAddr = Bytes<kIpByteSize>;
@@ -74,6 +75,11 @@ public:
     std::string ToString() const;
     bool ToSockAddr(struct sockaddr* out) const;
     bool FromSockAddr(const struct sockaddr *in);
+    size_t SerializedSize() const
+    {
+        return sizeof(proto_addr_.timestamp()) + sizeof(proto_addr_.services()) +
+               kIpByteSize + sizeof(proto_addr_.port());
+    }
     
     //-------------------------------------------------------------------------
     uint8_t GetByte(int n) const;
@@ -85,6 +91,12 @@ public:
     void SetIpv6(const uint8_t *src);
     void GetGroup(std::vector<uint8_t> *out) const;
     bool SetInternal(const std::string& name);
+    
+    //-------------------------------------------------------------------------
+    template <typename Stream>
+    void Serialize(Stream& out) const;
+    template <typename Stream>
+    void Deserialize(Stream& in);
     
     //-------------------------------------------------------------------------
     bool operator==(const NetAddr& b) const
@@ -117,6 +129,36 @@ private:
 #define ASSERT_VALID_BYTE(N) ASSERT_SIZE(); \
                              ASSERT_RANGE(N)
 };
+
+template <typename Stream>
+void NetAddr::Serialize(Stream& out) const
+{
+    Serializer<Stream> serializer(out);
+    uint16_t port = static_cast<uint16_t>(proto_addr_.port());
+    
+    serializer.SerialWrite(proto_addr_.timestamp());
+    serializer.SerialWrite(proto_addr_.services());
+    serializer.SerialWrite(proto_addr_.ip());
+    serializer.SerialWrite(port);
+}
+
+template <typename Stream>
+void NetAddr::Deserialize(Stream& in)
+{
+    Deserializer<Stream> deserializer(in);
+    uint32_t timestamp;
+    uint64_t services;
+    uint16_t port;
+    
+    deserializer.SerialRead(&timestamp);
+    deserializer.SerialRead(&services);
+    deserializer.SerialRead(proto_addr_.mutable_ip());
+    deserializer.SerialRead(&port);
+    
+    proto_addr_.set_timestamp(timestamp);
+    proto_addr_.set_services(services);
+    proto_addr_.set_port(port);
+}
 
 } // namespace network
 } // namespace btclite

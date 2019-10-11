@@ -55,7 +55,7 @@ bool SendMsg(const Message& msg, std::shared_ptr<Node> dst_node)
     return true;
 }
 
-bool PushVersion(std::shared_ptr<Node> dst_node);
+bool SendVerMsg(std::shared_ptr<Node> dst_node);
 
 } // namespace msgprocess
 } // namespace network
