@@ -77,6 +77,7 @@ TEST(AcceptorTest, MethordAcceptConnCb)
     acceptor.AcceptConnCb(listener, fd, (struct sockaddr*)&client_addr, sizeof(client_addr), nullptr);
     EXPECT_EQ(SingletonNodes::GetInstance().CountInbound(), count);
     
+    SingletonNodes::GetInstance().Clear();
     evconnlistener_free(listener);
     event_base_free(base);
 }

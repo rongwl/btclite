@@ -31,6 +31,12 @@ TEST(VersionTest, Serialize)
     msg_version2.Deserialize(byte_source);
     EXPECT_EQ(header1, header2);
     EXPECT_EQ(msg_version1, msg_version2);
+    
+    msg_version1.set_version(kBip31Version);
+    msg_version2.Clear();
+    msg_version1.Serialize(byte_sink);
+    msg_version2.Deserialize(byte_source);
+    EXPECT_FALSE(msg_version2.relay());
 }
 
 TEST(VersionTest, ConstructFromRaw)

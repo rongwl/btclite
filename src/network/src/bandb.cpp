@@ -12,9 +12,9 @@ bool BanDb::Add(const SubNet& sub_net, const BanReason &ban_reason, bool dump_li
 {
     proto_banmap::BanEntry ban_entry;
     
-    ban_entry.set_create_time(Time::GetTimeSeconds());
+    ban_entry.set_create_time(btclite::utility::util_time::GetTimeSeconds());
     ban_entry.set_ban_reason(ban_reason);
-    ban_entry.set_ban_until(Time::GetTimeSeconds() + kDefaultMisbehavingBantime);
+    ban_entry.set_ban_until(btclite::utility::util_time::GetTimeSeconds() + kDefaultMisbehavingBantime);
     
     if (!Add_(sub_net, ban_entry))
         return false;
@@ -68,7 +68,7 @@ bool BanDb::Add_(const SubNet& sub_net, const proto_banmap::BanEntry& ban_entry)
 
 void BanDb::SweepBanned()
 {
-    int64_t now = Time::GetTimeSeconds();
+    int64_t now = btclite::utility::util_time::GetTimeSeconds();
     
     LOCK(cs_ban_map_);
     for (auto it = ban_map_.map().begin(); it != ban_map_.map().end(); ++it) {
@@ -120,7 +120,7 @@ bool BanDb::IsBanned(btclite::network::NetAddr addr)
     LOCK(cs_ban_map_);
     
     for (auto it = ban_map_.map().begin(); it != ban_map_.map().end(); ++it) {
-        if (SubNet(addr).ToString() == it->first && Time::GetTimeSeconds() < it->second.ban_until()) {
+        if (SubNet(addr).ToString() == it->first && btclite::utility::util_time::GetTimeSeconds() < it->second.ban_until()) {
             return true;
         }
     }

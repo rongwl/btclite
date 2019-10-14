@@ -141,6 +141,7 @@ void MessageHeader::Deserialize(Stream& in)
 class MessageData {
 public:
     virtual bool RecvHandler(std::shared_ptr<Node> src_node) const = 0;
+    virtual bool IsValid() const = 0;
 };
 
 // mixin GetHash()for MessageData classes

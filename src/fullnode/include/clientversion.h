@@ -5,8 +5,8 @@
 #include "config/btclite-config.h"
 #else
 
-#define PACKAGE_NAME "Btclite"
-#define PACKAGE_STRING "Btclite"
+#define PACKAGE_NAME "btclite"
+#define PACKAGE_STRING "btclite"
 
 #endif // HAVE_CONFIG_H
     

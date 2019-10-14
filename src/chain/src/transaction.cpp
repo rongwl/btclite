@@ -75,21 +75,21 @@ uint64_t Transaction::OutputsAmount() const
     return amount;
 }
 
-size_t Transaction::Size(bool serialized = false) const
+size_t Transaction::SerializedSize() const
 {
-    const auto ins = [serialized](size_t size, const TxIn& input)
+    const auto ins = [](size_t size, const TxIn& input)
     {
-        return size + input.Size(serialized);
+        return size + input.SerializedSize();
     };
-    const auto outs = [serialized](size_t size, const TxOut& output)
+    const auto outs = [](size_t size, const TxOut& output)
     {
-        return size + output.Size(serialized);
+        return size + output.SerializedSize();
     };
     
     return sizeof(version_) + sizeof(lock_time_)
-           + btclite::util::serialize::VarIntSize(inputs_.size())
+           + btclite::utility::serialize::VarIntSize(inputs_.size())
            + std::accumulate(inputs_.begin(), inputs_.end(), size_t{0}, ins)
-           + btclite::util::serialize::VarIntSize(outputs_.size())
+           + btclite::utility::serialize::VarIntSize(outputs_.size())
            + std::accumulate(outputs_.begin(), outputs_.end(), size_t{0}, outs);
 }
 

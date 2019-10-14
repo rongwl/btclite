@@ -40,7 +40,7 @@ bool btclite::Peers::Add(const btclite::network::NetAddr &addr, const btclite::n
             return false;
         
         // periodically update nTime
-        bool currently_online = (SingletonTime::GetInstance().GetAdjustedTime() - addr.proto_addr().timestamp() < 24 * 60 * 60);
+        bool currently_online = (btclite::utility::util_time::GetAdjustedTime() - addr.proto_addr().timestamp() < 24 * 60 * 60);
         uint32_t update_interval = (currently_online ? 60 * 60 : 24 * 60 * 60);
         if (addr.proto_addr().timestamp() &&
             (!exist_peer.addr().timestamp() || exist_peer.addr().timestamp() < addr.proto_addr().timestamp() - update_interval - time_penalty))

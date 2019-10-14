@@ -25,15 +25,12 @@ bool Version::RecvHandler(std::shared_ptr<Node> src_node) const
 
 bool Version::IsValid() const
 {
-    return (version_ != 0) ||
-           (services_ != 0) ||
-           (timestamp_ != 0) ||
-           (addr_recv_.IsValid()) ||
-           (addr_from_.IsValid()) ||
-           (nonce_ != 0) ||
-           (user_agent_.empty()) ||
-           (start_height_ != 0) ||
-           (relay_ != false);
+    return (version_ >= kMinPeerProtoVersion &&
+            services_ != 0 &&
+            timestamp_ != 0 &&
+            addr_recv_.IsValid() &&
+            nonce_ != 0 &&
+            start_height_ != 0); 
 }
 
 void Version::Clear()
@@ -68,7 +65,7 @@ size_t Version::SerializedSize() const
 {
     return sizeof(version_) + sizeof(services_) + sizeof(timestamp_) +
            addr_recv_.SerializedSize() + addr_from_.SerializedSize() +
-           sizeof(nonce_) + btclite::util::serialize::VarIntSize(user_agent_.size()) +
+           sizeof(nonce_) + btclite::utility::serialize::VarIntSize(user_agent_.size()) +
            user_agent_.size() + sizeof(start_height_) + sizeof(uint8_t);
 }
 

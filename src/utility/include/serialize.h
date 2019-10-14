@@ -13,7 +13,7 @@
 
 
 namespace btclite {
-namespace util {
+namespace utility {
 namespace serialize {
 
 size_t VarIntSize(size_t vec_size);
@@ -59,7 +59,7 @@ inline float BinaryToFloat(uint32_t i)
 }
 
 } // namespace serialize
-} // namespace util
+} // namespace utility
 } // namespace btclite
 
 template <typename Stream>
@@ -81,13 +81,13 @@ private:
     // for double
     void Serialize(const double& in) 
     {
-        SerWriteData(btclite::util::serialize::DoubleToBinary(in));
+        SerWriteData(btclite::utility::serialize::DoubleToBinary(in));
     }
     
     // for float
     void Serialize(const float& in)
     {
-        SerWriteData(btclite::util::serialize::FloatToBinary(in));
+        SerWriteData(btclite::utility::serialize::FloatToBinary(in));
     }
         
     //for string
@@ -209,7 +209,7 @@ private:
     {
         uint64_t i;
         SerReadData(&i);
-        *out = btclite::util::serialize::BinaryToDouble(i);        
+        *out = btclite::utility::serialize::BinaryToDouble(i);        
     }
     
     // for float
@@ -217,7 +217,7 @@ private:
     {
         uint32_t i;
         SerReadData(&i);
-        *out = btclite::util::serialize::BinaryToFloat(i);
+        *out = btclite::utility::serialize::BinaryToFloat(i);
     }
     
     // for string
@@ -326,7 +326,7 @@ std::enable_if_t<std::is_class<T>::value> Deserializer<Stream>::Deserialize(std:
     out->resize(count);
     for (auto it = out->begin(); it != out->end(); it++) {
         it->Deserialize(stream_);
-        size += it->Size(true);
+        size += it->SerializedSize();
         if (size > kMaxBlockSize)
             throw std::ios_base::failure("vector size larger than max block size");
     }

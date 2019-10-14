@@ -49,7 +49,7 @@ TEST(PeersTest, AddPeer)
     bool is_new, is_tried;
     proto_peers::Peer peer;
     std::vector<uint64_t> rand_order_keys;
-    uint64_t now = SingletonTime::GetInstance().GetAdjustedTime();
+    uint64_t now = btclite::utility::util_time::GetAdjustedTime();
     
     addr.SetIpv4(inet_addr("1.2.3.4"));
     addr.mutable_proto_addr()->set_timestamp(now-4000);
@@ -239,7 +239,7 @@ TEST(PeersTest, GetAddresses)
 {
     btclite::Peers peers;
     btclite::network::NetAddr addr, source;
-    int64_t now = SingletonTime::GetInstance().GetAdjustedTime();
+    int64_t now = btclite::utility::util_time::GetAdjustedTime();
     std::vector<btclite::network::NetAddr> addrs, addrs2;
     
     ASSERT_TRUE(peers.GetAddrs(&addrs));
@@ -329,7 +329,7 @@ TEST(PeersDbTest, DumpAndLoadPeers)
 {
     btclite::Peers& peers = SingletonPeers::GetInstance();
     btclite::network::NetAddr addr, source;
-    int64_t now = SingletonTime::GetInstance().GetAdjustedTime();
+    int64_t now = btclite::utility::util_time::GetAdjustedTime();
     
     source.SetIpv4(inet_addr("250.1.2.1"));
     addr.SetIpv4(inet_addr("250.250.2.1"));

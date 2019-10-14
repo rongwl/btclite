@@ -1,6 +1,7 @@
 #include "libevent.h"
 
 #include "msg_process.h"
+#include "protocol/version.h"
 
 
 struct event_base *LibEvent::EventBaseNew()
@@ -81,7 +82,11 @@ void LibEvent::EvconnlistenerFree(struct evconnlistener *lev)
         evconnlistener_free(lev);
 }
 
-void LibEvent::ConnReadCb(struct bufferevent *bev, void *ctx)
+namespace btclite {
+namespace network {
+namespace libevent {
+
+void ConnReadCb(struct bufferevent *bev, void *ctx)
 {
     // increase reference count
     std::shared_ptr<Node> pnode(SingletonNodes::GetInstance().GetNode(bev));
@@ -97,7 +102,8 @@ void LibEvent::ConnReadCb(struct bufferevent *bev, void *ctx)
         timer_mng.StopTimer(pnode->timers().no_msg_timer);
         pnode->mutable_timers()->no_msg_timer.reset();
         
-        uint32_t timeout = (pnode->version() > kBip0031Version) ? kNoReceivingTimeoutBip31 : kNoReceivingTimeout;
+        uint32_t timeout = (pnode->version() >
+                            btclite::network::protocol::kBip31Version) ? kNoReceivingTimeoutBip31 : kNoReceivingTimeout;
         pnode->mutable_timers()->no_receiving_timer = timer_mng.StartTimer(timeout*1000, 0, Node::InactivityTimeoutCb, pnode);
     }
     
@@ -105,7 +111,7 @@ void LibEvent::ConnReadCb(struct bufferevent *bev, void *ctx)
     SingletonThreadPool::GetInstance().AddTask(std::function<bool()>(task));
 }
 
-void LibEvent::ConnEventCb(struct bufferevent *bev, short events, void *ctx)
+void ConnEventCb(struct bufferevent *bev, short events, void *ctx)
 {
     // increase reference count
     std::shared_ptr<Node> pnode(SingletonNodes::GetInstance().GetNode(bev));
@@ -134,3 +140,7 @@ void LibEvent::ConnEventCb(struct bufferevent *bev, short events, void *ctx)
         }
     }
 }
+
+} // namespace libevent
+} // namespace network
+} // namespace btclite

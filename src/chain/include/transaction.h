@@ -198,9 +198,9 @@ public:
     
     //-------------------------------------------------------------------------
     std::string ToString() const;
-    size_t Size(bool serialized = false) const
+    size_t SerializedSize() const
     {
-        return prevout_.Size() + script_sig_.Size(serialized) + sizeof(sequence_no_);
+        return prevout_.Size() + script_sig_.SerializedSize() + sizeof(sequence_no_);
     }
     bool HasWitness() const
     {
@@ -302,9 +302,9 @@ public:
            << "scriptPubKey=" << HexEncode(script_pub_key_.begin(), script_pub_key_.end()) << ")";
         return ss.str();
     }
-    size_t Size(bool serialized = false) const
+    size_t SerializedSize() const
     {
-        return script_pub_key_.Size(serialized) + sizeof(value_);
+        return script_pub_key_.SerializedSize() + sizeof(value_);
     }
     
     //-------------------------------------------------------------------------
@@ -437,7 +437,7 @@ public:
     {
         return (inputs_.size() == 1 && inputs_[0].prevout().IsNull());
     }
-    size_t Size(bool) const;
+    size_t SerializedSize() const;
     uint64_t OutputsAmount() const;
     std::string ToString() const;
     

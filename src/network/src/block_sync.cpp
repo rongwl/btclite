@@ -124,7 +124,7 @@ uint32_t Orphans::LimitOrphanTxSize(uint32_t max_orphans)
 
     uint32_t evicted_count = 0;
     static int64_t next_sweep;
-    int64_t now = Time::GetTimeSeconds();
+    int64_t now = btclite::utility::util_time::GetTimeSeconds();
     if (next_sweep <= now) {
         // Sweep out expired orphan pool entries:
         int erased_count = 0;

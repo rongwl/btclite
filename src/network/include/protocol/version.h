@@ -13,35 +13,38 @@ namespace protocol {
 
 constexpr uint32_t kProtocolVersion = 70015;
 
-//! initial proto version, to be increased after version/verack negotiation
+// initial proto version, to be increased after version/verack negotiation
 constexpr uint32_t kInitProtoVersion = 209;
 
-//! In this version, 'getheaders' was introduced.
-constexpr uint32_t kGetheadersVersion = 31800;
-
-//! disconnect from peers older than this proto version
-constexpr uint32_t kMinPeerProtoVersion = kGetheadersVersion;
-
-//! timestamp field added to NetAddr, starting with this version;
-//! if possible, avoid requesting addresses nodes older than this
+// timestamp field added to NetAddr, starting with this version;
+// if possible, avoid requesting addresses nodes older than this
 constexpr uint32_t kAddrTimeVersion = 31402;
 
-//! BIP 0031, pong message, is enabled for all versions AFTER this one
+// In this version, 'getheaders' was introduced.
+constexpr uint32_t kGetheadersVersion = 31800;
+
+// disconnect from peers older than this proto version
+constexpr uint32_t kMinPeerProtoVersion = kGetheadersVersion;
+
+// BIP 0031, pong message, is enabled for all versions AFTER this one
 constexpr uint32_t kBip31Version = 60000;
 
-//! "filter*" commands are disabled without kNodeBloom after and including this version
+// BIP 0037, whether the remote peer should announce relayed transactions or not
+constexpr uint32_t kRelayedTxsVersion = 70001; 
+
+// "filter*" commands are disabled without kNodeBloom after and including this version
 constexpr uint32_t kNoBloomVersion = 70011;
 
-//! "sendheaders" command and announcing blocks with headers starts with this version
+// "sendheaders" command and announcing blocks with headers starts with this version
 constexpr uint32_t kSendheadersVersion = 70012;
 
-//! "feefilter" tells peers to filter invs to you by fee starts with this version
+// "feefilter" tells peers to filter invs to you by fee starts with this version
 constexpr uint32_t kFeefilterVersion = 70013;
 
-//! short-id-based block download starts with this version
+// short-id-based block download starts with this version
 constexpr uint32_t kShortIdsBlocksVersion = 70014;
 
-//! not banning for invalid compact blocks starts with this version
+// not banning for invalid compact blocks starts with this version
 constexpr uint32_t kInvalidCbNoBanVersion = 70015;
 
 
@@ -53,7 +56,7 @@ public:
     Version()
         : version_(0), services_(0), timestamp_(0), addr_recv_(),
           addr_from_(), nonce_(0), user_agent_(), start_height_(0),
-          relay_(false), hash_() {}
+          relay_(false) {}
     
     Version(uint32_t version, uint64_t services, uint64_t timestamp,
                 const btclite::network::NetAddr& address_receiver,
@@ -62,7 +65,7 @@ public:
         : version_(version), services_(services), timestamp_(timestamp),
           addr_recv_(address_receiver), addr_from_(address_from),
           nonce_(nonce), user_agent_(user_agent), start_height_(start_height),
-          relay_(relay), hash_() {}
+          relay_(relay) {}
     
     Version(uint32_t version, uint64_t services, uint64_t timestamp,
                 btclite::network::NetAddr&& address_receiver, 
@@ -72,7 +75,7 @@ public:
           addr_recv_(std::move(address_receiver)),
           addr_from_(std::move(address_from)),
           nonce_(nonce), user_agent_(std::move(user_agent)),
-          start_height_(start_height), relay_(relay), hash_() {}
+          start_height_(start_height), relay_(relay) {}
     
     Version(const Version& version)
         : Version(version.version_, version.services_, version.timestamp_,
@@ -214,8 +217,6 @@ private:
     
     // Fields below require version ≥ 70001
     bool relay_;
-    
-    Hash256 hash_;
 };
 
 template <typename Stream>
@@ -229,9 +230,13 @@ void Version::Serialize(Stream& out) const
     serializer.SerialWrite(addr_recv_);
     serializer.SerialWrite(addr_from_);
     serializer.SerialWrite(nonce_);
-    serializer.SerialWrite(user_agent_);
+    if (user_agent_.size() > kMaxSubVersionSize)
+        serializer.SerialWrite(user_agent_.substr(0, kMaxSubVersionSize));
+    else
+        serializer.SerialWrite(user_agent_);
     serializer.SerialWrite(start_height_);
-    serializer.SerialWrite(relay_);
+    if (version_ >= kRelayedTxsVersion)
+        serializer.SerialWrite(relay_);
 }
 
 template <typename Stream>
@@ -246,8 +251,11 @@ void Version::Deserialize(Stream& in)
     deserializer.SerialRead(&addr_from_);
     deserializer.SerialRead(&nonce_);
     deserializer.SerialRead(&user_agent_);
+    if (user_agent_.size() > kMaxSubVersionSize)
+        user_agent_.resize(kMaxSubVersionSize);
     deserializer.SerialRead(&start_height_);
-    deserializer.SerialRead(&relay_);
+    if (version_ >= kRelayedTxsVersion)
+        deserializer.SerialRead(&relay_);
 }
 
 } // namespace protocol

@@ -9,6 +9,8 @@
 #include <arpa/inet.h>
 
 
+using namespace btclite::network::libevent;
+
 bool Connector::InitEvent()
 {
     evthread_use_pthreads();
@@ -58,7 +60,7 @@ struct bufferevent *Connector::NewSocketEvent()
         return nullptr;
     }
     
-    bufferevent_setcb(bev, LibEvent::ConnReadCb, NULL, LibEvent::ConnEventCb, NULL);
+    bufferevent_setcb(bev, ConnReadCb, NULL, ConnEventCb, NULL);
     bufferevent_enable(bev, EV_READ);
     
     return bev;
@@ -94,7 +96,7 @@ bool Connector::OutboundTimeOutCb()
     if (SingletonNodes::GetInstance().CountOutbound() >= kMaxOutboundConnections)
         return false;
     
-    now = SingletonTime::GetInstance().GetAdjustedTime();
+    now = btclite::utility::util_time::GetAdjustedTime();
     tries = 0;
     while (tries <= 100) {
         if (SingletonNetInterrupt::GetInstance())
@@ -185,7 +187,7 @@ bool Connector::DnsLookup(const std::vector<Seed>& seeds)
             addr.mutable_proto_addr()->set_port(btclite::network::SingletonParams::GetInstance().default_port());
             addr.mutable_proto_addr()->set_services(desirable_service_flags);
             // use a random age between 3 and 7 days old
-            int64_t time = Time::GetTimeSeconds() - 3*24*60*60 - Random::GetUint64(4*24*60*60);
+            int64_t time = btclite::utility::util_time::GetTimeSeconds() - 3*24*60*60 - Random::GetUint64(4*24*60*60);
             addr.mutable_proto_addr()->set_timestamp(time);
             found++;
         }

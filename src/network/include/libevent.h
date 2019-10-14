@@ -58,10 +58,17 @@ public:
     struct event_base *EvconnlistenerGetBase(struct evconnlistener *lev);
     Socket::Fd EvconnlistenerGetFd(struct evconnlistener *lev);
     void EvconnlistenerFree(struct evconnlistener *lev);
-    
-    //-------------------------------------------------------------------------
-    static void ConnReadCb(struct bufferevent *bev, void *ctx);
-    static void ConnEventCb(struct bufferevent *bev, short events, void *ctx);
 };
+
+namespace btclite {
+namespace network {
+namespace libevent {
+
+void ConnReadCb(struct bufferevent *bev, void *ctx);
+void ConnEventCb(struct bufferevent *bev, short events, void *ctx);
+
+} // namespace libevent
+} // namespace network
+} // namespace btclite
 
 #endif // BTCLITE_LIBEVENT_H

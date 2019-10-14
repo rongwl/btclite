@@ -3,7 +3,7 @@
 
 void TimerCfg::Reset(uint32_t timeout, uint32_t interval)
 {
-   int64_t now = Time::GetTimeMillis();
+   int64_t now = btclite::utility::util_time::GetTimeMillis();
    if (timeout == 0) {
         expire_ms_ = now + timeout_;
         if (interval != 0)
@@ -19,7 +19,7 @@ void TimerCfg::Reset(uint32_t timeout, uint32_t interval)
 void TimerCfg::Resume()
 {
     if (interval_ > 0)
-        expire_ms_ = Time::GetTimeMillis() + interval_;
+        expire_ms_ = btclite::utility::util_time::GetTimeMillis() + interval_;
     set_suspended(false);
 }
 
@@ -35,7 +35,7 @@ void TimerMng::StopTimer(TimerPtr timer)
 void TimerMng::CheckTimers()
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    uint64_t now = Time::GetTimeMillis();
+    uint64_t now = btclite::utility::util_time::GetTimeMillis();
     for (auto it = timers_.begin(); it != timers_.end(); ++it) {
         if ((*it)->suspended() == false && now >= (*it)->expire_ms()) {
             (*it)->set_expire_ms(std::numeric_limits<uint64_t>::max());
@@ -52,7 +52,7 @@ void TimerMng::InvokeTimerCb(TimerPtr timer)
     
     timer->cb();
     if (timer->interval() > 0) {
-        timer->set_expire_ms(Time::GetTimeMillis() + timer->interval());
+        timer->set_expire_ms(btclite::utility::util_time::GetTimeMillis() + timer->interval());
     }
     else {
         std::lock_guard<std::mutex> lock(mutex_);

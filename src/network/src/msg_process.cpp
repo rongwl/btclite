@@ -27,25 +27,27 @@ MessageData *MsgDataFactory(const MessageHeader& header, const uint8_t *raw)
 bool ParseMsg(std::shared_ptr<Node> src_node)
 {
     struct evbuffer *buf;
-    uint8_t *raw;
+    uint8_t *raw = nullptr;
     
     if (!src_node->bev())
         return false;
     
     if (nullptr == (buf = bufferevent_get_input(src_node->mutable_bev())))
         return false;
-    
+
     if (src_node->disconnected())
         return false;
     
-    raw = evbuffer_pullup(buf, MessageHeader::kSize);
+    if (nullptr == (raw = evbuffer_pullup(buf, MessageHeader::kSize)))
+        return false;
+    
     while (raw) {
         MessageHeader header(raw);
-        
         if (!header.IsValid()) {
             BTCLOG(LOG_LEVEL_ERROR) << "Received invalid message header from peer " << src_node->id();
             return false;
         }
+        evbuffer_drain(buf, MessageHeader::kSize);
         
         raw = evbuffer_pullup(buf, header.payload_length());
         MessageData *message = MsgDataFactory(header, raw);
@@ -53,23 +55,42 @@ bool ParseMsg(std::shared_ptr<Node> src_node)
             BTCLOG(LOG_LEVEL_ERROR) << "Prasing message data from peer " << src_node->id() << " failed.";
             return false;
         }
+        if (!message->IsValid()) {
+            BTCLOG(LOG_LEVEL_ERROR) << "Received invalid message data from peer " << src_node->id();
+            return false;
+        }
+        evbuffer_drain(buf, header.payload_length());
         
-        message->RecvHandler(src_node);
+        if (!message->RecvHandler(src_node)) {
+            delete message;
+            return false;
+        }
         delete message;
         
         raw = evbuffer_pullup(buf, MessageHeader::kSize);
     }
-    
+
     return true;
 }
 
 bool SendVerMsg(std::shared_ptr<Node> dst_node)
 {
-    uint64_t nonce = dst_node->local_host_nonce();
-    int nNodeStartingHeight = dst_node->start_height();
-    btclite::network::NetAddr addr_recv(dst_node->addr()), addr_from();
+    ServiceFlags services = dst_node->services();
+    uint32_t start_height = dst_node->start_height();
+    btclite::network::NetAddr addr_recv(dst_node->addr());
+    btclite::network::NetAddr addr_from;
     
-    addr_from.mutable_proto_addr()->set_services(dst_node->services());
+    addr_from.mutable_proto_addr()->set_services(services);
+    Version ver_msg(kProtocolVersion, services, btclite::utility::util_time::GetTimeSeconds(),
+                    std::move(addr_recv), std::move(addr_from), dst_node->local_host_nonce(),
+                    BTCLITE_USER_AGENT, start_height, true);
+
+    if (!SendMsg(ver_msg, dst_node))
+        return false;
+
+    BTCLOG(LOG_LEVEL_INFO) << "Send version message: version " << kProtocolVersion 
+                           << ", start_height=" << start_height << ", addr_recv=" << addr_recv.ToString() 
+                           << ", peer=" << dst_node->id();
     
     return true;
 }

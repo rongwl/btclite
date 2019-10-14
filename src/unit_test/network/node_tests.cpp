@@ -139,4 +139,6 @@ TEST(NodeTest, destructor)
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
     EXPECT_EQ(block_sync.GetSyncState(id), nullptr);
+    
+    nodes.Clear();
 }

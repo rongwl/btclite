@@ -2,59 +2,53 @@
 #define BTCLITE_UTILTIME_H
 
 
-#include <cassert>
-#include <iomanip>
-#include <sys/time.h>
-
 #include "util.h"
 
 
-class Time {
+class TimeOffset {
 public:
-    static int64_t GetTimeSeconds()
-    {
-        time_t now = time(nullptr);
-        assert(now > 0);
-        return now;
-    }
-    
-    static int64_t GetTimeMillis()
-    {
-        struct timeval tv;
-        assert(0 == gettimeofday(&tv, NULL));
-        return tv.tv_sec*1000 + tv.tv_usec/1000;
-    }
-    
-    static int64_t GetTimeMicros()
-    {
-        struct timeval tv;
-        assert(0 == gettimeofday(&tv, NULL));
-        return tv.tv_sec*1000000+tv.tv_usec;
-    }
-    
-    int64_t GetAdjustedTime()
+    int64_t time_offset() const
     {
         LOCK(cs_time_offset_);
-        return GetTimeSeconds() + time_offset_;
+        return time_offset_;
     }
     
-    void AddTimeData(const std::string& ip, int64_t offset_sample);
-    
+    void set_time_offset(int64_t offset)
+    {
+        LOCK(cs_time_offset_);
+        time_offset_ = offset;
+    }
+
 private:
-    CriticalSection cs_time_offset_;
+    mutable CriticalSection cs_time_offset_;
     int64_t time_offset_;
 };
 
-class SingletonTime : Uncopyable {
+class SingletonTimeOffset : Uncopyable {
 public:
-    static Time& GetInstance()
+    static TimeOffset& GetInstance() 
     {
-        static Time time;
-        return time;
+        static TimeOffset time_offset;
+        return time_offset;
     }
     
 private:
-    SingletonTime() {}
+    SingletonTimeOffset() {}
 };
+
+namespace btclite {
+namespace utility {
+namespace util_time {
+
+int64_t GetTimeSeconds();
+int64_t GetTimeMillis();
+int64_t GetTimeMicros();
+int64_t GetAdjustedTime();
+void AddTimeData(const std::string& ip, int64_t offset_sample);
+
+} // namespace time
+} // namespace util
+} // namespace btclite
+
 
 #endif // BTCLITE_UTILTIME_H

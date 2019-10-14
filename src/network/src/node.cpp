@@ -9,7 +9,7 @@
 
 Node::Node(const struct bufferevent *bev, const btclite::network::NetAddr& addr,
            bool is_inbound, bool manual, std::string host_name)
-    : time_connected_(Time::GetTimeSeconds()),
+    : time_connected_(btclite::utility::util_time::GetTimeSeconds()),
       id_(SingletonNodes::GetInstance().GetNewNodeId()),
       version_(0),
       services_(SingletonLocalNetCfg::GetInstance().local_services()),

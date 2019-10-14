@@ -30,7 +30,7 @@ public:
     bool Add(const std::vector<btclite::network::NetAddr> &vAddr, const btclite::network::NetAddr& source, int64_t time_penalty = 0);
     
     // Move address to the tried table.
-    bool MakeTried(const btclite::network::NetAddr& addr, int64_t time = SingletonTime::GetInstance().GetAdjustedTime());
+    bool MakeTried(const btclite::network::NetAddr& addr, int64_t time = btclite::utility::util_time::GetAdjustedTime());
     
     // Choose an address to connect to.
     bool Select(proto_peers::Peer *out, bool newOnly = false);
@@ -41,10 +41,10 @@ public:
     bool FindSameGroup(uint64_t group_key, proto_peers::Peer *out, bool *is_tried, uint64_t *key = nullptr);
     
     // Mark an entry as connection attempted to.
-    bool Attempt(const btclite::network::NetAddr &addr, int64_t time = SingletonTime::GetInstance().GetAdjustedTime());
+    bool Attempt(const btclite::network::NetAddr &addr, int64_t time = btclite::utility::util_time::GetAdjustedTime());
     
     //! Update time of the address.
-    bool UpdateTime(const btclite::network::NetAddr &addr, int64_t time = SingletonTime::GetInstance().GetAdjustedTime());
+    bool UpdateTime(const btclite::network::NetAddr &addr, int64_t time = btclite::utility::util_time::GetAdjustedTime());
     
     // Return a bunch of addresses, selected at random.
     bool GetAddrs(std::vector<btclite::network::NetAddr> *out);
@@ -52,7 +52,7 @@ public:
     uint64_t MakeMapKey(const btclite::network::NetAddr& addr, bool by_group = false);
     
     static bool IsTerrible(const proto_peers::Peer& peer, 
-                    int64_t now = SingletonTime::GetInstance().GetAdjustedTime());
+                    int64_t now = btclite::utility::util_time::GetAdjustedTime());
     
     //-------------------------------------------------------------------------
     bool SerializeToOstream(std::ostream * output) const

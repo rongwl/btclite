@@ -28,6 +28,11 @@ public:
     //-------------------------------------------------------------------------
     bool RecvHandler(std::shared_ptr<Node> src_node) const;
     
+    bool IsValid() const
+    {
+        return (nonce_ != 0);
+    }
+    
     void Clear()
     {
         nonce_ = 0;

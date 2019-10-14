@@ -266,11 +266,10 @@ public:
     }
     
     //-------------------------------------------------------------------------
-    size_t Size(bool serialized = false) const
+    size_t SerializedSize() const
     {
         size_t result = data_.size();
-        if (serialized)
-            result += btclite::util::serialize::VarIntSize(result);
+        result += btclite::utility::serialize::VarIntSize(result);
         return result;
     }
     

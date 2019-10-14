@@ -6,10 +6,16 @@
 #include <cstddef>
 #include <cstdint>
 
+#include "btclite-config.h"
+
+
+#define BTCLITE_USER_AGENT "/" PACKAGE_NAME ":" PACKAGE_VERSION "/"
 
 constexpr size_t kMaxVardataSize = 0x02000000;
 constexpr size_t kMaxBlockSize = 1000000;
 constexpr size_t kMaxMessageSize = 0x02000000;
+// Maximum length of strSubVer in `version` message
+constexpr size_t kMaxSubVersionSize = 256;
 
 constexpr uint8_t kVarint16bits = 0xfd;
 constexpr uint8_t kVarint32bits = 0xfe;
@@ -53,9 +59,6 @@ constexpr uint32_t kNoConnectionTimeout = 60;
 
 // Time after which to disconnect, after waiting for a ping response (or inactivity).
 constexpr int kConnTimeoutInterval = 20 * 60;
-
-//! BIP 0031, pong message, is enabled for all versions AFTER this one
-constexpr int kBip0031Version = 60000;
 
 constexpr uint32_t kMaxTimedataSamples = 200;
 

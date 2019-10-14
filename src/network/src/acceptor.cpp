@@ -1,8 +1,12 @@
 #include "acceptor.h"
+
 #include "bandb.h"
 #include "block_sync.h"
+#include "protocol/version.h"
 #include "timer.h"
 
+
+using namespace btclite::network::libevent;
 
 Acceptor::Acceptor()
     : base_(nullptr), listener_(nullptr), sock_addr_()
@@ -101,7 +105,7 @@ void Acceptor::AcceptConnCb(struct evconnlistener *listener, evutil_socket_t fd,
         return;
     }
     
-    bufferevent_setcb(bev, LibEvent::ConnReadCb, NULL, LibEvent::ConnEventCb, NULL);
+    bufferevent_setcb(bev, ConnReadCb, NULL, ConnEventCb, NULL);
     bufferevent_enable(bev, EV_READ);
 
     BTCLOG(LOG_LEVEL_VERBOSE) << "Accept connection from " << addr.ToString() << " successfully.";
@@ -119,7 +123,7 @@ void Acceptor::CheckingTimeoutCb(evutil_socket_t fd, short event, void *arg)
     // increase reference count
     std::shared_ptr<Node> pnode(*(reinterpret_cast<std::shared_ptr<Node>*>(arg)));
     
-    int64_t now = Time::GetTimeSeconds();
+    int64_t now = btclite::utility::util_time::GetTimeSeconds();
     if (pnode->time_last_recv() == 0 || pnode->time_last_send() == 0)
     {
         BTCLOG(LOG_LEVEL_INFO) << "socket no message in first 60 seconds, "
@@ -133,14 +137,15 @@ void Acceptor::CheckingTimeoutCb(evutil_socket_t fd, short event, void *arg)
         pnode->set_disconnected(true);
         SingletonNodes::GetInstance().EraseNode(pnode);
     }
-    else if (now - pnode->time_last_recv() > (pnode->version() > kBip0031Version ? kConnTimeoutInterval : 90*60))
+    else if (now - pnode->time_last_recv() > (pnode->version() > 
+             btclite::network::protocol::kBip31Version ? kConnTimeoutInterval : 90*60))
     {
         BTCLOG(LOG_LEVEL_INFO) << "socket receive timeout: " << (now - pnode->time_last_recv());
         pnode->set_disconnected(true);
         SingletonNodes::GetInstance().EraseNode(pnode);
     }
     else if (pnode->ping_time().ping_nonce_sent &&
-             pnode->ping_time().ping_usec_start + kConnTimeoutInterval * 1000000 < Time::GetTimeMicros())
+             pnode->ping_time().ping_usec_start + kConnTimeoutInterval * 1000000 < btclite::utility::util_time::GetTimeMicros())
     {
         BTCLOG(LOG_LEVEL_INFO) << "ping timeout: " << (now - pnode->ping_time().ping_usec_start / 1000000);
         pnode->set_disconnected(true);

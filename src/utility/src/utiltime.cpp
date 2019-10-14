@@ -1,13 +1,43 @@
 #include "utiltime.h"
 
-#include <cstdlib>
-#include <set>
+#include <cassert>
+#include <ctime>
+#include <sys/time.h>
 
 #include "constants.h"
-#include "util.h"
 
 
-void Time::AddTimeData(const std::string& ip, int64_t offset_sample)
+namespace btclite {
+namespace utility {
+namespace util_time {
+
+int64_t GetTimeSeconds()
+{
+    std::time_t now = std::time(nullptr);
+    assert(now > 0);
+    return now;
+}
+
+int64_t GetTimeMillis()
+{
+    struct timeval tv;
+    assert(0 == gettimeofday(&tv, NULL));
+    return tv.tv_sec*1000 + tv.tv_usec/1000;
+}
+
+int64_t GetTimeMicros()
+{
+    struct timeval tv;
+    assert(0 == gettimeofday(&tv, NULL));
+    return tv.tv_sec*1000000+tv.tv_usec;
+}
+
+int64_t GetAdjustedTime()
+{
+    return GetTimeSeconds() + SingletonTimeOffset::GetInstance().time_offset();
+}
+
+void AddTimeData(const std::string& ip, int64_t offset_sample)
 {
     // Ignore duplicates
     static std::set<std::string> set_known;
@@ -24,13 +54,16 @@ void Time::AddTimeData(const std::string& ip, int64_t offset_sample)
     if (time_offsets.Size() >= 5 && time_offsets.Size() % 2 == 1)
     {
         int64_t median = time_offsets.Median();
-        LOCK(cs_time_offset_);
         // Only let other nodes change our time by so much
         if (abs(median) <= 70*60)
-            time_offset_ = median;
+            SingletonTimeOffset::GetInstance().set_time_offset(median);
         else
-            time_offset_ = 0;
+            SingletonTimeOffset::GetInstance().set_time_offset(0);
         
-        BTCLOG(LOG_LEVEL_VERBOSE) << "Set new btc time offset:" << time_offset_;
+        BTCLOG(LOG_LEVEL_VERBOSE) << "Set new btc time offset:" << SingletonTimeOffset::GetInstance().time_offset();
     }    
 }
+
+} // namespace util_time
+} // namespace utility
+} // namespace btclite
