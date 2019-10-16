@@ -52,23 +52,19 @@ enum ServiceFlags : uint64_t {
     // BIP process.
 };
 
-constexpr ServiceFlags desirable_service_flags = ServiceFlags(kNodeNetwork | kNodeWitness);
+constexpr uint64_t kDesirableServiceFlags = (kNodeNetwork | kNodeWitness);
 
 namespace btclite {
 namespace network {
 namespace serviceflags {
 
 /**
- * A shortcut for (services & desirable_service_flags)
- * == desirable_service_flags, ie determines whether the given
+ * A shortcut for (services & kDesirableServiceFlags)
+ * == kDesirableServiceFlags, ie determines whether the given
  * set of service flags are sufficient for a peer to be "relevant".
  */
-static inline bool IsDesirable(ServiceFlags services) {
-    return !(desirable_service_flags & (~services));
-}
-
 static inline bool IsDesirable(uint64_t services) {
-    return !(desirable_service_flags & (~services));
+    return !(kDesirableServiceFlags & (~services));
 }
 
 } // namespace serviceflags

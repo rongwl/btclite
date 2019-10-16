@@ -16,6 +16,8 @@ constexpr size_t kMaxBlockSize = 1000000;
 constexpr size_t kMaxMessageSize = 0x02000000;
 // Maximum length of strSubVer in `version` message
 constexpr size_t kMaxSubVersionSize = 256;
+// Maximum length of reject messages.
+constexpr size_t kMaxRejectMessageLength = 111;
 
 constexpr uint8_t kVarint16bits = 0xfd;
 constexpr uint8_t kVarint32bits = 0xfe;

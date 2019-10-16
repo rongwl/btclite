@@ -11,42 +11,38 @@ namespace btclite {
 namespace network {
 namespace protocol {
 
-constexpr uint32_t kProtocolVersion = 70015;
+enum VersionCode : uint32_t {
+    // initial proto version, to be increased after version/verack negotiation
+    kInitProtoVersion = 209,
+    
+    // timestamp field added to NetAddr, starting with this version;
+    // if possible, avoid requesting addresses nodes older than this
+    kAddrTimeVersion = 31402,
+    
+    // In this version, 'getheaders' was introduced.
+    kGetheadersVersion = 31800,
+    
+    // BIP 0031, pong message, is enabled for all versions AFTER this one
+    kBip31Version = 60000,
+    
+    // BIP 0037, whether the remote peer should announce relayed transactions or not
+    kRelayedTxsVersion = 70001,
+    
+    // "filter*" commands are disabled without kNodeBloom after and including this version
+    kNoBloomVersion = 70011,
+    
+    // "sendheaders" command and announcing blocks with headers starts with this version
+    kSendheadersVersion = 70012,
+    
+    // "feefilter" tells peers to filter invs to you by fee starts with this version
+    kShortIdsBlocksVersion = 70014,
+    
+    // not banning for invalid compact blocks starts with this version
+    kInvalidCbNoBanVersion = 70015
+};
 
-// initial proto version, to be increased after version/verack negotiation
-constexpr uint32_t kInitProtoVersion = 209;
-
-// timestamp field added to NetAddr, starting with this version;
-// if possible, avoid requesting addresses nodes older than this
-constexpr uint32_t kAddrTimeVersion = 31402;
-
-// In this version, 'getheaders' was introduced.
-constexpr uint32_t kGetheadersVersion = 31800;
-
-// disconnect from peers older than this proto version
-constexpr uint32_t kMinPeerProtoVersion = kGetheadersVersion;
-
-// BIP 0031, pong message, is enabled for all versions AFTER this one
-constexpr uint32_t kBip31Version = 60000;
-
-// BIP 0037, whether the remote peer should announce relayed transactions or not
-constexpr uint32_t kRelayedTxsVersion = 70001; 
-
-// "filter*" commands are disabled without kNodeBloom after and including this version
-constexpr uint32_t kNoBloomVersion = 70011;
-
-// "sendheaders" command and announcing blocks with headers starts with this version
-constexpr uint32_t kSendheadersVersion = 70012;
-
-// "feefilter" tells peers to filter invs to you by fee starts with this version
-constexpr uint32_t kFeefilterVersion = 70013;
-
-// short-id-based block download starts with this version
-constexpr uint32_t kShortIdsBlocksVersion = 70014;
-
-// not banning for invalid compact blocks starts with this version
-constexpr uint32_t kInvalidCbNoBanVersion = 70015;
-
+constexpr VersionCode kProtocolVersion = kInvalidCbNoBanVersion;
+constexpr VersionCode kMinPeerProtoVersion = kGetheadersVersion;
 
 class Version : public MessageData {
 public:
@@ -54,23 +50,23 @@ public:
     
     //-------------------------------------------------------------------------
     Version()
-        : version_(0), services_(0), timestamp_(0), addr_recv_(),
-          addr_from_(), nonce_(0), user_agent_(), start_height_(0),
+        : version_(0), services_(0), timestamp_(0),
+          addr_recv_(), addr_from_(), nonce_(0), user_agent_(), start_height_(0), 
           relay_(false) {}
     
     Version(uint32_t version, uint64_t services, uint64_t timestamp,
-                const btclite::network::NetAddr& address_receiver,
-                const btclite::network::NetAddr& address_from, uint64_t nonce,
-                const std::string& user_agent, uint32_t start_height, bool relay)
+            const btclite::network::NetAddr& address_receiver,
+            const btclite::network::NetAddr& address_from, uint64_t nonce,
+            const std::string& user_agent, uint32_t start_height, bool relay)
         : version_(version), services_(services), timestamp_(timestamp),
           addr_recv_(address_receiver), addr_from_(address_from),
           nonce_(nonce), user_agent_(user_agent), start_height_(start_height),
           relay_(relay) {}
     
     Version(uint32_t version, uint64_t services, uint64_t timestamp,
-                btclite::network::NetAddr&& address_receiver, 
-                btclite::network::NetAddr&& address_from, uint64_t nonce,
-                std::string&& user_agent, uint32_t start_height, bool relay)
+            btclite::network::NetAddr&& address_receiver, 
+            btclite::network::NetAddr&& address_from, uint64_t nonce,
+            std::string&& user_agent, uint32_t start_height, bool relay) noexcept
         : version_(version), services_(services), timestamp_(timestamp),
           addr_recv_(std::move(address_receiver)),
           addr_from_(std::move(address_from)),
@@ -79,15 +75,15 @@ public:
     
     Version(const Version& version)
         : Version(version.version_, version.services_, version.timestamp_,
-                      version.addr_recv_, version.addr_from_, version.nonce_,
-                      version.user_agent_, version.start_height_, version.relay_) {}
+                  version.addr_recv_, version.addr_from_, version.nonce_,
+                  version.user_agent_, version.start_height_, version.relay_) {}
     
     Version(Version&& version) noexcept
         : Version(version.version_, version.services_, version.timestamp_,
-                      std::move(version.addr_recv_),
-                      std::move(version.addr_from_), version.nonce_,
-                      std::move(version.user_agent_), version.start_height_,
-                      version.relay_) {}
+                  std::move(version.addr_recv_),
+                  std::move(version.addr_from_), version.nonce_,
+                  std::move(version.user_agent_), version.start_height_,
+                  version.relay_) {}
     
     Version(const uint8_t *raw, size_t size);
     

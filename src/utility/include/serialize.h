@@ -278,6 +278,7 @@ void Deserializer<Stream>::Deserialize(std::string *out)
     char c;
     
     // Read all size characters, pushing all non-null (may be many).
+    out->clear();
     out->reserve(size);
     for (size_t i = 0; i < size; i++) {
         stream_.read(&c, 1);

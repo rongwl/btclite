@@ -8,11 +8,16 @@
 #include "Endian.h"
 
 
-class Random {
-public:
-    static uint64_t GetUint64(uint64_t max);
-    static Uint256 GetUint256();
-};
+namespace btclite {
+namespace utility {
+namespace random {
+
+uint64_t GetUint64(uint64_t max);
+Uint256 GetUint256();
+
+} // namespace random
+} // namespace utility
+} // namespace btclite
 
 /* 
  * Fast randomness source. Merge from bitcoin core code.

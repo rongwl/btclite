@@ -10,6 +10,7 @@
 
 
 using namespace btclite::network::libevent;
+using namespace btclite::utility::random;
 
 bool Connector::InitEvent()
 {
@@ -173,7 +174,7 @@ bool Connector::DnsLookup(const std::vector<Seed>& seeds)
         if (SingletonNetInterrupt::GetInstance())
             return false;
         
-        std::string host = "x" + std::to_string(desirable_service_flags) + "." + seed.host;
+        std::string host = "x" + std::to_string(kDesirableServiceFlags) + "." + seed.host;
         btclite::network::NetAddr source;
         if (!source.SetInternal(host))
             continue;
@@ -185,9 +186,9 @@ bool Connector::DnsLookup(const std::vector<Seed>& seeds)
         
         for (btclite::network::NetAddr& addr : addrs) {
             addr.mutable_proto_addr()->set_port(btclite::network::SingletonParams::GetInstance().default_port());
-            addr.mutable_proto_addr()->set_services(desirable_service_flags);
+            addr.mutable_proto_addr()->set_services(kDesirableServiceFlags);
             // use a random age between 3 and 7 days old
-            int64_t time = btclite::utility::util_time::GetTimeSeconds() - 3*24*60*60 - Random::GetUint64(4*24*60*60);
+            int64_t time = btclite::utility::util_time::GetTimeSeconds() - 3*24*60*60 - GetUint64(4*24*60*60);
             addr.mutable_proto_addr()->set_timestamp(time);
             found++;
         }
@@ -273,7 +274,7 @@ bool Connector::GetHostAddr(const std::string& host_name, btclite::network::NetA
     if (!LookupHost(host_name.c_str(), &addrs, 256, true) || addrs.empty())
         return false;
     
-    const btclite::network::NetAddr& addr = addrs[Random::GetUint64(addrs.size()-1)];
+    const btclite::network::NetAddr& addr = addrs[GetUint64(addrs.size()-1)];
     if (!addr.IsValid()) {
         BTCLOG(LOG_LEVEL_WARNING) << "Invalide address " << addr.ToString() << " for " << host_name;
         return false;

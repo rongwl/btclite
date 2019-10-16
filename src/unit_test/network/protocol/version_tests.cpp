@@ -39,8 +39,17 @@ TEST(VersionTest, Serialize)
     EXPECT_FALSE(msg_version2.relay());
 }
 
+TEST(VersionTest, SerializedSize)
+{
+    Version msg_version;
+    
+    msg_version.set_user_agent("/btclite:0.1.0/");
+    EXPECT_EQ(msg_version.SerializedSize(), 113);
+}
+
 TEST(VersionTest, ConstructFromRaw)
 {
+    MemOstream os;
     std::vector<uint8_t> vec;
     ByteSink<std::vector<uint8_t> > byte_sink(vec);    
     btclite::network::NetAddr addr_recv(0x1234, kNodeNetwork, 
@@ -52,7 +61,8 @@ TEST(VersionTest, ConstructFromRaw)
     Version msg_version1(kProtocolVersion, kNodeNetwork, 0x1234, addr_recv,
                          addr_from, 0x5678, "/btclite:0.1.0/", 1000, true);
     
-    msg_version1.Serialize(byte_sink);
-    Version msg_version2(vec.data(), msg_version1.SerializedSize());
+    //msg_version1.Serialize(byte_sink);
+    os << msg_version1;
+    Version msg_version2(os.vec().data(), msg_version1.SerializedSize());
     EXPECT_EQ(msg_version1, msg_version2);    
 }

@@ -43,6 +43,16 @@ TEST(SerializerTest, SerializeString)
         FAIL() << "Exception:" << e.what();
     }
     EXPECT_EQ(input, output);
+    
+    input.clear();
+    ostream << input;
+    try {
+        istream >> output;
+    }
+    catch (const std::exception& e) {
+        FAIL() << "Exception:" << e.what();
+    }
+    EXPECT_EQ(input, output);
 }
 
 TEST(SerializerTest, SerializeArithmeticArray)

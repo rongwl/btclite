@@ -148,7 +148,7 @@ uint32_t Orphans::LimitOrphanTxSize(uint32_t max_orphans)
     while (map_orphan_txs_.size() > max_orphans)
     {
         // Evict a random orphan:
-        Uint256 randomhash = Random::GetUint256();
+        Uint256 randomhash = btclite::utility::random::GetUint256();
         auto it = map_orphan_txs_.lower_bound(randomhash);
         if (it == map_orphan_txs_.end())
             it = map_orphan_txs_.begin();

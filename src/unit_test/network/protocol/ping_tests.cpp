@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "protocol/ping.h"
+#include "stream.h"
 
 
 using namespace btclite::network::protocol;
@@ -20,12 +21,10 @@ TEST(PingTest, Serialize)
 
 TEST(PingTest, ConstructFromRaw)
 {
-    std::vector<uint8_t> vec;
-    ByteSink<std::vector<uint8_t> > byte_sink(vec);
-    ByteSource<std::vector<uint8_t> > byte_source(vec);
+    MemOstream os;
     Ping msg_ping1(0x1122334455667788);
     
-    msg_ping1.Serialize(byte_sink);
-    Ping msg_ping2(vec.data());
+    os << msg_ping1;
+    Ping msg_ping2(os.vec().data());
     EXPECT_EQ(msg_ping1, msg_ping2);
 }

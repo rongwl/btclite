@@ -2,11 +2,14 @@
 
 #include "random.h"
 
+
+using namespace btclite::utility::random;
+
 TEST(RandomTest, MethodGetUint64)
 {
-    ASSERT_EQ(Random::GetUint64(0), 0);
+    ASSERT_EQ(GetUint64(0), 0);
     for (int i = 0; i < 1000; i++) {
-        uint64_t rand = Random::GetUint64(10);
+        uint64_t rand = GetUint64(10);
         ASSERT_LE(rand, 10);
     }
 }
@@ -14,9 +17,9 @@ TEST(RandomTest, MethodGetUint64)
 TEST(RandomTest, MethodGetUint256)
 {
     Uint256 new_num, old_num;
-    old_num = Random::GetUint256();
+    old_num = GetUint256();
     for (int i = 0; i < 1000; i++) {
-        new_num = Random::GetUint256();
+        new_num = GetUint256();
         ASSERT_NE(old_num, new_num);
         old_num = new_num;
     }

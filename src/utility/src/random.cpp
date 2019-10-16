@@ -4,7 +4,11 @@
 #include <random>
 
 
-uint64_t Random::GetUint64(uint64_t max)
+namespace btclite {
+namespace utility {
+namespace random {
+
+uint64_t GetUint64(uint64_t max)
 {
     if (max == 0)
         return 0;
@@ -16,7 +20,7 @@ uint64_t Random::GetUint64(uint64_t max)
     return dis(rng);
 }
 
-Uint256 Random::GetUint256() 
+Uint256 GetUint256() 
 {
     Botan::System_RNG rng;
     Uint256 hash;
@@ -24,6 +28,10 @@ Uint256 Random::GetUint256()
     
     return hash;
 }
+
+} // namespace random
+} // namespace utility
+} // namespace btclite
 
 FastRandomContext::FastRandomContext(bool deterministic)
     : rng_(), requires_seed_(!deterministic), bytebuf_size_(0), bitbuf_size_(0)
@@ -65,7 +73,7 @@ uint64_t FastRandomContext::RandRange(uint64_t range)
 
 void FastRandomContext::RandomSeed()
 {
-    Uint256 seed = Random::GetUint256();
+    Uint256 seed = btclite::utility::random::GetUint256();
     rng_.add_entropy(seed.data(), seed.size());
     requires_seed_ = false;
 }

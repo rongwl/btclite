@@ -103,8 +103,10 @@ void ConnReadCb(struct bufferevent *bev, void *ctx)
         pnode->mutable_timers()->no_msg_timer.reset();
         
         uint32_t timeout = (pnode->version() >
-                            btclite::network::protocol::kBip31Version) ? kNoReceivingTimeoutBip31 : kNoReceivingTimeout;
-        pnode->mutable_timers()->no_receiving_timer = timer_mng.StartTimer(timeout*1000, 0, Node::InactivityTimeoutCb, pnode);
+                            btclite::network::protocol::kBip31Version) ? 
+                            kNoReceivingTimeoutBip31 : kNoReceivingTimeout;
+        pnode->mutable_timers()->no_receiving_timer = 
+            timer_mng.StartTimer(timeout*1000, 0, Node::InactivityTimeoutCb, pnode);
     }
     
     auto task = std::bind(btclite::network::msgprocess::ParseMsg, pnode);

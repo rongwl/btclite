@@ -38,7 +38,8 @@ bool Acceptor::InitEvent()
     
     //Disable Nagle's algorithm
     if (!Socket(evconnlistener_get_fd(listener_)).SetSockNoDelay()) {
-        BTCLOG(LOG_LEVEL_ERROR) << "Acceptor setting socket to no-delay failed, error:" << std::strerror(errno);
+        BTCLOG(LOG_LEVEL_ERROR) << "Acceptor setting socket to no-delay failed, error:"
+                                << std::strerror(errno);
         return false;
     } 
     
@@ -115,7 +116,8 @@ void Acceptor::AcceptErrCb(struct evconnlistener *listener, void *arg)
 {
     int err = EVUTIL_SOCKET_ERROR();
 
-    BTCLOG(LOG_LEVEL_WARNING) << "Accept new socket failed, error:" << evutil_socket_error_to_string(err);
+    BTCLOG(LOG_LEVEL_WARNING) << "Accept new socket failed, error:" 
+                              << evutil_socket_error_to_string(err);
 }
 
 void Acceptor::CheckingTimeoutCb(evutil_socket_t fd, short event, void *arg)
@@ -127,7 +129,8 @@ void Acceptor::CheckingTimeoutCb(evutil_socket_t fd, short event, void *arg)
     if (pnode->time_last_recv() == 0 || pnode->time_last_send() == 0)
     {
         BTCLOG(LOG_LEVEL_INFO) << "socket no message in first 60 seconds, "
-                               << pnode->time_last_recv() << " " << pnode->time_last_send() << " from " << pnode->id();
+                               << pnode->time_last_recv() << " " << pnode->time_last_send()
+                               << " from " << pnode->id();
         pnode->set_disconnected(true);
         SingletonNodes::GetInstance().EraseNode(pnode);
     }
@@ -145,9 +148,11 @@ void Acceptor::CheckingTimeoutCb(evutil_socket_t fd, short event, void *arg)
         SingletonNodes::GetInstance().EraseNode(pnode);
     }
     else if (pnode->ping_time().ping_nonce_sent &&
-             pnode->ping_time().ping_usec_start + kConnTimeoutInterval * 1000000 < btclite::utility::util_time::GetTimeMicros())
+             pnode->ping_time().ping_usec_start + kConnTimeoutInterval * 1000000 < 
+             btclite::utility::util_time::GetTimeMicros())
     {
-        BTCLOG(LOG_LEVEL_INFO) << "ping timeout: " << (now - pnode->ping_time().ping_usec_start / 1000000);
+        BTCLOG(LOG_LEVEL_INFO) << "ping timeout: " 
+                               << (now - pnode->ping_time().ping_usec_start / 1000000);
         pnode->set_disconnected(true);
         SingletonNodes::GetInstance().EraseNode(pnode);
     }
