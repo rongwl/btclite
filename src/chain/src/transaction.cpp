@@ -6,12 +6,13 @@
 
 std::string TxIn::ToString() const
 {
+    using namespace btclite::utility::string_encoding;
     std::stringstream ss;
     ss << "TxIn(" << prevout_.ToString() << ", ";
     if (prevout_.IsNull())
-        ss << "coinbase=" << HexEncode(script_sig_.begin(), script_sig_.end());
+        ss << "coinbase=" << EncodeHex(script_sig_.begin(), script_sig_.end());
     else
-        ss << "scriptSig=" << HexEncode(script_sig_.begin(), script_sig_.end()).substr(0, 24);
+        ss << "scriptSig=" << EncodeHex(script_sig_.begin(), script_sig_.end()).substr(0, 24);
     if (sequence_no_ != default_sequence_no)
         ss << ", sequence_no=" << sequence_no_;
     ss << ")";

@@ -5,16 +5,7 @@ namespace btclite {
 namespace network {
 namespace protocol {
 
-Reject::Reject(const uint8_t *raw, size_t size)
-    : Reject()
-{
-    std::vector<uint8_t> vec;
-    ByteSource<std::vector<uint8_t> > byte_source(vec);
-    
-    vec.reserve(size);
-    vec.assign(raw, raw + size);
-    Deserialize(byte_source);
-}
+const std::string Reject::kCommand = kMsgReject;
 
 bool Reject::RecvHandler(std::shared_ptr<Node> src_node) const
 {

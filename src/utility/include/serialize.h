@@ -298,7 +298,7 @@ std::enable_if_t<std::is_arithmetic<T>::value> Deserializer<Stream>::Deserialize
         throw std::ios_base::failure("vector size larger than max block size");
     out->clear();
     out->resize(count);
-    for (auto it = out->begin(); it != out->end(); it++)
+    for (auto it = out->begin(); it != out->end(); ++it)
         Deserialize(&(*it));
 }
 
@@ -309,7 +309,7 @@ void Deserializer<Stream>::Deserialize(std::vector<std::string> *out)
     size_t size = 0;    
     out->clear();
     out->resize(count);
-    for (auto it = out->begin(); it != out->end(); it++) {
+    for (auto it = out->begin(); it != out->end(); ++it) {
         Deserialize(&(*it));
         size += it->size();
         if (size > kMaxBlockSize)
@@ -325,7 +325,7 @@ std::enable_if_t<std::is_class<T>::value> Deserializer<Stream>::Deserialize(std:
     size_t size = 0;    
     out->clear();
     out->resize(count);
-    for (auto it = out->begin(); it != out->end(); it++) {
+    for (auto it = out->begin(); it != out->end(); ++it) {
         it->Deserialize(stream_);
         size += it->SerializedSize();
         if (size > kMaxBlockSize)

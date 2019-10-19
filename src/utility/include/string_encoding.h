@@ -10,51 +10,89 @@
 #include <vector>
 
 
+namespace btclite {
+namespace utility {
+namespace string_encoding {
+
 bool ParsePrechecks(const std::string& str);
-bool ParseInt32(const std::string& str, int32_t *out);
+
+/*
+ * Convert string to signed 32-bit integer with strict parse error feedback.
+ * @returns true if the entire string could be parsed as valid integer,
+ *   false if not the entire string could be parsed or when overflow or underflow occurred.
+ */
+bool DecodeInt32(const std::string& str, int32_t *out);
+
+/**
+ * Convert string to signed 64-bit integer with strict parse error feedback.
+ * @returns true if the entire string could be parsed as valid integer,
+ *   false if not the entire string could be parsed or when overflow or underflow occurred.
+ */
+bool DecodeInt64(const std::string& str, int64_t *out);
+
+/**
+ * Convert decimal string to unsigned 32-bit integer with strict parse error feedback.
+ * @returns true if the entire string could be parsed as valid integer,
+ *   false if not the entire string could be parsed or when overflow or underflow occurred.
+ */
+bool DecodeUint32(const std::string& str, uint32_t *out);
+
+/**
+ * Convert decimal string to unsigned 64-bit integer with strict parse error feedback.
+ * @returns true if the entire string could be parsed as valid integer,
+ *   false if not the entire string could be parsed or when overflow or underflow occurred.
+ */
+bool DecodeUint64(const std::string& str, uint64_t *out);
+
+/**
+ * Convert string to double with strict parse error feedback.
+ * @returns true if the entire string could be parsed as valid double,
+ *   false if not the entire string could be parsed or when overflow or underflow occurred.
+ */
+bool ParseDouble(const std::string& str, double *out);
 
 template <typename Iterator>
-std::string HexEncode(Iterator rbegin, Iterator rend, bool fSpaces=false)
+std::string EncodeHex(Iterator begin, Iterator end, bool fSpaces=false)
 {
     std::string rv;
+    static const char hexmap[16] = { '0', '1', '2', '3', '4', '5', '6', '7',
+                                     '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
 
-    rv.reserve((rend-rbegin)*3);
-    for(Iterator it = rbegin; it < rend; ++it)
-    {
-        if(fSpaces && it != rbegin)
+    rv.reserve((end-begin)*3);
+    for(Iterator it = begin; it < end; ++it) {
+        uint8_t val = static_cast<uint8_t>(*it);
+        if(fSpaces && it != begin)
             rv.push_back(' ');
-        std::stringstream ss;
-        ss << std::setw(2) << std::setfill('0') << std::hex << static_cast<int>(*it);
-        rv += ss.str();
+        rv.push_back(hexmap[val>>4]);
+        rv.push_back(hexmap[val&15]);
     }
 
     return rv;
 }
-
+/*
 template <typename Iterator>
-void HexDecode(const std::string& in, Iterator begin, Iterator end)
+void DecodeHex(const std::string& in, Iterator begin, Iterator end)
 {
-    auto first = std::find_if_not(in.begin(), in.end(), isspace);
-    if (first == in.end())
-        first = in.begin();
-    if (*first == '0' && std::tolower(*(first+1)) == 'x')
-        first += 2;
-    auto last = std::find_if_not(first, in.end(), isxdigit);
-    std::string substr(first, last);
-    
-    auto rit = substr.rbegin();
-    Iterator it = begin;
-    while (it != end && rit != substr.rend()) {
-        *it = std::stoi(std::string(rit, rit+1), 0, 16);
-        if (++rit != substr.rend()) {
-            *it |= (std::stoi(std::string(rit, rit+1), 0, 16) << 4);
-            rit++;
+    auto it_in = in.begin();
+    Iterator it_out = begin;
+    while (it_out != end && it_in != in.end()) {
+        while (isspace(*it_in))
+            ++it_in;
+        if (!isxdigit(*it_in))
+            return;
+        *it_out = std::stoi(std::string(it_in, ++it_in), 0, 16);
+        if (it_in != in.end()) {
+            *it_out = (*it_out << 4) | std::stoi(std::string(it_in, ++it_in), 0, 16);
         }
-        it++;
+        ++it_out;
     }
 }
+*/
+void DecodeHex(const std::string&, std::vector<uint8_t>*);
 
-void HexDecode(const std::string&, std::vector<uint8_t>*);
+} // namespace string_encoding
+} // namespace utility
+} // namespace btclite
 
 
 #endif // BTCLITE_UTILSTRENCODINGS_H

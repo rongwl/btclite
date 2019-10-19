@@ -17,7 +17,7 @@ bool ParseMsg(std::shared_ptr<Node> src_node);
 template <typename Message>
 bool SendMsg(const Message& msg, std::shared_ptr<Node> dst_node)
 {
-    MessageHeader header(btclite::network::SingletonParams::GetInstance().msg_magic());
+    MessageHeader header;
     Hash256 hash256;
     MemOstream ms;
     HashOStream hs;
@@ -27,6 +27,7 @@ bool SendMsg(const Message& msg, std::shared_ptr<Node> dst_node)
 
     hs << msg;
     hs.Sha256(&hash256);
+    header.set_magic(btclite::network::SingletonParams::GetInstance().msg_magic());
     header.set_command(msg.kCommand);
     header.set_payload_length(hs.vec().size());
     header.set_checksum(hash256.GetLow64());

@@ -26,26 +26,7 @@ enum CCode : uint8_t {
 
 class Reject : public MessageData {
 public:
-    Reject()
-        : message_(), ccode_(0), reason_(), data_() {}
-    
-    Reject(const std::string& message, uint8_t ccode, const std::string& reason,
-           const Hash256& data)
-        : message_(message), ccode_(ccode), reason_(reason), data_(data) {}
-    
-    Reject(std::string&& message, uint8_t ccode, const std::string& reason,
-           Hash256&& data) noexcept
-        : message_(std::move(message)), ccode_(ccode), reason_(std::move(reason)),
-          data_(std::move(data)) {}
-    
-    Reject(const Reject& reject)
-        : Reject(reject.message_, reject.ccode_, reject.reason_, reject.data_) {}
-    
-    Reject(Reject&& reject) noexcept
-        : Reject(std::move(reject.message_), reject.ccode_, std::move(reject.reason_),
-                 std::move(reject.data_)) {}
-    
-    Reject(const uint8_t *raw, size_t size);
+    static const std::string kCommand;
     
     //-------------------------------------------------------------------------
     bool RecvHandler(std::shared_ptr<Node> src_node) const;
@@ -114,7 +95,7 @@ public:
     
 private:
     std::string message_;
-    uint8_t ccode_;
+    uint8_t ccode_ = 0;
     std::string reason_;
     Hash256 data_;
 };

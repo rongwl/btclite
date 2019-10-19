@@ -112,7 +112,6 @@ utility_src_libbtclite_util_a_SOURCES = utility/src/error.cpp \
                                         utility/src/logging.cpp \
                                         utility/src/random.cpp \
                                         utility/src/serialize.cpp \
-                                        utility/src/stream.cpp \
                                         utility/src/string_encoding.cpp \
                                         utility/src/sync.cpp \
                                         utility/src/thread.cpp \

@@ -3,8 +3,7 @@
 #include "network/include/params.h"
 
 
-MessageHeader::MessageHeader(const uint8_t *raw_data)
-    : magic_(0), command_(), payload_length_(0), checksum_(0)
+bool MessageHeader::Init(const uint8_t *raw_data)
 {
     std::vector<uint8_t> vec;
     ByteSource<std::vector<uint8_t> > byte_source(vec);
@@ -13,6 +12,8 @@ MessageHeader::MessageHeader(const uint8_t *raw_data)
     vec.reserve(kSize);
     vec.assign(raw_data, raw_data + kSize);
     Deserialize(byte_source);
+    
+    return IsValid();
 }
 
 bool MessageHeader::IsValid() const

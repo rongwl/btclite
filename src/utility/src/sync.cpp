@@ -120,13 +120,13 @@ void DeleteLock(void *cs)
     while (it != lock_data.lock_orders_.end() && it->first.first == cs) {
         lock_data.lock_orders_.erase(it);
         lock_data.invlock_orders_.erase(std::make_pair(it->first.second, it->first.first));
-        it++;
+        ++it;
     }
     auto invit = lock_data.invlock_orders_.lower_bound(std::make_pair(cs, (void *)0));
     while (invit != lock_data.invlock_orders_.end() && invit->first == cs) {
         lock_data.invlock_orders_.erase(invit);
         lock_data.lock_orders_.erase(std::make_pair(invit->second, invit->first));
-        invit++;
+        ++invit;
     }
 }
 

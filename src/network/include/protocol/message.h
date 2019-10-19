@@ -2,6 +2,7 @@
 #define BTCLITE_MESSAGE_TYPES_MESSAGE_H
 
 
+#include "hash.h"
 #include "node.h"
 
 
@@ -16,44 +17,14 @@ public:
     using MsgMagic = uint32_t;
     
     //-------------------------------------------------------------------------
-    MessageHeader()
-        : magic_(0), command_(), payload_length_(0), checksum_(0)
-    {
-        std::memset(command_.begin(), 0, kCommandSize);
-    }
-    
-    explicit MessageHeader(uint32_t magic)
-        : magic_(magic), command_(), payload_length_(0), checksum_(0) 
-    {
-        std::memset(command_.begin(), 0, kCommandSize);
-    }
-    
-    explicit MessageHeader(const uint8_t *raw_data);
-    
-    MessageHeader(uint32_t magic, const std::string& command,
-                  uint32_t payload_length, uint32_t checksum)
-        : magic_(magic), command_(), payload_length_(payload_length), checksum_(checksum) 
-    {
-        std::memset(command_.begin(), 0, kCommandSize);
-        set_command(command);
-    }
-    
-    MessageHeader(const MessageHeader& header)
-        : magic_(header.magic_), command_(header.command_),
-          payload_length_(header.payload_length_), checksum_(header.checksum_) {}
-    
-    MessageHeader(MessageHeader&& header) noexcept
-        : magic_(header.magic_), command_(std::move(header.command_)),
-          payload_length_(header.payload_length_), checksum_(header.checksum_) {}
+    bool Init(const uint8_t *raw_data);
+    bool IsValid() const;
     
     //-------------------------------------------------------------------------
     template <typename Stream>
     void Serialize(Stream& out) const;
     template <typename Stream>
     void Deserialize(Stream& in);
-    
-    //-------------------------------------------------------------------------
-    bool IsValid() const;
     
     //-------------------------------------------------------------------------
     bool operator==(const MessageHeader& b) const
@@ -112,10 +83,10 @@ public:
     }
     
 private:    
-    uint32_t magic_;
-    std::array<char, kCommandSize> command_;
-    uint32_t payload_length_;
-    uint32_t checksum_;
+    uint32_t magic_ = 0;
+    std::array<char, kCommandSize> command_ = {};
+    uint32_t payload_length_ = 0;
+    uint32_t checksum_ = 0;
 };
 
 template <typename Stream>
@@ -141,7 +112,6 @@ void MessageHeader::Deserialize(Stream& in)
 class MessageData {
 public:
     virtual bool RecvHandler(std::shared_ptr<Node> src_node) const = 0;
-    virtual bool IsValid() const = 0;
 };
 
 // mixin GetHash()for MessageData classes

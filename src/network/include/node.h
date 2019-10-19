@@ -6,8 +6,8 @@
 #include <functional>
 #include <queue>
 
-#include "block_sync.h"
 #include "bloom.h"
+#include "block_sync.h"
 #include "timer.h"
 
 

@@ -14,18 +14,6 @@ public:
     static const std::string kCommand;
     
     //-------------------------------------------------------------------------
-    Ping()
-        : nonce_(0) {}
-    
-    explicit Ping(uint64_t nonce)
-        : nonce_(nonce) {}
-    
-    Ping(const Ping& ping)
-        : nonce_(ping.nonce_) {}
-    
-    explicit Ping(const uint8_t *raw);
-    
-    //-------------------------------------------------------------------------
     bool RecvHandler(std::shared_ptr<Node> src_node) const;
     
     bool IsValid() const
@@ -81,7 +69,7 @@ public:
     }
     
 private:
-    uint64_t nonce_;
+    uint64_t nonce_ = 0;
 };
 
 } // namespace protocol

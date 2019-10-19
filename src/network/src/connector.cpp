@@ -139,7 +139,7 @@ bool Connector::ConnectNodes(const std::vector<std::string>& str_addrs, bool man
         return false;
     
     std::vector<btclite::network::NetAddr> addrs;
-    for (auto it = str_addrs.begin(); it != str_addrs.end(); it++) {
+    for (auto it = str_addrs.begin(); it != str_addrs.end(); ++it) {
         btclite::network::NetAddr addr;
         GetHostAddr(*it, &addr);
         addrs.push_back(std::move(addr));

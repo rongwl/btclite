@@ -49,45 +49,6 @@ public:
     static const std::string kCommand;
     
     //-------------------------------------------------------------------------
-    Version()
-        : version_(0), services_(0), timestamp_(0),
-          addr_recv_(), addr_from_(), nonce_(0), user_agent_(), start_height_(0), 
-          relay_(false) {}
-    
-    Version(uint32_t version, uint64_t services, uint64_t timestamp,
-            const btclite::network::NetAddr& address_receiver,
-            const btclite::network::NetAddr& address_from, uint64_t nonce,
-            const std::string& user_agent, uint32_t start_height, bool relay)
-        : version_(version), services_(services), timestamp_(timestamp),
-          addr_recv_(address_receiver), addr_from_(address_from),
-          nonce_(nonce), user_agent_(user_agent), start_height_(start_height),
-          relay_(relay) {}
-    
-    Version(uint32_t version, uint64_t services, uint64_t timestamp,
-            btclite::network::NetAddr&& address_receiver, 
-            btclite::network::NetAddr&& address_from, uint64_t nonce,
-            std::string&& user_agent, uint32_t start_height, bool relay) noexcept
-        : version_(version), services_(services), timestamp_(timestamp),
-          addr_recv_(std::move(address_receiver)),
-          addr_from_(std::move(address_from)),
-          nonce_(nonce), user_agent_(std::move(user_agent)),
-          start_height_(start_height), relay_(relay) {}
-    
-    Version(const Version& version)
-        : Version(version.version_, version.services_, version.timestamp_,
-                  version.addr_recv_, version.addr_from_, version.nonce_,
-                  version.user_agent_, version.start_height_, version.relay_) {}
-    
-    Version(Version&& version) noexcept
-        : Version(version.version_, version.services_, version.timestamp_,
-                  std::move(version.addr_recv_),
-                  std::move(version.addr_from_), version.nonce_,
-                  std::move(version.user_agent_), version.start_height_,
-                  version.relay_) {}
-    
-    Version(const uint8_t *raw, size_t size);
-    
-    //-------------------------------------------------------------------------
     bool RecvHandler(std::shared_ptr<Node> src_node) const;
     bool IsValid() const;
     void Clear();
@@ -200,19 +161,19 @@ public:
     }
 
 private:
-    uint32_t version_;
-    uint64_t services_;
-    uint64_t timestamp_;
+    uint32_t version_ = 0;
+    uint64_t services_ = 0;
+    uint64_t timestamp_ = 0;
     btclite::network::NetAddr addr_recv_;
     
     // Fields below require version ≥ 106
     btclite::network::NetAddr addr_from_;
-    uint64_t nonce_;
+    uint64_t nonce_ = 0;
     std::string user_agent_;
-    uint32_t start_height_;
+    uint32_t start_height_ = 0;
     
     // Fields below require version ≥ 70001
-    bool relay_;
+    bool relay_ = false;
 };
 
 template <typename Stream>

@@ -22,7 +22,7 @@ public:
     explicit Blob(std::initializer_list<uint8_t> init)
     {   
         Clear();
-        for (auto it1 = this->begin(), it2 = init.begin(); it1 != this->end() && it2 != init.end(); it1++, it2++)
+        for (auto it1 = this->begin(), it2 = init.begin(); it1 != this->end() && it2 != init.end(); ++it1, ++it2)
             *it1 = *it2;
     }
 
@@ -85,13 +85,13 @@ public:
     
     std::string Hex() const
     {
-        return HexEncode(this->rbegin(), this->rend());
+        return btclite::utility::string_encoding::EncodeHex(this->begin(), this->end());
     }
-    void SetHex(const std::string& str)
+    /*void SetHex(const std::string& str)
     {
         Clear();
-        HexDecode(str, this->begin(), this->end());
-    }
+        btclite::utility::string_encoding::DecodeHex(str, this->begin(), this->end());
+    }*/
 
 private:
     uint32_t width_ = nBITS / 8;

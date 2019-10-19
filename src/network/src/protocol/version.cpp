@@ -7,17 +7,6 @@ namespace protocol{
 
 const std::string Version::kCommand = kMsgVersion;
 
-Version::Version(const uint8_t *raw, size_t size)
-    : Version()
-{
-    std::vector<uint8_t> vec;
-    ByteSource<std::vector<uint8_t> > byte_source(vec);
-    
-    vec.reserve(size);
-    vec.assign(raw, raw + size);
-    Deserialize(byte_source);
-}
-
 bool Version::RecvHandler(std::shared_ptr<Node> src_node) const
 {
     return true;

@@ -22,28 +22,28 @@ class Logging;
 #define LOG_LEVEL_VERBOSE  5
 #define LOG_LEVEL_MAX      6
 
-#define LOG_LOG_LEVEL_FATAL   LOG(FATAL)
-#define LOG_LOG_LEVEL_ERROR   LOG(ERROR)
-#define LOG_LOG_LEVEL_WARNING LOG(WARNING)
-#define LOG_LOG_LEVEL_INFO    VLOG(Logging::VERBOSE0)
-#define LOG_LOG_LEVEL_DEBUG   VLOG(Logging::VERBOSE1)
-#define LOG_LOG_LEVEL_VERBOSE VLOG(Logging::VERBOSE2)
+#define GLOG_LOG_LEVEL_FATAL   LOG(FATAL)
+#define GLOG_LOG_LEVEL_ERROR   LOG(ERROR)
+#define GLOG_LOG_LEVEL_WARNING LOG(WARNING)
+#define GLOG_LOG_LEVEL_INFO    VLOG(Logging::VERBOSE0)
+#define GLOG_LOG_LEVEL_DEBUG   VLOG(Logging::VERBOSE1)
+#define GLOG_LOG_LEVEL_VERBOSE VLOG(Logging::VERBOSE2)
 
-#define LOG_LOG_LEVEL_FATAL_MOD(module) \
+#define GLOG_LOG_LEVEL_FATAL_MOD(module) \
 LOG_IF(FATAL, module & Logging::log_module())
-#define LOG_LOG_LEVEL_ERROR_MOD(module) \
+#define GLOG_LOG_LEVEL_ERROR_MOD(module) \
 LOG_IF(ERROR, module & Logging::log_module())
-#define LOG_LOG_LEVEL_WARNING_MOD(module) \
+#define GLOG_LOG_LEVEL_WARNING_MOD(module) \
 LOG_IF(WARNING, module & Logging::log_module())
-#define LOG_LOG_LEVEL_INFO_MOD(module) \
+#define GLOG_LOG_LEVEL_INFO_MOD(module) \
 VLOG_IF(Logging::VERBOSE0, module & Logging::log_module())
-#define LOG_LOG_LEVEL_DEBUG_MOD(module) \
+#define GLOG_LOG_LEVEL_DEBUG_MOD(module) \
 VLOG_IF(Logging::VERBOSE1, module & Logging::log_module())
-#define LOG_LOG_LEVEL_VERBOSE_MOD(module) \
+#define GLOG_LOG_LEVEL_VERBOSE_MOD(module) \
 VLOG_IF(Logging::VERBOSE2, module & Logging::log_module())
 
-#define BTCLOG(level) LOG_##level
-#define BTCLOG_MOD(level, module) LOG_##level##_MOD(module)
+#define BTCLOG(level) GLOG_##level
+#define BTCLOG_MOD(level, module) GLOG_##level##_MOD(module)
 
 
 class Logging {

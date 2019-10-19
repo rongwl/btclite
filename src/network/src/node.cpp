@@ -1,6 +1,5 @@
 #include "node.h"
 
-
 #include "chain.h"
 #include "net.h"
 #include "peers.h"

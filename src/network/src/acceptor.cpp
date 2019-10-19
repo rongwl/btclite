@@ -1,7 +1,7 @@
 #include "acceptor.h"
 
 #include "bandb.h"
-#include "block_sync.h"
+#include "node.h"
 #include "protocol/version.h"
 #include "timer.h"
 

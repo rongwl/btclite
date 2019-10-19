@@ -1,7 +1,6 @@
 #include <gtest/gtest.h>
 
 #include "protocol/reject.h"
-#include "stream.h"
 #include "random.h"
 
 
@@ -12,9 +11,12 @@ TEST(RejectTest, Serialize)
     std::vector<uint8_t> vec;
     ByteSink<std::vector<uint8_t> > byte_sink(vec);
     ByteSource<std::vector<uint8_t> > byte_source(vec);
-    Reject msg1(kMsgVersion, kRejectDuplicate, "Duplicate version message", 
-                btclite::utility::random::GetUint256()), msg2;
+    Reject msg1, msg2;
     
+    msg1.set_message(kMsgVersion);
+    msg1.set_ccode(kRejectDuplicate);
+    msg1.set_reason(std::move(std::string("Duplicate version message")));
+    msg1.set_data(std::move(btclite::utility::random::GetUint256()));
     ASSERT_NE(msg1, msg2);
     msg1.Serialize(byte_sink);
     msg2.Deserialize(byte_source);
@@ -23,18 +25,11 @@ TEST(RejectTest, Serialize)
 
 TEST(RejectTest, SerializedSize)
 {
-    Reject msg(kMsgVersion, kRejectDuplicate, "Duplicate version message", 
-                btclite::utility::random::GetUint256());
-    EXPECT_EQ(msg.SerializedSize(), 67);
-}
-
-TEST(RejectTest, ConstructFromRaw)
-{
-    MemOstream os;
-    Reject msg1(kMsgVersion, kRejectDuplicate, "Duplicate version message", 
-                btclite::utility::random::GetUint256());
+    Reject msg;
     
-    os << msg1;
-    Reject msg2(os.vec().data(), msg1.SerializedSize());
-    EXPECT_EQ(msg1, msg2);
+    msg.set_message(kMsgVersion);
+    msg.set_ccode(kRejectDuplicate);
+    msg.set_reason(std::move(std::string("Duplicate version message")));
+    msg.set_data(std::move(btclite::utility::random::GetUint256()));
+    EXPECT_EQ(msg.SerializedSize(), 67);
 }

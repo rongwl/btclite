@@ -299,7 +299,10 @@ public:
         std::stringstream ss;
         ss << "TxOut(value=" << (value_ / kSatoshiPerBitcoin) << "."
            << std::setw(8) << std::setfill('0') << (value_ % kSatoshiPerBitcoin) << ", "
-           << "scriptPubKey=" << HexEncode(script_pub_key_.begin(), script_pub_key_.end()) << ")";
+           << "scriptPubKey=" 
+           << btclite::utility::string_encoding::EncodeHex(script_pub_key_.begin(),
+                   script_pub_key_.end()) 
+           << ")";
         return ss.str();
     }
     size_t SerializedSize() const
