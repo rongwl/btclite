@@ -1,9 +1,4 @@
-#include <gtest/gtest.h>
-#include <event2/event.h>
-#include <event2/bufferevent.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
+#include "msg_process_tests.h"
 
 #include "msg_process.h"
 #include "network/include/params.h"
@@ -17,14 +12,37 @@ using namespace btclite::network;
 using namespace btclite::network::msgprocess;
 using namespace btclite::network::protocol;
 
+void CheckMsg(struct bufferevent *bev, const char msg[])
+{    
+    ASSERT_NE(bev, nullptr);
+    
+    struct evbuffer *buf = bufferevent_get_input(bev);
+    ASSERT_NE(buf, nullptr);
+    
+    uint8_t *raw = evbuffer_pullup(buf, MessageHeader::kSize);
+    ASSERT_NE(raw, nullptr);
+    
+    MessageHeader header;
+    ASSERT_TRUE(header.Init(raw));
+    ASSERT_EQ(header.command(), msg);
+
+    evbuffer_drain(buf, MessageHeader::kSize);
+    raw = evbuffer_pullup(buf, header.payload_length());
+    MessageData *message = MsgDataFactory(header, raw);
+    ASSERT_NE(message, nullptr);
+    EXPECT_EQ(message->Command(), msg);
+    delete message;
+}
+
 void ReadCb(struct bufferevent *bev, void *ctx)
 {
-    struct event_base *base = reinterpret_cast<struct event_base*>(ctx);
+    const char *msg = reinterpret_cast<const char*>(ctx);
+    struct event_base *base = bufferevent_get_base(bev);
     NetAddr addr;
     
     addr.SetIpv4(inet_addr("1.2.3.5"));
     auto node = std::make_shared<Node>(bev, addr, false);
-    EXPECT_TRUE(msgprocess::ParseMsg(node));
+    CheckMsg(bev, msg);
     
     event_base_loopexit(base, NULL);
 }
@@ -113,25 +131,41 @@ TEST(MsgProcessTest, NullFactory)
     EXPECT_EQ(msg_in, nullptr);
 }
 
-TEST(MsgProcessTest, SendAndParseMsg)
+TEST_F(FixtureMsgProcessTest, SendVersion)
 {
-    struct event_base *base;
-    struct bufferevent *pair[2];
-    NetAddr addr;
+    ASSERT_NE(pair_[0], nullptr);
+    ASSERT_NE(pair_[1], nullptr);
+    ASSERT_TRUE(addr_.IsValid());
     
-    base = event_base_new();
-    ASSERT_NE(base, nullptr);
-    ASSERT_EQ(bufferevent_pair_new(base, BEV_OPT_CLOSE_ON_FREE, pair), 0);
+    bufferevent_setcb(pair_[1], ReadCb, NULL, NULL, const_cast<char*>(kMsgVersion));
+    bufferevent_enable(pair_[1], EV_READ);
+    auto node = std::make_shared<Node>(pair_[0], addr_, false);
+    ASSERT_TRUE(msgprocess::SendVersion(node));
     
-    addr.SetIpv4(inet_addr("1.2.3.4"));
-    auto node = std::make_shared<Node>(pair[0], addr, false);
-    ASSERT_TRUE(msgprocess::SendVerMsg(node));
-    
-    bufferevent_setcb(pair[1], ReadCb, NULL, NULL, base);
-    bufferevent_enable(pair[1], EV_READ);
-    event_base_dispatch(base);
+    event_base_dispatch(base_);
     
     //bufferevent_free(pair[0]);
     //bufferevent_free(pair[1]);
     //event_base_free(base);
+}
+
+TEST_F(FixtureMsgProcessTest, SendRejects)
+{
+    ASSERT_NE(pair_[0], nullptr);
+    ASSERT_NE(pair_[1], nullptr);
+    ASSERT_TRUE(addr_.IsValid());
+    
+    auto node = std::make_shared<Node>(pair_[0], addr_, false);
+    SingletonNodes::GetInstance().AddNode(node);
+    SingletonBlockSync::GetInstance().AddSyncState(node->id(), addr_, "");
+    BlockSyncState *state = SingletonBlockSync::GetInstance().GetSyncState(node->id());
+    ASSERT_NE(state, nullptr);
+    
+    BlockReject block_reject = { kRejectInvalid, "invalid", btclite::utility::random::GetUint256() };
+    state->mutable_stats()->AddBlockReject(std::move(block_reject));    
+    bufferevent_setcb(pair_[1], ReadCb, NULL, NULL, const_cast<char*>(kMsgReject));
+    bufferevent_enable(pair_[1], EV_READ);
+    ASSERT_TRUE(msgprocess::SendRejects(node));
+    
+    event_base_dispatch(base_);
 }

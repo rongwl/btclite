@@ -26,10 +26,14 @@ enum CCode : uint8_t {
 
 class Reject : public MessageData {
 public:
-    static const std::string kCommand;
+    bool RecvHandler(std::shared_ptr<Node> src_node) const;
+    
+    std::string Command() const
+    {
+        return kMsgReject;
+    }
     
     //-------------------------------------------------------------------------
-    bool RecvHandler(std::shared_ptr<Node> src_node) const;
     bool IsValid() const;
     void Clear();
     size_t SerializedSize() const;

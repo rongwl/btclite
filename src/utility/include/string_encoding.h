@@ -67,7 +67,7 @@ std::string EncodeHex(Iterator begin, Iterator end, bool fSpaces=false)
         rv.push_back(hexmap[val&15]);
     }
 
-    return rv;
+    return std::move(rv);
 }
 /*
 template <typename Iterator>
@@ -88,7 +88,8 @@ void DecodeHex(const std::string& in, Iterator begin, Iterator end)
     }
 }
 */
-void DecodeHex(const std::string&, std::vector<uint8_t>*);
+
+std::vector<uint8_t> DecodeHex(const std::string& in);
 
 } // namespace string_encoding
 } // namespace utility

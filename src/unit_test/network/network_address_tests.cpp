@@ -25,10 +25,10 @@ TEST(NetAddrTest, Constructor)
     addr1.mutable_proto_addr()->set_timestamp(3);
       
     NetAddr addr2(addr1);
-    ASSERT_EQ(addr1, addr2);
+    EXPECT_EQ(addr1, addr2);
     
     NetAddr addr3(std::move(addr1));
-    ASSERT_EQ(addr2, addr3);
+    EXPECT_EQ(addr2, addr3);
     
     struct sockaddr_in sock_addr;
     sock_addr.sin_family = AF_INET;
@@ -180,7 +180,7 @@ TEST(NetAddrTest, GetIpv6)
     uint8_t out[kIpByteSize];
     
     addr.SetIpv4(inet_addr("192.168.1.1"));
-    ASSERT_EQ(addr.GetIpv6(out), -1);
+    ASSERT_FALSE(addr.GetIpv6(out));
     
     uint8_t buf[sizeof(struct in6_addr)];
     inet_pton(AF_INET6, "0001:0203:0405:0607:0809:0A0B:0C0D:0E0F", buf);

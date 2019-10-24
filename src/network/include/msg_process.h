@@ -18,24 +18,24 @@ template <typename Message>
 bool SendMsg(const Message& msg, std::shared_ptr<Node> dst_node)
 {
     MessageHeader header;
-    Hash256 hash256;
     MemOstream ms;
     HashOStream hs;
+    Hash256 hash;
     
     if (!dst_node->bev())
         return false;
 
     hs << msg;
-    hs.Sha256(&hash256);
+    hs.Sha256(&hash);
     header.set_magic(btclite::network::SingletonParams::GetInstance().msg_magic());
-    header.set_command(msg.kCommand);
+    header.set_command(msg.Command());
     header.set_payload_length(hs.vec().size());
-    header.set_checksum(hash256.GetLow64());
+    header.set_checksum(hash.GetLow64());    
     ms << header;
-
+    
     if (ms.vec().size() != MessageHeader::kSize) {
         BTCLOG(LOG_LEVEL_ERROR) << "Wrong message header size:" << ms.vec().size()
-                                << ", message type:" << msg.kCommand;
+                                << ", message type:" << msg.Command();
         return false;
     }
 
@@ -56,7 +56,8 @@ bool SendMsg(const Message& msg, std::shared_ptr<Node> dst_node)
     return true;
 }
 
-bool SendVerMsg(std::shared_ptr<Node> dst_node);
+bool SendVersion(std::shared_ptr<Node> dst_node);
+bool SendRejects(std::shared_ptr<Node> dst_node);
 
 } // namespace msgprocess
 } // namespace network

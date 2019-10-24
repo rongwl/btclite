@@ -18,7 +18,6 @@ TEST(HashWStreamTest, Sha256)
     
     tx.set_version(1);    
     hs << tx;
-    ASSERT_TRUE(hash1.IsNull());
     hs.Sha256(&hash1);
     EXPECT_EQ(hash1, hash2);
 }
@@ -35,7 +34,6 @@ TEST(HashWStreamTest, DoubleSha256)
     
     tx.set_version(1);    
     hs << tx;
-    ASSERT_TRUE(hash1.IsNull());
     hs.DoubleSha256(&hash1);
     EXPECT_EQ(hash1, hash2);
 }
@@ -55,8 +53,6 @@ TEST(HashTest, Sha256)
     Sha256(hs.vec(), &hash1);
     EXPECT_EQ(hash1, hash2);
     
-    hash1.Clear();
-    ASSERT_TRUE(hash1.IsNull());
     Sha256(hs.vec().data(), hs.vec().size(), &hash1);
     EXPECT_EQ(hash1, hash2);
 }
@@ -73,11 +69,8 @@ TEST(HashTest, DoubleSha256)
     
     tx.set_version(1);    
     hs << tx;
-    ASSERT_TRUE(hash1.IsNull());
     DoubleSha256(hs.vec(), &hash1);
     
-    hash1.Clear();
-    ASSERT_TRUE(hash1.IsNull());
     DoubleSha256(hs.vec().data(), hs.vec().size(), &hash1);
     EXPECT_EQ(hash1, hash2);
 }

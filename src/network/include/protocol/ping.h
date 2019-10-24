@@ -11,11 +11,14 @@ namespace protocol {
 
 class Ping : public MessageData {
 public:
-    static const std::string kCommand;
-    
-    //-------------------------------------------------------------------------
     bool RecvHandler(std::shared_ptr<Node> src_node) const;
     
+    std::string Command() const
+    {
+        return kMsgPing;
+    }
+    
+    //-------------------------------------------------------------------------
     bool IsValid() const
     {
         return (nonce_ != 0);

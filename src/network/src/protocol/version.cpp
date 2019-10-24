@@ -5,8 +5,6 @@ namespace btclite {
 namespace network {
 namespace protocol{
 
-const std::string Version::kCommand = kMsgVersion;
-
 bool Version::RecvHandler(std::shared_ptr<Node> src_node) const
 {
     return true;
@@ -18,8 +16,7 @@ bool Version::IsValid() const
             services_ != 0 &&
             timestamp_ != 0 &&
             addr_recv_.IsValid() &&
-            nonce_ != 0 &&
-            start_height_ != 0); 
+            nonce_ != 0); 
 }
 
 void Version::Clear()

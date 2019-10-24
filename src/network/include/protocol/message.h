@@ -112,6 +112,7 @@ void MessageHeader::Deserialize(Stream& in)
 class MessageData {
 public:
     virtual bool RecvHandler(std::shared_ptr<Node> src_node) const = 0;
+    virtual std::string Command() const = 0;
 };
 
 // mixin GetHash()for MessageData classes
@@ -119,17 +120,17 @@ template <typename Base>
 struct MsgHashable : public Base {
     using Base::Base;
     
-    void GetHash(Hash256 *hash) const;
+    void GetHash(Hash256 *out) const;
 };
 
 template <typename Base>
-void MsgHashable<Base>::GetHash(Hash256 *hash) const
+void MsgHashable<Base>::GetHash(Hash256 *out) const
 {
     std::vector<uint8_t> vec;
     ByteSink<std::vector<uint8_t> > byte_sink(vec);
     
     Base::Serialize(byte_sink);
-    btclite::crypto::hash::Sha256(vec, hash);
+    btclite::crypto::hash::Sha256(vec, out);
 }
 
 

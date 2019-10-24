@@ -1,5 +1,6 @@
 #include "node.h"
 
+#include "bandb.h"
 #include "chain.h"
 #include "net.h"
 #include "peers.h"
@@ -40,8 +41,10 @@ Node::~Node()
         if (SingletonBlockSync::GetInstance().ShouldUpdateTime(id_))
             SingletonPeers::GetInstance().UpdateTime(addr_);
         
-        auto task = std::bind(&BlockSync::EraseSyncState, &(SingletonBlockSync::GetInstance()), std::placeholders::_1);
-        SingletonThreadPool::GetInstance().AddTask(std::function<void(NodeId)>(task), id_);
+        if (SingletonBlockSync::GetInstance().GetSyncState(id_)) {
+            auto task = std::bind(&BlockSync::EraseSyncState, &(SingletonBlockSync::GetInstance()), std::placeholders::_1);
+            SingletonThreadPool::GetInstance().AddTask(std::function<void(NodeId)>(task), id_);
+        }
     }
 }
 
@@ -52,7 +55,6 @@ void Node::InactivityTimeoutCb(std::shared_ptr<Node> node)
 
     BTCLOG(LOG_LEVEL_WARNING) << "Node " << node->id() << " inactive timeout.";
     node->set_disconnected(true);
-    SingletonNodes::GetInstance().EraseNode(node);
 }
 
 void Node::PingTimeoutCb(std::shared_ptr<Node> node)
@@ -66,6 +68,40 @@ void Node::PingTimeoutCb(std::shared_ptr<Node> node)
     }
     
     
+}
+
+bool Node::CheckBanned()
+{
+    BlockSyncState *state = SingletonBlockSync::GetInstance().GetSyncState(id_);
+    if (!state)
+        return false;
+    
+    if (!state->basic_state().should_ban())
+        return false;
+    
+    state->mutable_basic_state()->set_should_ban(false);
+    if (manual_) {
+        BTCLOG(LOG_LEVEL_WARNING) << "Can not punishing manually-connected peer "
+                                  << addr_.ToString();
+    }
+    else {
+        set_disconnected(true);
+        if (addr_.IsLocal()) {
+            BTCLOG(LOG_LEVEL_WARNING) << "Can not banning local peer "
+                                      << addr_.ToString();
+        }
+        else {
+            SingletonBanDb::GetInstance().Add(addr_, BanDb::NodeMisbehaving);
+        }
+    }
+    
+    return true;
+}
+
+void Node::set_disconnected(bool disconnected)
+{
+    disconnected_ = disconnected;
+    SingletonNodes::GetInstance().EraseNode(id_);
 }
 
 void Nodes::AddNode(std::shared_ptr<Node> node)
@@ -136,11 +172,13 @@ void Nodes::EraseNode(std::shared_ptr<Node> node)
 void Nodes::EraseNode(NodeId id)
 {
     LOCK(cs_nodes_);
-    for (auto it = list_.begin(); it != list_.end(); ++it)
+    for (auto it = list_.begin(); it != list_.end(); ++it) {
         if ((*it)->id() == id) {
             list_.erase(it);
             BTCLOG(LOG_LEVEL_VERBOSE) << "Cleared node " << id;
+            break;
         }
+    }
 }
 
 void Nodes::ClearDisconnected()

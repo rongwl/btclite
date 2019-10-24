@@ -132,20 +132,17 @@ void Acceptor::CheckingTimeoutCb(evutil_socket_t fd, short event, void *arg)
                                << pnode->time_last_recv() << " " << pnode->time_last_send()
                                << " from " << pnode->id();
         pnode->set_disconnected(true);
-        SingletonNodes::GetInstance().EraseNode(pnode);
     }
     else if (now - pnode->time_last_send() > kConnTimeoutInterval)
     {
         BTCLOG(LOG_LEVEL_INFO) << "socket sending timeout: " << (now - pnode->time_last_send());
         pnode->set_disconnected(true);
-        SingletonNodes::GetInstance().EraseNode(pnode);
     }
     else if (now - pnode->time_last_recv() > (pnode->version() > 
              btclite::network::protocol::kBip31Version ? kConnTimeoutInterval : 90*60))
     {
         BTCLOG(LOG_LEVEL_INFO) << "socket receive timeout: " << (now - pnode->time_last_recv());
         pnode->set_disconnected(true);
-        SingletonNodes::GetInstance().EraseNode(pnode);
     }
     else if (pnode->ping_time().ping_nonce_sent &&
              pnode->ping_time().ping_usec_start + kConnTimeoutInterval * 1000000 < 
@@ -154,12 +151,10 @@ void Acceptor::CheckingTimeoutCb(evutil_socket_t fd, short event, void *arg)
         BTCLOG(LOG_LEVEL_INFO) << "ping timeout: " 
                                << (now - pnode->ping_time().ping_usec_start / 1000000);
         pnode->set_disconnected(true);
-        SingletonNodes::GetInstance().EraseNode(pnode);
     }
     else if (!pnode->conn_established())
     {
         BTCLOG(LOG_LEVEL_INFO) << "version handshake timeout from " << pnode->id();
         pnode->set_disconnected(true);
-        SingletonNodes::GetInstance().EraseNode(pnode);
     }
 }

@@ -10,106 +10,19 @@
 
 using NodeId = int64_t;
 
-class BlockReject {
-public:
-    uint8_t reject_code() const
-    {
-        LOCK(cs_);
-        return rejec_code_;
-    }
-    void set_reject_code(uint8_t code)
-    {
-        LOCK(cs_);
-        rejec_code_ = code;
-    }
-    
-    std::string reject_reason() const // thread safe copy
-    {
-        LOCK(cs_);
-        return reject_reason_;
-    }
-    void set_reject_reason(const std::string& reason)
-    {
-        LOCK(cs_);
-        reject_reason_ = reason;
-    }
-    void set_reject_reason(std::string&& reason) noexcept
-    {
-        LOCK(cs_);
-        reject_reason_ = std::move(reason);
-    }
-    
-    Hash256 block_hash() const // thread safe copy
-    {
-        LOCK(cs_);
-        return block_hash_;
-    }
-    void set_block_hash(const Hash256& hash)
-    {
-        LOCK(cs_);
-        block_hash_ = hash;
-    }
-    void set_block_hash(Hash256&& hash) noexcept
-    {
-        LOCK(cs_);
-        block_hash_ = std::move(hash);
-    }
-
-private:
-    mutable CriticalSection cs_;
-    uint8_t rejec_code_ = 0;
-    std::string reject_reason_;
-    Hash256 block_hash_;
+struct BlockReject {
+    uint8_t reject_code = 0;
+    std::string reject_reason;
+    Hash256 block_hash;
 };
 
 /* Blocks that are in flight, and that are in the queue to be downloaded. */
-class QueuedBlock {
-public:
-    Hash256 hash() const // thread safe copy
-    {
-        LOCK(cs_);
-        return hash_;
-    }
-    void set_hash(const Hash256& hash)
-    {
-        LOCK(cs_);
-        hash_ = hash;
-    }
-    void set_hash(Hash256&& hash)
-    {
-        LOCK(cs_);
-        hash_ = std::move(hash);
-    }
-    
-    const BlockIndex *index() const
-    {
-        LOCK(cs_);
-        return index_;
-    }
-    void set_index(const BlockIndex *index)
-    {
-        LOCK(cs_);
-        index_ = index;
-    }
-    
-    bool has_validated_headers() const
-    {
-        LOCK(cs_);
-        return has_validated_headers_;
-    }
-    void set_has_validated_headers(bool has_validated_headers) 
-    {
-        LOCK(cs_);
-        has_validated_headers_ = has_validated_headers;
-    }
-    
-private:
-    mutable CriticalSection cs_;
-    Hash256 hash_;
-    const BlockIndex* index_ = nullptr;
+struct QueuedBlock {
+    Hash256 hash;
+    const BlockIndex* index = nullptr;
     
     // Whether this block has validated headers at the time of request.
-    bool has_validated_headers_;
+    bool has_validated_headers;
     
     // Optional, used for CMPCTBLOCK downloads
     //std::unique_ptr<PartiallyDownloadedBlock> partialBlock;
@@ -187,14 +100,23 @@ public:
         unconnecting_headers_len_ = unconnecting_headers_len;
     }
     
-    const std::vector<BlockReject>& rejects() const
+    std::vector<BlockReject> rejects() const // thread safe copy
     {
+        LOCK(cs_);
         return rejects_;
     }
-    std::vector<BlockReject> *mutable_rejects()
+    
+    void AddBlockReject(const BlockReject& reject)
     {
-        return &rejects_;
+        LOCK(cs_);
+        rejects_.push_back(reject);
     }
+    void AddBlockReject(BlockReject&& reject)
+    {
+        LOCK(cs_);
+        rejects_.push_back(std::move(reject));
+    }
+
 
 private:
     mutable CriticalSection cs_;
@@ -308,7 +230,6 @@ public:
     
     const SyncTimeoutState& timeout_state() const
     {
-        LOCK(cs_);
         return timeout_state_;
     }
     SyncTimeoutState *mutable_timeout_state()
@@ -402,13 +323,21 @@ class BlocksInFlight {
 public:
     using iterator = std::list<QueuedBlock>::iterator;
     
-    const std::list<QueuedBlock>& list() const
+    std::list<QueuedBlock> list() const // thread safe copy
     {
+        LOCK(cs_);
         return list_;
     }
-    std::list<QueuedBlock> *mutable_list()
+    
+    void AddQueuedBlock(const QueuedBlock& queued_block)
     {
-        return &list_;
+        LOCK(cs_);
+        list_.push_back(queued_block);
+    }
+    void AddQueuedBlock(QueuedBlock&& queued_block)
+    {
+        LOCK(cs_);
+        list_.push_back(std::move(queued_block));
     }
     
     int64_t downloading_since() const
@@ -649,7 +578,6 @@ public:
     void EraseSyncState(NodeId id);
     bool ShouldUpdateTime(NodeId id);
     void Misbehaving(NodeId id, int howmuch);
-    bool CheckBanned(NodeId id);    
 
 private:
     mutable CriticalSection cs_block_sync_;

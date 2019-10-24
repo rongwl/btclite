@@ -107,7 +107,8 @@ public:
     
     //-------------------------------------------------------------------------
     static void InactivityTimeoutCb(std::shared_ptr<Node> node);
-    static void PingTimeoutCb(std::shared_ptr<Node> node);
+    static void PingTimeoutCb(std::shared_ptr<Node> node);    
+    bool CheckBanned();
     
     //-------------------------------------------------------------------------
     int64_t time_connected() const
@@ -185,10 +186,7 @@ public:
         return disconnected_;
     }
     
-    void set_disconnected(bool disconnected)
-    {
-        disconnected_ = disconnected;
-    }
+    void set_disconnected(bool disconnected);
     
     int64_t time_last_send() const
     {

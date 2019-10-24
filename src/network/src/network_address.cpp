@@ -328,15 +328,15 @@ void NetAddr::SetIpv4(uint32_t net_byte_order_ip)
     proto_addr_.set_ip(3, net_byte_order_ip);
 }
 
-int NetAddr::GetIpv6(uint8_t *out) const
+bool NetAddr::GetIpv6(uint8_t *out) const
 {
     ASSERT_SIZE();
     if (!IsIpv6())
-        return -1;
+        return false;
     
     std::memcpy(out, proto_addr_.ip().begin(), kIpByteSize);
     
-    return 0;
+    return true;
 }
 
 void NetAddr::SetIpv6(const uint8_t *src)

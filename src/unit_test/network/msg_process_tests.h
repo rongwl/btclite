@@ -1,0 +1,31 @@
+#include <gtest/gtest.h>
+#include <event2/event.h>
+#include <event2/bufferevent.h>
+#include <event2/buffer.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
+#include "constants.h"
+#include "network_address.h"
+
+
+void ReadCb(struct bufferevent *bev, void *ctx);
+
+class FixtureMsgProcessTest : public ::testing::Test {
+protected:
+    void SetUp() override {
+        base_ = event_base_new();
+        if (!base_)
+            return;
+        
+        if (bufferevent_pair_new(base_, BEV_OPT_CLOSE_ON_FREE, pair_) != 0)
+            return;
+        
+        addr_.SetIpv4(inet_addr("1.2.3.4"));
+    }
+    
+    struct event_base *base_ = nullptr;
+    struct bufferevent *pair_[2] = {};
+    btclite::network::NetAddr addr_;
+};

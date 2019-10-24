@@ -15,12 +15,7 @@ TEST(SerializerTest, SerializeArithmetic)
     
     ostream << dinput << finput << iinput;
     vec.assign(ostream.vec().begin(), ostream.vec().end());
-    try {
-        istream >> doutput >> foutput >> ioutput;
-    }
-    catch (const std::exception& e) {
-        FAIL() << "Exception:" << e.what();
-    }
+    EXPECT_NO_THROW(istream >> doutput >> foutput >> ioutput);
     EXPECT_EQ(dinput, doutput);
     EXPECT_EQ(finput, foutput);
     EXPECT_EQ(iinput, ioutput);
@@ -36,22 +31,12 @@ TEST(SerializerTest, SerializeString)
     
     ostream << input;
     vec.assign(ostream.vec().begin(), ostream.vec().end());
-    try {
-        istream >> output;
-    }
-    catch (const std::exception& e) {
-        FAIL() << "Exception:" << e.what();
-    }
+    EXPECT_NO_THROW(istream >> output);
     EXPECT_EQ(input, output);
     
     input.clear();
     ostream << input;
-    try {
-        istream >> output;
-    }
-    catch (const std::exception& e) {
-        FAIL() << "Exception:" << e.what();
-    }
+    EXPECT_NO_THROW(istream >> output);
     EXPECT_EQ(input, output);
 }
 
@@ -67,12 +52,7 @@ TEST(SerializerTest, SerializeArithmeticArray)
     
     ostream << iinput << finput << dinput;
     vec.assign(ostream.vec().begin(), ostream.vec().end());
-    try {
-        istream >> ioutput >> foutput >> doutput;
-    }
-    catch (const std::exception& e) {
-        FAIL() << "Exception:" << e.what();
-    }
+    EXPECT_NO_THROW(istream >> ioutput >> foutput >> doutput);
     EXPECT_EQ(iinput, ioutput);
     EXPECT_EQ(dinput, doutput);
     EXPECT_EQ(finput, foutput);
@@ -90,12 +70,7 @@ TEST(SerializerTest, SerializeArithmeticVector)
     
     ostream << iinput << finput << dinput;
     vec.assign(ostream.vec().begin(), ostream.vec().end());
-    try {
-        istream >> ioutput >> foutput >> doutput;
-    }
-    catch (const std::exception& e) {
-        FAIL() << "Exception:" << e.what();
-    }
+    EXPECT_NO_THROW(istream >> ioutput >> foutput >> doutput);
     EXPECT_EQ(iinput, ioutput);
     EXPECT_EQ(dinput, doutput);
     EXPECT_EQ(finput, foutput);
@@ -111,12 +86,7 @@ TEST(SerializerTest, SerializeClassVector)
     
     ostream << input;
     vec.assign(ostream.vec().begin(), ostream.vec().end());
-    try {
-        istream >> output;
-    }
-    catch (const std::exception& e) {
-        FAIL() << "Exception:" << e.what();
-    }
+    EXPECT_NO_THROW(istream >> output);
     EXPECT_EQ(input, output);
 }
 

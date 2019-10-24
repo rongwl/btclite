@@ -22,24 +22,21 @@ BlockSyncState *BlockSync::GetSyncState(NodeId id)
 
 void BlockSync::EraseSyncState(NodeId id)
 {
-    LOCK(cs_block_sync_);
-    
-    auto it = map_sync_state_.find(id);
-    if (it == map_sync_state_.end())
+    BlockSyncState *state = GetSyncState(id);
+    if (!state)
         return;
-    BlockSyncState& state = it->second;
     
-    if (state.basic_state().sync_started())
+    if (state->basic_state().sync_started())
         sync_started_count_--;
     
-    for (const QueuedBlock& entry : state.blocks_in_flight().list()) {
-        map_block_in_flight_.erase(entry.hash());
+    for (const QueuedBlock& entry : state->blocks_in_flight().list()) {
+        map_block_in_flight_.erase(entry.hash);
     }    
     SingletonOrphans::GetInstance().EraseOrphansFor(id);
-    preferred_download_count_ -= state.download_state().preferred_download() ? 1 : 0;
-    validated_download_count_ -= (state.blocks_in_flight().valid_headers_count() != 0) ? 1 : 0;
+    preferred_download_count_ -= state->download_state().preferred_download() ? 1 : 0;
+    validated_download_count_ -= (state->blocks_in_flight().valid_headers_count() != 0) ? 1 : 0;
     assert(validated_download_count_ >= 0);
-    protected_outbound_count_ -= state.time_state().timeout_state().protect() ? 1 : 0;
+    protected_outbound_count_ -= state->time_state().timeout_state().protect() ? 1 : 0;
     assert(protected_outbound_count_ >= 0);
 
     map_sync_state_.erase(id);
@@ -71,35 +68,21 @@ void BlockSync::Misbehaving(NodeId id, int howmuch)
     if (howmuch == 0)
         return;
     
-    LOCK(cs_block_sync_);
-    auto it = map_sync_state_.find(id);
-    if (it == map_sync_state_.end())
+    BlockSyncState *state = GetSyncState(id);
+    if (!state)
         return;
     
-    auto score = it->second.stats().misbehavior_score();
-    it->second.mutable_stats()->set_misbehavior_score(score + howmuch);
-    if (it->second.stats().misbehavior_score() >= kDefaultBanscoreThreshold &&
-            it->second.stats().misbehavior_score() - howmuch < kDefaultBanscoreThreshold) {
-        it->second.mutable_basic_state()->set_should_ban(true);
+    auto score = state->stats().misbehavior_score();
+    state->mutable_stats()->set_misbehavior_score(score + howmuch);
+    if (state->stats().misbehavior_score() >= kDefaultBanscoreThreshold &&
+            state->stats().misbehavior_score() - howmuch < kDefaultBanscoreThreshold) {
+        state->mutable_basic_state()->set_should_ban(true);
         BTCLOG(LOG_LEVEL_INFO) << "ban threshold exceeded, peer:" << id << " misbehavior_score:"
-                               << it->second.stats().misbehavior_score();
+                               << state->stats().misbehavior_score();
     }
     else
         BTCLOG(LOG_LEVEL_INFO) << "peer " << id << " misbehavior, score:" 
-                               << it->second.stats().misbehavior_score();
-}
-
-bool BlockSync::CheckBanned(NodeId id)
-{
-    LOCK(cs_block_sync_);
-    
-    auto it = map_sync_state_.find(id);
-    if (it == map_sync_state_.end())
-        return false;
-    
-    //it->second.mutable_basic_state()->should_ban = banned;
-    
-    return true;
+                               << state->stats().misbehavior_score();
 }
 
 bool Orphans::AddOrphanTx(OrphanTx::TxSharedPtr tx, NodeId id)

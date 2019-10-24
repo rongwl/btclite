@@ -10,7 +10,7 @@
 template <size_t size>
 using Bytes = std::array<uint8_t, size>;
 
-/** Template class for fixed-sized opaque blobs. (Little endian) */
+/* Template class for fixed-sized opaque blobs. */
 template <uint32_t nBITS>
 class Blob : public Bytes<nBITS/8> {
 public:    

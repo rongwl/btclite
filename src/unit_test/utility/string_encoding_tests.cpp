@@ -29,16 +29,13 @@ TEST(StringEncodingTest, EncodeHex)
 
 TEST(StringEncodingTest, DecodeHex)
 {
-    std::vector<uint8_t> result;
     std::vector<uint8_t> expected(hex_expected, hex_expected + sizeof(hex_expected));
     
     // Basic test vector
-    DecodeHex("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f",
-              &result);
-    EXPECT_EQ(expected, result);
+    EXPECT_EQ(expected, DecodeHex("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f"));
     
     // Spaces between bytes must be supported
-    DecodeHex("12 34 56 78", &result);
+    std::vector<uint8_t> result = std::move(DecodeHex("12 34 56 78"));
     ASSERT_EQ(result.size(), 4);
     EXPECT_EQ(result[0], 0x12);
     EXPECT_EQ(result[1], 0x34);
@@ -46,7 +43,7 @@ TEST(StringEncodingTest, DecodeHex)
     EXPECT_EQ(result[3], 0x78);
     
     // Leading space must be supported (used in CDBEnv::Salvage)
-    DecodeHex(" 89 34 56 78", &result);
+    result = std::move(DecodeHex(" 89 34 56 78"));
     ASSERT_EQ(result.size(), 4);
     EXPECT_EQ(result[0], 0x89);
     EXPECT_EQ(result[1], 0x34);
@@ -54,7 +51,7 @@ TEST(StringEncodingTest, DecodeHex)
     EXPECT_EQ(result[3], 0x78);
 
     // Stop parsing at invalid value
-    DecodeHex("1234 invalid 1234", &result);
+    result = std::move(DecodeHex("1234 invalid 1234"));
     ASSERT_EQ(result.size(), 2);
     EXPECT_EQ(result[0], 0x12);
     EXPECT_EQ(result[1], 0x34);

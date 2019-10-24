@@ -45,11 +45,15 @@ constexpr VersionCode kProtocolVersion = kInvalidCbNoBanVersion;
 constexpr VersionCode kMinPeerProtoVersion = kGetheadersVersion;
 
 class Version : public MessageData {
-public:
-    static const std::string kCommand;
+public:    
+    bool RecvHandler(std::shared_ptr<Node> src_node) const;
+    
+    std::string Command() const
+    {
+        return kMsgVersion;
+    }
     
     //-------------------------------------------------------------------------
-    bool RecvHandler(std::shared_ptr<Node> src_node) const;
     bool IsValid() const;
     void Clear();
     size_t SerializedSize() const;

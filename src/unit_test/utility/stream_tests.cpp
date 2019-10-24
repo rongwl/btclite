@@ -16,12 +16,7 @@ TEST(MemIOstreamTest, OperatorIO)
     
     ostream << 11 << 22 << str_input << arr_input;
     vec.assign(ostream.vec().begin(), ostream.vec().end());
-    try {
-        istream >> num1 >> num2 >> str_output >> arr_output;
-    }
-    catch (const std::exception& e) {
-        FAIL() << "Exception:" << e.what();
-    }    
+    EXPECT_NO_THROW(istream >> num1 >> num2 >> str_output >> arr_output);
     EXPECT_EQ(num1, 11);
     EXPECT_EQ(num2, 22);
     EXPECT_EQ(str_output, str_input);

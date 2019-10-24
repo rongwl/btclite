@@ -5,8 +5,6 @@ namespace btclite {
 namespace network {
 namespace protocol {
 
-const std::string Reject::kCommand = kMsgReject;
-
 bool Reject::RecvHandler(std::shared_ptr<Node> src_node) const
 {
     return true;

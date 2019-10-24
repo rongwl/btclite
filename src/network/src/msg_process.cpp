@@ -78,7 +78,8 @@ bool ParseMsg(std::shared_ptr<Node> src_node)
     while (raw) {
         MessageHeader header;
         if (!header.Init(raw)) {
-            BTCLOG(LOG_LEVEL_ERROR) << "Received invalid message header from peer " << src_node->id();
+            BTCLOG(LOG_LEVEL_ERROR) << "Received invalid message header from peer " 
+                                    << src_node->id();
             return false;
         }
         evbuffer_drain(buf, MessageHeader::kSize);
@@ -86,7 +87,8 @@ bool ParseMsg(std::shared_ptr<Node> src_node)
         raw = evbuffer_pullup(buf, header.payload_length());
         MessageData *message = MsgDataFactory(header, raw);
         if (!message) {
-            BTCLOG(LOG_LEVEL_ERROR) << "Prasing message data from peer " << src_node->id() << " failed.";
+            BTCLOG(LOG_LEVEL_ERROR) << "Prasing message data from peer "
+                                    << src_node->id() << " failed.";
             return false;
         }
         evbuffer_drain(buf, header.payload_length());
@@ -103,7 +105,7 @@ bool ParseMsg(std::shared_ptr<Node> src_node)
     return true;
 }
 
-bool SendVerMsg(std::shared_ptr<Node> dst_node)
+bool SendVersion(std::shared_ptr<Node> dst_node)
 {
     ServiceFlags services = dst_node->services();
     uint32_t start_height = dst_node->start_height();
@@ -128,6 +130,27 @@ bool SendVerMsg(std::shared_ptr<Node> dst_node)
     BTCLOG(LOG_LEVEL_INFO) << "Send version message: version " << kProtocolVersion 
                            << ", start_height=" << start_height << ", addr_recv=" << addr_recv.ToString() 
                            << ", peer=" << dst_node->id();
+    
+    return true;
+}
+
+bool SendRejects(std::shared_ptr<Node> dst_node)
+{
+    BlockSyncState *state = SingletonBlockSync::GetInstance().GetSyncState(dst_node->id());
+    Reject reject;
+    
+    if (!state)
+        return false;
+    
+    std::vector<BlockReject> rejects(std::move(state->stats().rejects()));
+    for (auto it = rejects.begin(); it != rejects.end(); ++it) {
+        reject.Clear();
+        reject.set_message(std::move(std::string(kMsgBlock)));
+        reject.set_ccode(it->reject_code);
+        reject.set_reason(std::move(it->reject_reason));
+        reject.set_data(std::move(it->block_hash));
+        SendMsg(reject, dst_node);
+    }
     
     return true;
 }

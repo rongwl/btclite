@@ -193,7 +193,7 @@ public:
     Deserializer(Stream& s)
         : stream_(s) {}
     
-    // interface for unserialize
+    // interface for Deserialize
     template <typename T>
     void SerialRead(T *obj)
     {

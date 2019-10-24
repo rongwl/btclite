@@ -18,9 +18,10 @@ namespace hash {
 
 void Sha256(const uint8_t in[], size_t length, Hash256 *out);
 void Sha256(const std::vector<uint8_t>& in, Hash256 *out);
+
 void DoubleSha256(const uint8_t in[], size_t length, Hash256 *out);
-void DoubleSha256(const std::vector<uint8_t>& in, Hash256 *out);
-void DoubleSha256(const std::string& in, Hash256 *out);
+void DoubleSha256(const std::vector<uint8_t> &in, Hash256 *out);
+void DoubleSha256(const std::string &in, Hash256 *out);
 
 } // namespace hash
 } // namespace crypto
@@ -35,7 +36,7 @@ public:
     HashOStream()
         : vec_(), byte_sink_(vec_) {}
     
-    void Sha256(Hash256 *out);
+    void Sha256(Hash256 *out);    
     void DoubleSha256(Hash256 *out);
     
     template <typename T>
