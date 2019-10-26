@@ -61,3 +61,11 @@ bool MessageHeader::IsValid() const
     
     return true;
 }
+
+void MessageHeader::Clear()
+{
+    magic_ = 0;
+    std::memset(command_.begin(), 0, kCommandSize);
+    payload_length_ = 0;
+    checksum_ = 0;
+}

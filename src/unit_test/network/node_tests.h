@@ -23,8 +23,8 @@ protected:
     Nodes nodes_;
     btclite::network::NetAddr addr1_;
     btclite::network::NetAddr addr2_;
-    NodeId id1_;
-    NodeId id2_;
+    NodeId id1_ = 0;
+    NodeId id2_ = 0;
 };
 
 class FixtureNodeTest : public ::testing::Test {
@@ -37,5 +37,5 @@ protected:
     }
     
     btclite::network::NetAddr addr_;
-    NodeId id_;
+    NodeId id_ = 0;
 };

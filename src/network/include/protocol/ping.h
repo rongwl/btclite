@@ -11,6 +11,12 @@ namespace protocol {
 
 class Ping : public MessageData {
 public:
+    Ping() = default;
+    
+    explicit Ping(uint64_t nonce)
+        : nonce_(nonce) {}
+    
+    //-------------------------------------------------------------------------
     bool RecvHandler(std::shared_ptr<Node> src_node) const;
     
     std::string Command() const

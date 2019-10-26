@@ -29,19 +29,22 @@ public:
         prev_hash_.Clear();
         index_ = std::numeric_limits<uint32_t>::max();
     }
+    
     bool IsNull() const
     {
         return (prev_hash_.IsNull() && index_ == std::numeric_limits<uint32_t>::max());
     }
+    
     size_t Size() const
     {
         return prev_hash_.size() + sizeof(index_);
     }
+    
     std::string ToString() const
     {
         std::stringstream ss;
         ss << "OutPoint(" << prev_hash_.ToString().substr(0, 10) << ", " << index_ << ")";
-        return ss.str();
+        return std::move(ss.str());
     }
     
     //-------------------------------------------------------------------------
@@ -49,24 +52,29 @@ public:
     {
         return (a.prev_hash_ == b.prev_hash_ && a.index_ == b.index_);
     }
+    
     friend bool operator!=(const OutPoint& a, const OutPoint& b)
     {
         return !(a == b);
     }
+    
     friend bool operator<(const OutPoint& a, const OutPoint& b)
     {
         return (a < b || (a == b && a.index_ < b.index_));
     }
+    
     friend bool operator>(const OutPoint& a, const OutPoint& b)
     {
         return (a > b || (a == b && a.index_ > b.index_));
     }
+    
     OutPoint& operator=(const OutPoint& b)
     {
         prev_hash_ = b.prev_hash_;
         index_ = b.index_;
         return *this;
     }
+    
     OutPoint& operator=(OutPoint&& b) noexcept
     {
         if (this != &b) {
@@ -84,6 +92,7 @@ public:
         serializer.SerialWrite(prev_hash_);
         serializer.SerialWrite(index_);
     }
+    
     template <typename Stream>
     void Deserialize(Stream& is)
     {
@@ -159,6 +168,7 @@ public:
         serializer.SerialWrite(script_sig_);
         serializer.SerialWrite(sequence_no_);
     }
+    
     template <typename Stream>
     void Deserialize(Stream& is)
     {
@@ -175,10 +185,12 @@ public:
                 script_sig_ == b.script_sig_ &&
                 sequence_no_ == b.sequence_no_);
     }
+    
     bool operator!=(const TxIn& b) const
     {
         return !(*this == b);
     }
+    
     TxIn& operator=(const TxIn& b)
     {
         prevout_ = b.prevout_;
@@ -186,6 +198,7 @@ public:
         sequence_no_ = b.sequence_no_;
         return *this;
     }
+    
     TxIn& operator=(TxIn&& b) noexcept
     {
         if (this != &b) {
@@ -198,10 +211,12 @@ public:
     
     //-------------------------------------------------------------------------
     std::string ToString() const;
+    
     size_t SerializedSize() const
     {
         return prevout_.Size() + script_sig_.SerializedSize() + sizeof(sequence_no_);
     }
+    
     bool HasWitness() const
     {
         return false;
@@ -290,21 +305,14 @@ public:
         value_ = null_value;
         script_pub_key_.clear();
     }
+    
     bool IsNull()
     {
         return value_ == null_value;
     }
-    std::string ToString() const
-    {
-        std::stringstream ss;
-        ss << "TxOut(value=" << (value_ / kSatoshiPerBitcoin) << "."
-           << std::setw(8) << std::setfill('0') << (value_ % kSatoshiPerBitcoin) << ", "
-           << "scriptPubKey=" 
-           << btclite::utility::string_encoding::EncodeHex(script_pub_key_.begin(),
-                   script_pub_key_.end()) 
-           << ")";
-        return ss.str();
-    }
+    
+    std::string ToString() const;
+    
     size_t SerializedSize() const
     {
         return script_pub_key_.SerializedSize() + sizeof(value_);
@@ -436,10 +444,12 @@ public:
     {
         return inputs_.empty() && outputs_.empty();
     }
+    
     bool IsCoinBase() const
     {
         return (inputs_.size() == 1 && inputs_[0].prevout().IsNull());
     }
+    
     size_t SerializedSize() const;
     uint64_t OutputsAmount() const;
     std::string ToString() const;

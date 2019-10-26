@@ -17,7 +17,19 @@ std::string TxIn::ToString() const
         ss << ", sequence_no=" << sequence_no_;
     ss << ")";
     
-    return ss.str();
+    return std::move(ss.str());
+}
+
+std::string TxOut::ToString() const
+{
+    std::stringstream ss;
+    ss << "TxOut(value=" << (value_ / kSatoshiPerBitcoin) << "."
+       << std::setw(8) << std::setfill('0') << (value_ % kSatoshiPerBitcoin) << ", "
+       << "scriptPubKey=" 
+       << btclite::utility::string_encoding::EncodeHex(script_pub_key_.begin(),
+               script_pub_key_.end()) 
+       << ")";
+    return std::move(ss.str());
 }
 
 template <typename Stream>
@@ -109,7 +121,7 @@ std::string Transaction::ToString() const
     for (const auto& tx_out : outputs_)
         ss << "    " << tx_out.ToString() << "\n";
     
-    return ss.str();
+    return std::move(ss.str());
 }
 
 const Hash256& Transaction::Hash() const

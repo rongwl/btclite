@@ -27,7 +27,7 @@ public:
     {
         std::stringstream ss;
         ss << mutex_name_ << " " << file_ << ":" << line_ << (is_try_ ? " (TRY)" : "");
-        return ss.str();
+        return std::move(ss.str());
     }
     std::string MutexName() const
     {

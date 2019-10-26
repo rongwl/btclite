@@ -45,7 +45,29 @@ constexpr VersionCode kProtocolVersion = kInvalidCbNoBanVersion;
 constexpr VersionCode kMinPeerProtoVersion = kGetheadersVersion;
 
 class Version : public MessageData {
-public:    
+public:
+    Version() = default;
+    
+    Version(uint32_t version, uint64_t services, uint64_t timestamp,
+            const btclite::network::NetAddr& addr_recv,
+            const btclite::network::NetAddr& addr_from,
+            uint64_t nonce, const std::string& user_agent,
+            uint32_t start_height, bool relay)
+        : version_(version), services_(services), timestamp_(timestamp),
+          addr_recv_(addr_recv), addr_from_(addr_from), nonce_(nonce),
+          user_agent_(user_agent), start_height_(start_height), relay_(relay) {}
+    
+    Version(uint32_t version, uint64_t services, uint64_t timestamp,
+            btclite::network::NetAddr&& addr_recv,
+            btclite::network::NetAddr&& addr_from,
+            uint64_t nonce, std::string&& user_agent,
+            uint32_t start_height, bool relay) noexcept
+        : version_(version), services_(services), timestamp_(timestamp),
+          addr_recv_(std::move(addr_recv)), addr_from_(std::move(addr_from)),
+          nonce_(nonce), user_agent_(std::move(user_agent)),
+          start_height_(start_height), relay_(relay) {}
+    
+    //-------------------------------------------------------------------------
     bool RecvHandler(std::shared_ptr<Node> src_node) const;
     
     std::string Command() const

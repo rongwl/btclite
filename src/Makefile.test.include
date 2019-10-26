@@ -56,6 +56,10 @@ unit_test_test_network_SOURCES = unit_test/network/test_network.cpp \
                                  unit_test/network/block_sync_tests.h \
                                  unit_test/network/msg_process.h \
                                  unit_test/network/node_tests.h \
+                                 unit_test/network/protocol/message_tests.h \
+                                 unit_test/network/protocol/version_tests.h \
+                                 unit_test/network/protocol/ping_tests.h \
+                                 unit_test/network/protocol/reject_tests.h \
                                  unit_test/network/socket_tests.h
 
 unit_test_test_network_CPPFLAGS = $(AM_CPPFLAGS) \

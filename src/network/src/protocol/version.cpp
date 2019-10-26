@@ -1,12 +1,24 @@
 #include "protocol/version.h"
 
+#include "msg_process.h"
+#include "protocol/reject.h"
+
 
 namespace btclite {
 namespace network {
 namespace protocol{
 
+using namespace btclite::network::msg_process;
+
 bool Version::RecvHandler(std::shared_ptr<Node> src_node) const
 {
+    if (src_node->version() != 0) {
+        Reject reject(Command(), kRejectDuplicate, "Duplicate version message");
+        SendMsg(reject, src_node);
+        SingletonBlockSync::GetInstance().Misbehaving(src_node->id(), 1);
+        return false;
+    }
+    
     return true;
 }
 

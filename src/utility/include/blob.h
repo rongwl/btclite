@@ -67,7 +67,7 @@ public:
     //-------------------------------------------------------------------------    
     std::string ToString() const
     {
-        return Hex();
+        return std::move(Hex());
     }
 
     uint64_t Uint64(int pos) const
@@ -85,7 +85,7 @@ public:
     
     std::string Hex() const
     {
-        return btclite::utility::string_encoding::EncodeHex(this->begin(), this->end());
+        return std::move(btclite::utility::string_encoding::EncodeHex(this->begin(), this->end()));
     }
     /*void SetHex(const std::string& str)
     {

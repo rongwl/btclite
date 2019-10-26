@@ -11,7 +11,7 @@ using namespace btclite::network::protocol;
 
 namespace btclite {
 namespace network {
-namespace msgprocess{
+namespace msg_process{
 
 MessageData *MsgDataFactory(const MessageHeader& header, const uint8_t *raw)
 {    
@@ -111,18 +111,13 @@ bool SendVersion(std::shared_ptr<Node> dst_node)
     uint32_t start_height = dst_node->start_height();
     btclite::network::NetAddr addr_recv(dst_node->addr());
     btclite::network::NetAddr addr_from;
-    Version ver_msg;
     
     addr_from.mutable_proto_addr()->set_services(services);
-    ver_msg.set_version(kProtocolVersion);
-    ver_msg.set_services(services);
-    ver_msg.set_timestamp(btclite::utility::util_time::GetTimeSeconds());
-    ver_msg.set_addr_recv(std::move(addr_recv));
-    ver_msg.set_addr_from(std::move(addr_from));
-    ver_msg.set_nonce(dst_node->local_host_nonce());
-    ver_msg.set_user_agent(std::move(FormatUserAgent()));
-    ver_msg.set_start_height(start_height);
-    ver_msg.set_relay(true);
+    Version ver_msg(kProtocolVersion, services,
+                    btclite::utility::util_time::GetTimeSeconds(),
+                    std::move(addr_recv), std::move(addr_from),
+                    dst_node->local_host_nonce(), std::move(FormatUserAgent()),
+                    start_height, true);
 
     if (!SendMsg(ver_msg, dst_node))
         return false;
@@ -155,6 +150,6 @@ bool SendRejects(std::shared_ptr<Node> dst_node)
     return true;
 }
 
-} // namespace msgprocess
+} // namespace msg_process
 } // namespace network
 } // namespace btclite

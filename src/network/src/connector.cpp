@@ -262,7 +262,7 @@ bool Connector::ConnectNode(const btclite::network::NetAddr& addr, bool manual)
     
     BTCLOG(LOG_LEVEL_VERBOSE) << "Connected to " << addr.ToString() << ':' << addr.proto_addr().port();
     
-    btclite::network::msgprocess::SendVersion(node);
+    btclite::network::msg_process::SendVersion(node);
     
     return true;
 }

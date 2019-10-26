@@ -26,6 +26,25 @@ enum CCode : uint8_t {
 
 class Reject : public MessageData {
 public:
+    Reject() = default;
+    
+    Reject(const std::string& message, uint8_t ccode, const std::string& reason)
+        : message_(message), ccode_(ccode), reason_(reason), data_() {}
+    
+    Reject(std::string&& message, uint8_t ccode, std::string&& reason) noexcept
+        : message_(std::move(message)), ccode_(ccode), reason_(std::move(reason)),
+          data_() {}
+    
+    Reject(const std::string& message, uint8_t ccode, const std::string& reason,
+           const Hash256& data)
+        : message_(message), ccode_(ccode), reason_(reason), data_(data) {}
+    
+    Reject(std::string&& message, uint8_t ccode, std::string&& reason,
+           const Hash256& data) noexcept
+        : message_(std::move(message)), ccode_(ccode), reason_(std::move(reason)),
+          data_(data) {}
+    
+    //-------------------------------------------------------------------------
     bool RecvHandler(std::shared_ptr<Node> src_node) const;
     
     std::string Command() const
@@ -91,10 +110,6 @@ public:
     void set_data(const Hash256& data)
     {
         data_ = data;
-    }
-    void set_data(Hash256&& data) noexcept
-    {
-        data_ = std::move(data);
     }    
     
 private:
@@ -113,12 +128,16 @@ void Reject::Serialize(Stream& out) const
         serializer.SerialWrite(message_.substr(0, MessageHeader::kCommandSize));
     else
         serializer.SerialWrite(message_);
+    
     serializer.SerialWrite(ccode_);
+    
     if (reason_.size() > kMaxRejectMessageLength)
         serializer.SerialWrite(reason_.substr(0, kMaxRejectMessageLength));
     else
         serializer.SerialWrite(reason_);
-    serializer.SerialWrite(data_);
+    
+    if (message_ == kMsgBlock || message_ == kMsgTx)
+        serializer.SerialWrite(data_);
 }
 
 template <typename Stream>
@@ -129,11 +148,15 @@ void Reject::Deserialize(Stream& in)
     deserializer.SerialRead(&message_);
     if (message_.size() > MessageHeader::kCommandSize)
         message_.resize(MessageHeader::kCommandSize);
+    
     deserializer.SerialRead(&ccode_);
-    deserializer.SerialRead(&reason_);
+    
+    deserializer.SerialRead(&reason_);    
     if (reason_.size() > kMaxRejectMessageLength)
         reason_.resize(kMaxRejectMessageLength);
-    deserializer.SerialRead(&data_);
+    
+    if (message_ == kMsgBlock || message_ == kMsgTx)
+        deserializer.SerialRead(&data_);
 }
 
 } // namespace protocol

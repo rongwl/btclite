@@ -75,6 +75,7 @@ public:
     std::string ToString() const;
     bool ToSockAddr(struct sockaddr* out) const;
     bool FromSockAddr(const struct sockaddr *in);
+    
     size_t SerializedSize() const
     {
         return sizeof(proto_addr_.timestamp()) + sizeof(proto_addr_.services()) +

@@ -109,7 +109,7 @@ void ConnReadCb(struct bufferevent *bev, void *ctx)
             timer_mng.StartTimer(timeout*1000, 0, Node::InactivityTimeoutCb, pnode);
     }
     
-    auto task = std::bind(btclite::network::msgprocess::ParseMsg, pnode);
+    auto task = std::bind(btclite::network::msg_process::ParseMsg, pnode);
     SingletonThreadPool::GetInstance().AddTask(std::function<bool()>(task));
 }
 

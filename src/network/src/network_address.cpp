@@ -237,7 +237,7 @@ std::string NetAddr::ToString() const
            << ((GetByte(8) << 8) | GetByte(9)) << ":" << ((GetByte(10) << 8) | GetByte(11)) << ":"
            << ((GetByte(12) << 8) | GetByte(13)) << ":" << ((GetByte(14) << 8) | GetByte(15));
     
-    return ss.str();
+    return std::move(ss.str());
 }
 
 bool NetAddr::ToSockAddr(struct sockaddr* out) const
@@ -518,7 +518,7 @@ std::string SubNet::ToString() const
                << (netmask_[12] << 8 | netmask_[13]) << ":" << (netmask_[14] << 8 | netmask_[15]);
     }
 
-    return net_addr_.ToString() + "/" + os.str();;
+    return std::move(net_addr_.ToString() + "/" + os.str());
 }
 
 /*

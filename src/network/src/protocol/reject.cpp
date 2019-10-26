@@ -35,17 +35,26 @@ void Reject::Clear()
 
 size_t Reject::SerializedSize() const
 {
-    return btclite::utility::serialize::VarIntSize(message_.size()) + message_.size() +
-           btclite::utility::serialize::VarIntSize(reason_.size()) + reason_.size() +
-           sizeof(ccode_) + data_.size();
+    size_t result = btclite::utility::serialize::VarIntSize(message_.size()) +
+                    btclite::utility::serialize::VarIntSize(reason_.size()) +
+                    message_.size() + reason_.size() + sizeof(ccode_);
+    if (message_ == kMsgBlock || message_ == kMsgTx)
+        result += data_.size();
+    
+    return result;
 }
 
 bool Reject::operator==(const Reject& b) const
 {
+    if (message_ == kMsgBlock || message_ == kMsgTx)
+        return (message_ == b.message_ &&
+                ccode_ == b.ccode_ &&
+                reason_ == b.reason_ &&
+                data_ == b.data_);
+    
     return (message_ == b.message_ &&
             ccode_ == b.ccode_ &&
-            reason_ == b.reason_ &&
-            data_ == b.data_);
+            reason_ == b.reason_);
 }
 
 bool Reject::operator!=(const Reject& b) const

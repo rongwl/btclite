@@ -9,7 +9,7 @@
 
 namespace btclite {
 namespace network {
-namespace msgprocess{
+namespace msg_process{
 
 MessageData *MsgDataFactory(const MessageHeader& header, const uint8_t *raw);
 bool ParseMsg(std::shared_ptr<Node> src_node);
@@ -17,7 +17,6 @@ bool ParseMsg(std::shared_ptr<Node> src_node);
 template <typename Message>
 bool SendMsg(const Message& msg, std::shared_ptr<Node> dst_node)
 {
-    MessageHeader header;
     MemOstream ms;
     HashOStream hs;
     Hash256 hash;
@@ -27,10 +26,8 @@ bool SendMsg(const Message& msg, std::shared_ptr<Node> dst_node)
 
     hs << msg;
     hs.Sha256(&hash);
-    header.set_magic(btclite::network::SingletonParams::GetInstance().msg_magic());
-    header.set_command(msg.Command());
-    header.set_payload_length(hs.vec().size());
-    header.set_checksum(hash.GetLow64());    
+    MessageHeader header(btclite::network::SingletonParams::GetInstance().msg_magic(),
+                         msg.Command(), hs.vec().size(), hash.GetLow64());
     ms << header;
     
     if (ms.vec().size() != MessageHeader::kSize) {
@@ -59,7 +56,7 @@ bool SendMsg(const Message& msg, std::shared_ptr<Node> dst_node)
 bool SendVersion(std::shared_ptr<Node> dst_node);
 bool SendRejects(std::shared_ptr<Node> dst_node);
 
-} // namespace msgprocess
+} // namespace msg_process
 } // namespace network
 } // namespace btclite
 

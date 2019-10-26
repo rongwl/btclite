@@ -90,7 +90,8 @@ TEST(ConnectorTest, ConnectOutbound)
 
 TEST(ConnectorTest, DnsLookup)
 {
-    const std::vector<Seed>& seeds = btclite::network::SingletonParams::GetInstance(BaseEnv::testnet).seeds();
+    const std::vector<Seed>& seeds = 
+        btclite::network::SingletonParams::GetInstance(BaseEnv::testnet).seeds();
     ASSERT_TRUE(SingletonPeers::GetInstance().IsEmpty());
     ASSERT_TRUE(Connector::DnsLookup(seeds));
     EXPECT_FALSE(SingletonPeers::GetInstance().IsEmpty());

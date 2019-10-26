@@ -12,13 +12,33 @@ public:
     static constexpr size_t kCommandSize = 12;
     static constexpr size_t kPayloadSize = 4;
     static constexpr size_t kChecksumSize = 4;
-    static constexpr size_t kSize = kMessageStartSize + kCommandSize + kPayloadSize + kChecksumSize;
+    static constexpr size_t kSize = kMessageStartSize + kCommandSize
+                                    + kPayloadSize + kChecksumSize;
     
     using MsgMagic = uint32_t;
+    
+    MessageHeader() = default;
+    
+    MessageHeader(uint32_t magic, const std::string& command,
+                  uint32_t payload_length, uint32_t checksum)
+        : magic_(magic), payload_length_(payload_length),
+          checksum_(checksum)
+    {
+        set_command(command);
+    }
+    
+    MessageHeader(uint32_t magic, std::string&& command,
+                  uint32_t payload_length, uint32_t checksum) noexcept
+        : magic_(magic), payload_length_(payload_length),
+          checksum_(checksum)
+    {
+        set_command(std::move(command));
+    }
     
     //-------------------------------------------------------------------------
     bool Init(const uint8_t *raw_data);
     bool IsValid() const;
+    void Clear();
     
     //-------------------------------------------------------------------------
     template <typename Stream>
@@ -62,6 +82,12 @@ public:
         std::memset(command_.begin(), 0, kCommandSize);
         size_t size = command.size() < kCommandSize ? command.size() : kCommandSize;
         std::memcpy(command_.begin(), command.data(), size);
+    }
+    void set_command(std::string&& command) noexcept
+    {
+        std::memset(command_.begin(), 0, kCommandSize);
+        size_t size = command.size() < kCommandSize ? command.size() : kCommandSize;
+        std::memmove(command_.begin(), command.data(), size);
     }
 
     uint32_t payload_length() const
@@ -113,6 +139,7 @@ class MessageData {
 public:
     virtual bool RecvHandler(std::shared_ptr<Node> src_node) const = 0;
     virtual std::string Command() const = 0;
+    virtual ~MessageData() {}
 };
 
 // mixin GetHash()for MessageData classes
