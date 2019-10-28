@@ -28,462 +28,110 @@ struct QueuedBlock {
     //std::unique_ptr<PartiallyDownloadedBlock> partialBlock;
 };
 
-class SyncBasicState {
-public:
-    bool connected() const
-    {
-        LOCK(cs_);
-        return connected_;
-    }
-    void set_connected(bool connected)
-    {
-        LOCK(cs_);
-        connected_ = connected;
-    }
-    
-    bool sync_started() const
-    {
-        LOCK(cs_);
-        return sync_started_;
-    }
-    void set_sync_started(bool sync_started)
-    {
-        LOCK(cs_);
-        sync_started_ = sync_started;
-    }
-    
-    bool should_ban() const
-    {
-        LOCK(cs_);
-        return should_ban_;
-    }
-    void set_should_ban(bool should_ban)
-    {
-        LOCK(cs_);
-        should_ban_ = should_ban;
-    }
-    
-private:
-    mutable CriticalSection cs_;
-    
+struct SyncBasicState {
     //! Whether we have a fully established connection.
-    bool connected_ = false;
+    bool connected = false;
     
     //! Whether we've started headers synchronization with this peer.
-    bool sync_started_ = false;
+    bool sync_started = false;
     
     //! Whether this peer should be disconnected and banned (unless whitelisted).
-    bool should_ban_ = false;  
+    bool should_ban = false;  
 };
 
-class SyncStats {
-public:
-    int misbehavior_score() const
-    {
-        LOCK(cs_);
-        return misbehavior_score_;
-    }
-    void set_misbehavior_score(int misbehavior_score)
-    {
-        LOCK(cs_);
-        misbehavior_score_ = misbehavior_score;
-    }
-    
-    int unconnecting_headers_len() const
-    {
-        LOCK(cs_);
-        return unconnecting_headers_len_;
-    }
-    void set_unconnecting_headers_len(int unconnecting_headers_len)
-    {
-        LOCK(cs_);
-        unconnecting_headers_len_ = unconnecting_headers_len;
-    }
-    
-    std::vector<BlockReject> rejects() const // thread safe copy
-    {
-        LOCK(cs_);
-        return rejects_;
-    }
-    
-    void AddBlockReject(const BlockReject& reject)
-    {
-        LOCK(cs_);
-        rejects_.push_back(reject);
-    }
-    void AddBlockReject(BlockReject&& reject)
-    {
-        LOCK(cs_);
-        rejects_.push_back(std::move(reject));
-    }
-
-
-private:
-    mutable CriticalSection cs_;
-    
+struct SyncStats {    
     //! Accumulated misbehaviour score for this peer.
-    int misbehavior_score_ = 0;
+    int misbehavior_score = 0;
     
     //! Length of current-streak of unconnecting headers announcements
-    int unconnecting_headers_len_ = 0; 
+    int unconnecting_headers_len = 0; 
     
     //! List of asynchronously-determined block rejections to notify this peer about.
-    std::vector<BlockReject> rejects_;
+    std::vector<BlockReject> rejects;
 };
 
-class SyncTimeoutState {
-public:
-    int64_t timeout() const
-    {
-        LOCK(cs_);
-        return timeout_;
-    }
-    void set_timeout(int64_t timeout)
-    {
-        LOCK(cs_);
-        timeout_ = timeout;
-    }
-    
-    const BlockIndex *work_header() const
-    {
-        LOCK(cs_);
-        return work_header_;
-    }
-    void set_work_header(const BlockIndex *index)
-    {
-        LOCK(cs_);
-        work_header_ = index;
-    }
-    
-    bool sent_getheaders() const
-    {
-        LOCK(cs_);
-        return sent_getheaders_;
-    }
-    void set_sent_getheaders(bool sent_getheaders)
-    {
-        LOCK(cs_);
-        sent_getheaders_ = sent_getheaders;
-    }
-    
-    bool protect() const
-    {
-        LOCK(cs_);
-        return protect_;
-    }
-    void set_protect(bool protect)
-    {
-        LOCK(cs_);
-        protect_ = protect;
-    }
-    
-private:
-    mutable CriticalSection cs_;
-    
+struct SyncTimeoutState {
     // A timeout used for checking whether our peer has sufficiently synced
-    int64_t timeout_ = 0;
+    int64_t timeout = 0;
     
     // A header with the work we require on our peer's chain
-    const BlockIndex *work_header_ = nullptr;
+    const BlockIndex *work_header = nullptr;
     
     // After timeout is reached, set to true after sending getheaders
-    bool sent_getheaders_ = false;
+    bool sent_getheaders = false;
     
     // Whether this peer is protected from disconnection due to a bad/slow chain
-    bool protect_ = false;
+    bool protect = false;
 };
 
-class SyncTimeState {
-public:
-    int64_t headers_sync_timeout() const
-    {
-        LOCK(cs_);
-        return headers_sync_timeout_;
-    }
-    void set_headers_sync_timeout(int64_t headers_sync_timeout)
-    {
-        LOCK(cs_);
-        headers_sync_timeout_ = headers_sync_timeout;
-    }
-    
-    int64_t stalling_since() const
-    {
-        LOCK(cs_);
-        return stalling_since_;
-    }
-    void set_stalling_since(int64_t stalling_since)
-    {
-        LOCK(cs_);
-        stalling_since_ = stalling_since;
-    }
-    
-    int64_t last_block_announcement() const
-    {
-        LOCK(cs_);
-        return last_block_announcement_;
-    }
-    void set_last_block_announcement(int64_t last_block_announcement)
-    {
-        LOCK(cs_);
-        last_block_announcement_ = last_block_announcement;
-    }
-    
-    const SyncTimeoutState& timeout_state() const
-    {
-        return timeout_state_;
-    }
-    SyncTimeoutState *mutable_timeout_state()
-    {
-        return &timeout_state_;
-    }
-    
-private:
-    mutable CriticalSection cs_;
-    
+struct SyncTimeState {
     //! When to potentially disconnect peer for stalling headers download
-    int64_t headers_sync_timeout_ = 0;
+    int64_t headers_sync_timeout = 0;
     
     //! Since when we're stalling block download progress (in microseconds), or 0.
-    int64_t stalling_since_ = 0;
+    int64_t stalling_since = 0;
     
     //! Time of last new block announcement
-    int64_t last_block_announcement_ = 0;
+    int64_t last_block_announcement = 0;
     
-    SyncTimeoutState timeout_state_;
+    SyncTimeoutState timeout_state;
 };
 
-class SyncProcessState {
-public:
-    const BlockIndex *best_known_block_index() const
-    {
-        LOCK(cs_);
-        return best_known_block_index_;
-    }
-    void set_best_known_block_index(const BlockIndex *index)
-    {
-        LOCK(cs_);
-        best_known_block_index_ = index;
-    }
-    
-    const BlockIndex *last_common_block_index() const
-    {
-        LOCK(cs_);
-        return last_common_block_index_;
-    }
-    void set_last_common_block_index(const BlockIndex *index)
-    {
-        LOCK(cs_);
-        last_common_block_index_ = index;
-    }
-    
-    const BlockIndex *best_header_sent_index() const
-    {
-        LOCK(cs_);
-        return best_header_sent_index_;
-    }
-    void set_best_header_sent_index(const BlockIndex *index)
-    {
-        LOCK(cs_);
-        best_header_sent_index_ = index;
-    }
-    
-    Hash256 last_unknown_block_hash() const // thread safe copy
-    {
-        LOCK(cs_);
-        return last_unknown_block_hash_;
-    }
-    void set_last_unknown_block_hash(const Hash256& last_unknown_block_hash)
-    {
-        LOCK(cs_);
-        last_unknown_block_hash_ = last_unknown_block_hash;
-    }
-    void set_last_unknown_block_hash(Hash256&& last_unknown_block_hash)
-    {
-        LOCK(cs_);
-        last_unknown_block_hash_ = std::move(last_unknown_block_hash);
-    }
-    
-private:
-    mutable CriticalSection cs_;
-    
+struct SyncProcessState {
     //! The best known block we know this peer has announced.
-    const BlockIndex *best_known_block_index_ = nullptr;
+    const BlockIndex *best_known_block_index = nullptr;
     
     //! The last full block we both have.
-    const BlockIndex *last_common_block_index_ = nullptr;
+    const BlockIndex *last_common_block_index = nullptr;
     
     //! The best header we have sent our peer.
-    const BlockIndex *best_header_sent_index_ = nullptr;
+    const BlockIndex *best_header_sent_index = nullptr;
     
     //! The hash of the last unknown block this peer has announced.
-    Hash256 last_unknown_block_hash_;
+    Hash256 last_unknown_block_hash;
 };
 
-class BlocksInFlight {
-public:
+struct BlocksInFlight {
     using iterator = std::list<QueuedBlock>::iterator;
     
-    std::list<QueuedBlock> list() const // thread safe copy
-    {
-        LOCK(cs_);
-        return list_;
-    }
-    
-    void AddQueuedBlock(const QueuedBlock& queued_block)
-    {
-        LOCK(cs_);
-        list_.push_back(queued_block);
-    }
-    void AddQueuedBlock(QueuedBlock&& queued_block)
-    {
-        LOCK(cs_);
-        list_.push_back(std::move(queued_block));
-    }
-    
-    int64_t downloading_since() const
-    {
-        LOCK(cs_);
-        return downloading_since_;
-    }
-    void set_downloading_since(int64_t downloading_since)
-    {
-        LOCK(cs_);
-        downloading_since_ = downloading_since;
-    }
-    
-    int valid_headers_count() const
-    {
-        LOCK(cs_);
-        return valid_headers_count_;
-    }
-    void set_valid_headers_count(int valid_headers_count)
-    {
-        LOCK(cs_);
-        valid_headers_count_ = valid_headers_count;
-    }
-
-private:
-    mutable CriticalSection cs_;
-    
-    std::list<QueuedBlock> list_;
+    std::list<QueuedBlock> list;
     
     //! When the first entry in BlocksInFlight started downloading. Don't care when BlocksInFlight is empty.
-    int64_t downloading_since_ = 0;
+    int64_t downloading_since = 0;
     
-    //int count_;
+    //int count;
     
-    int valid_headers_count_ = 0;
+    int valid_headers_count = 0;
 };
 
-class DownloadState {
-public:
-    bool preferred_download() const
-    {
-        LOCK(cs_);
-        return preferred_download_;
-    }
-    void set_preferred_download(bool preferred_download)
-    {
-        LOCK(cs_);
-        preferred_download_ = preferred_download;
-    }
-    
-    bool prefer_headers() const
-    {
-        LOCK(cs_);
-        return prefer_headers_;
-    }
-    void set_prefer_headers(bool prefer_headers)
-    {
-        LOCK(cs_);
-        prefer_headers_ = prefer_headers;
-    }
-    
-    bool prefer_header_and_ids() const
-    {
-        LOCK(cs_);
-        return prefer_header_and_ids_;
-    }
-    void set_prefer_header_and_ids(bool prefer_header_and_ids)
-    {
-        LOCK(cs_);
-        prefer_header_and_ids_ = prefer_header_and_ids;
-    }
-    
-    bool provides_header_and_ids() const
-    {
-        LOCK(cs_);
-        return provides_header_and_ids_;
-    }
-    void set_provides_header_and_ids(bool provides_header_and_ids)
-    {
-        LOCK(cs_);
-        provides_header_and_ids_ = provides_header_and_ids;
-    }
-    
-    bool is_witness() const
-    {
-        LOCK(cs_);
-        return is_witness_;
-    }
-    void set_is_witness(bool is_witness)
-    {
-        LOCK(cs_);
-        is_witness_ = is_witness;
-    }
-    
-    bool wants_cmpct_witness() const
-    {
-        LOCK(cs_);
-        return wants_cmpct_witness_;
-    }
-    void set_wants_cmpct_witness(bool wants_cmpct_witness)
-    {
-        LOCK(cs_);
-        wants_cmpct_witness_ = wants_cmpct_witness;
-    }
-    
-    bool supports_desired_cmpct_version() const
-    {
-        LOCK(cs_);
-        return supports_desired_cmpct_version_;
-    }
-    void set_supports_desired_cmpct_version(bool supports_desired_cmpct_version)
-    {
-        LOCK(cs_);
-        supports_desired_cmpct_version_ = supports_desired_cmpct_version;
-    }
-    
-private:
-    mutable CriticalSection cs_;
-    
+struct DownloadState {
     //! Whether we consider this a preferred download peer.
-    bool preferred_download_ = false;
+    bool preferred_download = false;
     
     //! Whether this peer wants invs or headers (when possible) for block announcements.
-    bool prefer_headers_ = false;
+    bool prefer_headers = false;
     
     //! Whether this peer wants invs or cmpctblocks (when possible) for block announcements.
-    bool prefer_header_and_ids_ = false;
+    bool prefer_header_and_ids = false;
     
     /*
       * Whether this peer will send us cmpctblocks if we request them.
       * This is not used to gate request logic, as we really only care about supports_desired_cmpct_version_,
       * but is used as a flag to "lock in" the version of compact blocks (fWantsCmpctWitness) we send.
       */
-    bool provides_header_and_ids_ = false;
+    bool provides_header_and_ids = false;
     
     //! Whether this peer can give us witnesses
-    bool is_witness_ = false;
+    bool is_witness = false;
     
     //! Whether this peer wants witnesses in cmpctblocks/blocktxns
-    bool wants_cmpct_witness_ = false;
+    bool wants_cmpct_witness = false;
     
     /*
      * If we've announced kNodeWitness to this peer: whether the peer sends witnesses in cmpctblocks/blocktxns,
      * otherwise: whether this peer sends non-witnesses in cmpctblocks/blocktxns.
      */
-    bool supports_desired_cmpct_version_ = false;
+    bool supports_desired_cmpct_version = false;
 };
 
 // Maintain validation-specific state about block sync
@@ -496,7 +144,7 @@ public:
     {
         return node_addr_;
     }
-    
+
     const SyncBasicState& basic_state() const
     {
         return basic_state_;
@@ -542,7 +190,7 @@ public:
         return blocks_in_flight_;
     }
     
-    BlocksInFlight *mutable_blocks_inflight()
+    BlocksInFlight *mutable_blocks_in_flight()
     {
         return &blocks_in_flight_;
     }
@@ -573,12 +221,97 @@ public:
     using MapPeerSyncState = std::map<NodeId, BlockSyncState>;
     using MapBlockInFlight = std::map<Hash256, std::pair<NodeId, BlocksInFlight::iterator> >;
     
+    //-------------------------------------------------------------------------
     void AddSyncState(NodeId id, const btclite::network::NetAddr& addr, const std::string& addr_name);    
-    BlockSyncState *GetSyncState(NodeId id);
-    void EraseSyncState(NodeId id);
+    void EraseSyncState(NodeId id);    
     bool ShouldUpdateTime(NodeId id);
     void Misbehaving(NodeId id, int howmuch);
+    void Clear();
+    
+    bool IsExist(NodeId id)
+    {
+        LOCK(cs_block_sync_);        
+        return GetSyncState(id) ? true : false;
+    }
+    
+    //-------------------------------------------------------------------------
+    bool GetNodeAddr(NodeId id, btclite::network::NetAddr *out);
+    
+    //-------------------------------------------------------------------------
+    // basic sync state
+    bool GetConnected(NodeId id, bool *out);
+    bool SetConnected(NodeId id, bool connected);    
+    bool GetSyncStarted(NodeId id, bool *out);
+    bool SetSyncStarted(NodeId id, bool sync_started);    
+    bool GetShouldBan(NodeId id, bool *out);
+    bool SetShouldBan(NodeId id, bool should_ban);
+    
+    //-------------------------------------------------------------------------
+    // sync stats
+    bool GetMisbehaviorScore(NodeId id, int *out);
+    bool SetMisbehaviorScore(NodeId id, int misbehavior_score);
+    bool GetUnconnectingHeadersLen(NodeId id, int *out);
+    bool SetUnconnectingHeadersLen(NodeId id, int unconnecting_headers_len);
+    bool GetRejects(NodeId id, std::vector<BlockReject> *out);
+    bool AddBlockReject(NodeId id, const BlockReject& reject);
+    bool ClearRejects(NodeId id);
 
+    //-------------------------------------------------------------------------
+    // sync timeout state
+    bool GetTimeOut(NodeId id, int64_t *out);
+    bool SetTimeout(NodeId id, int64_t timeout);
+    const BlockIndex *GetWorkHeader(NodeId id);
+    bool SetWorkHeader(NodeId id, const BlockIndex *index);
+    bool GetSentGetheaders(NodeId id, bool *out);
+    bool SetSentGetheaders(NodeId id, bool sent_getheaders);
+    bool GetProtect(NodeId id, bool *out);
+    bool SetProtect(NodeId id, bool protect);
+    
+    //-------------------------------------------------------------------------
+    // sync time state
+    bool GetHeadersSyncTimeout(NodeId id, int64_t *out);
+    bool SetHeadersSyncTimeout(NodeId id, int64_t headers_sync_timeout);
+    bool StallingSince(NodeId id, int64_t *out);
+    bool SetStallingSince(NodeId id, int64_t stalling_since);
+    bool GetLastBlockAnnouncement(NodeId id, int64_t *out);
+    bool SetLastBlockAnnouncement(NodeId id, int64_t last_block_announcement);
+    
+    //-------------------------------------------------------------------------
+    // sync process state
+    const BlockIndex *GetBestKnownBlockIndex(NodeId id);
+    bool SetBestKnownBlockIndex(NodeId id, const BlockIndex *index);
+    const BlockIndex *GetLastCommonBlockIndex(NodeId id);
+    bool SetLastCommonBlockIndex(NodeId id, const BlockIndex *index);
+    const BlockIndex *GetBestHeaderSentIndex(NodeId id);
+    bool SetBestHeaderSentIndex(NodeId id, const BlockIndex *index);
+    bool GetLastUnknownBlockHash(NodeId id, Hash256 *out);
+    bool SetLastUnknownBlockHash(NodeId id, const Hash256& last_unknown_block_hash);
+    
+    //-------------------------------------------------------------------------
+    // blocks in flight
+    bool ClearBlocksInFlight(NodeId id);
+    bool GetDownloadingSince(NodeId id, int64_t *out);
+    bool SetDownloadingSince(NodeId id, int64_t downloading_since);
+    bool GetValidHeadersCount(NodeId id, int *out);
+    bool SetValidHeadersCount(NodeId id, int valid_headers_count);
+    
+    //-------------------------------------------------------------------------
+    // download state
+    bool GetPreferredDownload(NodeId id, bool *out);
+    bool SetPreferredDownload(NodeId id, bool preferred_download);
+    bool GetPreferHeaders(NodeId id, bool *out);
+    bool SetPreferHeaders(NodeId id, bool prefer_headers);
+    bool GetPreferHeaderAndIds(NodeId id, bool *out);
+    bool SetPreferHeaderAndIds(NodeId id, bool prefer_header_and_ids);
+    bool GetProvidesHeaderAndIds(NodeId id, bool *out);
+    bool SetProvidesHeaderAndIds(NodeId id, bool provides_header_and_ids);
+    bool GetIsWitness(NodeId id, bool *out);
+    bool SetIsWitness(NodeId id, bool is_witness);
+    bool GetWantsCmpctWitness(NodeId id, bool *out);
+    bool SetWantsCmpctWitness(NodeId id, bool wants_cmpct_witness);
+    bool GetSupportsDesiredCmpctVersion(NodeId id, bool *out);
+    bool SetSupportsDesiredCmpctVersion(NodeId id, bool supports_desired_cmpct_version);
+    
 private:
     mutable CriticalSection cs_block_sync_;
     
@@ -596,6 +329,9 @@ private:
     
     MapPeerSyncState map_sync_state_;
     MapBlockInFlight map_block_in_flight_;
+    
+    // requires cs_block_sync_
+    BlockSyncState *GetSyncState(NodeId id);
 };
 
 class SingletonBlockSync : Uncopyable {

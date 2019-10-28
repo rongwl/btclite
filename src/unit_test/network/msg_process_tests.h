@@ -14,7 +14,8 @@ void ReadCb(struct bufferevent *bev, void *ctx);
 
 class FixtureMsgProcessTest : public ::testing::Test {
 protected:
-    void SetUp() override {
+    void SetUp() override
+    {
         base_ = event_base_new();
         if (!base_)
             return;

@@ -14,7 +14,7 @@ TEST(NodesTest, InitializeNode)
     std::shared_ptr<Node> result = nodes.GetNode(addr);
     ASSERT_NE(result, nullptr);
     EXPECT_EQ(result->addr(), addr);
-    EXPECT_NE(SingletonBlockSync::GetInstance().GetSyncState(node->id()), nullptr);
+    EXPECT_TRUE(SingletonBlockSync::GetInstance().IsExist(node->id()));
 }
 
 TEST_F(FixtureNodesTest, GetNodeByAddr)
@@ -132,14 +132,14 @@ TEST_F(FixtureNodeTest, HandleInactiveTimeout)
 TEST_F(FixtureNodeTest, CheckBanned)
 {
     Nodes& nodes = SingletonNodes::GetInstance();
+    BlockSync& block_sync = SingletonBlockSync::GetInstance();
     std::shared_ptr<Node> node = nodes.GetNode(id_);    
-    SingletonBlockSync::GetInstance().AddSyncState(id_, addr_, "");
-    BlockSyncState *state = SingletonBlockSync::GetInstance().GetSyncState(id_);
+    block_sync.AddSyncState(id_, addr_, "");
     
     ASSERT_NE(node, nullptr);
-    ASSERT_NE(state, nullptr);
+    ASSERT_TRUE(block_sync.IsExist(id_));
     ASSERT_FALSE(node->CheckBanned());    
-    state->mutable_basic_state()->set_should_ban(true);
+    block_sync.SetShouldBan(id_, true);
     ASSERT_TRUE(node->CheckBanned());
     EXPECT_TRUE(node->disconnected());
     EXPECT_TRUE(SingletonBanDb::GetInstance().IsBanned(addr_));
@@ -160,12 +160,12 @@ TEST(NodeTest, destructor)
         std::shared_ptr<Node> node = std::make_shared<Node>(nullptr, addr);
         nodes.AddNode(node);
         block_sync.AddSyncState(node->id(), node->addr(), node->host_name());
-        ASSERT_NE(block_sync.GetSyncState(node->id()), nullptr);
+        ASSERT_TRUE(block_sync.IsExist(node->id()));
         node->InactivityTimeoutCb(node);
         id = node->id();
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
-    EXPECT_EQ(block_sync.GetSyncState(id), nullptr);
+    EXPECT_FALSE(block_sync.IsExist(id));
     
     nodes.Clear();
 }

@@ -8,7 +8,8 @@
 
 class FixtureBlockSyncTest : public ::testing::Test {
 protected:
-    void SetUp() override {
+    void SetUp() override 
+    {
         addr1_.SetIpv4(inet_addr("1.1.1.1"));
         block_sync_.AddSyncState(1, addr1_, "");
         addr2_.SetIpv4(inet_addr("1.1.1.2"));

@@ -41,7 +41,7 @@ Node::~Node()
         if (SingletonBlockSync::GetInstance().ShouldUpdateTime(id_))
             SingletonPeers::GetInstance().UpdateTime(addr_);
         
-        if (SingletonBlockSync::GetInstance().GetSyncState(id_)) {
+        if (SingletonBlockSync::GetInstance().IsExist(id_)) {
             auto task = std::bind(&BlockSync::EraseSyncState, &(SingletonBlockSync::GetInstance()), std::placeholders::_1);
             SingletonThreadPool::GetInstance().AddTask(std::function<void(NodeId)>(task), id_);
         }
@@ -72,14 +72,13 @@ void Node::PingTimeoutCb(std::shared_ptr<Node> node)
 
 bool Node::CheckBanned()
 {
-    BlockSyncState *state = SingletonBlockSync::GetInstance().GetSyncState(id_);
-    if (!state)
+    BlockSync &block_sync = SingletonBlockSync::GetInstance();
+    bool should_ban = false;
+    
+    if (!block_sync.GetShouldBan(id_, &should_ban) || !should_ban)
         return false;
     
-    if (!state->basic_state().should_ban())
-        return false;
-    
-    state->mutable_basic_state()->set_should_ban(false);
+    block_sync.SetShouldBan(id_, false);
     if (manual_) {
         BTCLOG(LOG_LEVEL_WARNING) << "Can not punishing manually-connected peer "
                                   << addr_.ToString();

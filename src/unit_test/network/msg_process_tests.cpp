@@ -157,15 +157,15 @@ TEST_F(FixtureMsgProcessTest, SendRejects)
     
     auto node = std::make_shared<Node>(pair_[0], addr_, false);
     SingletonNodes::GetInstance().AddNode(node);
-    SingletonBlockSync::GetInstance().AddSyncState(node->id(), addr_, "");
-    BlockSyncState *state = SingletonBlockSync::GetInstance().GetSyncState(node->id());
-    ASSERT_NE(state, nullptr);
-    
+    SingletonBlockSync::GetInstance().AddSyncState(node->id(), addr_, "");    
     BlockReject block_reject = { kRejectInvalid, "invalid", btclite::utility::random::GetUint256() };
-    state->mutable_stats()->AddBlockReject(std::move(block_reject));    
+    ASSERT_TRUE(SingletonBlockSync::GetInstance().AddBlockReject(node->id(), block_reject));
+    
     bufferevent_setcb(pair_[1], ReadCb, NULL, NULL, const_cast<char*>(kMsgReject));
     bufferevent_enable(pair_[1], EV_READ);
     ASSERT_TRUE(msg_process::SendRejects(node));
     
     event_base_dispatch(base_);
+    SingletonBlockSync::GetInstance().Clear();
+    SingletonNodes::GetInstance().Clear();
 }

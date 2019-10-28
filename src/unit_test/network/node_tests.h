@@ -8,7 +8,8 @@
 
 class FixtureNodesTest : public ::testing::Test {
 protected:
-    void SetUp() override {
+    void SetUp() override 
+    {
         addr1_.SetIpv4(inet_addr("1.1.1.1"));
         std::shared_ptr<Node> node1 = std::make_shared<Node>(nullptr, addr1_);
         id1_ = node1->id();
@@ -18,6 +19,12 @@ protected:
         std::shared_ptr<Node> node2 = std::make_shared<Node>(nullptr, addr2_);
         id2_ = node2->id();
         nodes_.AddNode(node2);
+    }
+    
+    void TearDown() override
+    {
+        SingletonNodes::GetInstance().Clear();
+        SingletonBlockSync::GetInstance().Clear();
     }
     
     Nodes nodes_;

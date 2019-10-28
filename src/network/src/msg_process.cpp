@@ -131,14 +131,14 @@ bool SendVersion(std::shared_ptr<Node> dst_node)
 
 bool SendRejects(std::shared_ptr<Node> dst_node)
 {
-    BlockSyncState *state = SingletonBlockSync::GetInstance().GetSyncState(dst_node->id());
-    Reject reject;
+    BlockSync &block_sync = SingletonBlockSync::GetInstance();
+    std::vector<BlockReject> rejects;
     
-    if (!state)
+    if (!block_sync.GetRejects(dst_node->id(), &rejects))
         return false;
     
-    std::vector<BlockReject> rejects(std::move(state->stats().rejects()));
     for (auto it = rejects.begin(); it != rejects.end(); ++it) {
+        Reject reject;
         reject.Clear();
         reject.set_message(std::move(std::string(kMsgBlock)));
         reject.set_ccode(it->reject_code);
@@ -146,6 +146,7 @@ bool SendRejects(std::shared_ptr<Node> dst_node)
         reject.set_data(std::move(it->block_hash));
         SendMsg(reject, dst_node);
     }
+    block_sync.ClearRejects(dst_node->id());
     
     return true;
 }
