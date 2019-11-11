@@ -39,6 +39,7 @@ constexpr uint32_t kRegtestMagic = 0xDAB5BFFA;
 constexpr size_t kIpByteSize = 16;
 constexpr std::array<uint8_t, kIpByteSize> kNullIp = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 constexpr uint8_t kPchIpv4[12] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff };
+constexpr uint8_t kPchOnionCat[] = { 0xFD, 0x87, 0xD8, 0x7E, 0xEB, 0x43 };
 // 0xFD + sha256("bitcoin")[0:5]
 constexpr uint8_t kBtcIpPrefix[] = { 0xFD, 0x6B, 0x88, 0xC0, 0x87, 0x24 };
 

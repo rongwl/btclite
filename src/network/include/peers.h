@@ -3,7 +3,7 @@
 
 
 #include "arithmetic.h"
-#include "network_address.h"
+#include "node.h"
 #include "peers.pb.h"
 #include "random.h"
 #include "sync.h"
@@ -11,7 +11,7 @@
 
 
 namespace btclite {
-
+namespace network {
 
 class Peers {
 public:
@@ -24,27 +24,37 @@ public:
     
     //-------------------------------------------------------------------------
     // Add a single address.
-    bool Add(const btclite::network::NetAddr &addr, const btclite::network::NetAddr& source, int64_t time_penalty = 0);
+    bool Add(const btclite::network::NetAddr &addr, const btclite::network::NetAddr& source,
+             int64_t time_penalty = 0);
     
     //! Add multiple addresses.
-    bool Add(const std::vector<btclite::network::NetAddr> &vAddr, const btclite::network::NetAddr& source, int64_t time_penalty = 0);
+    bool Add(const std::vector<btclite::network::NetAddr> &vAddr, 
+             const btclite::network::NetAddr& source, int64_t time_penalty = 0);
     
     // Move address to the tried table.
-    bool MakeTried(const btclite::network::NetAddr& addr, int64_t time = btclite::utility::util_time::GetAdjustedTime());
+    bool MakeTried(const btclite::network::NetAddr& addr, 
+                   int64_t time = btclite::utility::util_time::GetAdjustedTime());
     
     // Choose an address to connect to.
     bool Select(proto_peers::Peer *out, bool newOnly = false);
     
+    bool SetServices(const btclite::network::NetAddr& addr, uint64_t services);
+    
     // Find an entry.
-    bool Find(uint64_t map_key, uint64_t group_key, proto_peers::Peer *out, bool *is_new, bool *is_tried);
-    bool Find(const btclite::network::NetAddr& addr, proto_peers::Peer *out, bool *is_new, bool *is_tried);
-    bool FindSameGroup(uint64_t group_key, proto_peers::Peer *out, bool *is_tried, uint64_t *key = nullptr);
+    bool Find(uint64_t map_key, uint64_t group_key, proto_peers::Peer *out,
+              bool *is_new, bool *is_tried);
+    bool Find(const btclite::network::NetAddr& addr, proto_peers::Peer *out,
+              bool *is_new, bool *is_tried);
+    bool FindSameGroup(uint64_t group_key, proto_peers::Peer *out, bool *is_tried,
+                       uint64_t *key = nullptr);
     
     // Mark an entry as connection attempted to.
-    bool Attempt(const btclite::network::NetAddr &addr, int64_t time = btclite::utility::util_time::GetAdjustedTime());
+    bool Attempt(const btclite::network::NetAddr &addr, 
+                 int64_t time = btclite::utility::util_time::GetAdjustedTime());
     
     //! Update time of the address.
-    bool UpdateTime(const btclite::network::NetAddr &addr, int64_t time = btclite::utility::util_time::GetAdjustedTime());
+    bool UpdateTime(const btclite::network::NetAddr &addr, 
+                    int64_t time = btclite::utility::util_time::GetAdjustedTime());
     
     // Return a bunch of addresses, selected at random.
     bool GetAddrs(std::vector<btclite::network::NetAddr> *out);
@@ -116,14 +126,14 @@ private:
     void EraseRand(uint64_t key);
 };
 
-
-} //namespace btclite
+} // namespace network
+} // namespace btclite
 
 class SingletonPeers : Uncopyable {
 public:
-    static btclite::Peers& GetInstance()
+    static btclite::network::Peers& GetInstance()
     {
-        static btclite::Peers peers;
+        static btclite::network::Peers peers;
         return peers;
     }
     
@@ -154,7 +164,7 @@ private:
     const std::string default_peers_file = "peers.dat";
     
     fs::path path_peers_;
-    btclite::Peers& peers_;
+    btclite::network::Peers& peers_;
 };
 
 #endif // BTCLITE_PEERS_H

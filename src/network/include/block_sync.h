@@ -238,6 +238,45 @@ public:
     bool GetNodeAddr(NodeId id, btclite::network::NetAddr *out);
     
     //-------------------------------------------------------------------------
+    int sync_started_count() const
+    {
+        LOCK(cs_block_sync_);
+        return sync_started_count_;
+    }
+    void set_sync_started_count(int sync_started_count)
+    {
+        LOCK(cs_block_sync_);     
+        sync_started_count_ = sync_started_count;
+    }
+    
+    int preferred_download_count() const
+    {
+        return preferred_download_count_;
+    }
+    void set_preferred_download_count(int preferred_download_count)
+    {
+        preferred_download_count_ = preferred_download_count;
+    }
+    
+    int validated_download_count() const
+    {
+        return validated_download_count_;
+    }
+    void set_validated_download_count(int validated_download_count)
+    {
+        validated_download_count_ = validated_download_count;
+    }
+    
+    int protected_outbound_count() const
+    {
+        return protected_outbound_count_;
+    }
+    void set_protected_outbound_count(int protected_outbound_count)
+    {
+        protected_outbound_count_ = protected_outbound_count;
+    }
+    
+    //-------------------------------------------------------------------------
     // basic sync state
     bool GetConnected(NodeId id, bool *out);
     bool SetConnected(NodeId id, bool connected);    
@@ -393,5 +432,14 @@ private:
     SingletonOrphans() {}
 };
 
+namespace btclite {
+namespace network {
+namespace block_sync {
+
+bool IsInitialBlockDownload();
+
+} // namespace block_sync
+} // namespace network 
+} // namespace block_sync
 
 #endif // BTCLITE_BLOCK_SYNC_H

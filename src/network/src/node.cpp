@@ -7,30 +7,26 @@
 #include "thread.h"
 
 
+const BloomFilter *NodeFilter::bloom_filter() const
+{
+    LOCK(cs_bloom_filter_);
+    
+    if (!bloom_filter_)
+        return nullptr;
+    
+    return bloom_filter_.get();
+}
+
 Node::Node(const struct bufferevent *bev, const btclite::network::NetAddr& addr,
            bool is_inbound, bool manual, std::string host_name)
-    : time_connected_(btclite::utility::util_time::GetTimeSeconds()),
-      id_(SingletonNodes::GetInstance().GetNewNodeId()),
-      version_(0),
+    : id_(SingletonNodes::GetInstance().GetNewNodeId()),
       services_(SingletonLocalNetCfg::GetInstance().local_services()),
-      start_height_(SingletonBlockChain::GetInstance().Height()),
-      bev_(const_cast<struct bufferevent*>(bev)),
-      addr_(addr),
+      bev_(const_cast<struct bufferevent*>(bev)), addr_(addr),
       local_host_nonce_(btclite::utility::random::GetUint64(std::numeric_limits<uint64_t>::max())),
-      time_last_send_(0),
-      time_last_recv_(0),
-      is_inbound_(is_inbound),
-      manual_(manual),
-      host_name_(host_name),
-      conn_established_(false),
-      disconnected_(false),
-      bloom_filter_(std::make_unique<BloomFilter>()),
-      ping_time_({ 0, 0, 0, std::numeric_limits<int64_t>::max(), false }),
-      last_block_time_(0),
-      last_tx_time_(0),
-      timers_()
+      host_name_(host_name), is_inbound_(is_inbound), manual_(manual),
+      time_(btclite::utility::util_time::GetTimeSeconds())
 {
-
+    time_.ping_time.min_ping_usec_time = std::numeric_limits<int64_t>::max();
 }
 
 Node::~Node()
@@ -341,6 +337,18 @@ bool Nodes::ShouldDnsLookup()
     }
     
     return (count < 2);
+}
+
+bool Nodes::CheckIncomingNonce(uint64_t nonce)
+{
+    LOCK(cs_nodes_);
+    for (auto it = list_.begin(); it != list_.end(); ++it) {
+        if (!(*it)->conn_established() && !(*it)->is_inbound() &&
+                (*it)->local_host_nonce() == nonce)
+            return false;
+    }
+
+    return true;
 }
 
 /*

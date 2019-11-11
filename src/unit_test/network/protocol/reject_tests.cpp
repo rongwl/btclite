@@ -1,7 +1,7 @@
 #include "reject_tests.h"
 
 
-TEST_F(FixtureRejectTest, Constructor)
+TEST_F(RejectTest, Constructor)
 {
     EXPECT_EQ(reject1_.message(), "");
     EXPECT_EQ(reject1_.ccode(), 0);
@@ -19,7 +19,7 @@ TEST_F(FixtureRejectTest, Constructor)
     EXPECT_EQ(reject3_.data(), data_);
 }
 
-TEST_F(FixtureRejectTest, OperatorEqual)
+TEST_F(RejectTest, OperatorEqual)
 {
     EXPECT_EQ(reject2_, reject3_);
     EXPECT_NE(reject1_, reject2_);
@@ -47,7 +47,7 @@ TEST_F(FixtureRejectTest, OperatorEqual)
     EXPECT_EQ(reject2_, reject3_);
 }
 
-TEST_F(FixtureRejectTest, Set)
+TEST_F(RejectTest, Set)
 {
     reject1_.set_message(reject2_.message());
     reject1_.set_ccode(reject2_.ccode());
@@ -62,20 +62,20 @@ TEST_F(FixtureRejectTest, Set)
     EXPECT_EQ(reject1_, reject2_);
 }
 
-TEST_F(FixtureRejectTest, Clear)
+TEST_F(RejectTest, Clear)
 {
     reject2_.Clear();
     EXPECT_EQ(reject1_, reject2_);
 }
 
-TEST_F(FixtureRejectTest, IsValid)
+TEST_F(RejectTest, IsValid)
 {
     EXPECT_FALSE(reject1_.IsValid());
     reject1_.set_ccode(kRejectInvalid);
     EXPECT_TRUE(reject1_.IsValid());
 }
 
-TEST_F(FixtureRejectTest, Serialize)
+TEST_F(RejectTest, Serialize)
 {
     std::vector<uint8_t> vec;
     ByteSink<std::vector<uint8_t> > byte_sink(vec);
@@ -92,7 +92,7 @@ TEST_F(FixtureRejectTest, Serialize)
     EXPECT_EQ(reject1_, reject2_);
 }
 
-TEST_F(FixtureRejectTest, SerializedSize)
+TEST_F(RejectTest, SerializedSize)
 {
     EXPECT_EQ(reject2_.SerializedSize(), 43);
     

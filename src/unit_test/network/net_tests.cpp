@@ -1,38 +1,41 @@
-#include <gtest/gtest.h>
-#include <cstdint>
-#include <string>
-#include <vector>
+#include "net_tests.h"
+
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include "net.h"
-#include "constants.h"
-#include "network/include/params.h"
 
-
-TEST(LocalNetConfigTest, Constructor)
+TEST_F(LocalNetConfigTest, Constructor)
 {
-    LocalNetConfig config;
-    EXPECT_EQ(config.local_services(), kNodeNetwork | kNodeNetworkLimited);
+    EXPECT_EQ(config_.local_services(), kNodeNetwork | kNodeNetworkLimited);
 }
 
-TEST(LocalNetConfigTest, GetAndSetLocalServiecs)
+TEST_F(LocalNetConfigTest, GetAndSetLocalServiecs)
 {
-    LocalNetConfig config;
-    config.set_local_services(kNodeNetwork);
-    EXPECT_EQ(config.local_services(), kNodeNetwork);
+    config_.set_local_services(kNodeNetwork);
+    EXPECT_EQ(config_.local_services(), kNodeNetwork);
 }
 
-TEST(LocalNetConfigTest, ValidateLocalAddrs)
+TEST_F(LocalNetConfigTest, ValidateLocalAddrs)
 {
-    LocalNetConfig config;
     btclite::network::NetAddr addr;
     
-    ASSERT_TRUE(config.LookupLocalAddrs());
-    EXPECT_TRUE(config.IsLocal(config.local_addrs().front()));
-    EXPECT_TRUE(config.IsLocal(config.local_addrs().back()));
+    ASSERT_FALSE(config_.map_local_addrs().empty());
+    std::map<btclite::network::NetAddr, int> map = config_.map_local_addrs();
+    for (auto it = map.begin(); it != map.end(); ++it)
+        EXPECT_TRUE(config_.IsLocal(it->first));
     
     addr.SetIpv4(inet_addr("1.2.3.4"));
-    EXPECT_FALSE(config.IsLocal(addr));  
+    EXPECT_FALSE(config_.IsLocal(addr));  
+}
+
+TEST_F(LocalNetConfigTest, GetLocalAddr)
+{
+    btclite::network::NetAddr peer_addr, addr;
+    
+    ASSERT_FALSE(config_.map_local_addrs().empty());
+    peer_addr.SetIpv4(inet_addr("1.2.3.4"));
+    ASSERT_TRUE(config_.GetLocalAddr(peer_addr, kNodeNetwork, &addr));
+    EXPECT_TRUE(config_.IsLocal(addr));
+    EXPECT_EQ(addr.proto_addr().services(), kNodeNetwork);
 }

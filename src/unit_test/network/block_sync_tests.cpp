@@ -1,7 +1,7 @@
 #include "block_sync_tests.h"
 
 
-TEST_F(FixtureBlockSyncTest, GetSyncState)
+TEST_F(BlockSyncTest, GetSyncState)
 {
     btclite::network::NetAddr addr;
     
@@ -17,7 +17,7 @@ TEST_F(FixtureBlockSyncTest, GetSyncState)
     EXPECT_EQ(addr, addr3_);
 }
 
-TEST_F(FixtureBlockSyncTest, EraseSyncState)
+TEST_F(BlockSyncTest, EraseSyncState)
 {
     block_sync_.EraseSyncState(1);
     ASSERT_TRUE(!block_sync_.IsExist(1) &&
@@ -35,7 +35,7 @@ TEST_F(FixtureBlockSyncTest, EraseSyncState)
                 !block_sync_.IsExist(3));
 }
 
-TEST_F(FixtureBlockSyncTest, ShouldUpdateTime)
+TEST_F(BlockSyncTest, ShouldUpdateTime)
 {
     EXPECT_FALSE(block_sync_.ShouldUpdateTime(1));
     EXPECT_FALSE(block_sync_.ShouldUpdateTime(2));
@@ -45,7 +45,7 @@ TEST_F(FixtureBlockSyncTest, ShouldUpdateTime)
     EXPECT_TRUE(block_sync_.ShouldUpdateTime(3));
 }
 
-TEST_F(FixtureBlockSyncTest, Misbehaving)
+TEST_F(BlockSyncTest, Misbehaving)
 {
     bool should_ban = false;
     

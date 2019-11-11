@@ -24,8 +24,9 @@ TEST(ConnectorTest, ConnectNode)
     
     // local addr
     LocalNetConfig& config = SingletonLocalNetCfg::GetInstance();
-    ASSERT_TRUE(config.LookupLocalAddrs());
-    addrs[0] = std::move(config.local_addrs().front());
+    if (config.map_local_addrs().empty())
+        ASSERT_TRUE(config.LookupLocalAddrs());
+    addrs[0] = std::move(config.map_local_addrs().begin()->first);
     EXPECT_FALSE(connector.ConnectNodes(addrs));
     
     // banned addr
@@ -73,9 +74,10 @@ TEST(ConnectorTest, ConnectOutbound)
     
     // connecting peer is local
     LocalNetConfig& config = SingletonLocalNetCfg::GetInstance();
-    config.LookupLocalAddrs();
+    if (config.map_local_addrs().empty())
+        config.LookupLocalAddrs();
     source.SetIpv4(inet_addr("1.2.3.4"));
-    SingletonPeers::GetInstance().Add(config.local_addrs(), source);
+    SingletonPeers::GetInstance().Add(config.map_local_addrs().begin()->first, source);
     ASSERT_FALSE(connector.OutboundTimeOutCb());
     SingletonPeers::GetInstance().Clear();
     

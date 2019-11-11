@@ -14,37 +14,18 @@
 
 class P2P : Uncopyable {
 public:
-    explicit P2P(const ExecutorConfig& config)
-        : network_params_(btclite::network::SingletonParams::GetInstance(config.env())),
-          network_args_(config.args()), 
-          local_network_config_(SingletonLocalNetCfg::GetInstance()), 
-          nodes_(SingletonNodes::GetInstance()),
-          ban_db_(SingletonBanDb::GetInstance(config.path_data_dir())),
-          peers_db_(config.path_data_dir()), acceptor_(), connector_(),
-          interrupt_(SingletonNetInterrupt::GetInstance()) {}
+    explicit P2P(const ExecutorConfig& config);
     
     bool Init();
     bool Start();
     void Interrupt();
-    void Stop();
-    
-    //-------------------------------------------------------------------------    
-    const NetArgs& network_args() const
-    {
-        return network_args_;
-    }
+    void Stop();   
     
 private:
-    btclite::network::Params& network_params_;
-    NetArgs network_args_;
-    LocalNetConfig& local_network_config_;
-    Nodes& nodes_;
-    BanDb& ban_db_;
     PeersDb peers_db_;
     Acceptor acceptor_;
     Connector connector_;
     
-    ThreadInterrupt& interrupt_;
     std::thread thread_acceptor_loop_;
     std::thread thread_connector_loop_;
 };

@@ -6,9 +6,9 @@
 
 using namespace btclite::network::protocol;
 
-class FixtureVersionTest : public ::testing::Test {
+class VersionTest : public ::testing::Test {
 protected:
-    FixtureVersionTest()
+    VersionTest()
         : version_(kProtocolVersion), services_(kNodeNetwork), timestamp_(0x1234),
           addr_recv_(0x1234, kNodeNetwork, 
                      {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 0x1, 0x2, 0x3, 0x4},

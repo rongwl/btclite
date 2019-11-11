@@ -24,7 +24,6 @@ public:
         return kMsgPing;
     }
     
-    //-------------------------------------------------------------------------
     bool IsValid() const
     {
         return (nonce_ != 0);

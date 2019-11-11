@@ -916,3 +916,15 @@ int Orphans::EraseOrphanTx(const Hash256& hash)
     return 1;
 }
 
+namespace btclite {
+namespace network {
+namespace block_sync {
+
+bool IsInitialBlockDownload()
+{
+    return false;
+}
+
+} // namespace block_sync
+} // namespace network 
+} // namespace block_sync

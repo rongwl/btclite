@@ -116,7 +116,7 @@ bool Connector::OutboundTimeOutCb()
         if (now - peer.last_try() < 600 && tries < 30)
             continue;
         
-        if (!btclite::network::serviceflags::IsDesirable(peer.addr().services()))
+        if (!btclite::network::service_flags::IsDesirable(peer.addr().services()))
             continue;
         
         // do not allow non-default ports, unless after 50 invalid addresses selected already

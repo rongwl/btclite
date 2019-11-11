@@ -6,9 +6,9 @@
 
 using namespace btclite::network::protocol;
 
-class FixtureRejectTest : public ::testing::Test {
+class RejectTest : public ::testing::Test {
 protected:
-    FixtureRejectTest()
+    RejectTest()
         : message_(kMsgBlock), ccode_(kRejectDuplicate), reason_("foo"), 
           data_(btclite::utility::random::GetUint256()),
           reject1_(), reject2_(message_, ccode_, reason_, data_),

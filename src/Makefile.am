@@ -56,6 +56,7 @@ BTCLITE_HEADER_FILES = \
                        network/include/protocol/address.h \
                        network/include/protocol/ping.h \
                        network/include/protocol/reject.h \
+                       network/include/protocol/verack.h \
                        network/include/protocol/version.h \
                        network/include/msg_process.h \
                        network/include/node.h \
@@ -70,6 +71,7 @@ BTCLITE_HEADER_FILES = \
                        crypto/include/hash.h \
                        utility/include/arithmetic.h \
                        utility/include/blob.h \
+                       utility/include/circular_buffer.h \
                        utility/include/constants.h \
                        utility/include/Endian.h \
                        utility/include/error.h \
@@ -108,7 +110,8 @@ utility_src_libbtclite_util_a_CPPFLAGS = $(AM_CXXFLAGS) \
                                          $(BTCLITE_CRYPTO_INCLUDES) \
                                          $(BTCLITE_NETWORK_PROTO_INCLUDES) \
                                          $(BTCLITE_FULLNODE_INCLUDES)
-utility_src_libbtclite_util_a_SOURCES = utility/src/error.cpp \
+utility_src_libbtclite_util_a_SOURCES = utility/src/circular_buffer.cpp \
+                                        utility/src/error.cpp \
                                         utility/src/logging.cpp \
                                         utility/src/random.cpp \
                                         utility/src/serialize.cpp \
@@ -156,6 +159,7 @@ network_src_libbtclite_network_a_SOURCES = network/proto/banmap.pb.cc \
                                            network/src/protocol/address.cpp \
                                            network/src/protocol/ping.cpp \
                                            network/src/protocol/reject.cpp \
+                                           network/src/protocol/verack.cpp \
                                            network/src/protocol/version.cpp \
                                            network/src/msg_process.cpp \
                                            network/src/netbase.cpp \

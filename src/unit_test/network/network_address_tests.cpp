@@ -123,7 +123,7 @@ TEST(NetAddrTest, IsIpv6)
     EXPECT_TRUE(addr.IsIpv6());
 }
 
-TEST(NetAddrTest, SetByte)
+TEST(NetAddrTest, GetAndSetByte)
 {
     NetAddr addr;
     
@@ -141,20 +141,7 @@ TEST(NetAddrTest, SetNByte)
     EXPECT_TRUE(addr.IsIpv4());
 }
 
-TEST(NetAddrTest, SetIpv4)
-{
-    NetAddr addr;
-    
-    addr.SetIpv4(inet_addr("192.168.1.2"));
-    ASSERT_TRUE(addr.IsValid());
-    ASSERT_TRUE(addr.IsIpv4());
-    ASSERT_EQ(addr.GetByte(12), 192);
-    ASSERT_EQ(addr.GetByte(13), 168);
-    ASSERT_EQ(addr.GetByte(14), 1);
-    ASSERT_EQ(addr.GetByte(15), 2);
-}
-
-TEST(NetAddrTest, GetIpv4)
+TEST(NetAddrTest, GetAndSetIpv4)
 {
     NetAddr addr;
     
@@ -162,19 +149,7 @@ TEST(NetAddrTest, GetIpv4)
     ASSERT_EQ(addr.GetIpv4(), inet_addr("192.168.1.1"));
 }
 
-TEST(NetAddrTest, SetIpv6)
-{
-    NetAddr addr;
-    uint8_t buf[sizeof(struct in6_addr)];
-    
-    inet_pton(AF_INET6, "0001:0203:0405:0607:0809:0A0B:0C0D:0E0F", buf);
-    addr.SetIpv6(buf);
-    ASSERT_TRUE(addr.IsValid());
-    for (int i = 0; i < kIpByteSize; i++)
-        ASSERT_EQ(addr.GetByte(i), i);
-}
-
-TEST(NetAddrTest, GetIpv6)
+TEST(NetAddrTest, GetAndSetIpv6)
 {
     NetAddr addr;
     uint8_t out[kIpByteSize];
@@ -199,71 +174,57 @@ TEST(NetAddrTest, GetGroup)
     addr.GetGroup(&group);
     EXPECT_EQ(group, std::vector<uint8_t>({0})); // Local -> !Routable()
     
-    addr.Clear();
-    group.clear();
     addr.SetIpv4(inet_addr("257.0.0.1"));
     addr.GetGroup(&group);
     EXPECT_EQ(group, std::vector<uint8_t>({0})); // !Valid -> !Routable()
     
-    addr.Clear();
-    group.clear();
     addr.SetIpv4(inet_addr("10.0.0.1"));
     addr.GetGroup(&group);
     EXPECT_EQ(group, std::vector<uint8_t>({0})); // RFC1918 -> !Routable()
     
-    addr.Clear();
-    group.clear();
     addr.SetIpv4(inet_addr("169.254.1.1"));
     addr.GetGroup(&group);
     EXPECT_EQ(group, std::vector<uint8_t>({0})); // RFC3927 -> !Routable()
     
-    addr.Clear();
-    group.clear();
     addr.SetIpv4(inet_addr("1.2.3.4"));
     addr.GetGroup(&group);
-    EXPECT_EQ(group, std::vector<uint8_t>({AF_IPV4, 1, 2})); // IPv4
+    EXPECT_EQ(group, std::vector<uint8_t>({kAfIpv4, 1, 2})); // IPv4
     
-    addr.Clear();
-    group.clear();
     inet_pton(AF_INET6, "::FFFF:0:102:304", buf);
     addr.SetIpv6(buf);
     addr.GetGroup(&group);
-    EXPECT_EQ(group, std::vector<uint8_t>({AF_IPV4, 1, 2})); // RFC6145
+    EXPECT_EQ(group, std::vector<uint8_t>({kAfIpv4, 1, 2})); // RFC6145
     
-    addr.Clear();
-    group.clear();
     inet_pton(AF_INET6, "64:FF9B::102:304", buf);
     addr.SetIpv6(buf);
     addr.GetGroup(&group);
-    EXPECT_EQ(group, std::vector<uint8_t>({AF_IPV4, 1, 2})); // RFC6052
+    EXPECT_EQ(group, std::vector<uint8_t>({kAfIpv4, 1, 2})); // RFC6052
     
-    addr.Clear();
-    group.clear();
     inet_pton(AF_INET6, "2002:102:304:9999:9999:9999:9999:9999", buf); 
     addr.SetIpv6(buf);
     addr.GetGroup(&group);
-    EXPECT_EQ(group, std::vector<uint8_t>({AF_IPV4, 1, 2})); // RFC3964
+    EXPECT_EQ(group, std::vector<uint8_t>({kAfIpv4, 1, 2})); // RFC3964
     
-    addr.Clear();
-    group.clear();
     inet_pton(AF_INET6, "2001:0:9999:9999:9999:9999:FEFD:FCFB", buf);
     addr.SetIpv6(buf);
     addr.GetGroup(&group);
-    EXPECT_EQ(group, std::vector<uint8_t>({AF_IPV4, 1, 2})); // RFC4380
+    EXPECT_EQ(group, std::vector<uint8_t>({kAfIpv4, 1, 2})); // RFC4380
     
-    addr.Clear();
-    group.clear();
+    inet_pton(AF_INET6, "FD87:D87E:EB43:edb1:8e4:3588:e546:35ca", buf);
+    addr.SetIpv6(buf);
+    ASSERT_TRUE(addr.IsTor());
+    addr.GetGroup(&group);
+    EXPECT_EQ(group, std::vector<uint8_t>({kAfTor, 239})); // Tor
+    
     inet_pton(AF_INET6, "2001:470:abcd:9999:9999:9999:9999:9999", buf);
     addr.SetIpv6(buf);
     addr.GetGroup(&group);
-    EXPECT_EQ(group, std::vector<uint8_t>({AF_IPV6, 32, 1, 4, 112, 175})); //he.net
+    EXPECT_EQ(group, std::vector<uint8_t>({kAfIpv6, 32, 1, 4, 112, 175})); //he.net
     
-    addr.Clear();
-    group.clear();
     inet_pton(AF_INET6, "2001:2001:9999:9999:9999:9999:9999:9999", buf);
     addr.SetIpv6(buf);
     addr.GetGroup(&group);
-    EXPECT_EQ(group, std::vector<uint8_t>({AF_IPV6, 32, 1, 32, 1})); //IPv6
+    EXPECT_EQ(group, std::vector<uint8_t>({kAfIpv6, 32, 1, 32, 1})); //IPv6
 }
 
 TEST(NetAddrTest, Properties)
@@ -299,7 +260,7 @@ TEST(NetAddrTest, Properties)
     addr.SetIpv4(inet_addr("169.254.1.1"));
     EXPECT_TRUE(addr.IsRFC3927());
     
-    uint8_t buf[sizeof(struct in6_addr)];
+    uint8_t buf[sizeof(struct in6_addr)];    
     inet_pton(AF_INET6, "2001:0DB8::", buf);
     addr.SetIpv6(buf);
     EXPECT_TRUE(addr.IsRFC3849());
@@ -328,6 +289,10 @@ TEST(NetAddrTest, Properties)
     inet_pton(AF_INET6, "::FFFF:0:0:0", buf);
     addr.SetIpv6(buf);
     EXPECT_TRUE(addr.IsRFC6145());
+    
+    inet_pton(AF_INET6, "FD87:D87E:EB43:edb1:8e4:3588:e546:35ca", buf);
+    addr.SetIpv6(buf);
+    EXPECT_TRUE(addr.IsTor());
     
     addr.SetIpv4(inet_addr("127.0.0.1"));
     EXPECT_TRUE(addr.IsLocal());
@@ -358,6 +323,33 @@ TEST(NetAddrTest, Properties)
     EXPECT_FALSE(addr.IsValid());
     addr.SetIpv4(INADDR_NONE);
     EXPECT_FALSE(addr.IsValid());
+}
+
+TEST(NetAddrTest, GetFamily)
+{
+    NetAddr addr;
+    uint8_t buf[sizeof(struct in6_addr)];
+    
+    addr.SetIpv4(inet_addr("127.0.0.1"));
+    EXPECT_EQ(addr.GetFamily(), kAfUnroutable);
+    
+    addr.SetIpv4(inet_addr("8.8.8.8"));
+    EXPECT_EQ(addr.GetFamily(), kAfIpv4);
+    
+    inet_pton(AF_INET6, "::1", buf);
+    addr.SetIpv6(buf);
+    EXPECT_EQ(addr.GetFamily(), kAfUnroutable);
+    
+    inet_pton(AF_INET6, "2001::8888", buf);
+    addr.SetIpv6(buf);
+    EXPECT_EQ(addr.GetFamily(), kAfIpv6);
+    
+    inet_pton(AF_INET6, "FD87:D87E:EB43:edb1:8e4:3588:e546:35ca", buf);
+    addr.SetIpv6(buf);
+    EXPECT_EQ(addr.GetFamily(), kAfTor);
+    
+    addr.SetInternal("foo.com");
+    EXPECT_EQ(addr.GetFamily(), kAfInternal);
 }
 
 TEST(NetAddrTest, ToSockAddr)

@@ -10,9 +10,12 @@
 
 class FullNodeMain : public Executor {
 public:
-    FullNodeMain(const FullNodeConfig& config)
-        : chain_params_(btclite::chain::SingletonParams::GetInstance(config.env())),
-          network_(config), block_chain_(SingletonBlockChain::GetInstance()) {}
+    explicit FullNodeMain(const FullNodeConfig& config)
+        : network_(config)
+    {
+        btclite::chain::SingletonParams::GetInstance(config.env());
+        //SingletonBlockChain::GetInstance();
+    }
 
     //-------------------------------------------------------------------------
     bool Init();
@@ -21,9 +24,7 @@ public:
     void Stop();
     
 private:
-    btclite::chain::Params& chain_params_;
     P2P network_;
-    BlockChain& block_chain_;
 };
 
 

@@ -3,9 +3,9 @@
 #include "protocol/message.h"
 
 
-class FixtureMessageTest : public ::testing::Test {
+class MessageTest : public ::testing::Test {
 protected:
-    FixtureMessageTest()
+    MessageTest()
         : magic_(kMainMagic), command_(kMsgVersion),
           payload_length_(kMaxMessageSize), checksum_(0x12345678),
           header1_(), 

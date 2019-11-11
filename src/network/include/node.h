@@ -56,7 +56,7 @@ constexpr uint64_t kDesirableServiceFlags = (kNodeNetwork | kNodeWitness);
 
 namespace btclite {
 namespace network {
-namespace serviceflags {
+namespace service_flags {
 
 /**
  * A shortcut for (services & kDesirableServiceFlags)
@@ -67,26 +67,70 @@ static inline bool IsDesirable(uint64_t services) {
     return !(kDesirableServiceFlags & (~services));
 }
 
-} // namespace serviceflags
+} // namespace service_flags
 } // namespace network
 } // namespace btclite
+
+class NodeFilter {
+public:
+    bool relay_txes() const
+    {
+        LOCK(cs_bloom_filter_);
+        return relay_txes_;
+    }
+    
+    void set_relay_txes(bool relay_txes)
+    {
+        LOCK(cs_bloom_filter_);
+        relay_txes_ = relay_txes;
+    }
+    
+    const BloomFilter *bloom_filter() const;
+    
+private:
+    mutable CriticalSection cs_bloom_filter_;
+    
+    // We use fRelayTxes for two purposes -
+    // a) it allows us to not relay tx invs before receiving the peer's version message
+    // b) the peer may tell us in its version message that we should not relay tx invs
+    //    unless it loads a bloom filter.
+    bool relay_txes_ = false; 
+    std::unique_ptr<BloomFilter> bloom_filter_ = nullptr;
+};
 
 // Ping time measurement
 struct PingTime {
     // The pong reply we're expecting, or 0 if no pong expected.
-    std::atomic<uint64_t> ping_nonce_sent;
+    std::atomic<uint64_t> ping_nonce_sent = 0;
     
     // Time (in usec) the last ping was sent, or 0 if no ping was ever sent.
-    std::atomic<int64_t> ping_usec_start;
+    std::atomic<int64_t> ping_usec_start = 0;
     
     // Last measured round-trip time.
-    std::atomic<int64_t> ping_usec_time;
+    std::atomic<int64_t> ping_usec_time = 0;
     
     // Best measured round-trip time.
-    std::atomic<int64_t> min_ping_usec_time;
+    std::atomic<int64_t> min_ping_usec_time = 0;
     
     // Whether a ping is requested.
-    std::atomic<bool> ping_queued;
+    std::atomic<bool> ping_queued = false;
+};
+
+struct NodeTime {
+    NodeTime(int64_t time)
+        : time_connected(time) {}
+    
+    const int64_t time_connected;
+    
+    std::atomic<int64_t> time_last_send = 0;
+    std::atomic<int64_t> time_last_recv = 0;
+    
+    // Block and TXN accept times
+    std::atomic<int64_t> time_last_block = 0;
+    std::atomic<int64_t> time_last_tx = 0;
+    
+    // Ping time measurement
+    PingTime ping_time;
 };
 
 struct NodeTimers {
@@ -110,12 +154,12 @@ public:
     static void PingTimeoutCb(std::shared_ptr<Node> node);    
     bool CheckBanned();
     
-    //-------------------------------------------------------------------------
-    int64_t time_connected() const
+    bool IsClient() const
     {
-        return time_connected_;
+        return !(services_ & kNodeNetwork);
     }
     
+    //-------------------------------------------------------------------------   
     NodeId id() const
     {
         return id_;
@@ -126,14 +170,28 @@ public:
         return version_;
     }
     
+    void set_version(int version)
+    {
+        version_ = version;
+    }
+    
     ServiceFlags services() const
     {
         return services_;
+    }
+    void set_services(ServiceFlags services)
+    {
+        services_ = services;
     }
     
     int start_height() const
     {
         return start_height_;
+    }
+    
+    void set_start_height(int start_height)
+    {
+        start_height_ = start_height;
     }
     
     const struct bufferevent* const bev() const
@@ -161,6 +219,31 @@ public:
         return keyed_net_group_;
     }*/
     
+    std::string host_name() const // thread safe copy
+    {
+        LOCK(cs_host_name_);
+        return host_name_;
+    }
+    
+    void set_host_name(const std::string& name)
+    {
+        LOCK(cs_host_name_);
+        host_name_ = name;
+    }
+    
+    btclite::network::NetAddr local_addr() const // thread safe copy
+    {
+        LOCK(cs_local_addr_);
+        return local_addr_;
+    }
+    
+    void set_local_addr(const btclite::network::NetAddr& addr)
+    {
+        LOCK(cs_local_addr_);
+        if (!local_addr_.IsValid())
+            local_addr_ = addr;
+    }
+    
     bool is_inbound() const
     {
         return is_inbound_;
@@ -170,7 +253,7 @@ public:
     {
         return manual_;
     }
-    
+        
     bool conn_established() const
     {
         return conn_established_;
@@ -188,53 +271,24 @@ public:
     
     void set_disconnected(bool disconnected);
     
-    int64_t time_last_send() const
+    const NodeFilter& filter() const
     {
-        return time_last_send_;
+        return filter_;
     }
     
-    int64_t time_last_recv() const
+    NodeFilter *mutable_filter()
     {
-        return time_last_recv_;
+        return &filter_;
     }
     
-    std::string host_name() const
+    const NodeTime& time() const
     {
-        LOCK(cs_host_name_);
-        return host_name_;
+        return time_;
     }
     
-    void set_host_name(const std::string& name)
+    NodeTime *mutable_time()
     {
-        LOCK(cs_host_name_);
-        host_name_ = name;
-    }
-    
-    const BloomFilter *bloom_filter() const
-    {
-        LOCK(cs_bloom_filter_);
-        return bloom_filter_.get();
-    }
-    
-    bool relay_txes() const
-    {
-        LOCK(cs_bloom_filter_);
-        return relay_txes_;
-    }
-    
-    const PingTime& ping_time() const
-    {
-        return ping_time_;
-    }
-    
-    int64_t last_block_time() const
-    {
-        return last_block_time_;
-    }
-    
-    int64_t last_tx_time() const
-    {
-        return last_tx_time_;
+        return &time_;
     }
     
     const NodeTimers& timers() const
@@ -248,43 +302,28 @@ public:
     }
     
 private:
-    const int64_t time_connected_;
     const NodeId id_;
-    std::atomic<int> version_;
-    const ServiceFlags services_;
-    const int start_height_;
-    struct bufferevent *bev_;    
+    std::atomic<int> version_ = 0;
+    std::atomic<ServiceFlags> services_ = kNodeNone;
+    std::atomic<int> start_height_ = 0;
+    struct bufferevent *bev_ = nullptr;    
     const btclite::network::NetAddr addr_;
     //const uint64_t keyed_net_group_;
-    const uint64_t local_host_nonce_;
-    
-    std::atomic<int64_t> time_last_send_;
-    std::atomic<int64_t> time_last_recv_;
+    const uint64_t local_host_nonce_;    
     
     mutable CriticalSection cs_host_name_;
     std::string host_name_;
     
+    mutable CriticalSection cs_local_addr_;
+    btclite::network::NetAddr local_addr_;    
+        
     const bool is_inbound_;
     const bool manual_;
-    std::atomic<bool> conn_established_;
-    std::atomic<bool> disconnected_;
-    //SemaphoreGrant grant_outbound_;
+    std::atomic<bool> conn_established_ = false;
+    std::atomic<bool> disconnected_ = false;
     
-    mutable CriticalSection cs_bloom_filter_;
-    std::unique_ptr<BloomFilter> bloom_filter_;
-    // We use fRelayTxes for two purposes -
-    // a) it allows us to not relay tx invs before receiving the peer's version message
-    // b) the peer may tell us in its version message that we should not relay tx invs
-    //    unless it loads a bloom filter.
-    bool relay_txes_; // protected by cs_bloom_filter_
-    
-    // Ping time measurement
-    PingTime ping_time_;
-    
-    // Block and TXN accept times
-    std::atomic<int64_t> last_block_time_;
-    std::atomic<int64_t> last_tx_time_;
-    
+    NodeFilter filter_;    
+    NodeTime time_;    
     NodeTimers timers_;
 };
 
@@ -338,10 +377,13 @@ public:
     
     void ClearDisconnected();    
     void DisconnectNode(const SubNet& subnet);
+    
+    //-------------------------------------------------------------------------
     //bool AttemptToEvictConnection();
     int CountInbound();
     int CountOutbound();
     bool ShouldDnsLookup();
+    bool CheckIncomingNonce(uint64_t nonce);
     
 private:
     mutable CriticalSection cs_nodes_;

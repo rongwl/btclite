@@ -12,7 +12,7 @@
 
 void ReadCb(struct bufferevent *bev, void *ctx);
 
-class FixtureMsgProcessTest : public ::testing::Test {
+class MsgProcessTest : public ::testing::Test {
 protected:
     void SetUp() override
     {

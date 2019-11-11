@@ -3,35 +3,29 @@
 #include "bandb.h"
 
 
-TEST(NodesTest, InitializeNode)
+TEST_F(NodesTest, InitializeNode)
 {
-    Nodes nodes;
-    btclite::network::NetAddr addr;
-    
-    addr.SetIpv4(inet_addr("1.1.1.1"));
-    std::shared_ptr<Node> node = nodes.InitializeNode(nullptr, addr);
-    ASSERT_NE(node, nullptr);
-    std::shared_ptr<Node> result = nodes.GetNode(addr);
+    std::shared_ptr<Node> result = nodes_.GetNode(addr3_);
     ASSERT_NE(result, nullptr);
-    EXPECT_EQ(result->addr(), addr);
-    EXPECT_TRUE(SingletonBlockSync::GetInstance().IsExist(node->id()));
+    EXPECT_EQ(result->addr(), addr3_);
+    EXPECT_TRUE(SingletonBlockSync::GetInstance().IsExist(id3_)); 
 }
 
-TEST_F(FixtureNodesTest, GetNodeByAddr)
+TEST_F(NodesTest, GetNodeByAddr)
 {
     std::shared_ptr<Node> result = nodes_.GetNode(addr1_);
     ASSERT_NE(result, nullptr);
     EXPECT_EQ(result->addr(), addr1_);
 }
 
-TEST_F(FixtureNodesTest, GetNodeById)
+TEST_F(NodesTest, GetNodeById)
 {
     std::shared_ptr<Node> result = nodes_.GetNode(id2_);
     ASSERT_NE(result, nullptr);
     EXPECT_EQ(result->addr(), addr2_);
 }
 
-TEST_F(FixtureNodesTest, EraseNodeByPtr)
+TEST_F(NodesTest, EraseNodeByPtr)
 {
     std::shared_ptr<Node> node = nodes_.GetNode(id1_);
     ASSERT_NE(node, nullptr);
@@ -41,7 +35,7 @@ TEST_F(FixtureNodesTest, EraseNodeByPtr)
     EXPECT_NE(nodes_.GetNode(id2_), nullptr);
 }
 
-TEST_F(FixtureNodesTest, EraseNodeById)
+TEST_F(NodesTest, EraseNodeById)
 {
     std::shared_ptr<Node> node = nodes_.GetNode(id2_);
     ASSERT_NE(node, nullptr);
@@ -51,61 +45,69 @@ TEST_F(FixtureNodesTest, EraseNodeById)
     EXPECT_NE(nodes_.GetNode(id1_), nullptr);
 }
 
-TEST(NodesTest, DisconnectNode)
+TEST_F(NodesTest, CheckIncomingNonce)
 {
-    Nodes nodes;
-    btclite::network::NetAddr addr, netmask;
+    std::shared_ptr<Node> node1 = nodes_.GetNode(id1_);
+    std::shared_ptr<Node> node2 = nodes_.GetNode(id2_);
+    ASSERT_NE(node1, nullptr);
+    ASSERT_NE(node2, nullptr);
+    EXPECT_FALSE(nodes_.CheckIncomingNonce(node1->local_host_nonce()));
+    EXPECT_TRUE(nodes_.CheckIncomingNonce(1234));
+    EXPECT_TRUE(nodes_.CheckIncomingNonce(node2->local_host_nonce()));
+    node1->set_conn_established(true);
+    EXPECT_TRUE(nodes_.CheckIncomingNonce(node1->local_host_nonce()));
+}
+
+TEST_F(NodesTest, DisconnectNode)
+{
+    btclite::network::NetAddr addr1, addr2, addr3, netmask;
     
-    addr.SetIpv4(inet_addr("1.1.1.1"));
-    nodes.InitializeNode(nullptr, addr);
-    addr.SetIpv4(inet_addr("1.1.2.1"));
-    nodes.InitializeNode(nullptr, addr);
-    addr.SetIpv4(inet_addr("1.1.2.2"));
-    nodes.InitializeNode(nullptr, addr);    
-    addr.SetIpv4(inet_addr("1.1.2.3"));
-    nodes.InitializeNode(nullptr, addr);
+    addr1.SetIpv4(inet_addr("1.1.2.1"));
+    nodes_.InitializeNode(nullptr, addr1);
+    addr2.SetIpv4(inet_addr("1.1.2.2"));
+    nodes_.InitializeNode(nullptr, addr2);    
+    addr3.SetIpv4(inet_addr("1.1.2.3"));
+    nodes_.InitializeNode(nullptr, addr3);
     
     netmask.SetIpv4(inet_addr("255.255.255.0"));
-    SubNet subnet(addr, netmask);
-    nodes.DisconnectNode(subnet);
+    SubNet subnet(addr1, netmask);
+    nodes_.DisconnectNode(subnet);
     
-    addr.SetIpv4(inet_addr("1.1.1.1"));
-    std::shared_ptr<Node> node = nodes.GetNode(addr);
+    std::shared_ptr<Node> node = nodes_.GetNode(addr1_);
     EXPECT_FALSE(node->disconnected());
     
-    addr.SetIpv4(inet_addr("1.1.2.1"));
-    node = nodes.GetNode(addr);
+    node = nodes_.GetNode(addr2_);
+    EXPECT_FALSE(node->disconnected());
+    
+    node = nodes_.GetNode(addr3_);
+    EXPECT_FALSE(node->disconnected());
+    
+    node = nodes_.GetNode(addr1);
     EXPECT_TRUE(node->disconnected());
     
-    addr.SetIpv4(inet_addr("1.1.2.2"));
-    node = nodes.GetNode(addr);
+    node = nodes_.GetNode(addr2);
     EXPECT_TRUE(node->disconnected());
     
-    addr.SetIpv4(inet_addr("1.1.2.3"));
-    node = nodes.GetNode(addr);
+    node = nodes_.GetNode(addr3);
     EXPECT_TRUE(node->disconnected());
+    
+    SingletonBlockSync::GetInstance().Clear();
+    SingletonNodes::GetInstance().Clear();
 }
 
-TEST(NodesTest, InboundCount)
+TEST_F(NodesTest, InboundCount)
 {
-    Nodes nodes;
     btclite::network::NetAddr addr;
     
-    addr.SetIpv4(inet_addr("1.1.1.1"));
-    nodes.InitializeNode(nullptr, addr);
-    addr.SetIpv4(inet_addr("1.1.1.2"));
-    nodes.InitializeNode(nullptr, addr);
-    addr.SetIpv4(inet_addr("1.1.1.3"));
-    nodes.InitializeNode(nullptr, addr);
     addr.SetIpv4(inet_addr("1.1.1.4"));
-    nodes.InitializeNode(nullptr, addr, false);
+    nodes_.InitializeNode(nullptr, addr, false);
     addr.SetIpv4(inet_addr("1.1.1.5"));
-    nodes.InitializeNode(nullptr, addr, false);
-    EXPECT_EQ(nodes.CountInbound(), 3);
-    EXPECT_EQ(nodes.CountOutbound(), 2);
+    nodes_.InitializeNode(nullptr, addr, false);
+    EXPECT_EQ(nodes_.CountInbound(), 2);
+    EXPECT_EQ(nodes_.CountOutbound(), 3);
 }
 
-TEST_F(FixtureNodeTest, Disconnect)
+TEST_F(NodeTest, Disconnect)
 {
     Nodes& nodes = SingletonNodes::GetInstance();
     std::shared_ptr<Node> node = nodes.GetNode(id_);
@@ -113,11 +115,9 @@ TEST_F(FixtureNodeTest, Disconnect)
     node->set_disconnected(true);
     EXPECT_TRUE(node->disconnected());
     EXPECT_EQ(nodes.GetNode(id_), nullptr);
-    
-    nodes.Clear();
 }
 
-TEST_F(FixtureNodeTest, HandleInactiveTimeout)
+TEST_F(NodeTest, HandleInactiveTimeout)
 {
     Nodes& nodes = SingletonNodes::GetInstance();
     std::shared_ptr<Node> node = nodes.GetNode(id_);
@@ -125,11 +125,9 @@ TEST_F(FixtureNodeTest, HandleInactiveTimeout)
     node->InactivityTimeoutCb(node);
     EXPECT_TRUE(node->disconnected());
     EXPECT_EQ(nodes.GetNode(node->id()), nullptr);
-    
-    nodes.Clear();
 }
 
-TEST_F(FixtureNodeTest, CheckBanned)
+TEST_F(NodeTest, CheckBanned)
 {
     Nodes& nodes = SingletonNodes::GetInstance();
     BlockSync& block_sync = SingletonBlockSync::GetInstance();
@@ -144,11 +142,11 @@ TEST_F(FixtureNodeTest, CheckBanned)
     EXPECT_TRUE(node->disconnected());
     EXPECT_TRUE(SingletonBanDb::GetInstance().IsBanned(addr_));
     
-    nodes.Clear();
+    block_sync.Clear();
     SingletonBanDb::GetInstance().Clear();
 }
 
-TEST(NodeTest, destructor)
+TEST(DestructNodeTest, destructor)
 {
     btclite::network::NetAddr addr;
     Nodes& nodes = SingletonNodes::GetInstance();
@@ -167,5 +165,5 @@ TEST(NodeTest, destructor)
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
     EXPECT_FALSE(block_sync.IsExist(id));
     
-    nodes.Clear();
+    block_sync.Clear();
 }

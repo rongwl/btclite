@@ -68,13 +68,19 @@ NetAddr::NetAddr(uint32_t timestamp, uint64_t services, IpAddr&& ip, uint16_t po
 bool NetAddr::IsIpv4() const
 {
     ASSERT_SIZE();
-    return (std::memcmp(proto_addr_.ip().data(), kPchIpv4, sizeof(kPchIpv4)) == 0);
+    return (std::memcmp(proto_addr_.ip().begin(), kPchIpv4, sizeof(kPchIpv4)) == 0);
 }
 
 bool NetAddr::IsIpv6() const
 {
     ASSERT_SIZE();
-    return (!IsIpv4() && !IsInternal());
+    return (!IsIpv4() && !IsTor() && !IsInternal());
+}
+
+bool NetAddr::IsTor() const
+{
+    ASSERT_SIZE();
+    return (std::memcmp(proto_addr_.ip().begin(), kPchOnionCat, sizeof(kPchOnionCat)) == 0);
 }
 
 bool NetAddr::IsRFC1918() const
@@ -174,6 +180,7 @@ bool NetAddr::IsRoutable() const
              IsRFC5737() ||
              IsRFC4193() ||
              IsRFC4843() ||
+             (IsRFC4193() && !IsTor()) ||
              IsLocal() ||
              IsInternal());
 }
@@ -225,8 +232,12 @@ std::string NetAddr::ToString() const
 {
     std::stringstream ss;
     
+    if (IsTor())
+        return Botan::base32_encode(reinterpret_cast<const uint8_t*>(proto_addr_.ip().begin()) + sizeof(kPchOnionCat),
+                                   kIpByteSize - sizeof(kPchOnionCat)) + ".onion";
+    
     if (IsInternal())
-        return Botan::base32_encode(reinterpret_cast<const uint8_t*>(proto_addr_.ip().data()) + sizeof(kBtcIpPrefix),
+        return Botan::base32_encode(reinterpret_cast<const uint8_t*>(proto_addr_.ip().begin()) + sizeof(kBtcIpPrefix),
                                     kIpByteSize - sizeof(kBtcIpPrefix)) + ".internal";
 
     if (IsIpv4())
@@ -349,10 +360,15 @@ void NetAddr::SetIpv6(const uint8_t *src)
 void NetAddr::GetGroup(std::vector<uint8_t> *out) const
 {
     ASSERT_SIZE();
-    int af = AF_IPV6;
+    int af = kAfIpv6;
     int start_byte = 0;
     int bits = 16;
 
+    if (!out)
+        return;
+    
+    out->clear();
+    
     // all local addresses belong to the same group
     if (IsLocal())
     {
@@ -362,36 +378,42 @@ void NetAddr::GetGroup(std::vector<uint8_t> *out) const
     // all internal-usage addresses get their own group
     if (IsInternal())
     {
-        af = AF_INTERNAL;
+        af = kAfInternal;
         start_byte = sizeof(kBtcIpPrefix);
         bits = (kIpByteSize - sizeof(kBtcIpPrefix)) * 8;
     }
     // all other unroutable addresses belong to the same group
     else if (!IsRoutable())
     {
-        af = AF_UNROUTABLE;
+        af = kAfUnroutable;
         bits = 0;
     }
     // for IPv4 addresses, '1' + the 16 higher-order bits of the IP
     // includes mapped IPv4, SIIT translated IPv4, and the well-known prefix
     else if (IsIpv4() || IsRFC6145() || IsRFC6052())
     {
-        af = AF_IPV4;
+        af = kAfIpv4;
         start_byte = 12;
     }
     // for 6to4 tunnelled addresses, use the encapsulated IPv4 address
     else if (IsRFC3964())
     {
-        af = AF_IPV4;
+        af = kAfIpv4;
         start_byte = 2;
     }
     // for Teredo-tunnelled IPv6 addresses, use the encapsulated IPv4 address
     else if (IsRFC4380())
     {
-        out->push_back(AF_IPV4);
+        out->push_back(kAfIpv4);
         out->push_back(GetByte(12) ^ 0xFF);
         out->push_back(GetByte(13) ^ 0xFF);
         return;
+    }
+    else if (IsTor())
+    {
+        af = kAfTor;
+        start_byte = 6;
+        bits = 4;
     }
     // for he.net, use /36 groups
     else if (GetByte(0) == 0x20 && GetByte(1) == 0x01 && GetByte(2) == 0x04 && GetByte(3) == 0x70)
@@ -426,6 +448,107 @@ bool NetAddr::SetInternal(const std::string& name)
     std::memcpy(data + sizeof(kBtcIpPrefix), hash, kIpByteSize - sizeof(kBtcIpPrefix));
     
     return true;
+}
+
+AddrFamily NetAddr::GetFamily() const
+{
+    if (IsInternal())
+        return kAfInternal;
+
+    if (!IsRoutable())
+        return kAfUnroutable;
+
+    if (IsIpv4())
+        return kAfIpv4;
+
+    if (IsTor())
+        return kAfTor;
+
+    return kAfIpv6;
+}
+
+int NetAddr::GetReachability(const NetAddr& addr_partner) const
+{
+    enum Reachability {
+        kReachUnreachable,
+        kReachDefault,
+        kReachTeredo,
+        kReachIpv6Weak,
+        kReachIpv4,
+        kReachIpv6Strong,
+        kReachPrivate
+    };
+
+    if (!IsRoutable() || IsInternal())
+        return kReachUnreachable;
+
+    int our_net = GetExtFamily();
+    int their_net = addr_partner.GetExtFamily();
+    bool is_tunnel = IsRFC3964() || IsRFC6052() || IsRFC6145();
+
+    switch(their_net) {
+        case kAfIpv4:
+            switch(our_net) {
+                case kAfIpv4: 
+                    return kReachIpv4;
+                default:
+                    return kReachDefault;                    
+            }
+        case kAfIpv6:
+            switch(our_net) {
+                case kAfTeredo:
+                    return kReachTeredo;
+                case kAfIpv4:
+                    return kReachIpv4;
+                case kAfIpv6:
+                     // only prefer giving our IPv6 address if it's not tunnelled
+                    return is_tunnel ? kReachIpv6Weak : kReachIpv6Strong;
+                default:
+                    return kReachDefault;                    
+            }
+        case kAfTor:
+            switch(our_net) {
+                case kAfIpv4:
+                    return kReachIpv4; // Tor users can connect to IPv4 as well
+                case kAfTor:
+                    return kReachPrivate;
+                default:
+                    return kReachDefault;                    
+            }
+        case kAfTeredo:
+            switch(our_net) {
+                case kAfTeredo:
+                    return kReachTeredo;
+                case kAfIpv6:
+                    return kReachIpv6Weak;
+                case kAfIpv4:
+                    return kReachIpv4;
+                default:
+                    return kReachDefault;                    
+            }
+        case kAfUnroutable:
+        default:
+            switch(our_net) {
+                case kAfTeredo:
+                    return kReachTeredo;
+                case kAfIpv6:
+                    return kReachIpv6Weak;
+                case kAfIpv4:
+                    return kReachIpv4;
+                case kAfTor:
+                    return kReachPrivate; // either from Tor, or don't care about our address
+                default:
+                    return kReachDefault;                    
+            }
+    }
+}
+
+AddrFamily NetAddr::GetExtFamily() const
+{
+    if (IsRFC4380())
+        return kAfTeredo;
+
+    return GetFamily();
 }
 
 } // namespace network

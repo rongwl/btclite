@@ -26,7 +26,7 @@ namespace network {
 
 class Params {
 public:
-    Params(BaseEnv env);
+    explicit Params(BaseEnv env);
     
     //-------------------------------------------------------------------------
     MessageHeader::MsgMagic msg_magic() const

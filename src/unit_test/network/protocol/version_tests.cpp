@@ -1,7 +1,7 @@
 #include "version_tests.h"
 
 
-TEST_F(FixtureVersionTest, Constructor)
+TEST_F(VersionTest, Constructor)
 {
     EXPECT_EQ(version1_.version(), 0);
     EXPECT_EQ(version1_.services(), 0);
@@ -34,7 +34,7 @@ TEST_F(FixtureVersionTest, Constructor)
     EXPECT_EQ(version3_.relay(), relay_);
 }
 
-TEST_F(FixtureVersionTest, OperatorEqual)
+TEST_F(VersionTest, OperatorEqual)
 {
     EXPECT_EQ(version2_, version3_);
     EXPECT_NE(version1_, version2_);
@@ -83,7 +83,7 @@ TEST_F(FixtureVersionTest, OperatorEqual)
     EXPECT_NE(version2_, version3_);
 }
 
-TEST_F(FixtureVersionTest, Set)
+TEST_F(VersionTest, Set)
 {
     version1_.set_version(version2_.version());
     version1_.set_services(version2_.services());
@@ -105,20 +105,20 @@ TEST_F(FixtureVersionTest, Set)
     EXPECT_EQ(version1_, version2_);
 }
 
-TEST_F(FixtureVersionTest, Clear)
+TEST_F(VersionTest, Clear)
 {
     version2_.Clear();
     EXPECT_EQ(version1_, version2_);
 }
 
-TEST_F(FixtureVersionTest, IsValid)
+TEST_F(VersionTest, IsValid)
 {
     EXPECT_FALSE(version1_.IsValid());
     
     version2_.set_version(kMinPeerProtoVersion);
     EXPECT_TRUE(version2_.IsValid());
     
-    version2_.set_version(kAddrTimeVersion);
+    version2_.set_version(0);
     EXPECT_FALSE(version2_.IsValid());
     
     version2_.set_version(kMinPeerProtoVersion);
@@ -142,7 +142,7 @@ TEST_F(FixtureVersionTest, IsValid)
     EXPECT_FALSE(version2_.IsValid());
 }
 
-TEST_F(FixtureVersionTest, Serialize)
+TEST_F(VersionTest, Serialize)
 {
     std::vector<uint8_t> vec;
     ByteSink<std::vector<uint8_t> > byte_sink(vec);
@@ -163,10 +163,8 @@ TEST_F(FixtureVersionTest, Serialize)
     EXPECT_FALSE(version1_.relay());
 }
 
-TEST(VersionTest, SerializedSize)
+TEST_F(VersionTest, SerializedSize)
 {
-    Version msg_version;
-    
-    msg_version.set_user_agent("/btclite:0.1.0/");
-    EXPECT_EQ(msg_version.SerializedSize(), 113);
+    version1_.set_user_agent("/btclite:0.1.0/");
+    EXPECT_EQ(version1_.SerializedSize(), 113);
 }

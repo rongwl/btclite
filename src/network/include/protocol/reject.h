@@ -52,7 +52,6 @@ public:
         return kMsgReject;
     }
     
-    //-------------------------------------------------------------------------
     bool IsValid() const;
     void Clear();
     size_t SerializedSize() const;

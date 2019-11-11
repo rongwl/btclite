@@ -126,30 +126,30 @@ void Acceptor::CheckingTimeoutCb(evutil_socket_t fd, short event, void *arg)
     std::shared_ptr<Node> pnode(*(reinterpret_cast<std::shared_ptr<Node>*>(arg)));
     
     int64_t now = btclite::utility::util_time::GetTimeSeconds();
-    if (pnode->time_last_recv() == 0 || pnode->time_last_send() == 0)
+    if (pnode->time().time_last_recv == 0 || pnode->time().time_last_send == 0)
     {
         BTCLOG(LOG_LEVEL_INFO) << "socket no message in first 60 seconds, "
-                               << pnode->time_last_recv() << " " << pnode->time_last_send()
+                               << pnode->time().time_last_recv << " " << pnode->time().time_last_send
                                << " from " << pnode->id();
         pnode->set_disconnected(true);
     }
-    else if (now - pnode->time_last_send() > kConnTimeoutInterval)
+    else if (now - pnode->time().time_last_send > kConnTimeoutInterval)
     {
-        BTCLOG(LOG_LEVEL_INFO) << "socket sending timeout: " << (now - pnode->time_last_send());
+        BTCLOG(LOG_LEVEL_INFO) << "socket sending timeout: " << (now - pnode->time().time_last_send);
         pnode->set_disconnected(true);
     }
-    else if (now - pnode->time_last_recv() > (pnode->version() > 
+    else if (now - pnode->time().time_last_recv > (pnode->version() > 
              btclite::network::protocol::kBip31Version ? kConnTimeoutInterval : 90*60))
     {
-        BTCLOG(LOG_LEVEL_INFO) << "socket receive timeout: " << (now - pnode->time_last_recv());
+        BTCLOG(LOG_LEVEL_INFO) << "socket receive timeout: " << (now - pnode->time().time_last_recv);
         pnode->set_disconnected(true);
     }
-    else if (pnode->ping_time().ping_nonce_sent &&
-             pnode->ping_time().ping_usec_start + kConnTimeoutInterval * 1000000 < 
+    else if (pnode->time().ping_time.ping_nonce_sent &&
+             pnode->time().ping_time.ping_usec_start + kConnTimeoutInterval * 1000000 < 
              btclite::utility::util_time::GetTimeMicros())
     {
         BTCLOG(LOG_LEVEL_INFO) << "ping timeout: " 
-                               << (now - pnode->ping_time().ping_usec_start / 1000000);
+                               << (now - pnode->time().ping_time.ping_usec_start / 1000000);
         pnode->set_disconnected(true);
     }
     else if (!pnode->conn_established())

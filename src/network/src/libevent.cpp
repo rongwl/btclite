@@ -132,9 +132,10 @@ void ConnEventCb(struct bufferevent *bev, short events, void *ctx)
     else if (events & BEV_EVENT_ERROR) {
         if (errno != EWOULDBLOCK && errno != EMSGSIZE && errno != EINTR && errno != EINPROGRESS)
         {
-            if (!pnode->disconnected())
+            if (!pnode->disconnected()) {
                 BTCLOG(LOG_LEVEL_ERROR) << "peer " << pnode->id() << " socket recv error:"
                                         << std::string(strerror(errno));
+            }
             pnode->set_conn_established(false);
             pnode->set_disconnected(true);
         }

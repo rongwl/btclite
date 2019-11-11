@@ -8,9 +8,11 @@
 #include "constants.h"
 
 
+using namespace btclite::network;
+
 TEST(PeersTest, Constructor)
 {
-    btclite::Peers peers;
+    Peers peers;
     uint64_t key[4];
     
     ASSERT_EQ(peers.proto_peers().key().size(), 4);
@@ -20,8 +22,8 @@ TEST(PeersTest, Constructor)
 
 TEST(PeersTest, MakeMapKey)
 {
-    btclite::Peers peers;
-    btclite::network::NetAddr addr1, addr2;
+    Peers peers;
+    NetAddr addr1, addr2;
     
     addr1.SetIpv4(inet_addr("1.2.3.4"));
     addr2.SetIpv4(inet_addr("1.2.5.6"));
@@ -44,8 +46,8 @@ TEST(PeersTest, MakeMapKey)
 
 TEST(PeersTest, AddPeer)
 {
-    btclite::Peers peers;
-    btclite::network::NetAddr addr, source;
+    Peers peers;
+    NetAddr addr, source;
     bool is_new, is_tried;
     proto_peers::Peer peer;
     std::vector<uint64_t> rand_order_keys;
@@ -58,7 +60,7 @@ TEST(PeersTest, AddPeer)
     ASSERT_TRUE(peers.Find(addr, &peer, &is_new, &is_tried));
     EXPECT_TRUE(is_new);
     EXPECT_FALSE(is_tried);
-    EXPECT_EQ(btclite::network::NetAddr(peer.addr()), addr);
+    EXPECT_EQ(peer.addr(), addr);
     EXPECT_EQ(peer.addr().timestamp(), now-4000);
     uint64_t key = peers.MakeMapKey(addr);
     EXPECT_EQ(peers.rand_order_keys()[0], key);
@@ -68,7 +70,7 @@ TEST(PeersTest, AddPeer)
     ASSERT_FALSE(peers.Add(addr, source, 100));
     ASSERT_TRUE(peers.Find(addr, &peer, &is_new, &is_tried));
     EXPECT_EQ(peer.addr().timestamp(), now-100); 
-    EXPECT_EQ(btclite::network::NetAddr(peer.addr()), addr);
+    EXPECT_EQ(peer.addr(), addr);
     
     // delete exist terrible peer
     addr.SetIpv4(inet_addr("1.3.1.1"));
@@ -116,11 +118,11 @@ TEST(PeersTest, AddPeer)
     vec[1].SetIpv4(inet_addr("2.2.2.2"));
     ASSERT_TRUE(peers.Add(vec, source));
     ASSERT_TRUE(peers.Find(vec[0], &peer, &is_new, &is_tried));
-    EXPECT_EQ(btclite::network::NetAddr(peer.addr()), vec[0]);
+    EXPECT_EQ(peer.addr(), vec[0]);
     EXPECT_TRUE(is_new);
     EXPECT_FALSE(is_tried);
     EXPECT_TRUE(peers.Find(vec[1], &peer, &is_new, &is_tried));
-    EXPECT_EQ(btclite::network::NetAddr(peer.addr()), vec[1]);
+    EXPECT_EQ(peer.addr(), vec[1]);
     EXPECT_TRUE(is_new);
     EXPECT_FALSE(is_tried);
     
@@ -134,10 +136,27 @@ TEST(PeersTest, AddPeer)
     EXPECT_EQ(peer.addr().port(), 8333);
 }
 
+TEST(PeersTest, SetServices)
+{
+    Peers peers;
+    NetAddr addr, source;
+    bool is_new, is_tried;
+    proto_peers::Peer peer;
+    
+    addr.SetIpv4(inet_addr("1.2.3.4"));
+    addr.mutable_proto_addr()->set_port(8333);
+    source.SetIpv4(inet_addr("1.1.1.1"));
+    ASSERT_TRUE(peers.Add(addr, source));
+    ASSERT_TRUE(peers.SetServices(addr, kNodeNetwork));
+    ASSERT_TRUE(peers.Find(addr, &peer, &is_new, &is_tried));
+    EXPECT_EQ(peer.addr(), addr);
+    EXPECT_EQ(peer.addr().services(), kNodeNetwork);
+}
+
 TEST(PeersTest, MakePeerTried)
 {
-    btclite::Peers peers;
-    btclite::network::NetAddr addr, source;
+    Peers peers;
+    NetAddr addr, source;
     bool is_new, is_tried;
     proto_peers::Peer peer;
     
@@ -171,8 +190,8 @@ TEST(PeersTest, MakePeerTried)
 
 TEST(PeersTest, SelectPeer)
 {
-    btclite::Peers peers;
-    btclite::network::NetAddr addr, source;
+    Peers peers;
+    NetAddr addr, source;
     
     // Select from new with 1 addr in new.
     source.SetIpv4(inet_addr("1.1.1.1"));
@@ -181,19 +200,19 @@ TEST(PeersTest, SelectPeer)
     ASSERT_TRUE(peers.Add(addr, source));
     proto_peers::Peer out;
     ASSERT_TRUE(peers.Select(&out, true));
-    EXPECT_EQ(btclite::network::NetAddr(std::move(out.addr())), addr);
+    EXPECT_EQ(out.addr(), addr);
     
     // move addr to tried, select from new expected nothing returned.
     ASSERT_TRUE(peers.MakeTried(addr));
     ASSERT_FALSE(peers.Select(&out, true));
     ASSERT_TRUE(peers.Select(&out, false));
-    EXPECT_EQ(btclite::network::NetAddr(std::move(out.addr())), addr);
+    EXPECT_EQ(out.addr(), addr);
 }
 
 TEST(PeersTest, AttemptPeer)
 {
-    btclite::Peers peers;
-    btclite::network::NetAddr addr, source;
+    Peers peers;
+    NetAddr addr, source;
     bool is_new, is_tried;
     proto_peers::Peer peer;
     
@@ -215,8 +234,8 @@ TEST(PeersTest, AttemptPeer)
 
 TEST(PeersTest, UpdatePeerTime)
 {
-    btclite::Peers peers;
-    btclite::network::NetAddr addr, source;
+    Peers peers;
+    NetAddr addr, source;
     bool is_new, is_tried;
     proto_peers::Peer peer;
     
@@ -237,8 +256,8 @@ TEST(PeersTest, UpdatePeerTime)
 
 TEST(PeersTest, GetAddresses)
 {
-    btclite::Peers peers;
-    btclite::network::NetAddr addr, source;
+    Peers peers;
+    NetAddr addr, source;
     int64_t now = btclite::utility::util_time::GetAdjustedTime();
     std::vector<btclite::network::NetAddr> addrs, addrs2;
     
@@ -291,32 +310,32 @@ TEST(PeersTest, PeerIsTerrible)
     int64_t now = 10000000;
     
     peer.set_last_try(now-60);
-    EXPECT_FALSE(btclite::Peers::IsTerrible(peer, now));
+    EXPECT_FALSE(Peers::IsTerrible(peer, now));
     
     peer.set_last_try(now-100);
     peer.mutable_addr()->set_timestamp(now+10*60+1);
-    EXPECT_TRUE(btclite::Peers::IsTerrible(peer, now));
+    EXPECT_TRUE(Peers::IsTerrible(peer, now));
     peer.mutable_addr()->set_timestamp(now+10*60);
-    EXPECT_FALSE(btclite::Peers::IsTerrible(peer, now));
+    EXPECT_FALSE(Peers::IsTerrible(peer, now));
     
     peer.mutable_addr()->set_timestamp(now-kPeerHorizonDays*24*60*60-1);
-    EXPECT_TRUE(btclite::Peers::IsTerrible(peer, now));
+    EXPECT_TRUE(Peers::IsTerrible(peer, now));
     peer.mutable_addr()->set_timestamp(now-kPeerHorizonDays*24*60*60);
-    EXPECT_FALSE(btclite::Peers::IsTerrible(peer, now));
+    EXPECT_FALSE(Peers::IsTerrible(peer, now));
     
     peer.set_attempts(kPeerRetries);
-    EXPECT_TRUE(btclite::Peers::IsTerrible(peer, now));
+    EXPECT_TRUE(Peers::IsTerrible(peer, now));
     peer.set_attempts(kPeerRetries-1);
-    EXPECT_FALSE(btclite::Peers::IsTerrible(peer, now));
+    EXPECT_FALSE(Peers::IsTerrible(peer, now));
     
     peer.set_last_success(now-kMinPeerFailDays*24*60*60-1);
     peer.set_attempts(kMaxPeerFailures);
-    EXPECT_TRUE(btclite::Peers::IsTerrible(peer, now));
+    EXPECT_TRUE(Peers::IsTerrible(peer, now));
     peer.set_last_success(now-kMinPeerFailDays*24*60*60);
-    EXPECT_FALSE(btclite::Peers::IsTerrible(peer, now));
+    EXPECT_FALSE(Peers::IsTerrible(peer, now));
     peer.set_last_success(now-kMinPeerFailDays*24*60*60-1);
     peer.set_attempts(kMaxPeerFailures-1);
-    EXPECT_FALSE(btclite::Peers::IsTerrible(peer, now));
+    EXPECT_FALSE(Peers::IsTerrible(peer, now));
 }
 
 TEST(PeersDbTest, Constructor)
@@ -327,8 +346,8 @@ TEST(PeersDbTest, Constructor)
 
 TEST(PeersDbTest, DumpAndLoadPeers)
 {
-    btclite::Peers& peers = SingletonPeers::GetInstance();
-    btclite::network::NetAddr addr, source;
+    Peers& peers = SingletonPeers::GetInstance();
+    NetAddr addr, source;
     int64_t now = btclite::utility::util_time::GetAdjustedTime();
     
     source.SetIpv4(inet_addr("250.1.2.1"));

@@ -6,7 +6,7 @@
 #include "block_sync.h"
 
 
-class FixtureBlockSyncTest : public ::testing::Test {
+class BlockSyncTest : public ::testing::Test {
 protected:
     void SetUp() override 
     {

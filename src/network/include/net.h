@@ -12,11 +12,21 @@
 class LocalNetConfig {
 public:
     LocalNetConfig()
-        : local_services_(ServiceFlags(kNodeNetwork | kNodeNetworkLimited)), local_addrs_() {}
+        : local_services_(ServiceFlags(kNodeNetwork | kNodeNetworkLimited)), 
+          map_local_addrs_() {}
     
+    //-------------------------------------------------------------------------
     bool LookupLocalAddrs();
-    bool IsLocal(const btclite::network::NetAddr& addr);
+    bool GetLocalAddr(const btclite::network::NetAddr& peer_addr, ServiceFlags services,
+                      btclite::network::NetAddr *out);
     
+    bool IsLocal(const btclite::network::NetAddr& addr)
+    {
+        LOCK(cs_local_net_config_);
+        return (map_local_addrs_.count(addr) > 0);
+    }
+    
+    //-------------------------------------------------------------------------
     ServiceFlags local_services() const
     {
         LOCK(cs_local_net_config_);
@@ -28,18 +38,18 @@ public:
         local_services_ = flags;
     }
     
-    std::vector<btclite::network::NetAddr> local_addrs() const // thread safe copy
+    std::map<btclite::network::NetAddr, int> map_local_addrs() const // thread safe copy
     {
         LOCK(cs_local_net_config_);
-        return local_addrs_;
+        return map_local_addrs_;
     }
     
 private:
     mutable CriticalSection cs_local_net_config_;
     ServiceFlags local_services_;
-    std::vector<btclite::network::NetAddr> local_addrs_;
+    std::map<btclite::network::NetAddr, int> map_local_addrs_;
     
-    bool AddLocalHost(const btclite::network::NetAddr& addr);
+    bool AddLocalHost(const btclite::network::NetAddr& addr, int score);
 };
 
 class SingletonLocalNetCfg : Uncopyable {
@@ -70,14 +80,14 @@ class NetArgs {
 public:
     explicit NetArgs(const Args& args);
     
-    bool is_listen() const
+    bool listening() const
     {
-        return is_listen_;
+        return listening_;
     }
     
-    bool is_discover() const
+    bool should_discover() const
     {
-        return is_discover_;
+        return should_discover_;
     }
     
     bool is_dnsseed() const
@@ -91,10 +101,22 @@ public:
     }
     
 private:
-    bool is_listen_;
-    bool is_discover_;
-    bool is_dnsseed_;
+    bool listening_ = true;
+    bool should_discover_ = true;
+    bool is_dnsseed_ = true;
     std::vector<std::string> specified_outgoing_;
+};
+
+class SingletonNetArgs : Uncopyable {
+public:
+    static NetArgs& GetInstance(const Args& args = Args())
+    {
+        static NetArgs net_args(args);
+        return net_args;
+    }
+    
+private:
+    SingletonNetArgs() {}
 };
 
 

@@ -5,9 +5,9 @@
 
 using namespace btclite::network::protocol;
 
-class FixturePingTest : public ::testing::Test {
+class PingTest : public ::testing::Test {
 protected:
-    FixturePingTest()
+    PingTest()
         : nonce_(0x1122334455667788), ping1_(), ping2_(nonce_) {}
     
     uint64_t nonce_ = 0;

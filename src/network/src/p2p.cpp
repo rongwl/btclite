@@ -2,8 +2,21 @@
 #include "fullnode/include/config.h"
 
 
+P2P::P2P(const ExecutorConfig& config)
+    : peers_db_(config.path_data_dir())
+{
+    btclite::network::SingletonParams::GetInstance(config.env());
+    SingletonNetArgs::GetInstance(config.args());
+    //SingletonLocalNetCfg::GetInstance();
+    //SingletonNodes::GetInstance();
+    SingletonBanDb::GetInstance(config.path_data_dir());
+    //SingletonNetInterrupt::GetInstance();
+}
+
 bool P2P::Init()
 {
+    BanDb& ban_db = SingletonBanDb::GetInstance();
+    
     BTCLOG(LOG_LEVEL_INFO) << "Initializing p2p network...";
     
     if (!acceptor_.InitEvent())
@@ -21,15 +34,15 @@ bool P2P::Init()
         peers_db_.DumpPeers();
     }
     
-    if (ban_db_.LoadBanList()) {
-        ban_db_.set_dirty(false); // no need to write down, just read data
-        ban_db_.SweepBanned(); // sweep out unused entries
-        BTCLOG(LOG_LEVEL_INFO) << "Loaded " << ban_db_.Size() << " banned node ips/subnets from banlist.dat";
+    if (ban_db.LoadBanList()) {
+        ban_db.set_dirty(false); // no need to write down, just read data
+        ban_db.SweepBanned(); // sweep out unused entries
+        BTCLOG(LOG_LEVEL_INFO) << "Loaded " << ban_db.Size() << " banned node ips/subnets from banlist.dat";
     }
     else {
         BTCLOG(LOG_LEVEL_INFO) << "Invalid or missing banlist.dat; recreating";
-        ban_db_.set_dirty(true); // force write
-        ban_db_.DumpBanList();
+        ban_db.set_dirty(true); // force write
+        ban_db.DumpBanList();
     }
     
     BTCLOG(LOG_LEVEL_INFO) << "Initialized p2p network.";
@@ -39,9 +52,11 @@ bool P2P::Init()
 
 bool P2P::Start()
 {   
+    NetArgs& net_args = SingletonNetArgs::GetInstance();
+    
     BTCLOG(LOG_LEVEL_INFO) << "Starting p2p network...";
     
-    interrupt_.Reset();
+    SingletonNetInterrupt::GetInstance().Reset();
     
     // start acceptor
     thread_acceptor_loop_ = std::thread(&TraceThread<std::function<void()> >, "acceptor",
@@ -50,8 +65,8 @@ bool P2P::Start()
     // start connector
     thread_connector_loop_ = std::thread(&TraceThread<std::function<void()> >, "connector",
                                          std::function<void()>(std::bind(&Connector::StartEventLoop, &connector_)));
-    if (!network_args_.specified_outgoing().empty()) {
-        if (!connector_.ConnectNodes(network_args_.specified_outgoing()), true)
+    if (!net_args.specified_outgoing().empty()) {
+        if (!connector_.ConnectNodes(net_args.specified_outgoing()), true)
             return false;
     }
     else  {
@@ -70,7 +85,7 @@ void P2P::Interrupt()
 {
     BTCLOG(LOG_LEVEL_INFO) << "Interrupting p2p network...";
     
-    interrupt_();
+    SingletonNetInterrupt::GetInstance()();
     SingletonTimerMng::GetInstance().set_stop(true);
     acceptor_.ExitEventLoop();
     connector_.ExitEventLoop();    
@@ -89,7 +104,7 @@ void P2P::Stop()
         thread_connector_loop_.join();
     
     peers_db_.DumpPeers();
-    ban_db_.DumpBanList();
+    SingletonBanDb::GetInstance().DumpBanList();
     
     BTCLOG(LOG_LEVEL_INFO) << "Stopped p2p network.";
 }

@@ -18,14 +18,26 @@ namespace btclite {
 namespace network {
 
 enum AddrFamily {
-    AF_UNROUTABLE = 0,
-    AF_IPV4,
-    AF_IPV6,
-    AF_TOR,
-    AF_INTERNAL,
-
-    AF_MAXIMUM,
+    kAfUnroutable = 0,
+    kAfIpv4,
+    kAfIpv6,
+    kAfTor,
+    kAfInternal,
+    kAfTeredo,
+    
+    kAfMaximum,
 };
+
+enum AddrCategory {
+    kAcNone,   // unknown
+    kAcLocalIf,     // address a local interface listens on
+    kAcBind,   // address explicit bound to
+    kAcUpnp,   // address reported by upnp
+    kAcManual, // address explicitly specified (-externalip=)
+
+    kAcMax
+};
+
     
 class NetAddr {
 public:
@@ -37,13 +49,13 @@ public:
         proto_addr_.mutable_ip()->Resize(ip_uint32_size, 0);
     }
     
-    explicit NetAddr(const struct sockaddr_in& addr);    
-    explicit NetAddr(const struct sockaddr_in6& addr6);    
-    explicit NetAddr(const struct sockaddr_storage& addr);
+    NetAddr(const struct sockaddr_in& addr);    
+    NetAddr(const struct sockaddr_in6& addr6);    
+    NetAddr(const struct sockaddr_storage& addr);
     
-    explicit NetAddr(const proto_netaddr::NetAddr& proto_addr)
+    NetAddr(const proto_netaddr::NetAddr& proto_addr)
         : proto_addr_(proto_addr) {}
-    explicit NetAddr(proto_netaddr::NetAddr&& proto_addr) noexcept
+    NetAddr(proto_netaddr::NetAddr&& proto_addr) noexcept
         : proto_addr_(std::move(proto_addr)) {}
     
     NetAddr(uint32_t timestamp, uint64_t services, IpAddr& ip, uint16_t port);
@@ -52,6 +64,7 @@ public:
     //-------------------------------------------------------------------------
     bool IsIpv4() const;
     bool IsIpv6() const;
+    bool IsTor() const;
     bool IsRFC1918() const; // IPv4 private networks (10.0.0.0/8, 192.168.0.0/16, 172.16.0.0/12)
     bool IsRFC2544() const; // IPv4 inter-network communications (192.18.0.0/15)
     bool IsRFC6598() const; // IPv4 ISP-level NAT (100.64.0.0/10)
@@ -92,6 +105,8 @@ public:
     void SetIpv6(const uint8_t *src);
     void GetGroup(std::vector<uint8_t> *out) const;
     bool SetInternal(const std::string& name);
+    AddrFamily GetFamily() const;
+    int GetReachability(const NetAddr& addr_partner) const;
     
     //-------------------------------------------------------------------------
     template <typename Stream>
@@ -100,15 +115,21 @@ public:
     void Deserialize(Stream& in);
     
     //-------------------------------------------------------------------------
-    bool operator==(const NetAddr& b) const
+    friend bool operator==(const NetAddr& a, const NetAddr& b)
     {
-        return (std::memcmp(this->proto_addr_.ip().data(), b.proto_addr().ip().data(), kIpByteSize) == 0 &&
-                this->proto_addr_.port() == b.proto_addr().port());
+        return (std::memcmp(a.proto_addr_.ip().begin(), b.proto_addr().ip().begin(), kIpByteSize) == 0 &&
+                a.proto_addr_.port() == b.proto_addr().port());
     }
     
-    bool operator!=(const NetAddr& b) const
+    friend bool operator!=(const NetAddr& a, const NetAddr& b)
     {
-        return !(*this == b);
+        return !(a == b);
+    }
+    
+    friend bool operator<(const NetAddr& a, const NetAddr& b)
+    {
+        return (std::memcmp(a.proto_addr_.ip().begin(), b.proto_addr().ip().begin(), kIpByteSize)
+                < 0);
     }
     
     //-------------------------------------------------------------------------
@@ -124,6 +145,8 @@ public:
 
 private:
     proto_netaddr::NetAddr proto_addr_;
+    
+    AddrFamily GetExtFamily() const;
     
 #define ASSERT_SIZE() assert(proto_addr_.ip().size() == 4)
 #define ASSERT_RANGE(N) assert(N >= 0 && N <= 15)
@@ -175,16 +198,15 @@ public:
         std::memset(netmask_, 0, sizeof(netmask_));
     }
     
-    explicit SubNet(const btclite::network::NetAddr& addr)
+    SubNet(const btclite::network::NetAddr& addr)
         : net_addr_(addr), valid_(addr.IsValid())
     {
         std::memset(netmask_, 0xff, sizeof(netmask_));
     }
     
-    explicit SubNet(btclite::network::NetAddr&& addr) noexcept
+    SubNet(btclite::network::NetAddr&& addr) noexcept
         : net_addr_(std::move(addr)), valid_(addr.IsValid())
     {
-        std::cout << __func__ << ":" << __LINE__ << '\n';
         std::memset(netmask_, 0xff, sizeof(netmask_));
     }
     
@@ -210,8 +232,8 @@ public:
     //-------------------------------------------------------------------------
     friend bool operator==(const SubNet& a, const SubNet& b)
     {
-        return (std::memcmp(a.net_addr().proto_addr().ip().data(),
-                            b.net_addr().proto_addr().ip().data(),
+        return (std::memcmp(a.net_addr().proto_addr().ip().begin(),
+                            b.net_addr().proto_addr().ip().begin(),
                             kIpByteSize) == 0);
     }
     

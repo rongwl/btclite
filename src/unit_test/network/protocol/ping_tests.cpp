@@ -3,20 +3,20 @@
 #include "stream.h"
 
 
-TEST_F(FixturePingTest, Constructor)
+TEST_F(PingTest, Constructor)
 {
     EXPECT_EQ(ping1_.nonce(), 0);
     EXPECT_EQ(ping2_.nonce(), nonce_);
 }
 
-TEST_F(FixturePingTest, OperatorEqual)
+TEST_F(PingTest, OperatorEqual)
 {
     EXPECT_NE(ping1_, ping2_);
     ping1_.set_nonce(ping2_.nonce());
     EXPECT_EQ(ping1_, ping2_);
 }
 
-TEST_F(FixturePingTest, Serialize)
+TEST_F(PingTest, Serialize)
 {
     std::vector<uint8_t> vec;
     ByteSink<std::vector<uint8_t> > byte_sink(vec);

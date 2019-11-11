@@ -139,6 +139,7 @@ class MessageData {
 public:
     virtual bool RecvHandler(std::shared_ptr<Node> src_node) const = 0;
     virtual std::string Command() const = 0;
+    virtual bool IsValid() const = 0;
     virtual ~MessageData() {}
 };
 
