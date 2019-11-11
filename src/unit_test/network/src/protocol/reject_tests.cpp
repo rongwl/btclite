@@ -1,4 +1,4 @@
-#include "reject_tests.h"
+#include "protocol/reject_tests.h"
 
 
 TEST_F(RejectTest, Constructor)

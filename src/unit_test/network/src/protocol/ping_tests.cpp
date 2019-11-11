@@ -1,4 +1,4 @@
-#include "ping_tests.h"
+#include "protocol/ping_tests.h"
 
 #include "stream.h"
 

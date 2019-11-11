@@ -66,7 +66,6 @@ BTCLITE_HEADER_FILES = \
                        network/include/net.h \
                        network/include/netbase.h \
                        network/include/network_address.h \
-                       network/include/session.h \
                        network/include/socket.h \
                        crypto/include/hash.h \
                        utility/include/arithmetic.h \
@@ -169,7 +168,6 @@ network_src_libbtclite_network_a_SOURCES = network/proto/banmap.pb.cc \
                                            network/src/p2p.cpp \
                                            network/src/net.cpp \
                                            network/src/node.cpp \
-                                           network/src/session.cpp \
                                            network/src/socket.cpp
 
 

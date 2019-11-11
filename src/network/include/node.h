@@ -404,32 +404,6 @@ public:
 private:
     SingletonNodes() {}    
 };
-/*
-class MsgHandler {
-public:
-    using MsgDataHandler = std::function<bool()>;
-    
-    MsgHandler(std::shared_ptr<Message> msg, std::shared_ptr<Node> src_node)
-    {
-        Factory(msg, src_node);
-    }
-    
-    static bool HandleMessage(std::shared_ptr<Message> msg, std::shared_ptr<Node> src_node,
-                              MsgDataHandler data_handler);
-    
-    std::function<bool()> data_handler() const
-    {
-        return data_handler_;
-    }
-    
-private:
-    MsgDataHandler data_handler_;
-    
-    void Factory(std::shared_ptr<Message> msg, std::shared_ptr<Node> src_node);
 
-    static bool VerifyMsgHeader(const MessageHeader& header);
-    static bool HandleRecvVersion(std::shared_ptr<Message> msg, std::shared_ptr<Node> src_node);
-};
-*/
 
 #endif // BTCLITE_NODE_H

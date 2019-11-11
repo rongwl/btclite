@@ -1,4 +1,4 @@
-#include "version_tests.h"
+#include "protocol/version_tests.h"
 
 
 TEST_F(VersionTest, Constructor)
