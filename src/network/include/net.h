@@ -119,5 +119,12 @@ private:
     SingletonNetArgs() {}
 };
 
+namespace btclite {
+namespace network {
+
+bool IsPeerLocalAddrGood(std::shared_ptr<Node> node);
+
+} // namespace network
+} // namespace btclite
 
 #endif // BTCLITE_NET_H

@@ -7,6 +7,7 @@
 #include "network_address.h"
 #include "constants.h"
 #include "node.h"
+#include "stream.h"
 
 
 using namespace btclite::network;
@@ -443,8 +444,10 @@ TEST(NetAddrTest, Clear)
 
 TEST(NetAddrTest, SerializedSize)
 {
+    MemOstream ms;
     NetAddr addr;
-    EXPECT_EQ(addr.SerializedSize(), 32);
+    ms << addr;
+    EXPECT_EQ(addr.SerializedSize(), ms.vec().size());
 }
 
 TEST(NetAddrTest, Serialize)

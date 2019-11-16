@@ -1,51 +1,43 @@
-#ifndef BTCLITE_PROTOCOL_PING_H
-#define BTCLITE_PROTOCOL_PING_H
+#ifndef BTCLITE_PROTOCOL_INVENTORY_H
+#define BTCLITE_PROTOCOL_INVENTORY_H
 
 
 #include "message.h"
+#include "inventory_vector.h"
 
 
 namespace btclite {
 namespace network {
 namespace protocol {
 
-class ping : public MessageData {
+class inventory : public MessageData {
 public:
-    ping() = default;
-    
-    explicit ping(uint64_t nonce)
-        : nonce_(nonce) {}
-    
-    //-------------------------------------------------------------------------
     bool RecvHandler(std::shared_ptr<Node> src_node) const;
     
     std::string Command() const
     {
-        return kMsgPing;
+        return kMsgInv;
     }
+    
+    size_t SerializedSize() const;
     
     bool IsValid() const
     {
-        return (nonce_ != 0);
+        return !inv_vects_.empty();
     }
     
     void Clear()
     {
-        nonce_ = 0;
-    }
-    
-    size_t SerializedSize() const
-    {
-        return sizeof(nonce_);
+        inv_vects_.clear();
     }
     
     //-------------------------------------------------------------------------
-    bool operator==(const ping& b) const
+    bool operator==(const inventory& b) const
     {
-        return nonce_ == b.nonce_;
+        return (inv_vects_ == b.inv_vects_);
     }
     
-    bool operator!=(const ping& b) const
+    bool operator!=(const inventory& b) const
     {
         return !(*this == b);
     }
@@ -55,36 +47,35 @@ public:
     void Serialize(Stream& out) const
     {
         Serializer<Stream> serializer(out);
-        serializer.SerialWrite(nonce_);
+        serializer.SerialWrite(inv_vects_);
     }
     
     template <typename Stream>
     void Deserialize(Stream& in)
     {
         Deserializer<Stream> deserializer(in);
-        deserializer.SerialRead(&nonce_);
+        deserializer.SerialRead(&inv_vects_);
     }
     
     //-------------------------------------------------------------------------
-    uint64_t nonce() const
+    const std::vector<InvVect>& inv_vects() const
     {
-        return nonce_;
+        return inv_vects_;
     }
     
-    void set_nonce(uint64_t nonce)
+    std::vector<InvVect> *mutable_inv_vects()
     {
-        nonce_ = nonce;
+        return &inv_vects_;
     }
     
 private:
-    uint64_t nonce_ = 0;
+    std::vector<InvVect> inv_vects_;
 };
 
-using Ping = Hashable<ping>;
+using Inv = Hashable<inventory>;
 
 } // namespace protocol
 } // namespace network
 } // namespace btclite
 
-
-#endif // BTCLITE_PROTOCOL_PING_H
+#endif // BTCLITE_PROTOCOL_INVENTORY_H

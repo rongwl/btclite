@@ -114,3 +114,16 @@ NetArgs::NetArgs(const Args& args)
     if (args.IsArgSet(FULLNODE_OPTION_CONNECT))
         specified_outgoing_ = args.GetArgs(FULLNODE_OPTION_CONNECT);
 }
+
+
+namespace btclite {
+namespace network {
+
+bool IsPeerLocalAddrGood(std::shared_ptr<Node> node)
+{    
+    return (SingletonNetArgs::GetInstance().should_discover() && 
+            node->addr().IsRoutable() && node->local_addr().IsRoutable());
+}
+
+} // namespace network
+} // namespace btclite

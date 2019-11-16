@@ -54,6 +54,9 @@ BTCLITE_HEADER_FILES = \
                        network/include/libevent.h \
                        network/include/protocol/message.h \
                        network/include/protocol/address.h \
+                       network/include/protocol/inventory.h \
+                       network/include/protocol/inventory_vector.h \
+                       network/include/protocol/getaddr.h \
                        network/include/protocol/ping.h \
                        network/include/protocol/reject.h \
                        network/include/protocol/verack.h \
@@ -107,10 +110,10 @@ utility_src_libbtclite_util_a_CPPFLAGS = $(AM_CXXFLAGS) \
                                          $(BOTAN_CFLAGS) \
                                          $(BTCLITE_UTIL_INCLUDES) \
                                          $(BTCLITE_CRYPTO_INCLUDES) \
+                                         $(BTCLITE_NETWORK_INCLUDES) \
                                          $(BTCLITE_NETWORK_PROTO_INCLUDES) \
                                          $(BTCLITE_FULLNODE_INCLUDES)
-utility_src_libbtclite_util_a_SOURCES = utility/src/circular_buffer.cpp \
-                                        utility/src/error.cpp \
+utility_src_libbtclite_util_a_SOURCES = utility/src/error.cpp \
                                         utility/src/logging.cpp \
                                         utility/src/random.cpp \
                                         utility/src/serialize.cpp \
@@ -156,6 +159,8 @@ network_src_libbtclite_network_a_SOURCES = network/proto/banmap.pb.cc \
                                            network/src/libevent.cpp \
                                            network/src/protocol/message.cpp \
                                            network/src/protocol/address.cpp \
+                                           network/src/protocol/inventory.cpp \
+                                           network/src/protocol/getaddr.cpp \
                                            network/src/protocol/ping.cpp \
                                            network/src/protocol/reject.cpp \
                                            network/src/protocol/verack.cpp \

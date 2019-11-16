@@ -1,11 +1,11 @@
-#include "protocol/verack.h"
+#include "protocol/getaddr.h"
 
 
 namespace btclite {
 namespace network {
 namespace protocol {
 
-bool verack::RecvHandler(std::shared_ptr<Node> src_node) const
+bool getaddress::RecvHandler(std::shared_ptr<Node> src_node) const
 {
     return true;
 }

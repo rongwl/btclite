@@ -12,7 +12,7 @@ namespace btclite {
 namespace utility {
 namespace random {
 
-uint64_t GetUint64(uint64_t max);
+uint64_t GetUint64(uint64_t max = std::numeric_limits<uint64_t>::max());
 Uint256 GetUint256();
 
 } // namespace random

@@ -10,8 +10,6 @@
 #include "network_address.h"
 
 
-void ReadCb(struct bufferevent *bev, void *ctx);
-
 class MsgProcessTest : public ::testing::Test {
 protected:
     void SetUp() override

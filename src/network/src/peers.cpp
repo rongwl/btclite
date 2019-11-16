@@ -338,7 +338,6 @@ bool Peers::GetAddrs(std::vector<btclite::network::NetAddr> *out)
 uint64_t Peers::MakeMapKey(const btclite::network::NetAddr& addr, bool by_group)
 {
     HashOStream hs;
-    Uint256 out;
     
     if (by_group) {
         std::vector<uint8_t> group;        
@@ -351,9 +350,8 @@ uint64_t Peers::MakeMapKey(const btclite::network::NetAddr& addr, bool by_group)
             vec_addr.push_back(addr.proto_addr().ip()[i]);
         hs << key_ << vec_addr;
     }
-    hs.Sha256(&out);
     
-    return out.GetLow64();
+    return hs.Sha256().GetLow64();
 }
 
 bool Peers::IsTerrible(const proto_peers::Peer& peer, int64_t now)

@@ -17,11 +17,16 @@ namespace crypto {
 namespace hash {
 
 void Sha256(const uint8_t in[], size_t length, Hash256 *out);
+Hash256 Sha256(const uint8_t in[], size_t length);
 void Sha256(const std::vector<uint8_t>& in, Hash256 *out);
+Hash256 Sha256(const std::vector<uint8_t>& in);
 
 void DoubleSha256(const uint8_t in[], size_t length, Hash256 *out);
+Hash256 DoubleSha256(const uint8_t in[], size_t length);
 void DoubleSha256(const std::vector<uint8_t> &in, Hash256 *out);
+Hash256 DoubleSha256(const std::vector<uint8_t> &in);
 void DoubleSha256(const std::string &in, Hash256 *out);
+Hash256 DoubleSha256(const std::string &in);
 
 } // namespace hash
 } // namespace crypto
@@ -36,8 +41,10 @@ public:
     HashOStream()
         : vec_(), byte_sink_(vec_) {}
     
-    void Sha256(Hash256 *out);    
-    void DoubleSha256(Hash256 *out);
+    void Sha256(Hash256 *out) const; 
+    Hash256 Sha256() const;
+    void DoubleSha256(Hash256 *out) const;
+    Hash256 DoubleSha256() const;
     
     template <typename T>
     HashOStream& operator<<(const T& obj)
@@ -97,5 +104,27 @@ private:
     const Botan::secure_vector<uint8_t> key_;
     bool is_set_key_;
 };
+
+// mixin GetHash() for any class with Serialize methord
+template <typename Base>
+struct Hashable : public Base {
+    using Base::Base;
+    
+    Hash256 GetHash() const;
+};
+
+template <typename Base>
+Hash256 Hashable<Base>::GetHash() const
+{
+    std::vector<uint8_t> vec;
+    Hash256 hash;
+    ByteSink<std::vector<uint8_t> > byte_sink(vec);
+    
+    Base::Serialize(byte_sink);
+    btclite::crypto::hash::Sha256(vec, &hash);
+    
+    return hash;
+}
+
 
 #endif // BTCLITE_Hash256_H

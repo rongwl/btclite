@@ -3,7 +3,7 @@
 
 TEST_F(VersionTest, Constructor)
 {
-    EXPECT_EQ(version1_.version(), 0);
+    EXPECT_EQ(version1_.protocol_version(), 0);
     EXPECT_EQ(version1_.services(), 0);
     EXPECT_EQ(version1_.timestamp(), 0);
     EXPECT_EQ(version1_.addr_recv(), btclite::network::NetAddr());
@@ -13,7 +13,7 @@ TEST_F(VersionTest, Constructor)
     EXPECT_EQ(version1_.start_height(), 0);
     EXPECT_EQ(version1_.relay(), 0);
     
-    EXPECT_EQ(version2_.version(), version_);
+    EXPECT_EQ(version2_.protocol_version(), version_);
     EXPECT_EQ(version2_.services(), services_);
     EXPECT_EQ(version2_.timestamp(), timestamp_);
     EXPECT_EQ(version2_.addr_recv(), addr_recv_);
@@ -23,7 +23,7 @@ TEST_F(VersionTest, Constructor)
     EXPECT_EQ(version2_.start_height(), start_height_);
     EXPECT_EQ(version2_.relay(), relay_);
     
-    EXPECT_EQ(version3_.version(), version_);
+    EXPECT_EQ(version3_.protocol_version(), version_);
     EXPECT_EQ(version3_.services(), services_);
     EXPECT_EQ(version3_.timestamp(), timestamp_);
     EXPECT_EQ(version3_.addr_recv(), addr_recv_);
@@ -39,10 +39,10 @@ TEST_F(VersionTest, OperatorEqual)
     EXPECT_EQ(version2_, version3_);
     EXPECT_NE(version1_, version2_);
     
-    version2_.set_version(kShortIdsBlocksVersion);
+    version2_.set_protocol_version(kShortIdsBlocksVersion);
     EXPECT_NE(version2_, version3_);
     
-    version2_.set_version(version3_.version());
+    version2_.set_protocol_version(version3_.protocol_version());
     EXPECT_EQ(version2_, version3_);
     version2_.set_services(kNodeNone);
     EXPECT_NE(version2_, version3_);
@@ -85,7 +85,7 @@ TEST_F(VersionTest, OperatorEqual)
 
 TEST_F(VersionTest, Set)
 {
-    version1_.set_version(version2_.version());
+    version1_.set_protocol_version(version2_.protocol_version());
     version1_.set_services(version2_.services());
     version1_.set_timestamp(version2_.timestamp());
     version1_.set_addr_recv(version2_.addr_recv());
@@ -115,13 +115,13 @@ TEST_F(VersionTest, IsValid)
 {
     EXPECT_FALSE(version1_.IsValid());
     
-    version2_.set_version(kMinPeerProtoVersion);
+    version2_.set_protocol_version(kMinPeerProtoVersion);
     EXPECT_TRUE(version2_.IsValid());
     
-    version2_.set_version(0);
+    version2_.set_protocol_version(0);
     EXPECT_FALSE(version2_.IsValid());
     
-    version2_.set_version(kMinPeerProtoVersion);
+    version2_.set_protocol_version(kMinPeerProtoVersion);
     EXPECT_TRUE(version2_.IsValid());
     version2_.set_addr_recv(std::move(btclite::network::NetAddr()));
     EXPECT_FALSE(version2_.IsValid());
@@ -157,7 +157,7 @@ TEST_F(VersionTest, Serialize)
     EXPECT_EQ(version1_, version2_);
     
     version1_.Clear();
-    version2_.set_version(kBip31Version);
+    version2_.set_protocol_version(kBip31Version);
     version2_.Serialize(byte_sink);
     version1_.Deserialize(byte_source);
     EXPECT_FALSE(version1_.relay());
@@ -165,6 +165,8 @@ TEST_F(VersionTest, Serialize)
 
 TEST_F(VersionTest, SerializedSize)
 {
-    version1_.set_user_agent("/btclite:0.1.0/");
-    EXPECT_EQ(version1_.SerializedSize(), 113);
+    MemOstream ms;
+    
+    ms << version2_;
+    EXPECT_EQ(version2_.SerializedSize(), ms.vec().size());
 }

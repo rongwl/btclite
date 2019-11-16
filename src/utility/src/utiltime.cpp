@@ -37,13 +37,13 @@ int64_t GetAdjustedTime()
     return GetTimeSeconds() + SingletonTimeOffset::GetInstance().time_offset();
 }
 
-void AddTimeData(const std::string& ip, int64_t offset_sample)
+void AddTimeData(const btclite::network::NetAddr& addr, int64_t offset_sample)
 {
     // Ignore duplicates
     static std::set<std::string> set_known;
     if (set_known.size() == kMaxTimedataSamples)
         return;
-    if (!set_known.insert(ip).second)
+    if (!set_known.insert(addr.ToString()).second)
         return;
 
     // Add data

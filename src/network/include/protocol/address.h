@@ -10,7 +10,7 @@ namespace btclite {
 namespace network {
 namespace protocol {
 
-class Addr : public MessageData {
+class address : public MessageData {
 public:
     using List = std::vector<btclite::network::NetAddr>;
     
@@ -35,6 +35,17 @@ public:
     size_t SerializedSize() const;
     
     //-------------------------------------------------------------------------
+    bool operator==(const address& b) const
+    {
+        return (addr_list_ == b.addr_list_);
+    }
+    
+    bool operator!=(const address& b) const
+    {
+        return !(*this == b);
+    }
+    
+    //-------------------------------------------------------------------------
     template <typename Stream>
     void Serialize(Stream& out) const
     {
@@ -55,19 +66,16 @@ public:
         return addr_list_;
     }
     
-    void set_addr_list(const List& addr_list)
+    List *mutable_addr_list()
     {
-        addr_list_ = addr_list;
-    }
-    
-    void set_addr_list(List&& addr_list) noexcept
-    {
-        addr_list_ = std::move(addr_list);
+        return &addr_list_;
     }
     
 private:
     List addr_list_;
 };
+
+using Addr = Hashable<address>;
 
 } // namespace protocol
 } // namespace network

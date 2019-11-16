@@ -22,8 +22,8 @@ Node::Node(const struct bufferevent *bev, const btclite::network::NetAddr& addr,
     : id_(SingletonNodes::GetInstance().GetNewNodeId()),
       services_(SingletonLocalNetCfg::GetInstance().local_services()),
       bev_(const_cast<struct bufferevent*>(bev)), addr_(addr),
-      local_host_nonce_(btclite::utility::random::GetUint64(std::numeric_limits<uint64_t>::max())),
-      host_name_(host_name), is_inbound_(is_inbound), manual_(manual),
+      local_host_nonce_(btclite::utility::random::GetUint64()),
+      host_name_(host_name), is_inbound_(is_inbound), manual_(manual), known_addrs_(3000),
       time_(btclite::utility::util_time::GetTimeSeconds())
 {
     time_.ping_time.min_ping_usec_time = std::numeric_limits<int64_t>::max();
@@ -88,6 +88,20 @@ bool Node::CheckBanned()
         else {
             SingletonBanDb::GetInstance().Add(addr_, BanDb::NodeMisbehaving);
         }
+    }
+    
+    return true;
+}
+
+bool Node::PushAddress(const btclite::network::NetAddr& addr)
+{
+    if (!addr.IsValid() || known_addrs_.exist(addr.GetHash().GetLow64()))
+        return false;
+    
+    if (addrs_to_send_.size() >= kMaxAddrToSend) {
+        addrs_to_send_[btclite::utility::random::GetUint64(addrs_to_send_.size())] = addr;
+    } else {
+        addrs_to_send_.push_back(addr);
     }
     
     return true;

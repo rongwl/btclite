@@ -146,6 +146,18 @@ TEST_F(NodeTest, CheckBanned)
     SingletonBanDb::GetInstance().Clear();
 }
 
+TEST_F(NodeTest, PushAddress)
+{
+    Nodes& nodes = SingletonNodes::GetInstance();
+    std::shared_ptr<Node> node = nodes.GetNode(id_);
+    node->mutable_known_addrs()->push_back(addr_.GetHash().GetLow64());
+    EXPECT_FALSE(node->PushAddress(addr_));
+    
+    addr_.mutable_proto_addr()->set_port(8333);
+    ASSERT_TRUE(node->PushAddress(addr_));
+    EXPECT_EQ(node->addrs_to_send().front(), addr_);
+}
+
 TEST(DestructNodeTest, destructor)
 {
     btclite::network::NetAddr addr;

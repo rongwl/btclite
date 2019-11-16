@@ -1,5 +1,5 @@
-#ifndef BTCLITE_PROTOCOL_VERACK_H
-#define BTCLITE_PROTOCOL_VERACK_H
+#ifndef BTCLITE_PROTOCOL_GETADDR_H
+#define BTCLITE_PROTOCOL_GETADDR_H
 
 
 #include "message.h"
@@ -9,13 +9,13 @@ namespace btclite {
 namespace network {
 namespace protocol {
 
-class verack : public MessageData {
+class getaddress : public MessageData {
 public:
     bool RecvHandler(std::shared_ptr<Node> src_node) const;
     
     std::string Command() const
     {
-        return kMsgVerack;
+        return kMsgGetAddr;
     }
     
     bool IsValid() const
@@ -37,11 +37,10 @@ public:
     void Deserialize(Stream& in) {}
 };
 
-using Verack = Hashable<verack>;
+using GetAddr = Hashable<getaddress>;
 
 } // namespace protocol
 } // namespace network
 } // namespace btclite
 
-
-#endif // BTCLITE_PROTOCOL_VERACK_H
+#endif //BTCLITE_PROTOCOL_GETADDR_H

@@ -24,6 +24,8 @@ constexpr size_t kMaxMessageSize = 0x02000000;
 constexpr size_t kMaxSubVersionSize = 256;
 // Maximum length of reject messages.
 constexpr size_t kMaxRejectMessageLength = 111;
+// The maximum number of new addresses to accumulate before announcing.
+constexpr uint16_t kMaxAddrToSend = 1000;
 
 constexpr uint8_t kVarint16bits = 0xfd;
 constexpr uint8_t kVarint32bits = 0xfe;

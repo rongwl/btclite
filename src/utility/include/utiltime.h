@@ -2,6 +2,7 @@
 #define BTCLITE_UTILTIME_H
 
 
+#include "network_address.h"
 #include "util.h"
 
 
@@ -44,7 +45,7 @@ int64_t GetTimeSeconds();
 int64_t GetTimeMillis();
 int64_t GetTimeMicros();
 int64_t GetAdjustedTime();
-void AddTimeData(const std::string& ip, int64_t offset_sample);
+void AddTimeData(const btclite::network::NetAddr& addr, int64_t offset_sample);
 
 } // namespace time
 } // namespace util

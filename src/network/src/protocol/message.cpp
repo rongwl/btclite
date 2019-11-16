@@ -32,9 +32,9 @@ bool MessageHeader::IsValid() const
             cmd != kMsgMerkleBlock &&
             cmd != kMsgGetBlocks &&
             cmd != kMsgGetHeaders &&
-            cmd != kMsgTx &&
+            cmd != ::kMsgTx &&
             cmd != kMsgHeaders &&
-            cmd != kMsgBlock &&
+            cmd != ::kMsgBlock &&
             cmd != kMsgGetAddr &&
             cmd != kMsgMempool &&
             cmd != kMsgPing &&

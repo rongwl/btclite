@@ -1,4 +1,5 @@
 #include "protocol/reject_tests.h"
+#include "stream.h"
 
 
 TEST_F(RejectTest, Constructor)
@@ -94,8 +95,12 @@ TEST_F(RejectTest, Serialize)
 
 TEST_F(RejectTest, SerializedSize)
 {
-    EXPECT_EQ(reject2_.SerializedSize(), 43);
+    MemOstream ms;
+    ms << reject2_;
+    EXPECT_EQ(reject2_.SerializedSize(), ms.vec().size());
     
+    ms.Clear();
     reject2_.set_message(kMsgVersion);
-    EXPECT_EQ(reject2_.SerializedSize(), 13);
+    ms << reject2_;
+    EXPECT_EQ(reject2_.SerializedSize(), ms.vec().size());
 }

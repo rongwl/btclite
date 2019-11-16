@@ -5,7 +5,7 @@ namespace btclite {
 namespace network {
 namespace protocol {
 
-bool Ping::RecvHandler(std::shared_ptr<Node> src_node) const
+bool ping::RecvHandler(std::shared_ptr<Node> src_node) const
 {
     return true;
 }

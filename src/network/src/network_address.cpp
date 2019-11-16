@@ -5,7 +5,6 @@
 #include <sstream>
 
 #include "constants.h"
-#include "hash.h"
 
 
 namespace btclite {
@@ -549,6 +548,17 @@ AddrFamily NetAddr::GetExtFamily() const
         return kAfTeredo;
 
     return GetFamily();
+}
+
+Hash256 NetAddr::GetHash() const
+{
+    HashOStream hs;
+    
+    for (const auto& raw : proto_addr_.ip())
+        hs << raw;
+    hs << proto_addr_.port();
+    
+    return hs.Sha256();
 }
 
 } // namespace network

@@ -24,22 +24,22 @@ enum CCode : uint8_t {
     kRejectCheckpoint = 0x43
 };
 
-class Reject : public MessageData {
+class reject : public MessageData {
 public:
-    Reject() = default;
+    reject() = default;
     
-    Reject(const std::string& message, uint8_t ccode, const std::string& reason)
+    reject(const std::string& message, uint8_t ccode, const std::string& reason)
         : message_(message), ccode_(ccode), reason_(reason), data_() {}
     
-    Reject(std::string&& message, uint8_t ccode, std::string&& reason) noexcept
+    reject(std::string&& message, uint8_t ccode, std::string&& reason) noexcept
         : message_(std::move(message)), ccode_(ccode), reason_(std::move(reason)),
           data_() {}
     
-    Reject(const std::string& message, uint8_t ccode, const std::string& reason,
+    reject(const std::string& message, uint8_t ccode, const std::string& reason,
            const Hash256& data)
         : message_(message), ccode_(ccode), reason_(reason), data_(data) {}
     
-    Reject(std::string&& message, uint8_t ccode, std::string&& reason,
+    reject(std::string&& message, uint8_t ccode, std::string&& reason,
            const Hash256& data) noexcept
         : message_(std::move(message)), ccode_(ccode), reason_(std::move(reason)),
           data_(data) {}
@@ -63,8 +63,8 @@ public:
     void Deserialize(Stream& in);
     
     //-------------------------------------------------------------------------
-    bool operator==(const Reject& b) const;    
-    bool operator!=(const Reject& b) const;
+    bool operator==(const reject& b) const;    
+    bool operator!=(const reject& b) const;
     
     //-------------------------------------------------------------------------
     const std::string& message() const
@@ -119,7 +119,7 @@ private:
 };
 
 template <typename Stream>
-void Reject::Serialize(Stream& out) const
+void reject::Serialize(Stream& out) const
 {
     Serializer<Stream> serializer(out);
     
@@ -135,12 +135,12 @@ void Reject::Serialize(Stream& out) const
     else
         serializer.SerialWrite(reason_);
     
-    if (message_ == kMsgBlock || message_ == kMsgTx)
+    if (message_ == ::kMsgBlock || message_ == ::kMsgTx)
         serializer.SerialWrite(data_);
 }
 
 template <typename Stream>
-void Reject::Deserialize(Stream& in)
+void reject::Deserialize(Stream& in)
 {
     Deserializer<Stream> deserializer(in);
     
@@ -154,9 +154,11 @@ void Reject::Deserialize(Stream& in)
     if (reason_.size() > kMaxRejectMessageLength)
         reason_.resize(kMaxRejectMessageLength);
     
-    if (message_ == kMsgBlock || message_ == kMsgTx)
+    if (message_ == ::kMsgBlock || message_ == ::kMsgTx)
         deserializer.SerialRead(&data_);
 }
+
+using Reject = Hashable<reject>;
 
 } // namespace protocol
 } // namespace network

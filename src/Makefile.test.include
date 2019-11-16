@@ -1,8 +1,8 @@
-TESTS = unit_test/test_util/src \
-        unit_test/test_crypto/src \
-        unit_test/test_chain/src \
-        unit_test/test_network/src \
-        unit_test/test_fullnode/src
+TESTS = unit_test/test_util \
+        unit_test/test_crypto \
+        unit_test/test_chain \
+        unit_test/test_network \
+        unit_test/test_fullnode
 bin_PROGRAMS += unit_test/test_util \
                 unit_test/test_crypto \
                 unit_test/test_chain \
@@ -13,6 +13,7 @@ bin_PROGRAMS += unit_test/test_util \
 
 
 UNIT_TEST_NETWORK_INCLUDES = -I$(srcdir)/unit_test/network/include
+UNIT_TEST_UTIL_INCLUDES = -I$(srcdir)/unit_test/utility/include
 
 # test_fullnode binary #
 unit_test_test_fullnode_SOURCES = unit_test/fullnode/src/test_fullnode.cpp \
@@ -43,6 +44,8 @@ unit_test_test_network_SOURCES = unit_test/network/src/test_network.cpp \
                                  unit_test/network/src/peers_tests.cpp \
                                  unit_test/network/src/protocol/message_tests.cpp \
                                  unit_test/network/src/protocol/address_tests.cpp \
+                                 unit_test/network/src/protocol/inventory_vector_tests.cpp \
+                                 unit_test/network/src/protocol/inventory_tests.cpp \
                                  unit_test/network/src/protocol/ping_tests.cpp \
                                  unit_test/network/src/protocol/reject_tests.cpp \
                                  unit_test/network/src/protocol/version_tests.cpp \
@@ -58,6 +61,8 @@ unit_test_test_network_SOURCES = unit_test/network/src/test_network.cpp \
                                  unit_test/network/include/net_tests.h \
                                  unit_test/network/include/node_tests.h \
                                  unit_test/network/include/protocol/message_tests.h \
+                                 unit_test/network/include/protocol/address_tests.h \
+                                 unit_test/network/include/protocol/inventory_vector_tests.h \
                                  unit_test/network/include/protocol/version_tests.h \
                                  unit_test/network/include/protocol/ping_tests.h \
                                  unit_test/network/include/protocol/reject_tests.h \
@@ -118,6 +123,7 @@ unit_test_test_chain_LDADD += $(GTEST_LIBS) \
 
 # test_util binary #
 unit_test_test_util_SOURCES = unit_test/utility/src/test_util.cpp \
+                              unit_test/utility/src/circular_buffer_tests.cpp \
                               unit_test/utility/src/string_encoding_tests.cpp \
                               unit_test/utility/src/random_tests.cpp \
                               unit_test/utility/src/stream_tests.cpp \
@@ -128,6 +134,7 @@ unit_test_test_util_SOURCES = unit_test/utility/src/test_util.cpp \
 unit_test_test_util_CPPFLAGS = $(AM_CPPFLAGS) \
                                $(GTEST_CFLAGS) \
                                $(BOTAN_CFLAGS) \
+                               $(UNIT_TEST_UTIL_INCLUDES) \
                                $(BTCLITE_INCLUDES)
 unit_test_test_util_LDADD = $(LIBBTCLITE_UTIL)
 unit_test_test_util_LDADD += $(GTEST_LIBS) \

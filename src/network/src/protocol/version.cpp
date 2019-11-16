@@ -3,6 +3,7 @@
 #include "msg_process.h"
 #include "net.h"
 #include "peers.h"
+#include "protocol/getaddr.h"
 #include "protocol/reject.h"
 #include "protocol/verack.h"
 
@@ -14,7 +15,7 @@ namespace protocol{
 using namespace btclite::network::msg_process;
 using namespace btclite::network::block_sync;
 
-bool Version::RecvHandler(std::shared_ptr<Node> src_node) const
+bool version::RecvHandler(std::shared_ptr<Node> src_node) const
 {
     Verack verack;
     
@@ -56,9 +57,9 @@ bool Version::RecvHandler(std::shared_ptr<Node> src_node) const
         }
     }
     
-    if (version_ < kMinPeerProtoVersion) {
+    if (protocol_version_ < kMinPeerProtoVersion) {
         BTCLOG(LOG_LEVEL_INFO) << "Disconnecting peer " << src_node->id()
-                               << " for using obsolete version " << version_  << '.';
+                               << " for using obsolete version " << protocol_version_  << '.';
         std::stringstream ss;
         ss << "Version must be " << kMinPeerProtoVersion << " or greater";
         Reject reject(Command(), kRejectObsolete, std::move(ss.str()));
@@ -84,7 +85,7 @@ bool Version::RecvHandler(std::shared_ptr<Node> src_node) const
     src_node->set_local_addr(addr_recv_);
     src_node->set_start_height(start_height_);
     src_node->mutable_filter()->set_relay_txes(relay_);
-    src_node->set_version(version_);
+    src_node->set_version(protocol_version_);
     
     if (services_ & kNodeWitness)
         SingletonBlockSync::GetInstance().SetIsWitness(src_node->id(), true);
@@ -94,25 +95,53 @@ bool Version::RecvHandler(std::shared_ptr<Node> src_node) const
     if (!src_node->is_inbound()) {
         // Advertise our address
         if (SingletonNetArgs::GetInstance().listening() && !IsInitialBlockDownload()) {
-        
+            LocalNetConfig& net_config = SingletonLocalNetCfg::GetInstance();
+            btclite::network::NetAddr addr;
+            if (net_config.GetLocalAddr(src_node->addr(), net_config.local_services(), &addr)) {
+                if (addr.IsRoutable())
+                {
+                    BTCLOG(LOG_LEVEL_INFO) << "Advertising address " << addr.ToString();
+                    src_node->PushAddress(addr);
+                } else if (btclite::network::IsPeerLocalAddrGood(src_node)) {
+                    BTCLOG(LOG_LEVEL_INFO) << "Advertising address " << addr_recv_.ToString();
+                    src_node->PushAddress(addr_recv_);
+                }
+            }
         }
+        
+        // Get recent addresses
+        if (src_node->version() >= VersionCode::kAddrTimeVersion || 
+                SingletonPeers::GetInstance().Size() < 1000) {
+            GetAddr getaddr;
+            SendMsg(getaddr, src_node);
+            src_node->set_getaddr(true);
+        }
+        SingletonPeers::GetInstance().MakeTried(src_node->addr());
     }
+    
+    BTCLOG(LOG_LEVEL_INFO) << "Receive version message: version=" << protocol_version_
+                           << ", start_height=" << start_height_
+                           << ", addr_me=" << addr_recv_.ToString()
+                           << ", peer=" << src_node->id();
+    
+    btclite::utility::util_time::AddTimeData(src_node->addr(), 
+            timestamp_ - btclite::utility::util_time::GetTimeSeconds());
     
     return true;
 }
 
-bool Version::IsValid() const
+bool version::IsValid() const
 {
-    return (version_ != 0 &&
+    return (protocol_version_ != 0 &&
             services_ != 0 &&
             timestamp_ != 0 &&
             addr_recv_.IsValid() &&
             nonce_ != 0); 
 }
 
-void Version::Clear()
+void version::Clear()
 {
-    version_ = 0;
+    protocol_version_ = 0;
     services_ = 0;
     timestamp_ = 0;
     addr_recv_.Clear();
@@ -124,9 +153,9 @@ void Version::Clear()
     relay_ = false;
 }
 
-Version& Version::operator=(const Version& b)
+version& version::operator=(const version& b)
 {
-    version_ = b.version_;
+    protocol_version_ = b.protocol_version_;
     services_ = b.services_;
     timestamp_ = b.timestamp_;
     addr_recv_ = b.addr_recv_;
@@ -138,17 +167,22 @@ Version& Version::operator=(const Version& b)
     return *this;
 }
 
-size_t Version::SerializedSize() const
+size_t version::SerializedSize() const
 {
-    return sizeof(version_) + sizeof(services_) + sizeof(timestamp_) +
-           addr_recv_.SerializedSize() + addr_from_.SerializedSize() +
-           sizeof(nonce_) + btclite::utility::serialize::VarIntSize(user_agent_.size()) +
-           user_agent_.size() + sizeof(start_height_) + sizeof(uint8_t);
+    size_t size = sizeof(protocol_version_) + sizeof(services_) + 
+                  sizeof(timestamp_) + addr_recv_.SerializedSize() + 
+                  addr_from_.SerializedSize() + sizeof(nonce_) + 
+                  btclite::utility::serialize::VarIntSize(user_agent_.size()) +
+                  user_agent_.size() + sizeof(start_height_);
+    if (protocol_version_ >= kRelayedTxsVersion)
+        size += sizeof(bool);
+    
+    return size;
 }
 
-Version& Version::operator=(Version&& b) noexcept
+version& version::operator=(version&& b) noexcept
 {
-    version_ = b.version_;
+    protocol_version_ = b.protocol_version_;
     services_ = b.services_;
     timestamp_ = b.timestamp_;
     addr_recv_ = std::move(b.addr_recv_);
@@ -160,9 +194,9 @@ Version& Version::operator=(Version&& b) noexcept
     return *this;
 }
 
-bool Version::operator==(const Version& b) const
+bool version::operator==(const version& b) const
 {
-    return (version_ == b.version_) && 
+    return (protocol_version_ == b.protocol_version_) && 
            (services_ == b.services_) &&
            (timestamp_ == b.timestamp_) &&
            (addr_recv_.proto_addr().timestamp() == b.addr_recv_.proto_addr().timestamp()) &&
@@ -179,7 +213,7 @@ bool Version::operator==(const Version& b) const
            (relay_ == b.relay_);
 }
 
-bool Version::operator!=(const Version& b) const
+bool version::operator!=(const version& b) const
 {
     return !(*this == b);
 }

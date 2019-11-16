@@ -44,25 +44,25 @@ enum VersionCode : uint32_t {
 constexpr VersionCode kProtocolVersion = kInvalidCbNoBanVersion;
 constexpr VersionCode kMinPeerProtoVersion = kGetheadersVersion;
 
-class Version : public MessageData {
+class version : public MessageData {
 public:
-    Version() = default;
+    version() = default;
     
-    Version(uint32_t version, uint64_t services, uint64_t timestamp,
+    version(uint32_t version, uint64_t services, uint64_t timestamp,
             const btclite::network::NetAddr& addr_recv,
             const btclite::network::NetAddr& addr_from,
             uint64_t nonce, const std::string& user_agent,
             uint32_t start_height, bool relay)
-        : version_(version), services_(services), timestamp_(timestamp),
+        : protocol_version_(version), services_(services), timestamp_(timestamp),
           addr_recv_(addr_recv), addr_from_(addr_from), nonce_(nonce),
           user_agent_(user_agent), start_height_(start_height), relay_(relay) {}
     
-    Version(uint32_t version, uint64_t services, uint64_t timestamp,
+    version(uint32_t version, uint64_t services, uint64_t timestamp,
             btclite::network::NetAddr&& addr_recv,
             btclite::network::NetAddr&& addr_from,
             uint64_t nonce, std::string&& user_agent,
             uint32_t start_height, bool relay) noexcept
-        : version_(version), services_(services), timestamp_(timestamp),
+        : protocol_version_(version), services_(services), timestamp_(timestamp),
           addr_recv_(std::move(addr_recv)), addr_from_(std::move(addr_from)),
           nonce_(nonce), user_agent_(std::move(user_agent)),
           start_height_(start_height), relay_(relay) {}
@@ -80,10 +80,10 @@ public:
     size_t SerializedSize() const;
     
     //-------------------------------------------------------------------------
-    Version& operator=(const Version& b);
-    Version& operator=(Version&& b) noexcept;
-    bool operator==(const Version& b) const;
-    bool operator!=(const Version& b) const;
+    version& operator=(const version& b);
+    version& operator=(version&& b) noexcept;
+    bool operator==(const version& b) const;
+    bool operator!=(const version& b) const;
     
     //-------------------------------------------------------------------------
     template <typename Stream>
@@ -92,13 +92,13 @@ public:
     void Deserialize(Stream& in);
     
     //-------------------------------------------------------------------------
-    uint32_t version() const
+    uint32_t protocol_version() const
     {
-        return version_;
+        return protocol_version_;
     }
-    void set_version(uint32_t version)
+    void set_protocol_version(uint32_t version)
     {
-        version_ = version;
+        protocol_version_ = version;
     }
 
     uint64_t services() const
@@ -186,7 +186,7 @@ public:
     }
 
 private:
-    uint32_t version_ = 0;
+    uint32_t protocol_version_ = 0;
     uint64_t services_ = 0;
     uint64_t timestamp_ = 0;
     btclite::network::NetAddr addr_recv_;
@@ -202,11 +202,11 @@ private:
 };
 
 template <typename Stream>
-void Version::Serialize(Stream& out) const
+void version::Serialize(Stream& out) const
 {
     Serializer<Stream> serializer(out);
     
-    serializer.SerialWrite(version_);
+    serializer.SerialWrite(protocol_version_);
     serializer.SerialWrite(services_);
     serializer.SerialWrite(timestamp_);
     serializer.SerialWrite(addr_recv_);
@@ -217,16 +217,16 @@ void Version::Serialize(Stream& out) const
     else
         serializer.SerialWrite(user_agent_);
     serializer.SerialWrite(start_height_);
-    if (version_ >= kRelayedTxsVersion)
+    if (protocol_version_ >= kRelayedTxsVersion)
         serializer.SerialWrite(relay_);
 }
 
 template <typename Stream>
-void Version::Deserialize(Stream& in)
+void version::Deserialize(Stream& in)
 {
     Deserializer<Stream> deserializer(in);
     
-    deserializer.SerialRead(&version_);
+    deserializer.SerialRead(&protocol_version_);
     deserializer.SerialRead(&services_);
     deserializer.SerialRead(&timestamp_);
     deserializer.SerialRead(&addr_recv_);
@@ -236,9 +236,11 @@ void Version::Deserialize(Stream& in)
     if (user_agent_.size() > kMaxSubVersionSize)
         user_agent_.resize(kMaxSubVersionSize);
     deserializer.SerialRead(&start_height_);
-    if (version_ >= kRelayedTxsVersion)
+    if (protocol_version_ >= kRelayedTxsVersion)
         deserializer.SerialRead(&relay_);
 }
+
+using Version = Hashable<version>;
 
 } // namespace protocol
 } // namespace network

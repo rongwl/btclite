@@ -139,27 +139,10 @@ class MessageData {
 public:
     virtual bool RecvHandler(std::shared_ptr<Node> src_node) const = 0;
     virtual std::string Command() const = 0;
+    virtual size_t SerializedSize() const = 0;
     virtual bool IsValid() const = 0;
     virtual ~MessageData() {}
 };
-
-// mixin GetHash()for MessageData classes
-template <typename Base>
-struct MsgHashable : public Base {
-    using Base::Base;
-    
-    void GetHash(Hash256 *out) const;
-};
-
-template <typename Base>
-void MsgHashable<Base>::GetHash(Hash256 *out) const
-{
-    std::vector<uint8_t> vec;
-    ByteSink<std::vector<uint8_t> > byte_sink(vec);
-    
-    Base::Serialize(byte_sink);
-    btclite::crypto::hash::Sha256(vec, out);
-}
 
 
 #endif // BTCLITE_MESSAGE_TYPES_MESSAGE_H

@@ -8,6 +8,7 @@
 
 #include "blob.h"
 #include "constants.h"
+#include "hash.h"
 #include "network_address.pb.h"
 #include "serialize.h"
 
@@ -29,11 +30,11 @@ enum AddrFamily {
 };
 
 enum AddrCategory {
-    kAcNone,   // unknown
-    kAcLocalIf,     // address a local interface listens on
-    kAcBind,   // address explicit bound to
-    kAcUpnp,   // address reported by upnp
-    kAcManual, // address explicitly specified (-externalip=)
+    kAcNone,    // unknown
+    kAcLocalIf, // address a local interface listens on
+    kAcBind,    // address explicit bound to
+    kAcUpnp,    // address reported by upnp
+    kAcManual,  // address explicitly specified (-externalip=)
 
     kAcMax
 };
@@ -92,7 +93,7 @@ public:
     size_t SerializedSize() const
     {
         return sizeof(proto_addr_.timestamp()) + sizeof(proto_addr_.services()) +
-               kIpByteSize + sizeof(proto_addr_.port());
+               kIpByteSize + sizeof(uint16_t);
     }
     
     //-------------------------------------------------------------------------
@@ -107,6 +108,7 @@ public:
     bool SetInternal(const std::string& name);
     AddrFamily GetFamily() const;
     int GetReachability(const NetAddr& addr_partner) const;
+    Hash256 GetHash() const;
     
     //-------------------------------------------------------------------------
     template <typename Stream>

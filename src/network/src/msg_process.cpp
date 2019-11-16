@@ -3,6 +3,8 @@
 #include <event2/buffer.h>
 
 #include "protocol/address.h"
+#include "protocol/getaddr.h"
+#include "protocol/inventory.h"
 #include "protocol/ping.h"
 #include "protocol/reject.h"
 #include "protocol/verack.h"
@@ -24,7 +26,9 @@ MessageData *MsgDataFactory(const MessageHeader& header, const uint8_t *raw)
     if (!header.IsValid())
         return nullptr;
     
-    if (!raw && header.command() != kMsgVerack)
+    if (!raw && 
+            header.command() != kMsgVerack &&
+            header.command() != kMsgGetAddr)
         return nullptr;        
     
     vec.reserve(header.payload_length());
@@ -44,6 +48,16 @@ MessageData *MsgDataFactory(const MessageHeader& header, const uint8_t *raw)
         Addr *addr = new Addr();
         addr->Deserialize(byte_source);
         msg = addr;
+    }
+    else if (header.command() == kMsgInv) {
+        Inv *inv = new Inv();
+        inv->Deserialize(byte_source);
+        msg = inv;
+    }
+    else if (header.command() == kMsgGetAddr) {
+        GetAddr *getaddr = new GetAddr();
+        getaddr->Deserialize(byte_source);
+        msg = getaddr;
     }
     else if (header.command() == kMsgPing) {
         Ping *ping = new Ping();
@@ -125,14 +139,16 @@ bool SendVersion(std::shared_ptr<Node> dst_node)
     Version ver_msg(kProtocolVersion, services,
                     btclite::utility::util_time::GetTimeSeconds(),
                     std::move(addr_recv), std::move(addr_from),
-                    dst_node->local_host_nonce(), std::move(FormatUserAgent()),
+                    dst_node->local_host_nonce(), 
+                    std::move(FormatUserAgent()),
                     start_height, true);
 
     if (!SendMsg(ver_msg, dst_node))
         return false;
 
     BTCLOG(LOG_LEVEL_INFO) << "Send version message: version " << kProtocolVersion 
-                           << ", start_height=" << start_height << ", addr_recv=" << addr_recv.ToString() 
+                           << ", start_height=" << start_height 
+                           << ", addr_recv=" << addr_recv.ToString() 
                            << ", peer=" << dst_node->id();
     
     return true;
@@ -154,7 +170,7 @@ bool SendRejects(std::shared_ptr<Node> dst_node)
     for (auto it = rejects.begin(); it != rejects.end(); ++it) {
         Reject reject;
         reject.Clear();
-        reject.set_message(std::move(std::string(kMsgBlock)));
+        reject.set_message(std::move(std::string(::kMsgBlock)));
         reject.set_ccode(it->reject_code);
         reject.set_reason(std::move(it->reject_reason));
         reject.set_data(std::move(it->block_hash));

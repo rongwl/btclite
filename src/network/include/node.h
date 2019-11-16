@@ -8,6 +8,7 @@
 
 #include "bloom.h"
 #include "block_sync.h"
+#include "circular_buffer.h"
 #include "timer.h"
 
 
@@ -153,6 +154,7 @@ public:
     static void InactivityTimeoutCb(std::shared_ptr<Node> node);
     static void PingTimeoutCb(std::shared_ptr<Node> node);    
     bool CheckBanned();
+    bool PushAddress(const btclite::network::NetAddr& addr);    
     
     bool IsClient() const
     {
@@ -271,6 +273,31 @@ public:
     
     void set_disconnected(bool disconnected);
     
+    const std::vector<btclite::network::NetAddr>& addrs_to_send() const
+    {
+        return addrs_to_send_;
+    }
+    
+    const CircularBuffer<uint64_t>& known_addrs() const
+    {
+        return known_addrs_;
+    }
+    
+    CircularBuffer<uint64_t> *mutable_known_addrs()
+    {
+        return &known_addrs_;
+    }
+    
+    bool getaddr() const
+    {
+        return getaddr_;
+    }
+    
+    void set_getaddr(bool getaddr)
+    {
+        getaddr_ = getaddr;
+    }
+    
     const NodeFilter& filter() const
     {
         return filter_;
@@ -321,6 +348,11 @@ private:
     const bool manual_;
     std::atomic<bool> conn_established_ = false;
     std::atomic<bool> disconnected_ = false;
+    
+    // flood addrs relay
+    std::vector<btclite::network::NetAddr> addrs_to_send_;
+    CircularBuffer<uint64_t> known_addrs_;
+    bool getaddr_ = false;
     
     NodeFilter filter_;    
     NodeTime time_;    

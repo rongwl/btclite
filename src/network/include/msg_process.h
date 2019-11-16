@@ -18,37 +18,29 @@ template <typename Message>
 bool SendMsg(const Message& msg, std::shared_ptr<Node> dst_node)
 {
     MemOstream ms;
-    HashOStream hs;
-    Hash256 hash;
-    
+        
     if (!dst_node->bev())
         return false;
 
-    hs << msg;
-    hs.Sha256(&hash);
     MessageHeader header(btclite::network::SingletonParams::GetInstance().msg_magic(),
-                         msg.Command(), hs.vec().size(), hash.GetLow64());
-    ms << header;
+                         msg.Command(), msg.SerializedSize(), msg.GetHash().GetLow64());
+    ms << header << msg;
     
-    if (ms.vec().size() != MessageHeader::kSize) {
-        BTCLOG(LOG_LEVEL_ERROR) << "Wrong message header size:" << ms.vec().size()
+    if (ms.vec().size() != MessageHeader::kSize + msg.SerializedSize()) {
+        BTCLOG(LOG_LEVEL_ERROR) << "Wrong serialized message size:" << ms.vec().size()
+                                << ", correct size:" << MessageHeader::kSize + msg.SerializedSize() 
                                 << ", message type:" << msg.Command();
         return false;
     }
 
-    bufferevent_lock(dst_node->mutable_bev());
+    //bufferevent_lock(dst_node->mutable_bev());
 
     if (bufferevent_write(dst_node->mutable_bev(), ms.vec().data(), ms.vec().size())) {
-        BTCLOG(LOG_LEVEL_ERROR) << "Writing message header to bufferevent failed, peer:" << dst_node->id();
+        BTCLOG(LOG_LEVEL_ERROR) << "Writing message to bufferevent failed, peer:" << dst_node->id();
         return false;
     }
 
-    if (bufferevent_write(dst_node->mutable_bev(), hs.vec().data(), hs.vec().size())) {
-        BTCLOG(LOG_LEVEL_ERROR) << "Writing message data to bufferevent failed, peer:" << dst_node->id();
-        return false;
-    }
-
-    bufferevent_unlock(dst_node->mutable_bev());
+    //bufferevent_unlock(dst_node->mutable_bev());
 
     return true;
 }
