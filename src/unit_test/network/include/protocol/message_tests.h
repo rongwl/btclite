@@ -3,9 +3,9 @@
 #include "protocol/message.h"
 
 
-class MessageTest : public ::testing::Test {
+class MessageHeaderTest : public ::testing::Test {
 protected:
-    MessageTest()
+    MessageHeaderTest()
         : magic_(kMainMagic), command_(kMsgVersion),
           payload_length_(kMaxMessageSize), checksum_(0x12345678),
           header1_(), 

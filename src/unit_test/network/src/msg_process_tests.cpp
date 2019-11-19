@@ -8,6 +8,8 @@
 #include "protocol/inventory.h"
 #include "protocol/ping.h"
 #include "protocol/reject.h"
+#include "protocol/send_headers.h"
+#include "protocol/send_compact.h"
 #include "protocol/verack.h"
 #include "protocol/version.h"
 #include "random.h"
@@ -38,8 +40,8 @@ void TestMsg(struct bufferevent *bev, void *ctx,
     uint8_t *raw = evbuffer_pullup(buf, MessageHeader::kSize);
     ASSERT_NE(raw, nullptr);
     
-    MessageHeader header;
-    ASSERT_TRUE(header.Init(raw));
+    MessageHeader header(raw);
+    ASSERT_TRUE(header.IsValid());
     ASSERT_EQ(header.command(), msg);
 
     evbuffer_drain(buf, MessageHeader::kSize);
@@ -145,6 +147,27 @@ void RejectsReadCb(struct bufferevent *bev, void *ctx)
     TestMsg(bev, ctx, std::bind(TestRejects, _1));
 }
 
+void TestSendHeaders(const MessageData *msg)
+{
+}
+
+void SendHeadersReadCb(struct bufferevent *bev, void *ctx)
+{
+    TestMsg(bev, ctx, std::bind(TestSendHeaders, _1));
+}
+
+void TestSendCmpct(const MessageData *msg)
+{
+    const SendCmpct *send_compact1 = reinterpret_cast<const SendCmpct*>(msg);
+    SendCmpct send_compact2(true, 1);
+    EXPECT_EQ(*send_compact1, send_compact2);
+}
+
+void SendCmpctReadCb(struct bufferevent *bev, void *ctx)
+{
+    TestMsg(bev, ctx, std::bind(TestSendCmpct, _1));
+}
+
 TEST(MsgFactoryTest, VersionFactory)
 {
     MemOstream os;
@@ -158,7 +181,7 @@ TEST(MsgFactoryTest, VersionFactory)
                     std::move(addr_from), 0x5678, std::move(std::string("/btclite:0.1.0/")),
                     1000, true);
     MessageHeader header(SingletonParams::GetInstance().msg_magic(),
-                         kMsgVersion, msg_out.SerializedSize(), 0);
+                         kMsgVersion, msg_out.SerializedSize(), msg_out.GetHash().GetLow32());
     
     os << msg_out;    
     MessageData *msg_in= MsgDataFactory(header, os.vec().data());
@@ -169,8 +192,9 @@ TEST(MsgFactoryTest, VersionFactory)
 
 TEST(MsgFactoryTest, VerackFactory)
 {
+    Verack verack;
     MessageHeader header(SingletonParams::GetInstance().msg_magic(),
-                         kMsgVerack, 0, 0);
+                         kMsgVerack, 0, verack.GetHash().GetLow32());
     
     MessageData *msg_in= MsgDataFactory(header, nullptr);
     ASSERT_NE(msg_in, nullptr);
@@ -189,7 +213,7 @@ TEST(MsgFactoryTest, AddrFactory)
     msg_addr.mutable_addr_list()->push_back(addr1);
     msg_addr.mutable_addr_list()->push_back(addr2);
     MessageHeader header(SingletonParams::GetInstance().msg_magic(),
-                         kMsgAddr, msg_addr.SerializedSize(), 0);
+                         kMsgAddr, msg_addr.SerializedSize(), msg_addr.GetHash().GetLow32());
     os << msg_addr;
     
     MessageData *msg_in= MsgDataFactory(header, os.vec().data());
@@ -200,8 +224,9 @@ TEST(MsgFactoryTest, AddrFactory)
 
 TEST(MsgFactoryTest, GetAddrFactory)
 {
+    GetAddr getaddr;
     MessageHeader header(SingletonParams::GetInstance().msg_magic(),
-                         kMsgGetAddr, 0, 0);
+                         kMsgGetAddr, 0, getaddr.GetHash().GetLow32());
     
     MessageData *msg_in= MsgDataFactory(header, nullptr);
     ASSERT_NE(msg_in, nullptr);
@@ -218,7 +243,7 @@ TEST(MsgFactoryTest, InvFactory)
     msg_out.mutable_inv_vects()->emplace_back(DataMsgType::kMsgBlock, 
                                               btclite::utility::random::GetUint256());
     MessageHeader header(SingletonParams::GetInstance().msg_magic(),
-                         kMsgInv, msg_out.SerializedSize(), 0);
+                         kMsgInv, msg_out.SerializedSize(), msg_out.GetHash().GetLow32());
     
     os << msg_out;  
     MessageData *msg_in= MsgDataFactory(header, os.vec().data());
@@ -232,7 +257,7 @@ TEST(MsgFactoryTest, PingFactory)
     MemOstream os;
     Ping msg_out(0x1122334455667788);
     MessageHeader header(SingletonParams::GetInstance().msg_magic(),
-                         kMsgPing, msg_out.SerializedSize(), 0);
+                         kMsgPing, msg_out.SerializedSize(), msg_out.GetHash().GetLow32());
     
     os << msg_out;    
     MessageData *msg_in= MsgDataFactory(header, os.vec().data());
@@ -247,13 +272,42 @@ TEST(MsgFactoryTest, RejectFactory)
     Reject msg_out(kMsgVersion, kRejectDuplicate, "Duplicate version message",
                    std::move(btclite::utility::random::GetUint256()));
     MessageHeader header(SingletonParams::GetInstance().msg_magic(),
-                         kMsgReject, msg_out.SerializedSize(), 0);
+                         kMsgReject, msg_out.SerializedSize(), msg_out.GetHash().GetLow32());
     
     os << msg_out;    
     MessageData *msg_in= MsgDataFactory(header, os.vec().data());
     ASSERT_NE(msg_in, nullptr);
     EXPECT_EQ(msg_out, *reinterpret_cast<Reject*>(msg_in));
     delete msg_in;
+}
+
+TEST(MsgFactoryTest, SendHeadersFactory)
+{
+    MemOstream os;
+    SendHeaders send_headers;
+    MessageHeader header(SingletonParams::GetInstance().msg_magic(),
+                         kMsgSendHeaders, send_headers.SerializedSize(), 
+                         send_headers.GetHash().GetLow32());
+    
+    os << send_headers;    
+    MessageData *msg= MsgDataFactory(header, os.vec().data());
+    ASSERT_NE(msg, nullptr);
+    EXPECT_EQ(msg->Command(), kMsgSendHeaders);
+    delete msg;
+}
+
+TEST(MsgFactoryTest, SendCmpctFactory)
+{
+    MemOstream os;
+    SendCmpct send_compact(true, 1);
+    MessageHeader header(SingletonParams::GetInstance().msg_magic(),
+                         kMsgSendCmpct, send_compact.SerializedSize(), 
+                         send_compact.GetHash().GetLow32());
+    
+    os << send_compact;    
+    MessageData *msg= MsgDataFactory(header, os.vec().data());
+    ASSERT_NE(msg, nullptr);
+    EXPECT_EQ(*reinterpret_cast<SendCmpct*>(msg), send_compact);
 }
 
 TEST(MsgFactoryTest, NullFactory)
@@ -353,20 +407,24 @@ TEST_F(MsgProcessTest, SendPing)
     event_base_dispatch(base_);
 }
 
-TEST_F(MsgProcessTest, SendRejects)
+TEST_F(MsgProcessTest, SendSendHeaders)
 {
-    auto node = std::make_shared<Node>(pair_[0], addr_, false);
-    SingletonNodes::GetInstance().AddNode(node);
-    SingletonBlockSync::GetInstance().AddSyncState(node->id(), addr_, "");
-    reject_data = btclite::utility::random::GetUint256();
-    BlockReject block_reject = { kRejectInvalid, "invalid", reject_data };
-    ASSERT_TRUE(SingletonBlockSync::GetInstance().AddBlockReject(node->id(), block_reject));
-    
-    bufferevent_setcb(pair_[1], RejectsReadCb, NULL, NULL, const_cast<char*>(kMsgReject));
+    bufferevent_setcb(pair_[1], SendHeadersReadCb, NULL, NULL, const_cast<char*>(kMsgSendHeaders));
     bufferevent_enable(pair_[1], EV_READ);
-    ASSERT_TRUE(msg_process::SendRejects(node));
+    auto node = std::make_shared<Node>(pair_[0], addr_, false);
+    SendHeaders send_headers;
+    ASSERT_TRUE(msg_process::SendMsg(send_headers, node));
     
     event_base_dispatch(base_);
-    SingletonBlockSync::GetInstance().Clear();
-    SingletonNodes::GetInstance().Clear();
+}
+
+TEST_F(MsgProcessTest, SendSendCmpct)
+{
+    bufferevent_setcb(pair_[1], SendCmpctReadCb, NULL, NULL, const_cast<char*>(kMsgSendCmpct));
+    bufferevent_enable(pair_[1], EV_READ);
+    auto node = std::make_shared<Node>(pair_[0], addr_, false);
+    SendCmpct send_compact(true, 1);
+    ASSERT_TRUE(msg_process::SendMsg(send_compact, node));
+    
+    event_base_dispatch(base_);
 }

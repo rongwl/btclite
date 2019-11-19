@@ -35,8 +35,9 @@ public:
         set_command(std::move(command));
     }
     
+    explicit MessageHeader(const uint8_t *raw);
+    
     //-------------------------------------------------------------------------
-    bool Init(const uint8_t *raw_data);
     bool IsValid() const;
     void Clear();
     

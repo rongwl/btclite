@@ -21,8 +21,6 @@ bool version::RecvHandler(std::shared_ptr<Node> src_node) const
     
     // Each connection can only send one version message
     if (src_node->version() != 0) {
-        Reject reject(Command(), kRejectDuplicate, "Duplicate version message");
-        SendMsg(reject, src_node);
         SingletonBlockSync::GetInstance().Misbehaving(src_node->id(), 1);
         return false;
     }
@@ -40,8 +38,6 @@ bool version::RecvHandler(std::shared_ptr<Node> src_node) const
         std::stringstream ss;
         ss << "Expected to offer services " << std::showbase << std::hex 
            << kDesirableServiceFlags;
-        Reject reject(Command(), kRejectNonstandard, std::move(ss.str()));
-        SendMsg(reject, src_node);
         src_node->set_disconnected(true);
         return false;
     }
@@ -62,8 +58,6 @@ bool version::RecvHandler(std::shared_ptr<Node> src_node) const
                                << " for using obsolete version " << protocol_version_  << '.';
         std::stringstream ss;
         ss << "Version must be " << kMinPeerProtoVersion << " or greater";
-        Reject reject(Command(), kRejectObsolete, std::move(ss.str()));
-        SendMsg(reject, src_node);
         src_node->set_disconnected(true);
         return false;
     }

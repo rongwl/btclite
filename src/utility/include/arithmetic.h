@@ -18,9 +18,15 @@ public:
         std::memcpy(this->begin()+sizeof(uint64_t), &high, sizeof(uint64_t));
     }
     
-    uint64_t GetLow64()
+    uint64_t GetLow64() const
     {
-        uint64_t *x = reinterpret_cast<uint64_t*>(data());
+        const uint64_t *x = reinterpret_cast<const uint64_t*>(this->data());
+        return *x;
+    }
+    
+    uint32_t GetLow32() const
+    {
+        const uint32_t *x = reinterpret_cast<const uint32_t*>(this->data());
         return *x;
     }
     
@@ -55,9 +61,15 @@ public:
         std::memcpy(this->begin()+low.size(), high.begin(), high.size());
     }
     
-    uint64_t GetLow64()
+    uint64_t GetLow64() const
     {
-        uint64_t *x = reinterpret_cast<uint64_t*>(data());
+        const uint64_t *x = reinterpret_cast<const uint64_t*>(this->data());
+        return *x;
+    }
+    
+    uint32_t GetLow32() const
+    {
+        const uint32_t *x = reinterpret_cast<const uint32_t*>(this->data());
         return *x;
     }
     

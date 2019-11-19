@@ -23,7 +23,7 @@ bool SendMsg(const Message& msg, std::shared_ptr<Node> dst_node)
         return false;
 
     MessageHeader header(btclite::network::SingletonParams::GetInstance().msg_magic(),
-                         msg.Command(), msg.SerializedSize(), msg.GetHash().GetLow64());
+                         msg.Command(), msg.SerializedSize(), msg.GetHash().GetLow32());
     ms << header << msg;
     
     if (ms.vec().size() != MessageHeader::kSize + msg.SerializedSize()) {
@@ -47,7 +47,6 @@ bool SendMsg(const Message& msg, std::shared_ptr<Node> dst_node)
 
 bool SendVersion(std::shared_ptr<Node> dst_node);
 bool SendAddr(std::shared_ptr<Node> dst_node);
-bool SendRejects(std::shared_ptr<Node> dst_node);
 
 void UpdatePreferredDownload(std::shared_ptr<Node> node);
 

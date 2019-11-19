@@ -59,6 +59,8 @@ BTCLITE_HEADER_FILES = \
                        network/include/protocol/getaddr.h \
                        network/include/protocol/ping.h \
                        network/include/protocol/reject.h \
+                       network/include/protocol/send_headers.h \
+                       network/include/protocol/send_compact.h \
                        network/include/protocol/verack.h \
                        network/include/protocol/version.h \
                        network/include/msg_process.h \
@@ -163,6 +165,8 @@ network_src_libbtclite_network_a_SOURCES = network/proto/banmap.pb.cc \
                                            network/src/protocol/getaddr.cpp \
                                            network/src/protocol/ping.cpp \
                                            network/src/protocol/reject.cpp \
+                                           network/src/protocol/send_headers.cpp \
+                                           network/src/protocol/send_compact.cpp \
                                            network/src/protocol/verack.cpp \
                                            network/src/protocol/version.cpp \
                                            network/src/msg_process.cpp \

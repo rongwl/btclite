@@ -7,6 +7,8 @@
 #include "protocol/inventory.h"
 #include "protocol/ping.h"
 #include "protocol/reject.h"
+#include "protocol/send_headers.h"
+#include "protocol/send_compact.h"
 #include "protocol/verack.h"
 #include "protocol/version.h"
 
@@ -28,7 +30,8 @@ MessageData *MsgDataFactory(const MessageHeader& header, const uint8_t *raw)
     
     if (!raw && 
             header.command() != kMsgVerack &&
-            header.command() != kMsgGetAddr)
+            header.command() != kMsgGetAddr &&
+            header.command() != kMsgSendHeaders)
         return nullptr;        
     
     vec.reserve(header.payload_length());
@@ -37,37 +40,101 @@ MessageData *MsgDataFactory(const MessageHeader& header, const uint8_t *raw)
     if (header.command() == kMsgVersion) {        
         Version *version = new Version();
         version->Deserialize(byte_source);
+        if (header.checksum() != version->GetHash().GetLow32()) {
+            BTCLOG(LOG_LEVEL_INFO) << "Version message checksum error: expect "
+                                   << header.checksum() << ", received "
+                                   << version->GetHash().GetLow32();
+            return nullptr;
+        }
         msg = version;
     }
     else if (header.command() == kMsgVerack) {
         Verack *verack = new Verack();
         verack->Deserialize(byte_source);
+        if (header.checksum() != verack->GetHash().GetLow32()) {
+            BTCLOG(LOG_LEVEL_INFO) << "Verack message checksum error: expect "
+                                   << header.checksum() << ", received "
+                                   << verack->GetHash().GetLow32();
+            return nullptr;
+        }
         msg = verack;
     }
     else if (header.command() == kMsgAddr) {
         Addr *addr = new Addr();
         addr->Deserialize(byte_source);
+        if (header.checksum() != addr->GetHash().GetLow32()) {
+            BTCLOG(LOG_LEVEL_INFO) << "Addr message checksum error: expect "
+                                   << header.checksum() << ", received "
+                                   << addr->GetHash().GetLow32();
+            return nullptr;
+        }
         msg = addr;
     }
     else if (header.command() == kMsgInv) {
         Inv *inv = new Inv();
         inv->Deserialize(byte_source);
+        if (header.checksum() != inv->GetHash().GetLow32()) {
+            BTCLOG(LOG_LEVEL_INFO) << "Inv message checksum error: expect "
+                                   << header.checksum() << ", received "
+                                   << inv->GetHash().GetLow32();
+            return nullptr;
+        }
         msg = inv;
     }
     else if (header.command() == kMsgGetAddr) {
         GetAddr *getaddr = new GetAddr();
         getaddr->Deserialize(byte_source);
+        if (header.checksum() != getaddr->GetHash().GetLow32()) {
+            BTCLOG(LOG_LEVEL_INFO) << "Getaddr message checksum error: expect "
+                                   << header.checksum() << ", received "
+                                   << getaddr->GetHash().GetLow32();
+            return nullptr;
+        }
         msg = getaddr;
     }
     else if (header.command() == kMsgPing) {
         Ping *ping = new Ping();
         ping->Deserialize(byte_source);
+        if (header.checksum() != ping->GetHash().GetLow32()) {
+            BTCLOG(LOG_LEVEL_INFO) << "Ping message checksum error: expect "
+                                   << header.checksum() << ", received "
+                                   << ping->GetHash().GetLow32();
+            return nullptr;
+        }
         msg = ping;
     }
     else if (header.command() == kMsgReject) {
         Reject *reject = new Reject();
         reject->Deserialize(byte_source);
+        if (header.checksum() != reject->GetHash().GetLow32()) {
+            BTCLOG(LOG_LEVEL_INFO) << "Reject message checksum error: expect "
+                                   << header.checksum() << ", received "
+                                   << reject->GetHash().GetLow32();
+            return nullptr;
+        }
         msg = reject;
+    }
+    else if (header.command() == kMsgSendHeaders) {
+        SendHeaders *send_headers = new SendHeaders();
+        send_headers->Deserialize(byte_source);
+        if (header.checksum() != send_headers->GetHash().GetLow32()) {
+            BTCLOG(LOG_LEVEL_INFO) << "Sendheaders message checksum error: expect "
+                                   << header.checksum() << ", received "
+                                   << send_headers->GetHash().GetLow32();
+            return nullptr;
+        }
+        msg = send_headers;
+    }
+    else if (header.command() == kMsgSendCmpct) {
+        SendCmpct *send_compact = new SendCmpct();
+        send_compact->Deserialize(byte_source);
+        if (header.checksum() != send_compact->GetHash().GetLow32()) {
+            BTCLOG(LOG_LEVEL_INFO) << "Sendheaders message checksum error: expect "
+                                   << header.checksum() << ", received "
+                                   << send_compact->GetHash().GetLow32();
+            return nullptr;
+        }
+        msg = send_compact;
     }
     else
         return nullptr;
@@ -99,27 +166,42 @@ bool ParseMsg(std::shared_ptr<Node> src_node)
         return false;
     
     while (raw) {
-        MessageHeader header;
-        if (!header.Init(raw)) {
-            BTCLOG(LOG_LEVEL_ERROR) << "Received invalid message header from peer " 
-                                    << src_node->id();
+        // construct header and data from raw first
+        MessageHeader header(raw);
+        evbuffer_drain(buf, MessageHeader::kSize);
+        if (header.payload_length() > kMaxMessageSize) {
+            BTCLOG(LOG_LEVEL_ERROR) << "Oversized message from peer "                                    
+                                    << src_node->id() << ", disconnecting";
+            src_node->set_disconnected(true);
             return false;
         }
-        evbuffer_drain(buf, MessageHeader::kSize);
         
-        raw = evbuffer_pullup(buf, header.payload_length());
+        if (nullptr == (raw = evbuffer_pullup(buf, header.payload_length())))
+            return false;       
         MessageData *message = MsgDataFactory(header, raw);
+        evbuffer_drain(buf, header.payload_length());
+        
+        // validate header and data second
+        if (!header.IsValid()) {
+            BTCLOG(LOG_LEVEL_ERROR) << "Received invalid message header from peer "
+                                    << src_node->id();
+            raw = evbuffer_pullup(buf, MessageHeader::kSize);
+            continue;
+        }
         if (!message) {
             BTCLOG(LOG_LEVEL_ERROR) << "Prasing message data from peer "
                                     << src_node->id() << " failed.";
-            return false;
-        }
-        evbuffer_drain(buf, header.payload_length());
+            raw = evbuffer_pullup(buf, MessageHeader::kSize);
+            continue;
+        }        
         
-        if (!message->RecvHandler(src_node)) {
-            delete message;
-            return false;
+        if (header.command() != kMsgVersion && src_node->version() == 0) {
+            SingletonBlockSync::GetInstance().Misbehaving(src_node->id(), 1);
+            raw = evbuffer_pullup(buf, MessageHeader::kSize);
+            continue;
         }
+        
+        message->RecvHandler(src_node);
         delete message;
         
         raw = evbuffer_pullup(buf, MessageHeader::kSize);
@@ -156,28 +238,6 @@ bool SendVersion(std::shared_ptr<Node> dst_node)
 
 bool SendAddr(std::shared_ptr<Node> dst_node)
 {
-    return true;
-}
-
-bool SendRejects(std::shared_ptr<Node> dst_node)
-{
-    BlockSync &block_sync = SingletonBlockSync::GetInstance();
-    std::vector<BlockReject> rejects;
-    
-    if (!block_sync.GetRejects(dst_node->id(), &rejects))
-        return false;
-    
-    for (auto it = rejects.begin(); it != rejects.end(); ++it) {
-        Reject reject;
-        reject.Clear();
-        reject.set_message(std::move(std::string(::kMsgBlock)));
-        reject.set_ccode(it->reject_code);
-        reject.set_reason(std::move(it->reject_reason));
-        reject.set_data(std::move(it->block_hash));
-        SendMsg(reject, dst_node);
-    }
-    block_sync.ClearRejects(dst_node->id());
-    
     return true;
 }
 

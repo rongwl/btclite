@@ -3,7 +3,7 @@
 #include "stream.h"
 
 
-TEST_F(MessageTest, Constructor)
+TEST_F(MessageHeaderTest, Constructor)
 {
     EXPECT_EQ(0, header1_.magic());
     EXPECT_EQ("", header1_.command());
@@ -21,7 +21,16 @@ TEST_F(MessageTest, Constructor)
     EXPECT_EQ(checksum_, header3_.checksum());
 }
 
-TEST_F(MessageTest, OperatorEqual)
+TEST_F(MessageHeaderTest, ConstructFromRaw)
+{
+    MemOstream os;
+    os << header2_;
+    
+    MessageHeader header(os.vec().data());
+    EXPECT_EQ(header, header2_);
+}
+
+TEST_F(MessageHeaderTest, OperatorEqual)
 {
     EXPECT_NE(header1_, header2_);
     EXPECT_EQ(header2_, header3_);
@@ -42,7 +51,7 @@ TEST_F(MessageTest, OperatorEqual)
     EXPECT_NE(header2_, header3_);
 }
 
-TEST_F(MessageTest, Set)
+TEST_F(MessageHeaderTest, Set)
 {
     header1_.set_magic(header2_.magic());
     header1_.set_command(header2_.command());
@@ -58,14 +67,14 @@ TEST_F(MessageTest, Set)
     EXPECT_EQ("barbarbarbar", header1_.command());
 }
 
-TEST_F(MessageTest, Clear)
+TEST_F(MessageHeaderTest, Clear)
 {
     header2_.Clear();
     
     EXPECT_EQ(header1_, header2_);
 }
 
-TEST_F(MessageTest, ValidateHeader)
+TEST_F(MessageHeaderTest, ValidateHeader)
 {
     std::vector<uint32_t> magic_vec = { kMainMagic, kTestnetMagic, kRegtestMagic };
     std::vector<std::string> command_vec = { kMsgVersion };
@@ -95,16 +104,7 @@ TEST_F(MessageTest, ValidateHeader)
     EXPECT_FALSE(header1_.IsValid());
 }
 
-TEST_F(MessageTest, Init)
-{
-    MemOstream os;
-    
-    os << header2_;
-    ASSERT_TRUE(header1_.Init(os.vec().data()));
-    EXPECT_EQ(header1_, header2_);
-}
-
-TEST_F(MessageTest, Serialize)
+TEST_F(MessageHeaderTest, Serialize)
 {
     std::vector<uint8_t> vec;
     ByteSink<std::vector<uint8_t> > byte_sink(vec);

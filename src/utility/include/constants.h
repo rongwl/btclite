@@ -19,7 +19,8 @@ inline std::string FormatUserAgent()
 
 constexpr size_t kMaxVardataSize = 0x02000000;
 constexpr size_t kMaxBlockSize = 1000000;
-constexpr size_t kMaxMessageSize = 0x02000000;
+// Maximum length of incoming protocol messages (no message over 4 MB is currently acceptable).
+constexpr size_t kMaxMessageSize = 4 * 1000 * 1000;
 // Maximum length of strSubVer in `version` message
 constexpr size_t kMaxSubVersionSize = 256;
 // Maximum length of reject messages.
