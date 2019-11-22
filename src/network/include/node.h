@@ -152,7 +152,6 @@ public:
     
     //-------------------------------------------------------------------------
     static void InactivityTimeoutCb(std::shared_ptr<Node> node);
-    static void PingTimeoutCb(std::shared_ptr<Node> node);    
     bool CheckBanned();
     bool PushAddress(const btclite::network::NetAddr& addr);    
     
@@ -167,14 +166,14 @@ public:
         return id_;
     }
     
-    int version() const
+    int protocol_version() const
     {
-        return version_;
+        return protocol_version_;
     }
     
-    void set_version(int version)
+    void set_protocol_version(int version)
     {
-        version_ = version;
+        protocol_version_ = version;
     }
     
     ServiceFlags services() const
@@ -330,7 +329,7 @@ public:
     
 private:
     const NodeId id_;
-    std::atomic<int> version_ = 0;
+    std::atomic<int> protocol_version_ = 0;
     std::atomic<ServiceFlags> services_ = kNodeNone;
     std::atomic<int> start_height_ = 0;
     struct bufferevent *bev_ = nullptr;    

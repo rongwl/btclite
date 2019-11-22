@@ -3,6 +3,8 @@
 #include "protocol/message.h"
 
 
+using namespace btclite::network::protocol;
+
 class MessageHeaderTest : public ::testing::Test {
 protected:
     MessageHeaderTest()

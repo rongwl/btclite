@@ -138,7 +138,7 @@ void Acceptor::CheckingTimeoutCb(evutil_socket_t fd, short event, void *arg)
         BTCLOG(LOG_LEVEL_INFO) << "socket sending timeout: " << (now - pnode->time().time_last_send);
         pnode->set_disconnected(true);
     }
-    else if (now - pnode->time().time_last_recv > (pnode->version() > 
+    else if (now - pnode->time().time_last_recv > (pnode->protocol_version() > 
              btclite::network::protocol::kBip31Version ? kConnTimeoutInterval : 90*60))
     {
         BTCLOG(LOG_LEVEL_INFO) << "socket receive timeout: " << (now - pnode->time().time_last_recv);

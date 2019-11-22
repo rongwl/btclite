@@ -20,7 +20,7 @@ bool version::RecvHandler(std::shared_ptr<Node> src_node) const
     Verack verack;
     
     // Each connection can only send one version message
-    if (src_node->version() != 0) {
+    if (src_node->protocol_version() != 0) {
         SingletonBlockSync::GetInstance().Misbehaving(src_node->id(), 1);
         return false;
     }
@@ -79,7 +79,7 @@ bool version::RecvHandler(std::shared_ptr<Node> src_node) const
     src_node->set_local_addr(addr_recv_);
     src_node->set_start_height(start_height_);
     src_node->mutable_filter()->set_relay_txes(relay_);
-    src_node->set_version(protocol_version_);
+    src_node->set_protocol_version(protocol_version_);
     
     if (services_ & kNodeWitness)
         SingletonBlockSync::GetInstance().SetIsWitness(src_node->id(), true);
@@ -104,7 +104,7 @@ bool version::RecvHandler(std::shared_ptr<Node> src_node) const
         }
         
         // Get recent addresses
-        if (src_node->version() >= VersionCode::kAddrTimeVersion || 
+        if (src_node->protocol_version() >= VersionCode::kAddrTimeVersion || 
                 SingletonPeers::GetInstance().Size() < 1000) {
             GetAddr getaddr;
             SendMsg(getaddr, src_node);

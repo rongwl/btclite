@@ -49,21 +49,8 @@ void Node::InactivityTimeoutCb(std::shared_ptr<Node> node)
     if (SingletonNetInterrupt::GetInstance())
         return;
 
-    BTCLOG(LOG_LEVEL_WARNING) << "Node " << node->id() << " inactive timeout.";
+    BTCLOG(LOG_LEVEL_WARNING) << "Peer " << node->id() << " inactive timeout.";
     node->set_disconnected(true);
-}
-
-void Node::PingTimeoutCb(std::shared_ptr<Node> node)
-{
-    if (SingletonNetInterrupt::GetInstance())
-        return;
-    
-    if (node->disconnected() || !node->conn_established()) {
-        SingletonTimerMng::GetInstance().StopTimer(node->timers().ping_timer);
-        return;
-    }
-    
-    
 }
 
 bool Node::CheckBanned()

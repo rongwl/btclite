@@ -7,6 +7,7 @@
 #include "protocol/getaddr.h"
 #include "protocol/inventory.h"
 #include "protocol/ping.h"
+#include "protocol/pong.h"
 #include "protocol/reject.h"
 #include "protocol/send_headers.h"
 #include "protocol/send_compact.h"
@@ -23,6 +24,7 @@ using namespace btclite::network::protocol;
 
 uint64_t version_nonce = 0;
 uint64_t ping_nonce = 0;
+uint64_t pong_nonce = 0;
 Uint256 inv_hash;
 Uint256 reject_data;
 
@@ -46,7 +48,7 @@ void TestMsg(struct bufferevent *bev, void *ctx,
 
     evbuffer_drain(buf, MessageHeader::kSize);
     raw = evbuffer_pullup(buf, header.payload_length());
-    MessageData *message = MsgDataFactory(header, raw);
+    MessageData *message = MsgDataFactory(raw, header, kProtocolVersion);
     ASSERT_NE(message, nullptr);
     EXPECT_EQ(message->Command(), msg);
     TestMsgData(message);
@@ -135,6 +137,17 @@ void PingReadCb(struct bufferevent *bev, void *ctx)
     TestMsg(bev, ctx, std::bind(TestPing, _1));
 }
 
+void TestPong(const MessageData *msg)
+{
+    const Pong *pong = reinterpret_cast<const Pong*>(msg);
+    EXPECT_EQ(pong->nonce(), pong_nonce);
+}
+
+void PongReadCb(struct bufferevent *bev, void *ctx)
+{
+    TestMsg(bev, ctx, std::bind(TestPong, _1));
+}
+
 void TestRejects(const MessageData *msg)
 {
     const Reject *reject1 = reinterpret_cast<const Reject*>(msg);
@@ -184,7 +197,7 @@ TEST(MsgFactoryTest, VersionFactory)
                          kMsgVersion, msg_out.SerializedSize(), msg_out.GetHash().GetLow32());
     
     os << msg_out;    
-    MessageData *msg_in= MsgDataFactory(header, os.vec().data());
+    MessageData *msg_in= MsgDataFactory(os.vec().data(), header, 0);
     ASSERT_NE(msg_in, nullptr);
     EXPECT_EQ(msg_out, *reinterpret_cast<Version*>(msg_in));
     delete msg_in;
@@ -196,7 +209,7 @@ TEST(MsgFactoryTest, VerackFactory)
     MessageHeader header(SingletonParams::GetInstance().msg_magic(),
                          kMsgVerack, 0, verack.GetHash().GetLow32());
     
-    MessageData *msg_in= MsgDataFactory(header, nullptr);
+    MessageData *msg_in= MsgDataFactory(nullptr, header, 0);
     ASSERT_NE(msg_in, nullptr);
     EXPECT_EQ(msg_in->Command(), kMsgVerack);
     delete msg_in;
@@ -216,7 +229,7 @@ TEST(MsgFactoryTest, AddrFactory)
                          kMsgAddr, msg_addr.SerializedSize(), msg_addr.GetHash().GetLow32());
     os << msg_addr;
     
-    MessageData *msg_in= MsgDataFactory(header, os.vec().data());
+    MessageData *msg_in= MsgDataFactory(os.vec().data(), header, 0);
     ASSERT_NE(msg_in, nullptr);
     EXPECT_EQ(*reinterpret_cast<Addr*>(msg_in), msg_addr);
     delete msg_in;
@@ -228,7 +241,7 @@ TEST(MsgFactoryTest, GetAddrFactory)
     MessageHeader header(SingletonParams::GetInstance().msg_magic(),
                          kMsgGetAddr, 0, getaddr.GetHash().GetLow32());
     
-    MessageData *msg_in= MsgDataFactory(header, nullptr);
+    MessageData *msg_in= MsgDataFactory(nullptr, header, 0);
     ASSERT_NE(msg_in, nullptr);
     EXPECT_EQ(msg_in->Command(), kMsgGetAddr);
     delete msg_in;
@@ -246,7 +259,7 @@ TEST(MsgFactoryTest, InvFactory)
                          kMsgInv, msg_out.SerializedSize(), msg_out.GetHash().GetLow32());
     
     os << msg_out;  
-    MessageData *msg_in= MsgDataFactory(header, os.vec().data());
+    MessageData *msg_in= MsgDataFactory(os.vec().data(), header, 0);
     ASSERT_NE(msg_in, nullptr);
     EXPECT_EQ(msg_out, *reinterpret_cast<Inv*>(msg_in));
     delete msg_in;    
@@ -254,15 +267,39 @@ TEST(MsgFactoryTest, InvFactory)
 
 TEST(MsgFactoryTest, PingFactory)
 {
-    MemOstream os;
+    MemOstream ms;    
     Ping msg_out(0x1122334455667788);
     MessageHeader header(SingletonParams::GetInstance().msg_magic(),
                          kMsgPing, msg_out.SerializedSize(), msg_out.GetHash().GetLow32());
     
-    os << msg_out;    
-    MessageData *msg_in= MsgDataFactory(header, os.vec().data());
+    ms << msg_out;
+    MessageData *msg_in= MsgDataFactory( ms.vec().data(), header, msg_out.protocol_version());
     ASSERT_NE(msg_in, nullptr);
     EXPECT_EQ(msg_out, *reinterpret_cast<Ping*>(msg_in));
+    delete msg_in;
+    
+    ms.Clear();
+    msg_out.set_protocol_version(0);
+    header.set_payload_length(msg_out.SerializedSize());
+    header.set_checksum(msg_out.GetHash().GetLow32());
+    ms << msg_out;
+    msg_in = MsgDataFactory(nullptr, header, msg_out.protocol_version());
+    ASSERT_NE(msg_in, nullptr);
+    EXPECT_EQ(reinterpret_cast<Ping*>(msg_in)->nonce(), 0);
+    delete msg_in;
+}
+
+TEST(MsgFactoryTest, PongFactory)
+{
+    MemOstream ms;    
+    Pong msg_out(0x1122334455667788);
+    MessageHeader header(SingletonParams::GetInstance().msg_magic(),
+                         kMsgPong, msg_out.SerializedSize(), msg_out.GetHash().GetLow32());
+    
+    ms << msg_out;
+    MessageData *msg_in= MsgDataFactory(ms.vec().data(), header, 0);
+    ASSERT_NE(msg_in, nullptr);
+    EXPECT_EQ(msg_out, *reinterpret_cast<Pong*>(msg_in));
     delete msg_in;
 }
 
@@ -275,7 +312,7 @@ TEST(MsgFactoryTest, RejectFactory)
                          kMsgReject, msg_out.SerializedSize(), msg_out.GetHash().GetLow32());
     
     os << msg_out;    
-    MessageData *msg_in= MsgDataFactory(header, os.vec().data());
+    MessageData *msg_in= MsgDataFactory(os.vec().data(), header, 0);
     ASSERT_NE(msg_in, nullptr);
     EXPECT_EQ(msg_out, *reinterpret_cast<Reject*>(msg_in));
     delete msg_in;
@@ -290,7 +327,7 @@ TEST(MsgFactoryTest, SendHeadersFactory)
                          send_headers.GetHash().GetLow32());
     
     os << send_headers;    
-    MessageData *msg= MsgDataFactory(header, os.vec().data());
+    MessageData *msg= MsgDataFactory(os.vec().data(), header, 0);
     ASSERT_NE(msg, nullptr);
     EXPECT_EQ(msg->Command(), kMsgSendHeaders);
     delete msg;
@@ -305,7 +342,7 @@ TEST(MsgFactoryTest, SendCmpctFactory)
                          send_compact.GetHash().GetLow32());
     
     os << send_compact;    
-    MessageData *msg= MsgDataFactory(header, os.vec().data());
+    MessageData *msg= MsgDataFactory( os.vec().data(), header, 0);
     ASSERT_NE(msg, nullptr);
     EXPECT_EQ(*reinterpret_cast<SendCmpct*>(msg), send_compact);
 }
@@ -314,12 +351,12 @@ TEST(MsgFactoryTest, NullFactory)
 {
     MessageHeader header(SingletonParams::GetInstance().msg_magic(),
                          kMsgVersion, 0, 0);
-    MessageData *msg_in= MsgDataFactory(header, nullptr);
+    MessageData *msg_in= MsgDataFactory(nullptr, header, 0);
     EXPECT_EQ(msg_in, nullptr);
     
     uint8_t foo;
     header.set_command("bar");
-    msg_in= MsgDataFactory(header, &foo);
+    msg_in= MsgDataFactory(&foo, header, 0);
     EXPECT_EQ(msg_in, nullptr);
 }
 
@@ -403,6 +440,18 @@ TEST_F(MsgProcessTest, SendPing)
     ping_nonce = btclite::utility::random::GetUint64();
     Ping ping(ping_nonce);
     ASSERT_TRUE(msg_process::SendMsg(ping, node));
+    
+    event_base_dispatch(base_);
+}
+
+TEST_F(MsgProcessTest, SendPong)
+{
+    bufferevent_setcb(pair_[1], PongReadCb, NULL, NULL, const_cast<char*>(kMsgPong));
+    bufferevent_enable(pair_[1], EV_READ);
+    auto node = std::make_shared<Node>(pair_[0], addr_, false);
+    pong_nonce = btclite::utility::random::GetUint64();
+    Pong pong(pong_nonce);
+    ASSERT_TRUE(msg_process::SendMsg(pong, node));
     
     event_base_dispatch(base_);
 }

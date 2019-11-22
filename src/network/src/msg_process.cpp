@@ -6,6 +6,7 @@
 #include "protocol/getaddr.h"
 #include "protocol/inventory.h"
 #include "protocol/ping.h"
+#include "protocol/pong.h"
 #include "protocol/reject.h"
 #include "protocol/send_headers.h"
 #include "protocol/send_compact.h"
@@ -19,7 +20,8 @@ namespace btclite {
 namespace network {
 namespace msg_process{
 
-MessageData *MsgDataFactory(const MessageHeader& header, const uint8_t *raw)
+MessageData *MsgDataFactory(const uint8_t *raw, const MessageHeader& header, 
+                            uint32_t protocol_version)
 {    
     std::vector<uint8_t> vec;
     ByteSource<std::vector<uint8_t> > byte_source(vec);
@@ -31,7 +33,8 @@ MessageData *MsgDataFactory(const MessageHeader& header, const uint8_t *raw)
     if (!raw && 
             header.command() != kMsgVerack &&
             header.command() != kMsgGetAddr &&
-            header.command() != kMsgSendHeaders)
+            header.command() != kMsgSendHeaders &&
+            (header.command() == kMsgPing && protocol_version >= VersionCode::kBip31Version))
         return nullptr;        
     
     vec.reserve(header.payload_length());
@@ -94,6 +97,7 @@ MessageData *MsgDataFactory(const MessageHeader& header, const uint8_t *raw)
     }
     else if (header.command() == kMsgPing) {
         Ping *ping = new Ping();
+        ping->set_protocol_version(protocol_version);
         ping->Deserialize(byte_source);
         if (header.checksum() != ping->GetHash().GetLow32()) {
             BTCLOG(LOG_LEVEL_INFO) << "Ping message checksum error: expect "
@@ -102,6 +106,17 @@ MessageData *MsgDataFactory(const MessageHeader& header, const uint8_t *raw)
             return nullptr;
         }
         msg = ping;
+    }
+    else if (header.command() == kMsgPong) {
+        Pong *pong = new Pong();
+        pong->Deserialize(byte_source);
+        if (header.checksum() != pong->GetHash().GetLow32()) {
+            BTCLOG(LOG_LEVEL_INFO) << "Pong message checksum error: expect "
+                                   << header.checksum() << ", received "
+                                   << pong->GetHash().GetLow32();
+            return nullptr;
+        }
+        msg = pong;
     }
     else if (header.command() == kMsgReject) {
         Reject *reject = new Reject();
@@ -178,7 +193,7 @@ bool ParseMsg(std::shared_ptr<Node> src_node)
         
         if (nullptr == (raw = evbuffer_pullup(buf, header.payload_length())))
             return false;       
-        MessageData *message = MsgDataFactory(header, raw);
+        MessageData *message = MsgDataFactory(raw, header, src_node->protocol_version());
         evbuffer_drain(buf, header.payload_length());
         
         // validate header and data second
@@ -195,7 +210,7 @@ bool ParseMsg(std::shared_ptr<Node> src_node)
             continue;
         }        
         
-        if (header.command() != kMsgVersion && src_node->version() == 0) {
+        if (!CheckMisbehaving(header.command(), src_node)) {
             SingletonBlockSync::GetInstance().Misbehaving(src_node->id(), 1);
             raw = evbuffer_pullup(buf, MessageHeader::kSize);
             continue;

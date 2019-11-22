@@ -1,10 +1,14 @@
-#ifndef BTCLITE_MESSAGE_TYPES_MESSAGE_H
-#define BTCLITE_MESSAGE_TYPES_MESSAGE_H
+#ifndef BTCLITE_PROTOCOL_MESSAGE_H
+#define BTCLITE_PROTOCOL_MESSAGE_H
 
 
 #include "hash.h"
 #include "node.h"
 
+
+namespace btclite {
+namespace network {
+namespace protocol {
 
 class MessageHeader {
 public:
@@ -144,6 +148,12 @@ public:
     virtual bool IsValid() const = 0;
     virtual ~MessageData() {}
 };
+
+bool CheckMisbehaving(const std::string command, std::shared_ptr<Node> src_node);
+
+} // namespace protocol
+} // namespace network
+} // namespace btclite
 
 
 #endif // BTCLITE_MESSAGE_TYPES_MESSAGE_H

@@ -70,7 +70,10 @@ constexpr uint32_t kNoPingTimeout = 2*60;
 constexpr uint32_t kNoConnectionTimeout = 60;
 
 // Time after which to disconnect, after waiting for a ping response (or inactivity).
-constexpr int kConnTimeoutInterval = 20 * 60;
+constexpr uint32_t kConnTimeoutInterval = 20 * 60;
+
+// Time between pings automatically sent out for latency probing and keepalive (in seconds).
+constexpr uint32_t kPingInterval =  2 * 60;
 
 constexpr uint32_t kMaxTimedataSamples = 200;
 

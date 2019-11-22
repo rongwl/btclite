@@ -3,6 +3,10 @@
 #include "network/include/params.h"
 
 
+namespace btclite {
+namespace network {
+namespace protocol {
+
 MessageHeader::MessageHeader(const uint8_t *raw_data)
 {
     std::vector<uint8_t> vec;
@@ -67,3 +71,21 @@ void MessageHeader::Clear()
     payload_length_ = 0;
     checksum_ = 0;
 }
+
+bool CheckMisbehaving(const std::string command, std::shared_ptr<Node> src_node)
+{
+    // Must have a version message before anything else
+    if (command != kMsgVersion && src_node->protocol_version() == 0)
+        return false;
+    
+    // Must have a verack message before anything else
+    if (command != kMsgVersion && command != kMsgVerack &&
+            !src_node->conn_established())
+        return false;
+    
+    return true;
+}
+
+} // namespace protocol
+} // namespace network
+} // namespace btclite

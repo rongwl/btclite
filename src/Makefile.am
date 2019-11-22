@@ -58,6 +58,7 @@ BTCLITE_HEADER_FILES = \
                        network/include/protocol/inventory_vector.h \
                        network/include/protocol/getaddr.h \
                        network/include/protocol/ping.h \
+                       network/include/protocol/pong.h \
                        network/include/protocol/reject.h \
                        network/include/protocol/send_headers.h \
                        network/include/protocol/send_compact.h \
@@ -164,6 +165,7 @@ network_src_libbtclite_network_a_SOURCES = network/proto/banmap.pb.cc \
                                            network/src/protocol/inventory.cpp \
                                            network/src/protocol/getaddr.cpp \
                                            network/src/protocol/ping.cpp \
+                                           network/src/protocol/pong.cpp \
                                            network/src/protocol/reject.cpp \
                                            network/src/protocol/send_headers.cpp \
                                            network/src/protocol/send_compact.cpp \

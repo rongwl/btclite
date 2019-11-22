@@ -102,7 +102,7 @@ void ConnReadCb(struct bufferevent *bev, void *ctx)
         timer_mng.StopTimer(pnode->timers().no_msg_timer);
         pnode->mutable_timers()->no_msg_timer.reset();
         
-        uint32_t timeout = (pnode->version() >
+        uint32_t timeout = (pnode->protocol_version() >
                             btclite::network::protocol::kBip31Version) ? 
                             kNoReceivingTimeoutBip31 : kNoReceivingTimeout;
         pnode->mutable_timers()->no_receiving_timer = 

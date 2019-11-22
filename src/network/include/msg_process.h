@@ -11,12 +11,16 @@ namespace btclite {
 namespace network {
 namespace msg_process{
 
-MessageData *MsgDataFactory(const MessageHeader& header, const uint8_t *raw);
+btclite::network::protocol::MessageData *MsgDataFactory(const uint8_t *raw, 
+                                                        const btclite::network::protocol::MessageHeader& header,
+                                                        uint32_t protocol_version);
 bool ParseMsg(std::shared_ptr<Node> src_node);
 
 template <typename Message>
 bool SendMsg(const Message& msg, std::shared_ptr<Node> dst_node)
 {
+    using namespace btclite::network::protocol;
+    
     MemOstream ms;
         
     if (!dst_node->bev())
@@ -49,6 +53,7 @@ bool SendVersion(std::shared_ptr<Node> dst_node);
 bool SendAddr(std::shared_ptr<Node> dst_node);
 
 void UpdatePreferredDownload(std::shared_ptr<Node> node);
+
 
 } // namespace msg_process
 } // namespace network

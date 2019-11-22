@@ -29,7 +29,7 @@ public:
     explicit Params(BaseEnv env);
     
     //-------------------------------------------------------------------------
-    MessageHeader::MsgMagic msg_magic() const
+    protocol::MessageHeader::MsgMagic msg_magic() const
     {
         return msg_magic_;
     }
@@ -45,7 +45,7 @@ public:
     }
     
 private:
-    MessageHeader::MsgMagic msg_magic_; // little endian
+    protocol::MessageHeader::MsgMagic msg_magic_; // little endian
     uint16_t default_port_;
     std::vector<Seed> seeds_;
 };

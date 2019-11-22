@@ -96,6 +96,7 @@ TEST_F(RejectTest, Serialize)
 TEST_F(RejectTest, SerializedSize)
 {
     MemOstream ms;
+
     ms << reject2_;
     EXPECT_EQ(reject2_.SerializedSize(), ms.vec().size());
     

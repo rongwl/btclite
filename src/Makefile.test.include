@@ -47,6 +47,7 @@ unit_test_test_network_SOURCES = unit_test/network/src/test_network.cpp \
                                  unit_test/network/src/protocol/inventory_vector_tests.cpp \
                                  unit_test/network/src/protocol/inventory_tests.cpp \
                                  unit_test/network/src/protocol/ping_tests.cpp \
+                                 unit_test/network/src/protocol/pong_tests.cpp \
                                  unit_test/network/src/protocol/reject_tests.cpp \
                                  unit_test/network/src/protocol/send_compact_tests.cpp \
                                  unit_test/network/src/protocol/version_tests.cpp \
@@ -66,6 +67,7 @@ unit_test_test_network_SOURCES = unit_test/network/src/test_network.cpp \
                                  unit_test/network/include/protocol/inventory_vector_tests.h \
                                  unit_test/network/include/protocol/version_tests.h \
                                  unit_test/network/include/protocol/ping_tests.h \
+                                 unit_test/network/include/protocol/pong_tests.h \
                                  unit_test/network/include/protocol/reject_tests.h \
                                  unit_test/network/include/protocol/send_compact_tests.h \
                                  unit_test/network/include/socket_tests.h

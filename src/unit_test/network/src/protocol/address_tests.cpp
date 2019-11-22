@@ -8,13 +8,6 @@ TEST_F(AddrTest, Validate)
     EXPECT_TRUE(msg_addr2_.IsValid());
 }
 
-TEST_F(AddrTest, SerializedSize)
-{
-    MemOstream ms;
-    ms << msg_addr2_;
-    EXPECT_EQ(msg_addr2_.SerializedSize(), ms.vec().size());
-}
-
 TEST_F(AddrTest, Clear)
 {
     ASSERT_NE(msg_addr1_, msg_addr2_);
@@ -31,3 +24,12 @@ TEST_F(AddrTest, Serialize)
     msg_addr2_.Deserialize(byte_source);
     EXPECT_EQ(msg_addr1_, msg_addr2_);
 }
+
+TEST_F(AddrTest, SerializedSize)
+{
+    MemOstream ms;
+
+    ms << msg_addr2_;
+    EXPECT_EQ(msg_addr2_.SerializedSize(), ms.vec().size());
+}
+
