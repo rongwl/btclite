@@ -39,6 +39,7 @@ bin_PROGRAMS = btc-fullnode
 BTCLITE_HEADER_FILES = \
                        chain/include/block.h \
                        chain/include/chain.h \
+                       chain/include/compact.h \
                        chain/include/params.h \
                        chain/include/script.h \
                        chain/include/script_witness.h \
@@ -136,6 +137,7 @@ chain_src_libbtclite_chain_a_CPPFLAGS = $(AM_CXXFLAGS) \
                                         $(BTCLITE_NETWORK_INCLUDES) \
                                         $(BTCLITE_UTIL_INCLUDES)
 chain_src_libbtclite_chain_a_SOURCES = chain/src/block.cpp \
+                                       chain/src/compact.cpp \
                                        chain/src/script.cpp \
                                        chain/src/script_witness.cpp \
                                        chain/src/transaction.cpp \

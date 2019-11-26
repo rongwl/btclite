@@ -9,11 +9,12 @@ using namespace btclite::network::protocol;
 class VersionTest : public ::testing::Test {
 protected:
     VersionTest()
-        : version_(kProtocolVersion), services_(kNodeNetwork), timestamp_(0x1234),
-          addr_recv_(0x1234, kNodeNetwork, 
+        : version_(kProtocolVersion), services_(btclite::network::kNodeNetwork), 
+          timestamp_(0x1234),
+          addr_recv_(0x1234, btclite::network::kNodeNetwork, 
                      {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 0x1, 0x2, 0x3, 0x4},
                      8333),
-          addr_from_(0x5678, kNodeNetwork, 
+          addr_from_(0x5678, btclite::network::kNodeNetwork, 
                      {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 0x1, 0x2, 0x3, 0x5},
                      8333),
           nonce_(0x5678), user_agent_(std::string("/btclite:0.1.0/")), 

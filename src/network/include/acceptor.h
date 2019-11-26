@@ -6,6 +6,9 @@
 #include "node.h"
 
 
+namespace btclite {
+namespace network {
+
 class Acceptor : Uncopyable {
 public:
     Acceptor();
@@ -44,5 +47,8 @@ private:
     static void AcceptErrCb(struct evconnlistener *listener, void *arg);
     static void CheckingTimeoutCb(evutil_socket_t fd, short event, void *arg);
 };
+
+} // namespace network
+} // namespace btclite
 
 #endif // BTCLITE_ACCEPTOR_H

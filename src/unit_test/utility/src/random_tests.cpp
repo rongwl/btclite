@@ -3,7 +3,7 @@
 #include "random.h"
 
 
-using namespace btclite::utility::random;
+using namespace btclite::utility;
 
 TEST(RandomTest, MethodGetUint64)
 {

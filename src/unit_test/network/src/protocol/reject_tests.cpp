@@ -40,7 +40,7 @@ TEST_F(RejectTest, OperatorEqual)
     
     reject2_.set_reason(std::move(reject3_.reason()));
     EXPECT_EQ(reject2_, reject3_);
-    reject2_.set_data(btclite::utility::random::GetUint256());
+    reject2_.set_data(btclite::utility::GetUint256());
     EXPECT_NE(reject2_, reject3_);
     
     reject2_.set_message(kMsgVersion);

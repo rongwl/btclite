@@ -1,12 +1,18 @@
 #ifndef BTCLITE_ARITHMETIC_H
 #define BTCLITE_ARITHMETIC_H
 
+#include <boost/multiprecision/cpp_int.hpp>
 #include <endian.h>
 #include <limits>
 
 #include "Assert.h"
 #include "blob.h"
 
+
+using int128_t = boost::multiprecision::int128_t;
+using uint128_t = boost::multiprecision::uint128_t;
+using int256_t = boost::multiprecision::int256_t;
+using uint256_t = boost::multiprecision::uint256_t;
 
 class Uint128 : public Blob<128> {
 public:
@@ -18,6 +24,7 @@ public:
         std::memcpy(this->begin()+sizeof(uint64_t), &high, sizeof(uint64_t));
     }
     
+    //-------------------------------------------------------------------------
     uint64_t GetLow64() const
     {
         const uint64_t *x = reinterpret_cast<const uint64_t*>(this->data());
@@ -30,6 +37,7 @@ public:
         return *x;
     }
     
+    //-------------------------------------------------------------------------
     friend bool operator==(const Uint128& a, const Uint128& b)
     {
         return (a.Compare(b) == 0);
@@ -59,8 +67,9 @@ public:
     {
         std::memcpy(this->begin(), low.begin(), low.size());
         std::memcpy(this->begin()+low.size(), high.begin(), high.size());
-    }
+    }   
     
+    //-------------------------------------------------------------------------
     uint64_t GetLow64() const
     {
         const uint64_t *x = reinterpret_cast<const uint64_t*>(this->data());
@@ -73,6 +82,7 @@ public:
         return *x;
     }
     
+    //-------------------------------------------------------------------------
     friend bool operator==(const Uint256& a, const Uint256& b)
     {
         return (a.Compare(b) == 0);
@@ -262,5 +272,6 @@ private:
     
     T value_;
 };
+
 
 #endif // BTCLITE_ARITHMETIC_H

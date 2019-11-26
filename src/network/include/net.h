@@ -9,6 +9,9 @@
 #include "util.h"
 
 
+namespace btclite {
+namespace network {
+
 class LocalNetConfig {
 public:
     LocalNetConfig()
@@ -17,14 +20,16 @@ public:
     
     //-------------------------------------------------------------------------
     bool LookupLocalAddrs();
-    bool GetLocalAddr(const btclite::network::NetAddr& peer_addr, ServiceFlags services,
-                      btclite::network::NetAddr *out);
+    bool GetLocalAddr(const NetAddr& peer_addr, ServiceFlags services, NetAddr *out);
+    int GetAddrScore(const NetAddr& peer_addr);    
     
     bool IsLocal(const btclite::network::NetAddr& addr)
     {
         LOCK(cs_local_net_config_);
         return (map_local_addrs_.count(addr) > 0);
     }
+    
+    static void BroadcastTimeoutCb(std::shared_ptr<Node> node);
     
     //-------------------------------------------------------------------------
     ServiceFlags local_services() const
@@ -50,30 +55,6 @@ private:
     std::map<btclite::network::NetAddr, int> map_local_addrs_;
     
     bool AddLocalHost(const btclite::network::NetAddr& addr, int score);
-};
-
-class SingletonLocalNetCfg : Uncopyable {
-public:
-    static LocalNetConfig& GetInstance()
-    {
-        static LocalNetConfig config;
-        return config;
-    }
-    
-private:
-    SingletonLocalNetCfg() {}
-};
-
-class SingletonNetInterrupt : Uncopyable {
-public:
-    static ThreadInterrupt& GetInstance()
-    {
-        static ThreadInterrupt interrupt;
-        return interrupt;
-    }
-    
-private:
-    SingletonNetInterrupt() {}
 };
 
 class NetArgs {
@@ -107,24 +88,53 @@ private:
     std::vector<std::string> specified_outgoing_;
 };
 
+
+bool IsPeerLocalAddrGood(std::shared_ptr<Node> node);
+void AdvertiseLocalAddr(std::shared_ptr<Node> node);
+
+void BroadcastAddrsTimeoutCb(std::shared_ptr<Node> node);
+
+// Return a time interavl for send in the future (in microseconds) for exponentially distributed events.
+int64_t IntervalNextSend(int average_interval_seconds);
+
+} // namespace network
+} // namespace btclite
+
+
+class SingletonLocalNetCfg : Uncopyable {
+public:
+    static btclite::network::LocalNetConfig& GetInstance()
+    {
+        static btclite::network::LocalNetConfig config;
+        return config;
+    }
+    
+private:
+    SingletonLocalNetCfg() {}
+};
+
+class SingletonNetInterrupt : Uncopyable {
+public:
+    static ThreadInterrupt& GetInstance()
+    {
+        static ThreadInterrupt interrupt;
+        return interrupt;
+    }
+    
+private:
+    SingletonNetInterrupt() {}
+};
+
 class SingletonNetArgs : Uncopyable {
 public:
-    static NetArgs& GetInstance(const Args& args = Args())
+    static btclite::network::NetArgs& GetInstance(const Args& args = Args())
     {
-        static NetArgs net_args(args);
+        static btclite::network::NetArgs net_args(args);
         return net_args;
     }
     
 private:
     SingletonNetArgs() {}
 };
-
-namespace btclite {
-namespace network {
-
-bool IsPeerLocalAddrGood(std::shared_ptr<Node> node);
-
-} // namespace network
-} // namespace btclite
 
 #endif // BTCLITE_NET_H

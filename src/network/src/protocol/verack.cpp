@@ -49,14 +49,26 @@ bool verack::RecvHandler(std::shared_ptr<Node> src_node) const
     src_node->set_conn_established(true);
     
     // send ping
-    Ping ping(btclite::utility::random::GetUint64());
+    Ping ping(btclite::utility::GetUint64());
     if (src_node->protocol_version() < VersionCode::kBip31Version)
         ping.set_protocol_version(0);
     SendMsg(ping, src_node);
     // start ping timer
-    src_node->mutable_timers()->no_ping_timer = 
+    src_node->mutable_timers()->ping_timer = 
         SingletonTimerMng::GetInstance().StartTimer(kNoPingTimeout*1000, kNoPingTimeout*1000,
                                                     Ping::PingTimeoutCb, src_node);
+    
+    // broadcast local address
+    AdvertiseLocalAddr(src_node);
+    src_node->mutable_timers()->broadcast_local_addr_timer =
+        SingletonTimerMng::GetInstance().StartTimer(IntervalNextSend(kAvgLocalAddrBcInterval)*1000, 0, 
+                                                    btclite::network::LocalNetConfig::BroadcastTimeoutCb,
+                                                    src_node);
+    
+    // broadcast address
+    src_node->mutable_timers()->broadcast_addr_timer = 
+        SingletonTimerMng::GetInstance().StartTimer(kAvgAddrBcInterval*1000, 0, 
+                                                    btclite::network::BroadcastAddrsTimeoutCb, src_node);
     
     return true;
 }

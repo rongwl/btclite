@@ -2,15 +2,18 @@
 #define BTCLITE_NODE_H
 
 
+#include <boost/circular_buffer.hpp>
 #include <event2/bufferevent.h>
 #include <functional>
 #include <queue>
 
 #include "bloom.h"
 #include "block_sync.h"
-#include "circular_buffer.h"
 #include "timer.h"
 
+
+namespace btclite {
+namespace network {
 
 /* Services flags */
 enum ServiceFlags : uint64_t {
@@ -55,22 +58,15 @@ enum ServiceFlags : uint64_t {
 
 constexpr uint64_t kDesirableServiceFlags = (kNodeNetwork | kNodeWitness);
 
-namespace btclite {
-namespace network {
-namespace service_flags {
-
 /**
  * A shortcut for (services & kDesirableServiceFlags)
  * == kDesirableServiceFlags, ie determines whether the given
  * set of service flags are sufficient for a peer to be "relevant".
  */
-static inline bool IsDesirable(uint64_t services) {
+static inline bool IsServiceFlagDesirable(uint64_t services) {
     return !(kDesirableServiceFlags & (~services));
 }
 
-} // namespace service_flags
-} // namespace network
-} // namespace btclite
 
 class NodeFilter {
 public:
@@ -138,22 +134,35 @@ struct NodeTimers {
     TimerMng::TimerPtr no_msg_timer;
     TimerMng::TimerPtr no_sending_timer;
     TimerMng::TimerPtr no_receiving_timer;
-    TimerMng::TimerPtr no_ping_timer;
     TimerMng::TimerPtr no_connection_timer;
+    
     TimerMng::TimerPtr ping_timer;
+    TimerMng::TimerPtr broadcast_local_addr_timer;
+    TimerMng::TimerPtr broadcast_addr_timer;
 };
 
 /* Information about a connected peer */
 class Node {
 public:
-    Node(const struct bufferevent *bev, const btclite::network::NetAddr& addr,
-         bool is_inbound = true, bool manual = false, std::string host_name = "");
+    Node(const struct bufferevent *bev, const NetAddr& addr,
+         bool is_inbound = true, bool manual = false, 
+         std::string host_name = "");
     ~Node();
     
     //-------------------------------------------------------------------------
     static void InactivityTimeoutCb(std::shared_ptr<Node> node);
     bool CheckBanned();
-    bool PushAddress(const btclite::network::NetAddr& addr);    
+    bool PushAddrToSend(const NetAddr& addr);    
+    void ClearSentAddr();
+    
+    bool AddKnownAddr(const NetAddr& addr);
+    
+    bool IsKnownAddr(const NetAddr& addr)
+    {
+        LOCK(cs_addrs_);
+        return (std::find(known_addrs_.begin(), known_addrs_.end(), 
+                         addr.GetHash().GetLow64()) != known_addrs_.end());
+    }
     
     bool IsClient() const
     {
@@ -272,19 +281,10 @@ public:
     
     void set_disconnected(bool disconnected);
     
-    const std::vector<btclite::network::NetAddr>& addrs_to_send() const
+    std::vector<NetAddr> addrs_to_send() const
     {
+        LOCK(cs_addrs_);
         return addrs_to_send_;
-    }
-    
-    const CircularBuffer<uint64_t>& known_addrs() const
-    {
-        return known_addrs_;
-    }
-    
-    CircularBuffer<uint64_t> *mutable_known_addrs()
-    {
-        return &known_addrs_;
     }
     
     bool getaddr() const
@@ -333,7 +333,7 @@ private:
     std::atomic<ServiceFlags> services_ = kNodeNone;
     std::atomic<int> start_height_ = 0;
     struct bufferevent *bev_ = nullptr;    
-    const btclite::network::NetAddr addr_;
+    const NetAddr addr_;
     //const uint64_t keyed_net_group_;
     const uint64_t local_host_nonce_;    
     
@@ -349,8 +349,9 @@ private:
     std::atomic<bool> disconnected_ = false;
     
     // flood addrs relay
-    std::vector<btclite::network::NetAddr> addrs_to_send_;
-    CircularBuffer<uint64_t> known_addrs_;
+    mutable CriticalSection cs_addrs_;
+    std::vector<NetAddr> addrs_to_send_;
+    boost::circular_buffer<uint64_t> known_addrs_;
     bool getaddr_ = false;
     
     NodeFilter filter_;    
@@ -423,12 +424,16 @@ private:
     //void MakeEvictionCandidate(std::vector<NodeEvictionCandidate> *out);
 };
 
+} // namespace network
+} // namespace btclite
+
+
 // Singleton pattern, thread safe after c++11
 class SingletonNodes : Uncopyable {
 public:
-    static Nodes& GetInstance()
+    static btclite::network::Nodes& GetInstance()
     {
-        static Nodes nodes;
+        static btclite::network::Nodes nodes;
         return nodes;
     }
     

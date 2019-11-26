@@ -54,7 +54,6 @@ bool SendAddr(std::shared_ptr<Node> dst_node);
 
 void UpdatePreferredDownload(std::shared_ptr<Node> node);
 
-
 } // namespace msg_process
 } // namespace network
 } // namespace btclite

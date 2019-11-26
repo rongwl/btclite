@@ -6,6 +6,9 @@
 #include "node.h"
 
 
+namespace btclite {
+namespace network {
+
 // outbound socket connection
 class Connector {
 public:
@@ -39,5 +42,8 @@ private:
     
     bool ConnectNode(const btclite::network::NetAddr& addr, bool manual = false);
 };
+
+} // namespace network
+} // namespace btclite
 
 #endif //BTCLITE_CONNECTOR_H

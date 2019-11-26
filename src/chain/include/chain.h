@@ -6,6 +6,9 @@
 #include "util.h"
 
 
+namespace btclite {
+namespace chain {
+
 /*
  * The block chain is a tree shaped structure starting with the
  * genesis block at the root, with each block potentially having multiple
@@ -33,11 +36,14 @@ private:
     std::vector<BlockIndex*> chain_;
 };
 
+} // namespace chain
+} // namespace btclite
+
 class SingletonBlockChain : Uncopyable {
 public:
-    static BlockChain& GetInstance()
+    static btclite::chain::BlockChain& GetInstance()
     {
-        static BlockChain chain;
+        static btclite::chain::BlockChain chain;
         return chain;
     }
     

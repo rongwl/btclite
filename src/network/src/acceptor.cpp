@@ -6,6 +6,9 @@
 #include "timer.h"
 
 
+namespace btclite {
+namespace network {
+
 using namespace btclite::network::libevent;
 
 Acceptor::Acceptor()
@@ -158,3 +161,6 @@ void Acceptor::CheckingTimeoutCb(evutil_socket_t fd, short event, void *arg)
         pnode->set_disconnected(true);
     }
 }
+
+} // namespace network
+} // namespace btclite

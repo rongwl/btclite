@@ -52,7 +52,7 @@ void ping::PingTimeoutCb(std::shared_ptr<Node> node)
     }
     
     // send ping
-    Ping ping(btclite::utility::random::GetUint64());
+    Ping ping(btclite::utility::GetUint64());
     if (node->protocol_version() < VersionCode::kBip31Version)
         ping.set_protocol_version(0);
     SendMsg(ping, node);

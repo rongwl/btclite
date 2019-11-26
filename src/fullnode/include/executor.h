@@ -24,7 +24,7 @@ public:
     void Stop();
     
 private:
-    P2P network_;
+    btclite::network::P2P network_;
 };
 
 

@@ -2,6 +2,9 @@
 #include "fullnode/include/config.h"
 
 
+namespace btclite {
+namespace network {
+
 P2P::P2P(const ExecutorConfig& config)
     : peers_db_(config.path_data_dir())
 {
@@ -108,3 +111,6 @@ void P2P::Stop()
     
     BTCLOG(LOG_LEVEL_INFO) << "Stopped p2p network.";
 }
+
+} // namespace network
+} // namespace btclite

@@ -7,6 +7,9 @@
 #include "thread.h"
 
 
+namespace btclite {
+namespace network {
+
 const BloomFilter *NodeFilter::bloom_filter() const
 {
     LOCK(cs_bloom_filter_);
@@ -22,7 +25,7 @@ Node::Node(const struct bufferevent *bev, const btclite::network::NetAddr& addr,
     : id_(SingletonNodes::GetInstance().GetNewNodeId()),
       services_(SingletonLocalNetCfg::GetInstance().local_services()),
       bev_(const_cast<struct bufferevent*>(bev)), addr_(addr),
-      local_host_nonce_(btclite::utility::random::GetUint64()),
+      local_host_nonce_(btclite::utility::GetUint64()),
       host_name_(host_name), is_inbound_(is_inbound), manual_(manual), known_addrs_(3000),
       time_(btclite::utility::util_time::GetTimeSeconds())
 {
@@ -80,16 +83,42 @@ bool Node::CheckBanned()
     return true;
 }
 
-bool Node::PushAddress(const btclite::network::NetAddr& addr)
+bool Node::PushAddrToSend(const btclite::network::NetAddr& addr)
 {
-    if (!addr.IsValid() || known_addrs_.exist(addr.GetHash().GetLow64()))
+    LOCK(cs_addrs_);
+    
+    if (!addr.IsValid() || 
+            std::find(known_addrs_.begin(), known_addrs_.end(), 
+                      addr.GetHash().GetLow64()) != known_addrs_.end())
         return false;
     
     if (addrs_to_send_.size() >= kMaxAddrToSend) {
-        addrs_to_send_[btclite::utility::random::GetUint64(addrs_to_send_.size())] = addr;
+        addrs_to_send_[btclite::utility::GetUint64(addrs_to_send_.size())] = addr;
     } else {
         addrs_to_send_.push_back(addr);
     }
+    
+    return true;
+}
+
+void Node::ClearSentAddr()
+{
+    LOCK(cs_addrs_);
+    addrs_to_send_.clear();
+    
+    // we only send the big addr message once
+    if (addrs_to_send_.capacity() > 40)
+        addrs_to_send_.shrink_to_fit();
+}
+
+bool Node::AddKnownAddr(const NetAddr& addr)
+{
+    LOCK(cs_addrs_);
+    
+    if (!addr.IsValid())
+        return false;
+    
+    known_addrs_.push_back(addr.GetHash().GetLow64());
     
     return true;
 }
@@ -371,3 +400,6 @@ void Nodes::MakeEvictionCandidate(std::vector<NodeEvictionCandidate> *out)
     }
 }
 */
+
+} // namespace network
+} // namespace btclite

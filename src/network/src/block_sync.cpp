@@ -3,6 +3,11 @@
 #include "utiltime.h"
 
 
+namespace btclite {
+namespace network {
+
+using namespace btclite::chain;
+
 void BlockSync::AddSyncState(NodeId id, const btclite::network::NetAddr& addr, const std::string& addr_name)
 {
     LOCK(cs_block_sync_);
@@ -885,7 +890,7 @@ uint32_t Orphans::LimitOrphanTxSize(uint32_t max_orphans)
     while (map_orphan_txs_.size() > max_orphans)
     {
         // Evict a random orphan:
-        Uint256 randomhash = btclite::utility::random::GetUint256();
+        Uint256 randomhash = btclite::utility::GetUint256();
         auto it = map_orphan_txs_.lower_bound(randomhash);
         if (it == map_orphan_txs_.end())
             it = map_orphan_txs_.begin();
@@ -916,15 +921,11 @@ int Orphans::EraseOrphanTx(const Hash256& hash)
     return 1;
 }
 
-namespace btclite {
-namespace network {
-namespace block_sync {
 
 bool IsInitialBlockDownload()
 {
     return false;
 }
 
-} // namespace block_sync
 } // namespace network 
 } // namespace block_sync

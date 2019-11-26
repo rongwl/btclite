@@ -9,7 +9,7 @@ using namespace btclite::network::protocol;
 class InvVectTest : public ::testing::Test {
 protected:
     InvVectTest()
-        : type_(DataMsgType::kMsgTx), hash_(btclite::utility::random::GetUint256()),
+        : type_(DataMsgType::kMsgTx), hash_(btclite::utility::GetUint256()),
           inv_vect1_(), inv_vect2_(type_, hash_) {}
     
     DataMsgType type_;

@@ -12,6 +12,9 @@
 #include "thread.h"
 
 
+namespace btclite {
+namespace network {
+
 class P2P : Uncopyable {
 public:
     explicit P2P(const ExecutorConfig& config);
@@ -29,5 +32,8 @@ private:
     std::thread thread_acceptor_loop_;
     std::thread thread_connector_loop_;
 };
+
+} // namespace network
+} // namespace btclite
 
 #endif // BTCLITE_P2P_H

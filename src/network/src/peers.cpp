@@ -7,8 +7,6 @@
 namespace btclite {
 namespace network {
 
-using namespace btclite::utility::random;
-
 bool Peers::Add(const btclite::network::NetAddr &addr, 
                          const btclite::network::NetAddr& source, int64_t time_penalty)
 {
@@ -164,9 +162,9 @@ bool Peers::Select(proto_peers::Peer *out, bool new_only)
     // Use a 50% chance for choosing between tried and new peers.
     if (!new_only &&
         proto_peers_.tried_tbl().size() > 0 &&
-        (proto_peers_.new_tbl().size() == 0 || GetUint64(1) == 0)) {
+        (proto_peers_.new_tbl().size() == 0 || btclite::utility::GetUint64(1) == 0)) {
         // use a tried peer
-        uint64_t rand_pos = GetUint64(proto_peers_.tried_tbl().size()-1);
+        uint64_t rand_pos = btclite::utility::GetUint64(proto_peers_.tried_tbl().size()-1);
         auto it = proto_peers_.tried_tbl().begin();
         while (rand_pos-- > 0 && it++ != proto_peers_.tried_tbl().end())
             ;
@@ -174,7 +172,7 @@ bool Peers::Select(proto_peers::Peer *out, bool new_only)
     }
     else {
         // use a new peer
-        uint64_t rand_pos = GetUint64(proto_peers_.new_tbl().size()-1);
+        uint64_t rand_pos = btclite::utility::GetUint64(proto_peers_.new_tbl().size()-1);
         auto it = proto_peers_.new_tbl().begin();
         while (rand_pos-- > 0 && it++ != proto_peers_.new_tbl().end())
             ;

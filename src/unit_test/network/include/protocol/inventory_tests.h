@@ -12,9 +12,9 @@ protected:
         : inv1_(), inv2_()
     {
         inv2_.mutable_inv_vects()->emplace_back(DataMsgType::kMsgTx,
-                                                btclite::utility::random::GetUint256());
+                                                btclite::utility::GetUint256());
         inv2_.mutable_inv_vects()->emplace_back(DataMsgType::kMsgBlock, 
-                                                btclite::utility::random::GetUint256());
+                                                btclite::utility::GetUint256());
     }
     
     Inv inv1_;

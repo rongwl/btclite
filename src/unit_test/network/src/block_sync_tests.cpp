@@ -1,6 +1,8 @@
 #include "block_sync_tests.h"
 
 
+using namespace btclite::network;
+
 TEST_F(BlockSyncTest, GetSyncState)
 {
     btclite::network::NetAddr addr;

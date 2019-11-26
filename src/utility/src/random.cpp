@@ -6,7 +6,6 @@
 
 namespace btclite {
 namespace utility {
-namespace random {
 
 uint64_t GetUint64(uint64_t max)
 {
@@ -29,9 +28,6 @@ Uint256 GetUint256()
     return hash;
 }
 
-} // namespace random
-} // namespace utility
-} // namespace btclite
 
 FastRandomContext::FastRandomContext(bool deterministic)
     : rng_(), requires_seed_(!deterministic), bytebuf_size_(0), bitbuf_size_(0)
@@ -73,7 +69,7 @@ uint64_t FastRandomContext::RandRange(uint64_t range)
 
 void FastRandomContext::RandomSeed()
 {
-    Uint256 seed = btclite::utility::random::GetUint256();
+    Uint256 seed = GetUint256();
     rng_.add_entropy(seed.data(), seed.size());
     requires_seed_ = false;
 }
@@ -120,3 +116,6 @@ uint64_t FastRandomContext::CountBits(uint64_t x)
     
     return ret;
 }
+
+} // namespace utility
+} // namespace btclite

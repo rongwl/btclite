@@ -10,7 +10,7 @@ class RejectTest : public ::testing::Test {
 protected:
     RejectTest()
         : message_(::kMsgBlock), ccode_(kRejectDuplicate), reason_("foo"), 
-          data_(btclite::utility::random::GetUint256()),
+          data_(btclite::utility::GetUint256()),
           reject1_(), reject2_(message_, ccode_, reason_, data_),
           reject3_(std::move(std::string(message_)), ccode_,
                    std::move(std::string(reason_)), data_) {}

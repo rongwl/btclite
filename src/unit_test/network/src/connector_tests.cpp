@@ -10,6 +10,8 @@
 #include "peers.h"
 
 
+using namespace btclite::network;
+
 TEST(ConnectorTest, ConnectNode)
 {
     std::vector<btclite::network::NetAddr> addrs;

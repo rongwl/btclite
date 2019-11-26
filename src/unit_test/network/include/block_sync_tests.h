@@ -18,7 +18,7 @@ protected:
         block_sync_.AddSyncState(3, addr3_, "");
     }
     
-    BlockSync block_sync_;
+    btclite::network::BlockSync block_sync_;
     btclite::network::NetAddr addr1_;
     btclite::network::NetAddr addr2_;
     btclite::network::NetAddr addr3_;

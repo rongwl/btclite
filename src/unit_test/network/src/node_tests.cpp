@@ -3,6 +3,8 @@
 #include "bandb.h"
 
 
+using namespace btclite::network;
+
 TEST_F(NodesTest, InitializeNode)
 {
     std::shared_ptr<Node> result = nodes_.GetNode(addr3_);
@@ -146,15 +148,15 @@ TEST_F(NodeTest, CheckBanned)
     SingletonBanDb::GetInstance().Clear();
 }
 
-TEST_F(NodeTest, PushAddress)
+TEST_F(NodeTest, PushAddrToSend)
 {
     Nodes& nodes = SingletonNodes::GetInstance();
     std::shared_ptr<Node> node = nodes.GetNode(id_);
-    node->mutable_known_addrs()->push_back(addr_.GetHash().GetLow64());
-    EXPECT_FALSE(node->PushAddress(addr_));
+    node->AddKnownAddr(addr_);
+    EXPECT_FALSE(node->PushAddrToSend(addr_));
     
     addr_.mutable_proto_addr()->set_port(8333);
-    ASSERT_TRUE(node->PushAddress(addr_));
+    ASSERT_TRUE(node->PushAddrToSend(addr_));
     EXPECT_EQ(node->addrs_to_send().front(), addr_);
 }
 

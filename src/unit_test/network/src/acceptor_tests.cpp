@@ -5,6 +5,8 @@
 #include "bandb.h"
 
 
+using namespace btclite::network;
+
 TEST(AcceptorTest, Constructor)
 {
     Acceptor acceptor;

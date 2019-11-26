@@ -5,6 +5,8 @@
 #include <arpa/inet.h>
 
 
+using namespace btclite::network;
+
 TEST_F(LocalNetConfigTest, Constructor)
 {
     EXPECT_EQ(config_.local_services(), kNodeNetwork | kNodeNetworkLimited);

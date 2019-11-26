@@ -13,7 +13,6 @@ namespace network {
 namespace protocol{
 
 using namespace btclite::network::msg_process;
-using namespace btclite::network::block_sync;
 
 bool version::RecvHandler(std::shared_ptr<Node> src_node) const
 {
@@ -29,7 +28,7 @@ bool version::RecvHandler(std::shared_ptr<Node> src_node) const
         SingletonPeers::GetInstance().SetServices(src_node->addr(), services_);
     }
     if (!src_node->is_inbound() && !src_node->manual() 
-            && !btclite::network::service_flags::IsDesirable(services_)) {
+            && !btclite::network::IsServiceFlagDesirable(services_)) {
         BTCLOG(LOG_LEVEL_INFO) << "Disconnecting peer " << src_node->id() 
                                << " for not offering the expected services ("
                                << std::showbase << std::hex << services_
@@ -95,10 +94,10 @@ bool version::RecvHandler(std::shared_ptr<Node> src_node) const
                 if (addr.IsRoutable())
                 {
                     BTCLOG(LOG_LEVEL_INFO) << "Advertising address " << addr.ToString();
-                    src_node->PushAddress(addr);
+                    src_node->PushAddrToSend(addr);
                 } else if (btclite::network::IsPeerLocalAddrGood(src_node)) {
                     BTCLOG(LOG_LEVEL_INFO) << "Advertising address " << addr_recv_.ToString();
-                    src_node->PushAddress(addr_recv_);
+                    src_node->PushAddrToSend(addr_recv_);
                 }
             }
         }

@@ -75,6 +75,11 @@ constexpr uint32_t kConnTimeoutInterval = 20 * 60;
 // Time between pings automatically sent out for latency probing and keepalive (in seconds).
 constexpr uint32_t kPingInterval =  2 * 60;
 
+// Average delay between local address broadcasts in seconds.
+constexpr uint32_t kAvgLocalAddrBcInterval = 24 * 60 * 60;
+// Average delay between peer address broadcasts in seconds.
+static const unsigned int kAvgAddrBcInterval = 30;
+
 constexpr uint32_t kMaxTimedataSamples = 200;
 
 // how old addresses can maximally be

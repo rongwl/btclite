@@ -10,5 +10,5 @@ protected:
         config_.LookupLocalAddrs();
     }
     
-    LocalNetConfig config_;
+    btclite::network::LocalNetConfig config_;
 };

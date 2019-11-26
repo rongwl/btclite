@@ -1,5 +1,11 @@
 #include "protocol/version_tests.h"
 
+#include <event2/event.h>
+#include <event2/bufferevent.h>
+#include <event2/buffer.h>
+
+
+using namespace btclite::network;
 
 TEST_F(VersionTest, Constructor)
 {
@@ -169,4 +175,17 @@ TEST_F(VersionTest, SerializedSize)
     
     ms << version2_;
     EXPECT_EQ(version2_.SerializedSize(), ms.vec().size());
+}
+
+TEST_F(VersionTest, Received)
+{
+    //struct event_base *base = nullptr;
+    //struct bufferevent *pair[2] = {};
+    
+    //base = event_base_new();
+    //ASSERT_NE(base, nullptr);
+    //ASSERT_NE(bufferevent_pair_new(base, BEV_OPT_CLOSE_ON_FREE, pair), 0);
+    //bufferevent_setcb(pair_[1], SendCmpctReadCb, NULL, NULL, const_cast<char*>(kMsgSendCmpct));
+    //bufferevent_enable(pair_[1], EV_READ);
+    //auto node = std::make_shared<Node>(pair[0], addr_from_, false);
 }

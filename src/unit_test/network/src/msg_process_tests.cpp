@@ -252,9 +252,9 @@ TEST(MsgFactoryTest, InvFactory)
     MemOstream os;
     Inv msg_out;
     msg_out.mutable_inv_vects()->emplace_back(DataMsgType::kMsgTx, 
-                                              btclite::utility::random::GetUint256());
+                                              btclite::utility::GetUint256());
     msg_out.mutable_inv_vects()->emplace_back(DataMsgType::kMsgBlock, 
-                                              btclite::utility::random::GetUint256());
+                                              btclite::utility::GetUint256());
     MessageHeader header(SingletonParams::GetInstance().msg_magic(),
                          kMsgInv, msg_out.SerializedSize(), msg_out.GetHash().GetLow32());
     
@@ -307,7 +307,7 @@ TEST(MsgFactoryTest, RejectFactory)
 {
     MemOstream os;
     Reject msg_out(kMsgVersion, kRejectDuplicate, "Duplicate version message",
-                   std::move(btclite::utility::random::GetUint256()));
+                   std::move(btclite::utility::GetUint256()));
     MessageHeader header(SingletonParams::GetInstance().msg_magic(),
                          kMsgReject, msg_out.SerializedSize(), msg_out.GetHash().GetLow32());
     
@@ -412,7 +412,7 @@ TEST_F(MsgProcessTest, SendInv)
     bufferevent_setcb(pair_[1], InvReadCb, NULL, NULL, const_cast<char*>(kMsgInv));
     bufferevent_enable(pair_[1], EV_READ);
     auto node = std::make_shared<Node>(pair_[0], addr_, false);
-    inv_hash = btclite::utility::random::GetUint256();
+    inv_hash = btclite::utility::GetUint256();
     Inv inv;
     inv.mutable_inv_vects()->emplace_back(DataMsgType::kMsgTx, inv_hash);
     inv.mutable_inv_vects()->emplace_back(DataMsgType::kMsgBlock, inv_hash);
@@ -437,7 +437,7 @@ TEST_F(MsgProcessTest, SendPing)
     bufferevent_setcb(pair_[1], PingReadCb, NULL, NULL, const_cast<char*>(kMsgPing));
     bufferevent_enable(pair_[1], EV_READ);
     auto node = std::make_shared<Node>(pair_[0], addr_, false);
-    ping_nonce = btclite::utility::random::GetUint64();
+    ping_nonce = btclite::utility::GetUint64();
     Ping ping(ping_nonce);
     ASSERT_TRUE(msg_process::SendMsg(ping, node));
     
@@ -449,7 +449,7 @@ TEST_F(MsgProcessTest, SendPong)
     bufferevent_setcb(pair_[1], PongReadCb, NULL, NULL, const_cast<char*>(kMsgPong));
     bufferevent_enable(pair_[1], EV_READ);
     auto node = std::make_shared<Node>(pair_[0], addr_, false);
-    pong_nonce = btclite::utility::random::GetUint64();
+    pong_nonce = btclite::utility::GetUint64();
     Pong pong(pong_nonce);
     ASSERT_TRUE(msg_process::SendMsg(pong, node));
     

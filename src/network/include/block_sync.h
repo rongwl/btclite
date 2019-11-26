@@ -8,6 +8,9 @@
 #include "network_address.h"
 
 
+namespace btclite {
+namespace network {
+
 using NodeId = int64_t;
 
 struct BlockReject {
@@ -19,7 +22,7 @@ struct BlockReject {
 /* Blocks that are in flight, and that are in the queue to be downloaded. */
 struct QueuedBlock {
     Hash256 hash;
-    const BlockIndex* index = nullptr;
+    const btclite::chain::BlockIndex *index = nullptr;
     
     // Whether this block has validated headers at the time of request.
     bool has_validated_headers;
@@ -55,7 +58,7 @@ struct SyncTimeoutState {
     int64_t timeout = 0;
     
     // A header with the work we require on our peer's chain
-    const BlockIndex *work_header = nullptr;
+    const btclite::chain::BlockIndex *work_header = nullptr;
     
     // After timeout is reached, set to true after sending getheaders
     bool sent_getheaders = false;
@@ -79,13 +82,13 @@ struct SyncTimeState {
 
 struct SyncProcessState {
     //! The best known block we know this peer has announced.
-    const BlockIndex *best_known_block_index = nullptr;
+    const  btclite::chain::BlockIndex *best_known_block_index = nullptr;
     
     //! The last full block we both have.
-    const BlockIndex *last_common_block_index = nullptr;
+    const  btclite::chain::BlockIndex *last_common_block_index = nullptr;
     
     //! The best header we have sent our peer.
-    const BlockIndex *best_header_sent_index = nullptr;
+    const  btclite::chain::BlockIndex *best_header_sent_index = nullptr;
     
     //! The hash of the last unknown block this peer has announced.
     Hash256 last_unknown_block_hash;
@@ -279,9 +282,9 @@ public:
     //-------------------------------------------------------------------------
     // basic sync state
     bool GetConnected(NodeId id, bool *out);
-    bool SetConnected(NodeId id, bool connected);    
+    bool SetConnected(NodeId id, bool connected);
     bool GetSyncStarted(NodeId id, bool *out);
-    bool SetSyncStarted(NodeId id, bool sync_started);    
+    bool SetSyncStarted(NodeId id, bool sync_started);
     bool GetShouldBan(NodeId id, bool *out);
     bool SetShouldBan(NodeId id, bool should_ban);
     
@@ -299,8 +302,8 @@ public:
     // sync timeout state
     bool GetTimeOut(NodeId id, int64_t *out);
     bool SetTimeout(NodeId id, int64_t timeout);
-    const BlockIndex *GetWorkHeader(NodeId id);
-    bool SetWorkHeader(NodeId id, const BlockIndex *index);
+    const  btclite::chain::BlockIndex *GetWorkHeader(NodeId id);
+    bool SetWorkHeader(NodeId id, const  btclite::chain::BlockIndex *index);
     bool GetSentGetheaders(NodeId id, bool *out);
     bool SetSentGetheaders(NodeId id, bool sent_getheaders);
     bool GetProtect(NodeId id, bool *out);
@@ -317,12 +320,12 @@ public:
     
     //-------------------------------------------------------------------------
     // sync process state
-    const BlockIndex *GetBestKnownBlockIndex(NodeId id);
-    bool SetBestKnownBlockIndex(NodeId id, const BlockIndex *index);
-    const BlockIndex *GetLastCommonBlockIndex(NodeId id);
-    bool SetLastCommonBlockIndex(NodeId id, const BlockIndex *index);
-    const BlockIndex *GetBestHeaderSentIndex(NodeId id);
-    bool SetBestHeaderSentIndex(NodeId id, const BlockIndex *index);
+    const  btclite::chain::BlockIndex *GetBestKnownBlockIndex(NodeId id);
+    bool SetBestKnownBlockIndex(NodeId id, const  btclite::chain::BlockIndex *index);
+    const  btclite::chain::BlockIndex *GetLastCommonBlockIndex(NodeId id);
+    bool SetLastCommonBlockIndex(NodeId id, const  btclite::chain::BlockIndex *index);
+    const  btclite::chain::BlockIndex *GetBestHeaderSentIndex(NodeId id);
+    bool SetBestHeaderSentIndex(NodeId id, const  btclite::chain::BlockIndex *index);
     bool GetLastUnknownBlockHash(NodeId id, Hash256 *out);
     bool SetLastUnknownBlockHash(NodeId id, const Hash256& last_unknown_block_hash);
     
@@ -373,18 +376,6 @@ private:
     BlockSyncState *GetSyncState(NodeId id);
 };
 
-class SingletonBlockSync : Uncopyable {
-public:
-    static BlockSync& GetInstance()
-    {
-        static BlockSync block_sync;
-        return block_sync;
-    }
-    
-private:
-    SingletonBlockSync() {}
-};
-
 template <typename Iter>
 struct IterLess
 {
@@ -432,14 +423,23 @@ private:
     SingletonOrphans() {}
 };
 
-namespace btclite {
-namespace network {
-namespace block_sync {
 
 bool IsInitialBlockDownload();
 
-} // namespace block_sync
 } // namespace network 
 } // namespace block_sync
+
+
+class SingletonBlockSync : Uncopyable {
+public:
+    static btclite::network::BlockSync& GetInstance()
+    {
+        static btclite::network::BlockSync block_sync;
+        return block_sync;
+    }
+    
+private:
+    SingletonBlockSync() {}
+};
 
 #endif // BTCLITE_BLOCK_SYNC_H
