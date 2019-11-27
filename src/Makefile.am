@@ -137,6 +137,7 @@ chain_src_libbtclite_chain_a_CPPFLAGS = $(AM_CXXFLAGS) \
                                         $(BTCLITE_NETWORK_INCLUDES) \
                                         $(BTCLITE_UTIL_INCLUDES)
 chain_src_libbtclite_chain_a_SOURCES = chain/src/block.cpp \
+                                       chain/src/chain.cpp \
                                        chain/src/compact.cpp \
                                        chain/src/script.cpp \
                                        chain/src/script_witness.cpp \
