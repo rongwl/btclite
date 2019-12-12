@@ -155,7 +155,7 @@ TEST_F(NodeTest, PushAddrToSend)
     node->AddKnownAddr(addr_);
     EXPECT_FALSE(node->PushAddrToSend(addr_));
     
-    addr_.mutable_proto_addr()->set_port(8333);
+    addr_.set_port(8333);
     ASSERT_TRUE(node->PushAddrToSend(addr_));
     EXPECT_EQ(node->addrs_to_send().front(), addr_);
 }

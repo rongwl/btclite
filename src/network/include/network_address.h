@@ -42,8 +42,6 @@ enum AddrCategory {
     
 class NetAddr {
 public:
-    static constexpr size_t ip_uint32_size = 4;
-
     NetAddr()
         : proto_addr_()
     {
@@ -119,8 +117,8 @@ public:
     //-------------------------------------------------------------------------
     friend bool operator==(const NetAddr& a, const NetAddr& b)
     {
-        return (std::memcmp(a.proto_addr_.ip().begin(), b.proto_addr().ip().begin(), kIpByteSize) == 0 &&
-                a.proto_addr_.port() == b.proto_addr().port());
+        return (std::memcmp(a.proto_addr_.ip().begin(), b.proto_addr_.ip().begin(), kIpByteSize) == 0 &&
+                a.proto_addr_.port() == b.proto_addr_.port());
     }
     
     friend bool operator!=(const NetAddr& a, const NetAddr& b)
@@ -130,22 +128,59 @@ public:
     
     friend bool operator<(const NetAddr& a, const NetAddr& b)
     {
-        return (std::memcmp(a.proto_addr_.ip().begin(), b.proto_addr().ip().begin(), kIpByteSize)
+        return (std::memcmp(a.proto_addr_.ip().begin(), b.proto_addr_.ip().begin(), kIpByteSize)
                 < 0);
     }
     
-    //-------------------------------------------------------------------------
+    //-------------------------------------------------------------------------    
+    uint16_t port() const
+    {
+        return static_cast<uint16_t>(proto_addr_.port());
+    }
+    
+    void set_port(uint16_t port)
+    {
+        proto_addr_.set_port(port);
+    }
+    
+    uint32_t scope_id() const
+    {
+        return proto_addr_.scope_id();
+    }
+    
+    void set_scope_id(uint32_t id)
+    {
+        proto_addr_.set_scope_id(id);
+    }
+    
+    uint64_t services() const
+    {
+        return proto_addr_.services();
+    }
+    
+    void set_services(uint64_t services)
+    {
+        proto_addr_.set_services(services);
+    }
+    
+    uint32_t timestamp() const
+    {
+        return proto_addr_.timestamp();
+    }
+    
+    void set_timestamp(uint32_t timestamp)
+    {
+        proto_addr_.set_timestamp(timestamp);
+    }
+    
     const proto_netaddr::NetAddr& proto_addr() const
     {
         return proto_addr_;
     }
-    
-    proto_netaddr::NetAddr *mutable_proto_addr()
-    {
-        return &proto_addr_;
-    }
 
 private:
+    size_t ip_uint32_size = 4;
+    
     proto_netaddr::NetAddr proto_addr_;
     
     AddrFamily GetExtFamily() const;
@@ -234,9 +269,7 @@ public:
     //-------------------------------------------------------------------------
     friend bool operator==(const SubNet& a, const SubNet& b)
     {
-        return (std::memcmp(a.net_addr().proto_addr().ip().begin(),
-                            b.net_addr().proto_addr().ip().begin(),
-                            kIpByteSize) == 0);
+        return (a.net_addr() == b.net_addr());
     }
     
     friend bool operator!=(const SubNet& a, const SubNet& b)

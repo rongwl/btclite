@@ -17,6 +17,7 @@ public:
     {
         Clear();
     }
+    
     BlockHeader(int32_t version, const Hash256& prev_block_hash, const Hash256& merkle_root_hash,
                 uint32_t time, uint32_t bits, uint32_t nonce)
         : version_(version), 
@@ -25,17 +26,10 @@ public:
     {
         Hash();
     }
+    
     BlockHeader(const BlockHeader& h)
         : version_(h.version_), 
           prev_block_hash_(h.prev_block_hash_), merkle_root_hash_(h.merkle_root_hash_),
-          time_(h.time_), nBits_(h.nBits_), nonce_(h.nonce_)
-    {
-        Hash();
-    }
-    BlockHeader(BlockHeader&& h) noexcept
-        : version_(h.version_),
-          prev_block_hash_(std::move(h.prev_block_hash_)),
-          merkle_root_hash_(std::move(h.merkle_root_hash_)),
           time_(h.time_), nBits_(h.nBits_), nonce_(h.nonce_)
     {
         Hash();
@@ -88,11 +82,6 @@ public:
         prev_block_hash_ = hash;
         hash_cache_.Clear();
     }
-    void set_hashPrevBlock(Hash256&& hash)
-    {
-        prev_block_hash_ = std::move(hash);
-        hash_cache_.Clear();
-    }
     
     const Hash256& hashMerkleRoot() const
     {
@@ -102,11 +91,6 @@ public:
     void set_hashMerkleRoot(const Hash256& hash)
     {
         merkle_root_hash_ = hash;
-        hash_cache_.Clear();
-    }
-    void set_hashMerkleRoot(Hash256&& hash)
-    {
-        merkle_root_hash_ = std::move(hash);
         hash_cache_.Clear();
     }
     

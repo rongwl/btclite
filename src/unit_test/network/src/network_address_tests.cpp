@@ -15,15 +15,15 @@ using namespace btclite::network;
 TEST(NetAddrTest, Constructor)
 {
     NetAddr addr1;
-    EXPECT_EQ(addr1.proto_addr().ip().size(), NetAddr::ip_uint32_size);
-    EXPECT_EQ(std::memcmp(addr1.proto_addr().ip().data(), kNullIp.data(), kIpByteSize), 0);
+    for (int i = 0; i < kIpByteSize; i++)
+        EXPECT_EQ(addr1.GetByte(i), 0);
     
-    for (uint8_t i = 1; i <= NetAddr::ip_uint32_size; i++)
+    for (uint8_t i = 0; i < kIpByteSize; i++)
         addr1.SetByte(i, i);
-    addr1.mutable_proto_addr()->set_port(1234);
-    addr1.mutable_proto_addr()->set_scope_id(1);
-    addr1.mutable_proto_addr()->set_services(2);
-    addr1.mutable_proto_addr()->set_timestamp(3);
+    addr1.set_port(1234);
+    addr1.set_scope_id(1);
+    addr1.set_services(2);
+    addr1.set_timestamp(3);
       
     NetAddr addr2(addr1);
     EXPECT_EQ(addr1, addr2);
@@ -38,12 +38,12 @@ TEST(NetAddrTest, Constructor)
     NetAddr addr4(sock_addr);
     ASSERT_TRUE(addr4.IsIpv4());
     EXPECT_EQ(addr4.GetIpv4(), sock_addr.sin_addr.s_addr);
-    EXPECT_EQ(addr4.proto_addr().port(), ntohs(sock_addr.sin_port));
+    EXPECT_EQ(addr4.port(), ntohs(sock_addr.sin_port));
     
     struct sockaddr_in6 sock_addr6;
     uint8_t out[kIpByteSize];
     sock_addr6.sin6_family = AF_INET6;
-    for (uint8_t i = 1; i <= NetAddr::ip_uint32_size; i++)
+    for (uint8_t i = 0; i < kIpByteSize; i++)
         sock_addr6.sin6_addr.s6_addr[i] = i;
     sock_addr6.sin6_port = htons(1234);
     sock_addr6.sin6_scope_id = 1;
@@ -51,22 +51,22 @@ TEST(NetAddrTest, Constructor)
     ASSERT_TRUE(addr5.IsIpv6());
     addr5.GetIpv6(out);
     EXPECT_EQ(std::memcmp(sock_addr6.sin6_addr.s6_addr, out, sizeof(out)), 0);
-    EXPECT_EQ(addr5.proto_addr().port(), ntohs(sock_addr6.sin6_port));
-    EXPECT_EQ(addr5.proto_addr().scope_id(), sock_addr6.sin6_scope_id);
+    EXPECT_EQ(addr5.port(), ntohs(sock_addr6.sin6_port));
+    EXPECT_EQ(addr5.scope_id(), sock_addr6.sin6_scope_id);
     
     struct sockaddr_storage *storage_addr = reinterpret_cast<struct sockaddr_storage*>(&sock_addr);
     NetAddr addr6(*storage_addr);
     ASSERT_TRUE(addr6.IsIpv4());
     EXPECT_EQ(addr6.GetIpv4(), sock_addr.sin_addr.s_addr);
-    EXPECT_EQ(addr6.proto_addr().port(), ntohs(sock_addr.sin_port));
+    EXPECT_EQ(addr6.port(), ntohs(sock_addr.sin_port));
     
     storage_addr = reinterpret_cast<struct sockaddr_storage*>(&sock_addr6);
     NetAddr addr7(*storage_addr);
     ASSERT_TRUE(addr7.IsIpv6());
     addr7.GetIpv6(out);
     EXPECT_EQ(std::memcmp(sock_addr6.sin6_addr.s6_addr, out, sizeof(out)), 0);
-    EXPECT_EQ(addr7.proto_addr().port(), ntohs(sock_addr6.sin6_port));
-    EXPECT_EQ(addr7.proto_addr().scope_id(), sock_addr6.sin6_scope_id);
+    EXPECT_EQ(addr7.port(), ntohs(sock_addr6.sin6_port));
+    EXPECT_EQ(addr7.scope_id(), sock_addr6.sin6_scope_id);
     
     inet_pton(AF_INET6, "::ffff:192.168.1.1", sock_addr6.sin6_addr.s6_addr);
     NetAddr addr8(sock_addr6);
@@ -77,9 +77,9 @@ TEST(NetAddrTest, Constructor)
     NetAddr addr9(0x1234, kNodeNetwork, ip, 8333);
     ASSERT_TRUE(addr9.IsIpv4());
     EXPECT_EQ(addr9.GetIpv4(), inet_addr("1.2.3.4"));
-    EXPECT_EQ(addr9.proto_addr().timestamp(), 0x1234);
-    EXPECT_EQ(addr9.proto_addr().services(), kNodeNetwork);
-    EXPECT_EQ(addr9.proto_addr().port(), 8333);
+    EXPECT_EQ(addr9.timestamp(), 0x1234);
+    EXPECT_EQ(addr9.services(), kNodeNetwork);
+    EXPECT_EQ(addr9.port(), 8333);
     
     std::memset(ip.begin(), 0, ip.size());
     inet_pton(AF_INET6, "0001:0203:0405:0607:0809:0A0B:0C0D:0E0F", ip.begin());
@@ -93,9 +93,9 @@ TEST(NetAddrTest, Constructor)
 TEST(NetAddrTest, OperatorEqual)
 {
     NetAddr addr1, addr2;
-    for (uint8_t i = 1; i <= NetAddr::ip_uint32_size; i++)
+    for (uint8_t i = 0; i < kIpByteSize; i++)
         addr1.SetByte(i, i);
-    addr1.mutable_proto_addr()->set_port(1234);
+    addr1.set_port(1234);
     addr2 = addr1;
     EXPECT_EQ(addr1, addr2);
     
@@ -118,7 +118,7 @@ TEST(NetAddrTest, IsIpv6)
 {
     NetAddr addr;
     
-    for (uint8_t i = 1; i <= NetAddr::ip_uint32_size; i++)
+    for (uint8_t i = 0; i < kIpByteSize; i++)
         addr.SetByte(i, i);   
     EXPECT_FALSE(addr.IsIpv4());
     EXPECT_TRUE(addr.IsIpv6());
@@ -360,19 +360,19 @@ TEST(NetAddrTest, ToSockAddr)
     
     std::memset(&sock_addr, 0, sizeof(sock_addr));
     addr.SetIpv4(inet_addr("192.168.1.1"));
-    addr.mutable_proto_addr()->set_port(1234);    
+    addr.set_port(1234);    
     ASSERT_TRUE(addr.ToSockAddr(reinterpret_cast<struct sockaddr*>(&sock_addr)));
     
     struct sockaddr_in *sock_addr4 = reinterpret_cast<struct sockaddr_in*>(&sock_addr);
     EXPECT_EQ(sock_addr4->sin_family, AF_INET);
     EXPECT_EQ(sock_addr4->sin_addr.s_addr, inet_addr("192.168.1.1"));
-    EXPECT_EQ(sock_addr4->sin_port, htons(addr.proto_addr().port()));
+    EXPECT_EQ(sock_addr4->sin_port, htons(addr.port()));
     
     
     uint8_t buf[sizeof(struct in6_addr)];
     inet_pton(AF_INET6, "0001:0203:0405:0607:0809:0A0B:0C0D:0E0F", buf);
     addr.SetIpv6(buf);
-    addr.mutable_proto_addr()->set_scope_id(3);
+    addr.set_scope_id(3);
     std::memset(&sock_addr, 0, sizeof(sock_addr));    
     ASSERT_TRUE(addr.ToSockAddr(reinterpret_cast<struct sockaddr*>(&sock_addr)));
     
@@ -381,8 +381,8 @@ TEST(NetAddrTest, ToSockAddr)
     struct sockaddr_in6 *sock_addr6 = reinterpret_cast<struct sockaddr_in6*>(&sock_addr);
     EXPECT_EQ(sock_addr6->sin6_family, AF_INET6);
     EXPECT_EQ(std::memcmp(sock_addr6->sin6_addr.s6_addr, out, kIpByteSize), 0);
-    EXPECT_EQ(sock_addr6->sin6_port, htons(addr.proto_addr().port()));
-    EXPECT_EQ(sock_addr6->sin6_scope_id, addr.proto_addr().scope_id());
+    EXPECT_EQ(sock_addr6->sin6_port, htons(addr.port()));
+    EXPECT_EQ(sock_addr6->sin6_scope_id, addr.scope_id());
 }
 
 TEST(NetAddrTest, FromSockAddr)
@@ -395,12 +395,12 @@ TEST(NetAddrTest, FromSockAddr)
     addr.FromSockAddr(reinterpret_cast<const struct sockaddr*>(&sock_addr));
     ASSERT_TRUE(addr.IsIpv4());
     EXPECT_EQ(addr.GetIpv4(), sock_addr.sin_addr.s_addr);
-    EXPECT_EQ(addr.proto_addr().port(), ntohs(sock_addr.sin_port));
+    EXPECT_EQ(addr.port(), ntohs(sock_addr.sin_port));
     
     struct sockaddr_in6 sock_addr6;
     uint8_t out[kIpByteSize];
     sock_addr6.sin6_family = AF_INET6;
-    for (uint8_t i = 1; i <= NetAddr::ip_uint32_size; i++)
+    for (uint8_t i = 0; i < kIpByteSize; i++)
         sock_addr6.sin6_addr.s6_addr[i] = i;
     sock_addr6.sin6_port = htons(1234);
     sock_addr6.sin6_scope_id = 1;
@@ -409,8 +409,8 @@ TEST(NetAddrTest, FromSockAddr)
     ASSERT_TRUE(addr.IsIpv6());
     addr.GetIpv6(out);
     EXPECT_EQ(std::memcmp(sock_addr6.sin6_addr.s6_addr, out, sizeof(out)), 0);
-    EXPECT_EQ(addr.proto_addr().port(), ntohs(sock_addr6.sin6_port));
-    EXPECT_EQ(addr.proto_addr().scope_id(), sock_addr6.sin6_scope_id);
+    EXPECT_EQ(addr.port(), ntohs(sock_addr6.sin6_port));
+    EXPECT_EQ(addr.scope_id(), sock_addr6.sin6_scope_id);
     
     inet_pton(AF_INET6, "::ffff:192.168.1.1", sock_addr6.sin6_addr.s6_addr);
     addr.Clear();
@@ -437,7 +437,6 @@ TEST(NetAddrTest, Clear)
     
     addr.SetIpv4(inet_addr("192.168.1.1"));
     addr.Clear();
-    ASSERT_EQ(addr.proto_addr().ip_size(), NetAddr::ip_uint32_size);
     for (int i = 0; i < kIpByteSize; i++)
         ASSERT_EQ(addr.GetByte(i), 0);
 }
@@ -461,11 +460,11 @@ TEST(NetAddrTest, Serialize)
     
     addr1.Serialize(byte_sink);
     addr2.Deserialize(byte_source);
-    EXPECT_EQ(addr1.proto_addr().timestamp(), addr2.proto_addr().timestamp());
-    EXPECT_EQ(addr1.proto_addr().services(), addr2.proto_addr().services());
-    EXPECT_EQ(std::memcmp(addr1.proto_addr().ip().begin(), addr2.proto_addr().ip().begin(), 
-                          kIpByteSize), 0);
-    EXPECT_EQ(addr1.proto_addr().port(), addr2.proto_addr().port());
+    EXPECT_EQ(addr1.timestamp(), addr2.timestamp());
+    EXPECT_EQ(addr1.services(), addr2.services());
+    for (int i = 0; i < kIpByteSize; i++)
+        EXPECT_EQ(addr1.GetByte(i), addr2.GetByte(i));
+    EXPECT_EQ(addr1.port(), addr2.port());
 }
 
 TEST(SubNetTest, NetmaskBits)

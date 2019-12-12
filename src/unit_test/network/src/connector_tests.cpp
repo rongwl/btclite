@@ -84,8 +84,8 @@ TEST(ConnectorTest, ConnectOutbound)
     SingletonPeers::GetInstance().Clear();
     
     LookupHost(std::string("x9.seed.tbtc.petertodd.org").c_str(), &addr, true);
-    addr.mutable_proto_addr()->set_port(8333);
-    addr.mutable_proto_addr()->set_services(kDesirableServiceFlags);
+    addr.set_port(8333);
+    addr.set_services(kDesirableServiceFlags);
     SingletonPeers::GetInstance().Add(addr, source);
     EXPECT_TRUE(connector.OutboundTimeOutCb());
     

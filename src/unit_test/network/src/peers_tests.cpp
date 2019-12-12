@@ -54,7 +54,7 @@ TEST(PeersTest, AddPeer)
     uint64_t now = btclite::utility::util_time::GetAdjustedTime();
     
     addr.SetIpv4(inet_addr("1.2.3.4"));
-    addr.mutable_proto_addr()->set_timestamp(now-4000);
+    addr.set_timestamp(now-4000);
     source.SetIpv4(inet_addr("1.1.1.1"));
     ASSERT_TRUE(peers.Add(addr, source));
     ASSERT_TRUE(peers.Find(addr, &peer, &is_new, &is_tried));
@@ -66,7 +66,7 @@ TEST(PeersTest, AddPeer)
     EXPECT_EQ(peers.rand_order_keys()[0], key);
     
     // update time
-    addr.mutable_proto_addr()->set_timestamp(now);
+    addr.set_timestamp(now);
     ASSERT_FALSE(peers.Add(addr, source, 100));
     ASSERT_TRUE(peers.Find(addr, &peer, &is_new, &is_tried));
     EXPECT_EQ(peer.addr().timestamp(), now-100); 
@@ -74,21 +74,21 @@ TEST(PeersTest, AddPeer)
     
     // delete exist terrible peer
     addr.SetIpv4(inet_addr("1.3.1.1"));
-    addr.mutable_proto_addr()->set_timestamp(now+601);
+    addr.set_timestamp(now+601);
     ASSERT_TRUE(peers.Add(addr, source));
     key = peers.MakeMapKey(addr);
     EXPECT_EQ(peers.rand_order_keys()[1], key);
-    addr.mutable_proto_addr()->set_timestamp(now);
+    addr.set_timestamp(now);
     ASSERT_FALSE(peers.Add(addr, source));
     EXPECT_FALSE(peers.Find(addr, &peer, &is_new, &is_tried));
     EXPECT_EQ(peers.rand_order_keys().size(), 1);    
     
     // overwrite terrible peer of the same group
     addr.SetIpv4(inet_addr("1.4.1.1"));
-    addr.mutable_proto_addr()->set_timestamp(now+601);
+    addr.set_timestamp(now+601);
     ASSERT_TRUE(peers.Add(addr, source));
     addr.SetIpv4(inet_addr("1.4.1.2"));
-    addr.mutable_proto_addr()->set_timestamp(now);
+    addr.set_timestamp(now);
     ASSERT_TRUE(peers.Add(addr, source));
     EXPECT_TRUE(peers.Find(addr, &peer, &is_new, &is_tried));
     key = peers.MakeMapKey(addr);
@@ -128,9 +128,9 @@ TEST(PeersTest, AddPeer)
     
     // Addr with same IP but diff port does not replace existing addr.
     addr.SetIpv4(inet_addr("3.3.3.3"));
-    addr.mutable_proto_addr()->set_port(8333);
+    addr.set_port(8333);
     ASSERT_TRUE(peers.Add(addr, source));
-    addr.mutable_proto_addr()->set_port(8334);
+    addr.set_port(8334);
     ASSERT_FALSE(peers.Add(addr, source));
     ASSERT_TRUE(peers.Find(addr, &peer, &is_new, &is_tried));
     EXPECT_EQ(peer.addr().port(), 8333);
@@ -144,7 +144,7 @@ TEST(PeersTest, SetServices)
     proto_peers::Peer peer;
     
     addr.SetIpv4(inet_addr("1.2.3.4"));
-    addr.mutable_proto_addr()->set_port(8333);
+    addr.set_port(8333);
     source.SetIpv4(inet_addr("1.1.1.1"));
     ASSERT_TRUE(peers.Add(addr, source));
     ASSERT_TRUE(peers.SetServices(addr, kNodeNetwork));
@@ -161,8 +161,8 @@ TEST(PeersTest, MakePeerTried)
     proto_peers::Peer peer;
     
     addr.SetIpv4(inet_addr("1.2.3.4"));
-    addr.mutable_proto_addr()->set_timestamp(1000);
-    addr.mutable_proto_addr()->set_port(8333);
+    addr.set_timestamp(1000);
+    addr.set_port(8333);
     source.SetIpv4(inet_addr("1.1.1.1"));
     ASSERT_TRUE(peers.Add(addr, source));
     
@@ -170,14 +170,14 @@ TEST(PeersTest, MakePeerTried)
     EXPECT_FALSE(peers.MakeTried(addr));
 
     addr.SetIpv4(inet_addr("1.2.3.4"));
-    addr.mutable_proto_addr()->set_port(8332);
+    addr.set_port(8332);
     EXPECT_FALSE(peers.MakeTried(addr));
     
     addr.SetIpv4(inet_addr("1.1.3.4"));
     EXPECT_FALSE(peers.MakeTried(addr));
     
     addr.SetIpv4(inet_addr("1.2.3.4"));
-    addr.mutable_proto_addr()->set_port(8333);
+    addr.set_port(8333);
     ASSERT_TRUE(peers.MakeTried(addr, 2000));
     ASSERT_TRUE(peers.Find(addr, &peer, &is_new, &is_tried));
     ASSERT_FALSE(is_new);
@@ -196,7 +196,7 @@ TEST(PeersTest, SelectPeer)
     // Select from new with 1 addr in new.
     source.SetIpv4(inet_addr("1.1.1.1"));
     addr.SetIpv4(inet_addr("2.2.2.2"));
-    addr.mutable_proto_addr()->set_port(8333);
+    addr.set_port(8333);
     ASSERT_TRUE(peers.Add(addr, source));
     proto_peers::Peer out;
     ASSERT_TRUE(peers.Select(&out, true));
@@ -218,7 +218,7 @@ TEST(PeersTest, AttemptPeer)
     
     source.SetIpv4(inet_addr("1.1.1.1"));
     addr.SetIpv4(inet_addr("2.2.2.2"));
-    addr.mutable_proto_addr()->set_port(8333);
+    addr.set_port(8333);
     ASSERT_TRUE(peers.Add(addr, source));
     ASSERT_TRUE(peers.Attempt(addr, 1000));
     ASSERT_TRUE(peers.Find(addr, &peer, &is_new, &is_tried));
@@ -228,7 +228,7 @@ TEST(PeersTest, AttemptPeer)
     addr.SetIpv4(inet_addr("2.2.2.3"));
     EXPECT_FALSE(peers.Attempt(addr, 2000));
     addr.SetIpv4(inet_addr("2.2.2.2"));
-    addr.mutable_proto_addr()->set_port(8334);
+    addr.set_port(8334);
     EXPECT_FALSE(peers.Attempt(addr, 2000));
 }
 
@@ -241,7 +241,7 @@ TEST(PeersTest, UpdatePeerTime)
     
     source.SetIpv4(inet_addr("1.1.1.1"));
     addr.SetIpv4(inet_addr("2.2.2.2"));
-    addr.mutable_proto_addr()->set_port(8333);
+    addr.set_port(8333);
     ASSERT_TRUE(peers.Add(addr, source));
     ASSERT_TRUE(peers.UpdateTime(addr, 20*60+1));
     ASSERT_TRUE(peers.Find(addr, &peer, &is_new, &is_tried));
@@ -250,7 +250,7 @@ TEST(PeersTest, UpdatePeerTime)
     addr.SetIpv4(inet_addr("2.2.2.3"));
     EXPECT_FALSE(peers.UpdateTime(addr, 3000));
     addr.SetIpv4(inet_addr("2.2.2.2"));
-    addr.mutable_proto_addr()->set_port(8334);
+    addr.set_port(8334);
     EXPECT_FALSE(peers.UpdateTime(addr, 3000));
 }
 
@@ -266,7 +266,7 @@ TEST(PeersTest, GetAddresses)
     
     source.SetIpv4(inet_addr("250.1.2.1"));
     addr.SetIpv4(inet_addr("250.250.2.1"));
-    addr.mutable_proto_addr()->set_timestamp(now);
+    addr.set_timestamp(now);
     ASSERT_TRUE(peers.Add(addr, source));
     ASSERT_TRUE(peers.MakeTried(addr));
     addr.SetIpv4(inet_addr("250.251.2.2"));
@@ -290,7 +290,7 @@ TEST(PeersTest, GetAddresses)
         std::string str_addr = std::to_string(octet1) + "." + std::to_string(octet2) + ".1.23";
         btclite::network::NetAddr addr;
         addr.SetIpv4(inet_addr(str_addr.c_str()));
-        addr.mutable_proto_addr()->set_timestamp(now);
+        addr.set_timestamp(now);
         peers.Add(addr, source);
         if (i % 8 == 0)
             peers.MakeTried(addr);
@@ -352,7 +352,7 @@ TEST(PeersDbTest, DumpAndLoadPeers)
     
     source.SetIpv4(inet_addr("250.1.2.1"));
     addr.SetIpv4(inet_addr("250.250.2.1"));
-    addr.mutable_proto_addr()->set_timestamp(now);
+    addr.set_timestamp(now);
     ASSERT_TRUE(peers.Add(addr, source));
     ASSERT_TRUE(peers.MakeTried(addr));
     addr.SetIpv4(inet_addr("250.251.2.2"));

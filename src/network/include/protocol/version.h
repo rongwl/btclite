@@ -44,11 +44,13 @@ enum VersionCode : uint32_t {
 constexpr VersionCode kProtocolVersion = kInvalidCbNoBanVersion;
 constexpr VersionCode kMinPeerProtoVersion = kGetheadersVersion;
 
-class version : public MessageData {
+namespace private_space {
+
+class Version : public MessageData {
 public:
-    version() = default;
+    Version() = default;
     
-    version(uint32_t version, uint64_t services, uint64_t timestamp,
+    Version(uint32_t version, uint64_t services, uint64_t timestamp,
             const btclite::network::NetAddr& addr_recv,
             const btclite::network::NetAddr& addr_from,
             uint64_t nonce, const std::string& user_agent,
@@ -57,7 +59,7 @@ public:
           addr_recv_(addr_recv), addr_from_(addr_from), nonce_(nonce),
           user_agent_(user_agent), start_height_(start_height), relay_(relay) {}
     
-    version(uint32_t version, uint64_t services, uint64_t timestamp,
+    Version(uint32_t version, uint64_t services, uint64_t timestamp,
             btclite::network::NetAddr&& addr_recv,
             btclite::network::NetAddr&& addr_from,
             uint64_t nonce, std::string&& user_agent,
@@ -80,10 +82,10 @@ public:
     size_t SerializedSize() const;
     
     //-------------------------------------------------------------------------
-    version& operator=(const version& b);
-    version& operator=(version&& b) noexcept;
-    bool operator==(const version& b) const;
-    bool operator!=(const version& b) const;
+    Version& operator=(const Version& b);
+    Version& operator=(Version&& b) noexcept;
+    bool operator==(const Version& b) const;
+    bool operator!=(const Version& b) const;
     
     //-------------------------------------------------------------------------
     template <typename Stream>
@@ -202,7 +204,7 @@ private:
 };
 
 template <typename Stream>
-void version::Serialize(Stream& out) const
+void Version::Serialize(Stream& out) const
 {
     Serializer<Stream> serializer(out);
     
@@ -222,7 +224,7 @@ void version::Serialize(Stream& out) const
 }
 
 template <typename Stream>
-void version::Deserialize(Stream& in)
+void Version::Deserialize(Stream& in)
 {
     Deserializer<Stream> deserializer(in);
     
@@ -240,7 +242,9 @@ void version::Deserialize(Stream& in)
         deserializer.SerialRead(&relay_);
 }
 
-using Version = Hashable<version>;
+} // namespace private_space
+
+using Version = Hashable<private_space::Version>;
 
 } // namespace protocol
 } // namespace network

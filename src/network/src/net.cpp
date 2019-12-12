@@ -91,9 +91,8 @@ bool LocalNetConfig::GetLocalAddr(const NetAddr& peer_addr, ServiceFlags service
     if (best_score == -1)
         return false;
     
-    out->mutable_proto_addr()->set_services(services);
-    out->mutable_proto_addr()->set_timestamp(
-        btclite::utility::util_time::GetAdjustedTime());
+    out->set_services(services);
+    out->set_timestamp(btclite::utility::util_time::GetAdjustedTime());
     
     return true;
 }

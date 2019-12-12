@@ -232,7 +232,7 @@ bool SendVersion(std::shared_ptr<Node> dst_node)
     btclite::network::NetAddr addr_recv(dst_node->addr());
     btclite::network::NetAddr addr_from;
     
-    addr_from.mutable_proto_addr()->set_services(services);
+    addr_from.set_services(services);
     Version ver_msg(kProtocolVersion, services,
                     btclite::utility::util_time::GetTimeSeconds(),
                     std::move(addr_recv), std::move(addr_from),

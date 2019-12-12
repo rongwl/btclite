@@ -39,5 +39,5 @@ TEST_F(LocalNetConfigTest, GetLocalAddr)
     peer_addr.SetIpv4(inet_addr("1.2.3.4"));
     ASSERT_TRUE(config_.GetLocalAddr(peer_addr, kNodeNetwork, &addr));
     EXPECT_TRUE(config_.IsLocal(addr));
-    EXPECT_EQ(addr.proto_addr().services(), kNodeNetwork);
+    EXPECT_EQ(addr.services(), kNodeNetwork);
 }

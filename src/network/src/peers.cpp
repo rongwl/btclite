@@ -39,24 +39,24 @@ bool Peers::Add(const btclite::network::NetAddr &addr,
         }
         
         // do not update if no new information is present
-        if (!addr.proto_addr().timestamp() || 
+        if (!addr.timestamp() || 
             (exist_peer.addr().timestamp() && 
-             addr.proto_addr().timestamp() <= exist_peer.addr().timestamp()))
+             addr.timestamp() <= exist_peer.addr().timestamp()))
             return false;
         
         // periodically update nTime
-        bool currently_online = (btclite::utility::util_time::GetAdjustedTime() - addr.proto_addr().timestamp()
+        bool currently_online = (btclite::utility::util_time::GetAdjustedTime() - addr.timestamp()
                                  < 24 * 60 * 60);
         uint32_t update_interval = (currently_online ? 60 * 60 : 24 * 60 * 60);
-        if (addr.proto_addr().timestamp() &&
+        if (addr.timestamp() &&
             (!exist_peer.addr().timestamp() || 
-             exist_peer.addr().timestamp() < addr.proto_addr().timestamp() - update_interval - time_penalty))
+             exist_peer.addr().timestamp() < addr.timestamp() - update_interval - time_penalty))
             proto_peers_.mutable_map_peers()->find(map_key)->second.mutable_addr()->set_timestamp(
-                std::max((int64_t)0, addr.proto_addr().timestamp() - time_penalty));
+                std::max((int64_t)0, addr.timestamp() - time_penalty));
 
         // add services
         proto_peers_.mutable_map_peers()->find(map_key)->second.mutable_addr()->set_services(
-            ServiceFlags(exist_peer.addr().services() | addr.proto_addr().services()));
+            ServiceFlags(exist_peer.addr().services() | addr.services()));
         
         return false;
     }
@@ -343,9 +343,12 @@ uint64_t Peers::MakeMapKey(const btclite::network::NetAddr& addr, bool by_group)
         hs << key_ << group;
     }
     else {
-        std::vector<uint32_t> vec_addr;
-        for (int i = 0; i < btclite::network::NetAddr::ip_uint32_size; i++)
-            vec_addr.push_back(addr.proto_addr().ip()[i]);
+        std::vector<uint8_t> vec_addr(kIpByteSize);
+        for (int i = 0; i < kIpByteSize; i++)
+            vec_addr.push_back(addr.GetByte(i));
+        //std::vector<uint32_t> vec_addr;
+        //for (int i = 0; i < btclite::network::NetAddr::ip_uint32_size; i++)
+        //    vec_addr.push_back(addr.proto_addr().ip()[i]);
         hs << key_ << vec_addr;
     }
     

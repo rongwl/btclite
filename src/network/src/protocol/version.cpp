@@ -11,10 +11,11 @@
 namespace btclite {
 namespace network {
 namespace protocol{
+namespace private_space {
 
 using namespace btclite::network::msg_process;
 
-bool version::RecvHandler(std::shared_ptr<Node> src_node) const
+bool Version::RecvHandler(std::shared_ptr<Node> src_node) const
 {
     Verack verack;
     
@@ -123,7 +124,7 @@ bool version::RecvHandler(std::shared_ptr<Node> src_node) const
     return true;
 }
 
-bool version::IsValid() const
+bool Version::IsValid() const
 {
     return (protocol_version_ != 0 &&
             services_ != 0 &&
@@ -132,7 +133,7 @@ bool version::IsValid() const
             nonce_ != 0); 
 }
 
-void version::Clear()
+void Version::Clear()
 {
     protocol_version_ = 0;
     services_ = 0;
@@ -146,7 +147,7 @@ void version::Clear()
     relay_ = false;
 }
 
-version& version::operator=(const version& b)
+Version& Version::operator=(const Version& b)
 {
     protocol_version_ = b.protocol_version_;
     services_ = b.services_;
@@ -160,7 +161,7 @@ version& version::operator=(const version& b)
     return *this;
 }
 
-size_t version::SerializedSize() const
+size_t Version::SerializedSize() const
 {
     size_t size = sizeof(protocol_version_) + sizeof(services_) + 
                   sizeof(timestamp_) + addr_recv_.SerializedSize() + 
@@ -173,7 +174,7 @@ size_t version::SerializedSize() const
     return size;
 }
 
-version& version::operator=(version&& b) noexcept
+Version& Version::operator=(Version&& b) noexcept
 {
     protocol_version_ = b.protocol_version_;
     services_ = b.services_;
@@ -187,31 +188,30 @@ version& version::operator=(version&& b) noexcept
     return *this;
 }
 
-bool version::operator==(const version& b) const
+bool Version::operator==(const Version& b) const
 {
     return (protocol_version_ == b.protocol_version_) && 
            (services_ == b.services_) &&
            (timestamp_ == b.timestamp_) &&
-           (addr_recv_.proto_addr().timestamp() == b.addr_recv_.proto_addr().timestamp()) &&
-           (addr_recv_.proto_addr().services() == b.addr_recv_.proto_addr().services()) &&
-           !std::memcmp(addr_recv_.proto_addr().ip().begin(), b.addr_recv_.proto_addr().ip().begin(), kIpByteSize) &&
-           (addr_recv_.proto_addr().port() == b.addr_recv_.proto_addr().port()) &&
-           (addr_from_.proto_addr().timestamp() == b.addr_from_.proto_addr().timestamp()) &&
-           (addr_from_.proto_addr().services() == b.addr_from_.proto_addr().services()) &&
-           !std::memcmp(addr_from_.proto_addr().ip().begin(), b.addr_from_.proto_addr().ip().begin(), kIpByteSize) &&
-           (addr_from_.proto_addr().port() == b.addr_from_.proto_addr().port()) &&
+           (addr_recv_.timestamp() == b.addr_recv_.timestamp()) &&
+           (addr_recv_.services() == b.addr_recv_.services()) &&
+           (addr_recv_ == b.addr_recv_) &&
+           (addr_from_.timestamp() == b.addr_from_.timestamp()) &&
+           (addr_from_.services() == b.addr_from_.services()) &&
+           (addr_from_ == b.addr_from_) &&
            (nonce_ == b.nonce_) && 
            (user_agent_ == b.user_agent_) &&
            (start_height_ == b.start_height_) &&
            (relay_ == b.relay_);
 }
 
-bool version::operator!=(const version& b) const
+bool Version::operator!=(const Version& b) const
 {
     return !(*this == b);
 }
 
 
+} // namespace private_space
 } // namespace protocol
 } // namespace network
 } // namespace btclite

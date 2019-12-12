@@ -192,13 +192,12 @@ bool Connector::DnsLookup(const std::vector<Seed>& seeds)
             continue;
         
         for (btclite::network::NetAddr& addr : addrs) {
-            addr.mutable_proto_addr()->set_port(
-                btclite::network::SingletonParams::GetInstance().default_port());
-            addr.mutable_proto_addr()->set_services(kDesirableServiceFlags);
+            addr.set_port(btclite::network::SingletonParams::GetInstance().default_port());
+            addr.set_services(kDesirableServiceFlags);
             // use a random age between 3 and 7 days old
             int64_t time = btclite::utility::util_time::GetTimeSeconds() - 3*24*60*60 
                            - btclite::utility::GetUint64(4*24*60*60);
-            addr.mutable_proto_addr()->set_timestamp(time);
+            addr.set_timestamp(time);
             found++;
         }
         SingletonPeers::GetInstance().Add(addrs, source); 
@@ -251,7 +250,7 @@ bool Connector::ConnectNode(const btclite::network::NetAddr& addr, bool manual)
     }
 
     BTCLOG(LOG_LEVEL_INFO) << "Trying to connect to " << addr.ToString() 
-                           << ':' << addr.proto_addr().port();
+                           << ':' << addr.port();
     SingletonPeers::GetInstance().Attempt(addr);
 
     std::memset(&sock_addr, 0, sizeof(sock_addr));
@@ -272,7 +271,7 @@ bool Connector::ConnectNode(const btclite::network::NetAddr& addr, bool manual)
     }
     
     BTCLOG(LOG_LEVEL_VERBOSE) << "Connected to " << addr.ToString() 
-                              << ':' << addr.proto_addr().port();
+                              << ':' << addr.port();
     
     btclite::network::msg_process::SendVersion(node);
     
