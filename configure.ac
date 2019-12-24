@@ -27,8 +27,11 @@ AC_PROG_INSTALL
 dnl Require C++17 compiler (no GNU extensions)
 AX_CXX_COMPILE_STDCXX([17], [noext], [mandatory], [nodefault])
 
+
+# Checks for libraries.
+
 dnl Require protobuf
-PKG_CHECK_MODULES(PROTOBUF, protobuf >= 2.4.0)
+PKG_CHECK_MODULES(PROTOBUF, protobuf >= 3.0.0)
 AC_CHECK_PROG([PROTOC], [protoc], [protoc])
 AS_IF([test "x${PROTOC}" == "x"],
         [AC_MSG_ERROR([ProtoBuf compiler "protoc" not found.])])
@@ -40,18 +43,24 @@ dnl Require glog
 PKG_CHECK_MODULES(GLOG, libglog >= 0.3.5)
 
 dnl Require google test
-PKG_CHECK_MODULES(GTEST, gtest >= 1.8.1)
+PKG_CHECK_MODULES(GTEST, gtest >= 1.8.0)
 
 dnl Require google mock
-PKG_CHECK_MODULES(GMOCK, gmock >= 1.8.1)
+PKG_CHECK_MODULES(GMOCK, gmock >= 1.8.0)
 
 dnl Require libevent
-#PKG_CHECK_MODULES([EVENT], [libevent],, [AC_MSG_ERROR(libevent not found.)])
 PKG_CHECK_MODULES(EVENT, libevent >= 2.1.8)
 PKG_CHECK_MODULES(EVENT_PTHREADS, libevent_pthreads >= 2.1.8)
 
+dnl Require libsecp256k1
+PKG_CHECK_MODULES(LIBSECP256K1, libsecp256k1 >= 0.1)
 
- # Initialize libtool.
+dnl Require rocksdb
+AC_CHECK_LIB([rocksdb], [main], [ROCKSDB_LIBS=-lrocksdb], [AC_MSG_ERROR([librocksdb was not found.])])
+
+# Checks for header files.
+
+# Initialize libtool.
 LT_INIT([pic-only])
 
 # Enable debug
@@ -93,14 +102,12 @@ fi
 
 AM_CONDITIONAL([ENABLE_UNIT_TESTS],[test x$BUILD_UNIT_TEST = xyes])
 
-# Checks for libraries.
-
-# Checks for header files.
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_CHECK_HEADER_STDBOOL
 
 # Checks for library functions.
+
 
 AC_SUBST(BTCLITE_FULLNODE_BIN)
 

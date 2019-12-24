@@ -13,9 +13,11 @@ namespace btclite {
 namespace network {
 namespace protocol {
 
+namespace private_verack {
+
 using namespace btclite::network::msg_process;
 
-bool verack::RecvHandler(std::shared_ptr<Node> src_node) const
+bool Verack::RecvHandler(std::shared_ptr<Node> src_node) const
 {
     if (!src_node->is_inbound()) {
         // Mark this node as currently connected, so we update its timestamp later.
@@ -72,6 +74,8 @@ bool verack::RecvHandler(std::shared_ptr<Node> src_node) const
     
     return true;
 }
+
+} // namespace private_verack
 
 } // namespace protocol
 } // namespace network

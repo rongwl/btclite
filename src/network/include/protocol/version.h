@@ -44,7 +44,7 @@ enum VersionCode : uint32_t {
 constexpr VersionCode kProtocolVersion = kInvalidCbNoBanVersion;
 constexpr VersionCode kMinPeerProtoVersion = kGetheadersVersion;
 
-namespace private_space {
+namespace private_version {
 
 class Version : public MessageData {
 public:
@@ -242,9 +242,9 @@ void Version::Deserialize(Stream& in)
         deserializer.SerialRead(&relay_);
 }
 
-} // namespace private_space
+} // namespace private_version
 
-using Version = Hashable<private_space::Version>;
+using Version = Hashable<private_version::Version>;
 
 } // namespace protocol
 } // namespace network

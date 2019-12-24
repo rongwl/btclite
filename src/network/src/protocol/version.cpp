@@ -11,7 +11,8 @@
 namespace btclite {
 namespace network {
 namespace protocol{
-namespace private_space {
+
+namespace private_version {
 
 using namespace btclite::network::msg_process;
 
@@ -210,8 +211,8 @@ bool Version::operator!=(const Version& b) const
     return !(*this == b);
 }
 
+} // namespace private_version
 
-} // namespace private_space
 } // namespace protocol
 } // namespace network
 } // namespace btclite

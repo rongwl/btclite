@@ -9,7 +9,9 @@ namespace btclite {
 namespace network {
 namespace protocol {
 
-class verack : public MessageData {
+namespace private_verack {
+
+class Verack : public MessageData {
 public:
     bool RecvHandler(std::shared_ptr<Node> src_node) const;
     
@@ -37,7 +39,9 @@ public:
     void Deserialize(Stream& in) {}
 };
 
-using Verack = Hashable<verack>;
+} // namespace private_verack
+
+using Verack = Hashable<private_verack::Verack>;
 
 } // namespace protocol
 } // namespace network
