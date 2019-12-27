@@ -10,11 +10,13 @@ namespace btclite {
 namespace network {
 namespace protocol {
 
-class pong : public MessageData {
+namespace private_pong {
+
+class Pong : public MessageData {
 public:
-    pong() = default;
+    Pong() = default;
     
-    explicit pong(uint64_t nonce)
+    explicit Pong(uint64_t nonce)
         : nonce_(nonce) {}
     
     //-------------------------------------------------------------------------
@@ -41,12 +43,12 @@ public:
     }
     
     //-------------------------------------------------------------------------
-    bool operator==(const pong& b) const
+    bool operator==(const Pong& b) const
     {
         return nonce_ == b.nonce_;
     }
     
-    bool operator!=(const pong& b) const
+    bool operator!=(const Pong& b) const
     {
         return !(*this == b);
     }
@@ -81,7 +83,9 @@ private:
     uint64_t nonce_ = 0;
 };
 
-using Pong = Hashable<pong>;
+} // namespace private_pong
+
+using Pong = Hashable<private_pong::Pong>;
 
 } // namespace protocol
 } // namespace network

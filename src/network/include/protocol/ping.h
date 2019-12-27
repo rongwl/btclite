@@ -10,14 +10,16 @@ namespace btclite {
 namespace network {
 namespace protocol {
 
-class ping : public MessageData {
+namespace private_ping {
+
+class Ping : public MessageData {
 public:
-    ping() = default;
+    Ping() = default;
     
-    explicit ping(uint64_t nonce)
+    explicit Ping(uint64_t nonce)
         : nonce_(nonce) {}
     
-    ping(uint64_t nonce, uint32_t protocol_version)
+    Ping(uint64_t nonce, uint32_t protocol_version)
         : nonce_(nonce), protocol_version_(protocol_version) {}
     
     //-------------------------------------------------------------------------
@@ -49,12 +51,12 @@ public:
     }
     
     //-------------------------------------------------------------------------
-    bool operator==(const ping& b) const
+    bool operator==(const Ping& b) const
     {
         return nonce_ == b.nonce_;
     }
     
-    bool operator!=(const ping& b) const
+    bool operator!=(const Ping& b) const
     {
         return !(*this == b);
     }
@@ -94,7 +96,7 @@ private:
 };
 
 template <typename Stream>
-void ping::Serialize(Stream& out) const
+void Ping::Serialize(Stream& out) const
 {
     if (protocol_version_ >= VersionCode::kBip31Version) {
         Serializer<Stream> serializer(out);
@@ -103,7 +105,7 @@ void ping::Serialize(Stream& out) const
 }
 
 template <typename Stream>
-void ping::Deserialize(Stream& in)
+void Ping::Deserialize(Stream& in)
 {
     if (protocol_version_ >= VersionCode::kBip31Version) {
         Deserializer<Stream> deserializer(in);
@@ -111,7 +113,9 @@ void ping::Deserialize(Stream& in)
     }
 }
 
-using Ping = Hashable<ping>;
+} // namespace private_ping
+
+using Ping = Hashable<private_ping::Ping>;
 
 } // namespace protocol
 } // namespace network

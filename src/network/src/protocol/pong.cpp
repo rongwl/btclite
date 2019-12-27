@@ -5,7 +5,9 @@ namespace btclite {
 namespace network {
 namespace protocol {
 
-bool pong::RecvHandler(std::shared_ptr<Node> src_node) const
+namespace private_pong {
+
+bool Pong::RecvHandler(std::shared_ptr<Node> src_node) const
 {
     if (src_node->time().ping_time.ping_nonce_sent == 0) {
         BTCLOG(LOG_LEVEL_WARNING) << "Unsolicited pong without ping, peer=" 
@@ -26,6 +28,8 @@ bool pong::RecvHandler(std::shared_ptr<Node> src_node) const
         
     return true;
 }
+
+} // namespace pong
 
 } // namespace protocol
 } // namespace network

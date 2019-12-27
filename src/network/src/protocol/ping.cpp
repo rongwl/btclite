@@ -10,9 +10,11 @@ namespace btclite {
 namespace network {
 namespace protocol {
 
+namespace private_ping {
+
 using namespace btclite::network::msg_process;
 
-bool ping::RecvHandler(std::shared_ptr<Node> src_node) const
+bool Ping::RecvHandler(std::shared_ptr<Node> src_node) const
 {
     if (src_node->protocol_version() >= VersionCode::kBip31Version)
     {
@@ -34,7 +36,7 @@ bool ping::RecvHandler(std::shared_ptr<Node> src_node) const
     return true;
 }
 
-void ping::PingTimeoutCb(std::shared_ptr<Node> node)
+void Ping::PingTimeoutCb(std::shared_ptr<Node> node)
 {
     if (SingletonNetInterrupt::GetInstance())
         return;
@@ -52,11 +54,13 @@ void ping::PingTimeoutCb(std::shared_ptr<Node> node)
     }
     
     // send ping
-    Ping ping(btclite::utility::GetUint64());
+    btclite::network::protocol::Ping ping(btclite::utility::GetUint64());
     if (node->protocol_version() < VersionCode::kBip31Version)
         ping.set_protocol_version(0);
     SendMsg(ping, node);
 }
+
+} // namespace private_ping
 
 } // namespace protocol
 } // namespace network
