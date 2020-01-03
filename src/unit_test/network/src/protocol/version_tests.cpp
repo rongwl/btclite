@@ -124,7 +124,7 @@ TEST_F(VersionTest, IsValid)
     version2_.set_protocol_version(kMinPeerProtoVersion);
     EXPECT_TRUE(version2_.IsValid());
     
-    version2_.set_protocol_version(0);
+    version2_.set_protocol_version(kUnknownProtoVersion);
     EXPECT_FALSE(version2_.IsValid());
     
     version2_.set_protocol_version(kMinPeerProtoVersion);

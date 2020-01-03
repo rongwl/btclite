@@ -3,17 +3,17 @@
 #include "utiltime.h"
 
 
-bool BanDb::Add(const btclite::network::NetAddr& addr, const BanReason &ban_reason, bool dump_list)
+bool BanDb::Add(const btclite::network::NetAddr& addr, const BanReason& ban_reason, bool dump_list)
 {
     return Add(SubNet(addr), ban_reason, dump_list);
 }
 
-bool BanDb::Add(const SubNet& sub_net, const BanReason &ban_reason, bool dump_list)
+bool BanDb::Add(const SubNet& sub_net, const BanReason& ban_reason, bool dump_list)
 {
     proto_banmap::BanEntry ban_entry;
     
     ban_entry.set_create_time(btclite::utility::util_time::GetTimeSeconds());
-    ban_entry.set_ban_reason(ban_reason);
+    ban_entry.set_ban_reason(static_cast<std::underlying_type_t<BanReason> >(ban_reason));
     ban_entry.set_ban_until(btclite::utility::util_time::GetTimeSeconds() + kDefaultMisbehavingBantime);
     
     if (!Add_(sub_net, ban_entry))
@@ -21,7 +21,7 @@ bool BanDb::Add(const SubNet& sub_net, const BanReason &ban_reason, bool dump_li
     
     SingletonNodes::GetInstance().DisconnectNode(sub_net);
     
-    if (ban_reason == ManuallyAdded && dump_list)
+    if (ban_reason == BanReason::ManuallyAdded && dump_list)
         DumpBanList();
 
     return true;

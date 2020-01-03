@@ -12,14 +12,14 @@ bool reject::RecvHandler(std::shared_ptr<Node> src_node) const
 
 bool reject::IsValid() const
 {
-    if (ccode_ != kRejectMalformed &&
-        ccode_ != kRejectInvalid &&
-        ccode_ != kRejectObsolete &&
-        ccode_ != kRejectDuplicate &&
-        ccode_ != kRejectNonstandard &&
-        ccode_ != kRejectDust &&
-        ccode_ != kRejectInsufficientfee &&
-        ccode_ != kRejectCheckpoint)
+    if (ccode_ != CCode::kRejectMalformed &&
+        ccode_ != CCode::kRejectInvalid &&
+        ccode_ != CCode::kRejectObsolete &&
+        ccode_ != CCode::kRejectDuplicate &&
+        ccode_ != CCode::kRejectNonstandard &&
+        ccode_ != CCode::kRejectDust &&
+        ccode_ != CCode::kRejectInsufficientfee &&
+        ccode_ != CCode::kRejectCheckpoint)
         return false;
     
     return true;
@@ -28,7 +28,7 @@ bool reject::IsValid() const
 void reject::Clear()
 {
     message_.clear();
-    ccode_ = 0;
+    ccode_ = CCode::kRejectUnknown;
     reason_.clear();
     data_.Clear();
 }

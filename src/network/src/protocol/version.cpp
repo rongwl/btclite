@@ -136,8 +136,8 @@ bool Version::IsValid() const
 
 void Version::Clear()
 {
-    protocol_version_ = 0;
-    services_ = 0;
+    protocol_version_ = kUnknownProtoVersion;
+    services_ = kNodeNone;
     timestamp_ = 0;
     addr_recv_.Clear();
     addr_from_.Clear();

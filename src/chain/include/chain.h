@@ -112,7 +112,7 @@ public:
         return chain_tx_num_;
     }
     
-    uint32_t status() const
+    BlockStatus status() const
     {
         return status_;
     }
@@ -155,7 +155,7 @@ private:
     uint32_t chain_tx_num_ = 0;
 
     // Verification status of this block. See enum BlockStatus
-    uint32_t status_ = 0;
+    BlockStatus status_ = kBlockValidUnknown;
     
     //! (memory only) Sequential id assigned to distinguish order in which blocks are received.
     int32_t sequence_id_ = 0;

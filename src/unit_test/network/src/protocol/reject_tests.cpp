@@ -5,7 +5,7 @@
 TEST_F(RejectTest, Constructor)
 {
     EXPECT_EQ(reject1_.message(), "");
-    EXPECT_EQ(reject1_.ccode(), 0);
+    EXPECT_EQ(reject1_.ccode(), CCode::kRejectUnknown);
     EXPECT_EQ(reject1_.reason(), "");
     EXPECT_TRUE(reject1_.data().IsNull());
     
@@ -30,7 +30,7 @@ TEST_F(RejectTest, OperatorEqual)
     
     reject2_.set_message(std::move(reject3_.message()));
     EXPECT_EQ(reject2_, reject3_);
-    reject2_.set_ccode(kRejectMalformed);
+    reject2_.set_ccode(CCode::kRejectMalformed);
     EXPECT_NE(reject2_, reject3_);
     
     reject2_.set_ccode(reject3_.ccode());
@@ -72,7 +72,7 @@ TEST_F(RejectTest, Clear)
 TEST_F(RejectTest, IsValid)
 {
     EXPECT_FALSE(reject1_.IsValid());
-    reject1_.set_ccode(kRejectInvalid);
+    reject1_.set_ccode(CCode::kRejectInvalid);
     EXPECT_TRUE(reject1_.IsValid());
 }
 

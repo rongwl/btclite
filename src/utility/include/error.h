@@ -4,7 +4,7 @@
 #include <system_error>
 
 
-enum ErrorCode {
+enum class ErrorCode {
     success = 0,
     
     // args

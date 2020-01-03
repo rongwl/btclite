@@ -41,7 +41,7 @@ public:
     
     void Clear()
     {
-        type_ = 0;
+        type_ = kUndefined;
         hash_.Clear();
     }
     
@@ -74,7 +74,7 @@ public:
     }
     
     //-------------------------------------------------------------------------
-    uint32_t type() const
+    DataMsgType type() const
     {
         return type_;
     }
@@ -85,7 +85,7 @@ public:
     }
     
 private:
-    uint32_t type_ = 0;
+    DataMsgType type_ = kUndefined;
     Hash256 hash_;
 };
 

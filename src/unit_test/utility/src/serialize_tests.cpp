@@ -21,6 +21,22 @@ TEST(SerializerTest, SerializeArithmetic)
     EXPECT_EQ(iinput, ioutput);
 }
 
+TEST(SerializerTest, SerializeEnum)
+{
+    enum class Foo { kBar1, kBar2, kBar3 };
+    Foo out1, out2;
+    MemOstream ostream;
+    std::vector<uint8_t> vec;
+    ByteSource<std::vector<uint8_t> > byte_source(vec);
+    MemIstream<ByteSource<std::vector<uint8_t> > > istream(byte_source);
+    
+    ostream << Foo::kBar1 << Foo::kBar2;
+    vec.assign(ostream.vec().begin(), ostream.vec().end());
+    EXPECT_NO_THROW(istream >> out1 >> out2);
+    EXPECT_EQ(out1, Foo::kBar1);
+    EXPECT_EQ(out2, Foo::kBar2);
+}
+
 TEST(SerializerTest, SerializeString)
 {
     std::string input = "foo bar", output;

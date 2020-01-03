@@ -63,7 +63,7 @@ TEST(AcceptorTest, MethordAcceptConnCb)
     
     inet_pton(AF_INET6, "::ffff:1.2.3.250", client_addr.sin6_addr.s6_addr);
     btclite::network::NetAddr addr(client_addr);
-    SingletonBanDb::GetInstance().Add(addr, BanDb::NodeMisbehaving);
+    SingletonBanDb::GetInstance().Add(addr, BanDb::BanReason::NodeMisbehaving);
     acceptor.AcceptConnCb(listener, fd, (struct sockaddr*)&client_addr, sizeof(client_addr), nullptr);
     EXPECT_EQ(SingletonNodes::GetInstance().CountInbound(), count);  
     

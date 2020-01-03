@@ -10,7 +10,7 @@
 
 class BanDb {
 public:
-    enum BanReason {
+    enum class BanReason {
         Unknown          = 0,
         NodeMisbehaving  = 1,
         ManuallyAdded    = 2
@@ -25,8 +25,8 @@ public:
           ban_map_(ban_map), dirty_(true) {}
     
     //-------------------------------------------------------------------------
-    bool Add(const btclite::network::NetAddr& addr, const BanReason &ban_reason, bool dump_list = true);
-    bool Add(const SubNet& sub_net, const BanReason &ban_reason, bool dump_list = true);
+    bool Add(const btclite::network::NetAddr& addr, const BanReason& ban_reason, bool dump_list = true);
+    bool Add(const SubNet& sub_net, const BanReason& ban_reason, bool dump_list = true);
     bool Erase(const btclite::network::NetAddr& addr, bool dump_list = true);
     bool Erase(const SubNet& sub_net, bool dump_list = true);
     void Clear();

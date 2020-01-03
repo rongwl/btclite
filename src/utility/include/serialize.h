@@ -104,6 +104,13 @@ private:
         SerWriteData(in);
     }
     
+    // for enum
+    template <typename T>
+    std::enable_if_t<std::is_enum<T>::value> Serialize(const T& in)
+    {
+        SerWriteData(static_cast<std::underlying_type_t<T> >(in));
+    }
+    
     //for arithmetic std::array
     template <typename T, size_t N>
     std::enable_if_t<std::is_arithmetic<T>::value> Serialize(const std::array<T, N>& in)
@@ -228,6 +235,13 @@ private:
     std::enable_if_t<std::is_integral<T>::value> Deserialize(T *out) 
     {
         SerReadData(out);
+    }
+    
+    // for enum
+    template <typename T>
+    std::enable_if_t<std::is_enum_v<T> > Deserialize(T *out)
+    {
+        SerReadData(reinterpret_cast<std::underlying_type_t<T>*>(out));
     }
     
     // for arithmetic std::array

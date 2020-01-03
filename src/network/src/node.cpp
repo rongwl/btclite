@@ -76,7 +76,7 @@ bool Node::CheckBanned()
                                       << addr_.ToString();
         }
         else {
-            SingletonBanDb::GetInstance().Add(addr_, BanDb::NodeMisbehaving);
+            SingletonBanDb::GetInstance().Add(addr_, BanDb::BanReason::NodeMisbehaving);
         }
     }
     

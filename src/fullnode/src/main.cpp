@@ -14,7 +14,8 @@ int main(int argc, char **argv)
         config.ParseParameters(argc, argv);
     }
     catch (const Exception& e) {
-        if (e.code().value() != ErrorCode::show_help)
+        if (e.code().value() != 
+                static_cast<std::underlying_type_t<ErrorCode> >(ErrorCode::show_help))
             fprintf(stderr, "%s: %s\n", argv[0], e.what());
         FullNodeHelpInfo::PrintUsage();
         exit(e.code().value());

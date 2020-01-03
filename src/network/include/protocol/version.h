@@ -12,6 +12,8 @@ namespace network {
 namespace protocol {
 
 enum VersionCode : uint32_t {
+    kUnknownProtoVersion = 0,
+    
     // initial proto version, to be increased after version/verack negotiation
     kInitProtoVersion = 209,
     
@@ -50,7 +52,7 @@ class Version : public MessageData {
 public:
     Version() = default;
     
-    Version(uint32_t version, uint64_t services, uint64_t timestamp,
+    Version(VersionCode version, ServiceFlags services, uint64_t timestamp,
             const btclite::network::NetAddr& addr_recv,
             const btclite::network::NetAddr& addr_from,
             uint64_t nonce, const std::string& user_agent,
@@ -59,7 +61,7 @@ public:
           addr_recv_(addr_recv), addr_from_(addr_from), nonce_(nonce),
           user_agent_(user_agent), start_height_(start_height), relay_(relay) {}
     
-    Version(uint32_t version, uint64_t services, uint64_t timestamp,
+    Version(VersionCode version, ServiceFlags services, uint64_t timestamp,
             btclite::network::NetAddr&& addr_recv,
             btclite::network::NetAddr&& addr_from,
             uint64_t nonce, std::string&& user_agent,
@@ -94,20 +96,20 @@ public:
     void Deserialize(Stream& in);
     
     //-------------------------------------------------------------------------
-    uint32_t protocol_version() const
+    VersionCode protocol_version() const
     {
         return protocol_version_;
     }
-    void set_protocol_version(uint32_t version)
+    void set_protocol_version(VersionCode version)
     {
         protocol_version_ = version;
     }
 
-    uint64_t services() const
+    ServiceFlags services() const
     {
         return services_;
     }
-    void set_services(uint64_t services)
+    void set_services(ServiceFlags services)
     {
         services_ = services;
     }
@@ -188,8 +190,8 @@ public:
     }
 
 private:
-    uint32_t protocol_version_ = 0;
-    uint64_t services_ = 0;
+    VersionCode protocol_version_ = kUnknownProtoVersion;
+    ServiceFlags services_ = kNodeNone;
     uint64_t timestamp_ = 0;
     btclite::network::NetAddr addr_recv_;
     

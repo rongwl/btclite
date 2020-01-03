@@ -13,7 +13,8 @@ namespace network {
 namespace protocol {
 
 // "reject" message codes
-enum CCode : uint8_t {
+enum class CCode : uint8_t {
+    kRejectUnknown = 0,
     kRejectMalformed = 0x01,
     kRejectInvalid = 0x10,
     kRejectObsolete = 0x11,
@@ -28,18 +29,18 @@ class reject : public MessageData {
 public:
     reject() = default;
     
-    reject(const std::string& message, uint8_t ccode, const std::string& reason)
+    reject(const std::string& message, CCode ccode, const std::string& reason)
         : message_(message), ccode_(ccode), reason_(reason), data_() {}
     
-    reject(std::string&& message, uint8_t ccode, std::string&& reason) noexcept
+    reject(std::string&& message, CCode ccode, std::string&& reason) noexcept
         : message_(std::move(message)), ccode_(ccode), reason_(std::move(reason)),
           data_() {}
     
-    reject(const std::string& message, uint8_t ccode, const std::string& reason,
+    reject(const std::string& message, CCode ccode, const std::string& reason,
            const Hash256& data)
         : message_(message), ccode_(ccode), reason_(reason), data_(data) {}
     
-    reject(std::string&& message, uint8_t ccode, std::string&& reason,
+    reject(std::string&& message, CCode ccode, std::string&& reason,
            const Hash256& data) noexcept
         : message_(std::move(message)), ccode_(ccode), reason_(std::move(reason)),
           data_(data) {}
@@ -80,11 +81,11 @@ public:
         message_ = std::move(message);
     }
     
-    uint8_t ccode() const
+    CCode ccode() const
     {
         return ccode_;
     }
-    void set_ccode(uint8_t ccode)
+    void set_ccode(CCode ccode)
     {
         ccode_ = ccode;
     }
@@ -113,7 +114,7 @@ public:
     
 private:
     std::string message_;
-    uint8_t ccode_ = 0;
+    CCode ccode_ = CCode::kRejectUnknown;
     std::string reason_;
     Hash256 data_;
 };

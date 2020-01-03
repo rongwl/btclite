@@ -129,7 +129,7 @@ private:
 
 namespace chain {
 
-/**
+/*
  * ChainParams defines various tweakable parameters of a given instance of the
  * Bitcoin system. There are three: the main network on which people trade goods
  * and services, the public test network which gets reset from time to time and

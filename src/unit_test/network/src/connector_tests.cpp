@@ -33,7 +33,7 @@ TEST(ConnectorTest, ConnectNode)
     
     // banned addr
     addrs[0].SetIpv4(inet_addr("1.2.3.4"));
-    SingletonBanDb::GetInstance().Add(addrs[0], BanDb::NodeMisbehaving, false);
+    SingletonBanDb::GetInstance().Add(addrs[0], BanDb::BanReason::NodeMisbehaving, false);
     EXPECT_FALSE(connector.ConnectNodes(addrs));
     
     LookupHost(std::string("x9.seed.tbtc.petertodd.org").c_str(), &addrs[0], true);

@@ -151,7 +151,7 @@ void PongReadCb(struct bufferevent *bev, void *ctx)
 void TestRejects(const MessageData *msg)
 {
     const Reject *reject1 = reinterpret_cast<const Reject*>(msg);
-    Reject reject2(::kMsgBlock, kRejectInvalid, "invalid", reject_data);
+    Reject reject2(::kMsgBlock, CCode::kRejectInvalid, "invalid", reject_data);
     EXPECT_EQ(*reject1, reject2);
 }
 
@@ -306,7 +306,7 @@ TEST(MsgFactoryTest, PongFactory)
 TEST(MsgFactoryTest, RejectFactory)
 {
     MemOstream os;
-    Reject msg_out(kMsgVersion, kRejectDuplicate, "Duplicate version message",
+    Reject msg_out(::kMsgVersion, CCode::kRejectDuplicate, "Duplicate version message",
                    std::move(btclite::utility::GetUint256()));
     MessageHeader header(SingletonParams::GetInstance().msg_magic(),
                          kMsgReject, msg_out.SerializedSize(), msg_out.GetHash().GetLow32());

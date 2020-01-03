@@ -28,8 +28,8 @@ protected:
                     nonce_, std::move(std::string(user_agent_)),
                     start_height_, relay_) {}
     
-    uint32_t version_ = 0;
-    uint64_t services_ = 0;
+    VersionCode version_ = kUnknownProtoVersion;
+    btclite::network::ServiceFlags services_ = btclite::network::kNodeNone;
     uint64_t timestamp_ = 0;
     btclite::network::NetAddr addr_recv_;
     btclite::network::NetAddr addr_from_;
