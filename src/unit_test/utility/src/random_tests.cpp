@@ -3,7 +3,10 @@
 #include "random.h"
 
 
-using namespace btclite::utility;
+namespace btclite {
+namespace unit_test {
+
+using namespace util;
 
 TEST(RandomTest, MethodGetUint64)
 {
@@ -16,7 +19,7 @@ TEST(RandomTest, MethodGetUint64)
 
 TEST(RandomTest, MethodGetUint256)
 {
-    Uint256 new_num, old_num;
+    util::Uint256 new_num, old_num;
     old_num = GetUint256();
     for (int i = 0; i < 1000; i++) {
         new_num = GetUint256();
@@ -66,3 +69,6 @@ TEST(FastRandomContextTest, MethodRandbits)
         }
     }
 }
+
+} // namespace unit_test
+} // namespace btclit

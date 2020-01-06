@@ -5,6 +5,9 @@
 #include "serialize.h"
 
 
+namespace btclite {
+namespace util {
+
 /* 
  * Minimal stream for overwriting and/or appending to an existing byte vector
  * The referenced vector will grow as necessary
@@ -50,7 +53,7 @@ public:
     template <typename T>
     MemIstream& operator>>(T& obj)
     {
-        Deserializer<ByteSource> deserializer(byte_source_);
+        util::Deserializer<ByteSource> deserializer(byte_source_);
         deserializer.SerialRead(&obj);
         return *this;
     }
@@ -58,5 +61,9 @@ public:
 private:
     ByteSource& byte_source_;
 };
+
+} // namespace util
+} // namespace btclite
+
 
 #endif // BTCLITE_STREAM_H

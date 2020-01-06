@@ -25,23 +25,25 @@ enum class CCode : uint8_t {
     kRejectCheckpoint = 0x43
 };
 
-class reject : public MessageData {
+namespace private_reject {
+
+class Reject : public MessageData {
 public:
-    reject() = default;
+    Reject() = default;
     
-    reject(const std::string& message, CCode ccode, const std::string& reason)
+    Reject(const std::string& message, CCode ccode, const std::string& reason)
         : message_(message), ccode_(ccode), reason_(reason), data_() {}
     
-    reject(std::string&& message, CCode ccode, std::string&& reason) noexcept
+    Reject(std::string&& message, CCode ccode, std::string&& reason) noexcept
         : message_(std::move(message)), ccode_(ccode), reason_(std::move(reason)),
           data_() {}
     
-    reject(const std::string& message, CCode ccode, const std::string& reason,
-           const Hash256& data)
+    Reject(const std::string& message, CCode ccode, const std::string& reason,
+           const crypto::Hash256& data)
         : message_(message), ccode_(ccode), reason_(reason), data_(data) {}
     
-    reject(std::string&& message, CCode ccode, std::string&& reason,
-           const Hash256& data) noexcept
+    Reject(std::string&& message, CCode ccode, std::string&& reason,
+           const crypto::Hash256& data) noexcept
         : message_(std::move(message)), ccode_(ccode), reason_(std::move(reason)),
           data_(data) {}
     
@@ -64,8 +66,8 @@ public:
     void Deserialize(Stream& in);
     
     //-------------------------------------------------------------------------
-    bool operator==(const reject& b) const;    
-    bool operator!=(const reject& b) const;
+    bool operator==(const Reject& b) const;    
+    bool operator!=(const Reject& b) const;
     
     //-------------------------------------------------------------------------
     const std::string& message() const
@@ -103,11 +105,11 @@ public:
         reason_ = std::move(reason);
     }
     
-    const Hash256& data() const
+    const crypto::Hash256& data() const
     {
         return data_;
     }
-    void set_data(const Hash256& data)
+    void set_data(const crypto::Hash256& data)
     {
         data_ = data;
     }    
@@ -116,13 +118,13 @@ private:
     std::string message_;
     CCode ccode_ = CCode::kRejectUnknown;
     std::string reason_;
-    Hash256 data_;
+    crypto::Hash256 data_;
 };
 
 template <typename Stream>
-void reject::Serialize(Stream& out) const
+void Reject::Serialize(Stream& out) const
 {
-    Serializer<Stream> serializer(out);
+    util::Serializer<Stream> serializer(out);
     
     if (message_.size() > MessageHeader::kCommandSize)
         serializer.SerialWrite(message_.substr(0, MessageHeader::kCommandSize));
@@ -136,14 +138,14 @@ void reject::Serialize(Stream& out) const
     else
         serializer.SerialWrite(reason_);
     
-    if (message_ == ::kMsgBlock || message_ == ::kMsgTx)
+    if (message_ == btclite::kMsgBlock || message_ == btclite::kMsgTx)
         serializer.SerialWrite(data_);
 }
 
 template <typename Stream>
-void reject::Deserialize(Stream& in)
+void Reject::Deserialize(Stream& in)
 {
-    Deserializer<Stream> deserializer(in);
+    util::Deserializer<Stream> deserializer(in);
     
     deserializer.SerialRead(&message_);
     if (message_.size() > MessageHeader::kCommandSize)
@@ -155,11 +157,13 @@ void reject::Deserialize(Stream& in)
     if (reason_.size() > kMaxRejectMessageLength)
         reason_.resize(kMaxRejectMessageLength);
     
-    if (message_ == ::kMsgBlock || message_ == ::kMsgTx)
+    if (message_ == btclite::kMsgBlock || message_ == btclite::kMsgTx)
         deserializer.SerialRead(&data_);
 }
 
-using Reject = Hashable<reject>;
+} // namespace private_reject
+
+using Reject = crypto::Hashable<private_reject::Reject>;
 
 } // namespace protocol
 } // namespace network

@@ -2,6 +2,11 @@
 #include "stream.h"
 
 
+namespace btclite {
+namespace unit_test {
+
+using namespace network::protocol;
+
 TEST_F(PingTest, Constructor)
 {
     EXPECT_EQ(ping1_.nonce(), 0);
@@ -21,8 +26,8 @@ TEST_F(PingTest, OperatorEqual)
 TEST_F(PingTest, Serialize)
 {
     std::vector<uint8_t> vec;
-    ByteSink<std::vector<uint8_t> > byte_sink(vec);
-    ByteSource<std::vector<uint8_t> > byte_source(vec);
+    util::ByteSink<std::vector<uint8_t> > byte_sink(vec);
+    util::ByteSource<std::vector<uint8_t> > byte_source(vec);
     
     ping2_.Serialize(byte_sink);
     ping1_.Deserialize(byte_source);
@@ -31,9 +36,12 @@ TEST_F(PingTest, Serialize)
 
 TEST_F(PingTest, SerializedSize)
 {
-    MemOstream ms;
+    util::MemOstream ms;
     
     ms << ping2_;
     EXPECT_EQ(ping2_.SerializedSize(), ms.vec().size());
     EXPECT_EQ(ping3_.SerializedSize(), 0);
 }
+
+} // namespace unit_test
+} // namespace btclit

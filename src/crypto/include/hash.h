@@ -10,11 +10,10 @@
 #include "serialize.h"
 
 
-using Hash256 = Uint256;
-
 namespace btclite {
 namespace crypto {
-namespace hash {
+
+using Hash256 = util::Uint256;
 
 void Sha256(const uint8_t in[], size_t length, Hash256 *out);
 Hash256 Sha256(const uint8_t in[], size_t length);
@@ -28,15 +27,12 @@ Hash256 DoubleSha256(const std::vector<uint8_t> &in);
 void DoubleSha256(const std::string &in, Hash256 *out);
 Hash256 DoubleSha256(const std::string &in);
 
-} // namespace hash
-} // namespace crypto
-} // namespace btclite
 
 // A writer stream (for serialization) that computes a 256-bit hash.
 class HashOStream {
 public:
     using Container = std::vector<uint8_t>;
-    using ByteSinkType = ByteSink<Container>;
+    using ByteSinkType = util::ByteSink<Container>;
     
     HashOStream()
         : vec_(), byte_sink_(vec_) {}
@@ -49,7 +45,7 @@ public:
     template <typename T>
     HashOStream& operator<<(const T& obj)
     {
-        Serializer<ByteSinkType> serializer(byte_sink_);
+        util::Serializer<ByteSinkType> serializer(byte_sink_);
         serializer.SerialWrite(obj);
         return *this;
     }
@@ -82,7 +78,7 @@ public:
     SipHasher()
         : mac_(Botan::MessageAuthenticationCode::create_or_throw("SipHash")),
           rng_(), key_(rng_.random_vec(16)), is_set_key_(false) {}
-    explicit SipHasher(const Uint128& key)
+    explicit SipHasher(const util::Uint128& key)
         : mac_(Botan::MessageAuthenticationCode::create_or_throw("SipHash")),
           rng_(), key_(key.begin(), key.end()), is_set_key_(false) {}
 
@@ -118,13 +114,15 @@ Hash256 Hashable<Base>::GetHash() const
 {
     std::vector<uint8_t> vec;
     Hash256 hash;
-    ByteSink<std::vector<uint8_t> > byte_sink(vec);
+    util::ByteSink<std::vector<uint8_t> > byte_sink(vec);
     
     Base::Serialize(byte_sink);
-    btclite::crypto::hash::Sha256(vec, &hash);
+    crypto::Sha256(vec, &hash);
     
     return hash;
 }
 
+} // namespace crypto
+} // namespace btclite
 
 #endif // BTCLITE_Hash256_H

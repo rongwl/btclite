@@ -9,24 +9,23 @@
 
 namespace btclite {
 namespace network {
-namespace msg_process{
 
-btclite::network::protocol::MessageData *MsgDataFactory(const uint8_t *raw, 
-                                                        const btclite::network::protocol::MessageHeader& header,
+protocol::MessageData *MsgDataFactory(const uint8_t *raw, 
+                                                        const protocol::MessageHeader& header,
                                                         uint32_t protocol_version);
 bool ParseMsg(std::shared_ptr<Node> src_node);
 
 template <typename Message>
 bool SendMsg(const Message& msg, std::shared_ptr<Node> dst_node)
 {
-    using namespace btclite::network::protocol;
+    using namespace protocol;
     
-    MemOstream ms;
+    util::MemOstream ms;
         
     if (!dst_node->bev())
         return false;
 
-    MessageHeader header(btclite::network::SingletonParams::GetInstance().msg_magic(),
+    MessageHeader header(SingletonParams::GetInstance().msg_magic(),
                          msg.Command(), msg.SerializedSize(), msg.GetHash().GetLow32());
     ms << header << msg;
     
@@ -54,7 +53,6 @@ bool SendAddr(std::shared_ptr<Node> dst_node);
 
 void UpdatePreferredDownload(std::shared_ptr<Node> node);
 
-} // namespace msg_process
 } // namespace network
 } // namespace btclite
 

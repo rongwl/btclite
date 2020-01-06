@@ -85,7 +85,7 @@ public:
     const BloomFilter *bloom_filter() const;
     
 private:
-    mutable CriticalSection cs_bloom_filter_;
+    mutable util::CriticalSection cs_bloom_filter_;
     
     // We use fRelayTxes for two purposes -
     // a) it allows us to not relay tx invs before receiving the peer's version message
@@ -131,14 +131,14 @@ struct NodeTime {
 };
 
 struct NodeTimers {
-    TimerMng::TimerPtr no_msg_timer;
-    TimerMng::TimerPtr no_sending_timer;
-    TimerMng::TimerPtr no_receiving_timer;
-    TimerMng::TimerPtr no_connection_timer;
+    util::TimerMng::TimerPtr no_msg_timer;
+    util::TimerMng::TimerPtr no_sending_timer;
+    util::TimerMng::TimerPtr no_receiving_timer;
+    util::TimerMng::TimerPtr no_connection_timer;
     
-    TimerMng::TimerPtr ping_timer;
-    TimerMng::TimerPtr broadcast_local_addr_timer;
-    TimerMng::TimerPtr broadcast_addr_timer;
+    util::TimerMng::TimerPtr ping_timer;
+    util::TimerMng::TimerPtr broadcast_local_addr_timer;
+    util::TimerMng::TimerPtr broadcast_addr_timer;
 };
 
 /* Information about a connected peer */
@@ -214,7 +214,7 @@ public:
         return bev_;
     }
     
-    const btclite::network::NetAddr& addr() const
+    const NetAddr& addr() const
     {
         return addr_;
     }
@@ -241,13 +241,13 @@ public:
         host_name_ = name;
     }
     
-    btclite::network::NetAddr local_addr() const // thread safe copy
+    NetAddr local_addr() const // thread safe copy
     {
         LOCK(cs_local_addr_);
         return local_addr_;
     }
     
-    void set_local_addr(const btclite::network::NetAddr& addr)
+    void set_local_addr(const NetAddr& addr)
     {
         LOCK(cs_local_addr_);
         if (!local_addr_.IsValid())
@@ -337,11 +337,11 @@ private:
     //const uint64_t keyed_net_group_;
     const uint64_t local_host_nonce_;    
     
-    mutable CriticalSection cs_host_name_;
+    mutable util::CriticalSection cs_host_name_;
     std::string host_name_;
     
-    mutable CriticalSection cs_local_addr_;
-    btclite::network::NetAddr local_addr_;    
+    mutable util::CriticalSection cs_local_addr_;
+    NetAddr local_addr_;    
         
     const bool is_inbound_;
     const bool manual_;
@@ -349,7 +349,7 @@ private:
     std::atomic<bool> disconnected_ = false;
     
     // flood addrs relay
-    mutable CriticalSection cs_addrs_;
+    mutable util::CriticalSection cs_addrs_;
     std::vector<NetAddr> addrs_to_send_;
     boost::circular_buffer<uint64_t> known_addrs_;
     bool getaddr_ = false;
@@ -369,11 +369,11 @@ struct NodeEvictionCandidate
     bool relevant_services;
     bool relay_txes;
     bool bloom_filter;
-    btclite::network::NetAddr addr;
+    NetAddr addr;
     uint64_t keyed_net_group;
 };
 
-class Nodes : Uncopyable {
+class Nodes : util::Uncopyable {
 public:
     Nodes()
         : list_() {}
@@ -392,11 +392,11 @@ public:
     
     //-------------------------------------------------------------------------
     void AddNode(std::shared_ptr<Node> node);    
-    std::shared_ptr<Node> InitializeNode(const struct bufferevent *bev, const btclite::network::NetAddr& addr,
+    std::shared_ptr<Node> InitializeNode(const struct bufferevent *bev, const NetAddr& addr,
                                          bool is_inbound = true, bool manual = false);
     std::shared_ptr<Node> GetNode(NodeId id);    
     std::shared_ptr<Node> GetNode(struct bufferevent *bev);    
-    std::shared_ptr<Node> GetNode(const btclite::network::NetAddr& addr);    
+    std::shared_ptr<Node> GetNode(const NetAddr& addr);    
     void EraseNode(std::shared_ptr<Node> node);    
     void EraseNode(NodeId id);
     
@@ -418,28 +418,28 @@ public:
     bool CheckIncomingNonce(uint64_t nonce);
     
 private:
-    mutable CriticalSection cs_nodes_;
+    mutable util::CriticalSection cs_nodes_;
     std::list<std::shared_ptr<Node> > list_;
 
     //void MakeEvictionCandidate(std::vector<NodeEvictionCandidate> *out);
 };
 
-} // namespace network
-} // namespace btclite
-
 
 // Singleton pattern, thread safe after c++11
-class SingletonNodes : Uncopyable {
+class SingletonNodes : util::Uncopyable {
 public:
-    static btclite::network::Nodes& GetInstance()
+    static Nodes& GetInstance()
     {
-        static btclite::network::Nodes nodes;
+        static Nodes nodes;
         return nodes;
     }
     
 private:
     SingletonNodes() {}    
 };
+
+} // namespace network
+} // namespace btclite
 
 
 #endif // BTCLITE_NODE_H

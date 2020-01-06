@@ -14,17 +14,16 @@
 #include "protocol/version.h"
 
 
-using namespace btclite::network::protocol;
-
 namespace btclite {
 namespace network {
-namespace msg_process{
+
+using namespace protocol;
 
 MessageData *MsgDataFactory(const uint8_t *raw, const MessageHeader& header, 
                             uint32_t protocol_version)
 {    
     std::vector<uint8_t> vec;
-    ByteSource<std::vector<uint8_t> > byte_source(vec);
+    util::ByteSource<std::vector<uint8_t> > byte_source(vec);
     MessageData *msg = nullptr;
     
     if (!header.IsValid())
@@ -228,16 +227,16 @@ bool ParseMsg(std::shared_ptr<Node> src_node)
 bool SendVersion(std::shared_ptr<Node> dst_node)
 {
     ServiceFlags services = dst_node->services();
-    uint32_t start_height = SingletonBlockChain::GetInstance().Height();
-    btclite::network::NetAddr addr_recv(dst_node->addr());
-    btclite::network::NetAddr addr_from;
+    uint32_t start_height = chain::SingletonBlockChain::GetInstance().Height();
+    NetAddr addr_recv(dst_node->addr());
+    NetAddr addr_from;
     
     addr_from.set_services(services);
     Version ver_msg(kProtocolVersion, services,
-                    btclite::utility::util_time::GetTimeSeconds(),
+                    util::GetTimeSeconds(),
                     std::move(addr_recv), std::move(addr_from),
                     dst_node->local_host_nonce(), 
-                    std::move(FormatUserAgent()),
+                    std::move(protocol::FormatUserAgent()),
                     start_height, true);
 
     if (!SendMsg(ver_msg, dst_node))
@@ -272,6 +271,5 @@ void UpdatePreferredDownload(std::shared_ptr<Node> node)
         block_sync.set_preferred_download_count(block_sync.preferred_download_count()-1);
 }
 
-} // namespace msg_process
 } // namespace network
 } // namespace btclite

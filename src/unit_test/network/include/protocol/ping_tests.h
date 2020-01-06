@@ -3,7 +3,8 @@
 #include "protocol/ping.h"
 
 
-using namespace btclite::network::protocol;
+namespace btclite {
+namespace unit_test {
 
 class PingTest : public ::testing::Test {
 protected:
@@ -12,7 +13,10 @@ protected:
           ping1_(), ping2_(nonce_), ping3_(0, 0) {}
     
     uint64_t nonce_ = 0;
-    Ping ping1_;
-    Ping ping2_;
-    Ping ping3_;
+    network::protocol::Ping ping1_;
+    network::protocol::Ping ping2_;
+    network::protocol::Ping ping3_;
 };
+
+} // namespace unit_test
+} // namespace btclit

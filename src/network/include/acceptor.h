@@ -9,7 +9,7 @@
 namespace btclite {
 namespace network {
 
-class Acceptor : Uncopyable {
+class Acceptor : util::Uncopyable {
 public:
     Acceptor();
     

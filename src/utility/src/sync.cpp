@@ -6,6 +6,9 @@
 #include "utility/include/logging.h"
 
 
+namespace btclite {
+namespace util {
+
 #ifdef CHECK_LOCKORDER
 //
 // Early deadlock detection.
@@ -139,5 +142,8 @@ void LeaveCritical()
 {
     PopLock();
 }
+
+} // namespace util
+} // namespace btclite
 
 #endif // CHECK_LOCKORDER

@@ -3,13 +3,17 @@
 #include "protocol/send_compact.h"
 
 
-using namespace btclite::network::protocol;
+namespace btclite {
+namespace unit_test {
 
 class SendCmpctTest : public ::testing::Test {
 protected:
     SendCmpctTest()
         : send_compact1_(), send_compact2_(true, 1) {}
     
-    SendCmpct send_compact1_;
-    SendCmpct send_compact2_;
+    network::protocol::SendCmpct send_compact1_;
+    network::protocol::SendCmpct send_compact2_;
 };
+
+} // namespace unit_test
+} // namespace btclit

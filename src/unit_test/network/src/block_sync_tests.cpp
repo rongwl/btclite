@@ -1,11 +1,14 @@
 #include "block_sync_tests.h"
 
 
-using namespace btclite::network;
+namespace btclite {
+namespace unit_test {
+
+using namespace network;
 
 TEST_F(BlockSyncTest, GetSyncState)
 {
-    btclite::network::NetAddr addr;
+    NetAddr addr;
     
     ASSERT_TRUE(block_sync_.IsExist(1));
     ASSERT_TRUE(block_sync_.IsExist(2));
@@ -59,3 +62,6 @@ TEST_F(BlockSyncTest, Misbehaving)
     ASSERT_TRUE(block_sync_.GetShouldBan(2, &should_ban));
     ASSERT_TRUE(should_ban);
 }
+
+} // namespace unit_test
+} // namespace btclit

@@ -41,7 +41,7 @@ bool LocalNetConfig::LookupLocalAddrs()
         if (ifa->ifa_addr->sa_family == AF_INET)
         {
             struct sockaddr_in* s4 = reinterpret_cast<struct sockaddr_in*>(ifa->ifa_addr);
-            btclite::network::NetAddr addr;
+            NetAddr addr;
             addr.SetIpv4(s4->sin_addr.s_addr);
             if (AddLocalHost(addr, kAcLocalIf))
                 BTCLOG(LOG_LEVEL_INFO) << "Add local IPv4 addr " << ifa->ifa_name 
@@ -50,7 +50,7 @@ bool LocalNetConfig::LookupLocalAddrs()
         else if (ifa->ifa_addr->sa_family == AF_INET6)
         {
             struct sockaddr_in6* s6 = reinterpret_cast<struct sockaddr_in6*>(ifa->ifa_addr);
-            btclite::network::NetAddr addr;
+            NetAddr addr;
             addr.SetIpv6(s6->sin6_addr.s6_addr);
             if (AddLocalHost(addr, kAcLocalIf))
                 BTCLOG(LOG_LEVEL_INFO) << "Add local IPv6 addr " << ifa->ifa_name 
@@ -92,7 +92,7 @@ bool LocalNetConfig::GetLocalAddr(const NetAddr& peer_addr, ServiceFlags service
         return false;
     
     out->set_services(services);
-    out->set_timestamp(btclite::utility::util_time::GetAdjustedTime());
+    out->set_timestamp(util::GetAdjustedTime());
     
     return true;
 }
@@ -142,7 +142,7 @@ bool LocalNetConfig::AddLocalHost(const NetAddr& addr, int score)
     return true;
 }
 
-NetArgs::NetArgs(const Args& args)
+NetArgs::NetArgs(const util::Args& args)
     : listening_(args.GetBoolArg(FULLNODE_OPTION_LISTEN, true)),
       should_discover_(args.GetBoolArg(FULLNODE_OPTION_DISCOVER, true)),
       is_dnsseed_(args.GetBoolArg(FULLNODE_OPTION_DNSSEED, true)),
@@ -176,7 +176,7 @@ void AdvertiseLocalAddr(std::shared_ptr<Node> node)
     // tells us that it sees us as in case it has a better idea of our
     // address than we do.
     if (IsPeerLocalAddrGood(node) && (!addr_local.IsRoutable() ||
-                                       btclite::utility::GetUint64(
+                                       util::GetUint64(
                                            (score > kAcManual) ? 8:2) == 0))
         addr_local = std::move(node->local_addr());
     
@@ -204,13 +204,13 @@ void BroadcastAddrsTimeoutCb(std::shared_ptr<Node> node)
             addr_msg.mutable_addr_list()->push_back(addr);
             // receiver rejects addr messages larger than 1000
             if (addr_msg.addr_list().size() >= 1000) {
-                msg_process::SendMsg(addr_msg, node);
+                SendMsg(addr_msg, node);
                 addr_msg.mutable_addr_list()->clear();
             }
         }
     }
     if (!addr_msg.addr_list().empty())
-        msg_process::SendMsg(addr_msg, node);
+        SendMsg(addr_msg, node);
     node->ClearSentAddr();
     
     node->mutable_timers()->broadcast_addr_timer->set_interval(
@@ -220,7 +220,7 @@ void BroadcastAddrsTimeoutCb(std::shared_ptr<Node> node)
 
 int64_t IntervalNextSend(int average_interval_seconds)
 {
-    long double log = log1p(btclite::utility::GetUint64(1ULL << 48) * 
+    long double log = log1p(util::GetUint64(1ULL << 48) * 
                        -0.0000000000000035527136788 /* -1/2^48 */);
     return static_cast<int64_t>(log * average_interval_seconds * -1000000.0 + 0.5);
 }

@@ -5,10 +5,14 @@ namespace btclite {
 namespace network {
 namespace protocol {
 
-bool getaddress::RecvHandler(std::shared_ptr<Node> src_node) const
+namespace private_getaddress {
+
+bool GetAddress::RecvHandler(std::shared_ptr<Node> src_node) const
 {
     return true;
 }
+
+} // namespace private_getaddress
 
 } // namespace protocol
 } // namespace network

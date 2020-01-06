@@ -9,10 +9,10 @@
 
 
 namespace btclite {
-namespace utility {
+namespace util {
 
 uint64_t GetUint64(uint64_t max = std::numeric_limits<uint64_t>::max());
-Uint256 GetUint256();
+util::Uint256 GetUint256();
 
 
 /* 
@@ -26,7 +26,7 @@ public:
     explicit FastRandomContext(bool deterministic = false);
 
     /** Initialize with explicit seed (only for testing) */
-    explicit FastRandomContext(const Uint256& seed)
+    explicit FastRandomContext(const util::Uint256& seed)
         :  rng_(Botan::secure_vector<uint8_t>(seed.begin(), seed.end())), 
            requires_seed_(false), bytebuf_size_(0), bitbuf_size_(0) {}
 
@@ -57,7 +57,7 @@ public:
     }
 
     /** generate a random uint256. */
-    Uint256 Rand256();
+    util::Uint256 Rand256();
 
     /** Generate a random boolean. */
     bool RandBool()
@@ -102,7 +102,7 @@ private:
     }
 };
 
-} // namespace utility
+} // namespace util
 } // namespace btclite
 
 

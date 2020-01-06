@@ -7,6 +7,12 @@
 #include "p2p.h"
 #include "utiltime.h"
 
+
+namespace btclite {
+namespace unit_test {
+
+using namespace network;
+
 TEST(BanDbTest, Constructor)
 {
     BanDb ban_db(fs::path("/foo"));
@@ -16,7 +22,7 @@ TEST(BanDbTest, Constructor)
 
 TEST(BanDbTest, AddBanAddr)
 {
-    btclite::network::NetAddr addr;
+    NetAddr addr;
     addr.SetIpv4(inet_addr("1.2.3.4"));
     BanDb ban_db(fs::path("/tmp"));
     
@@ -39,7 +45,7 @@ TEST(BanDbTest, AddBanAddr)
 TEST(BanDbTest, ClearBanDb)
 {
     BanDb ban_db(fs::path("/tmp"));
-    btclite::network::NetAddr addr;
+    NetAddr addr;
     
     for (int i = 1; i < 10; i++) {
         std::string ip = "1.2.3." + std::to_string(i);
@@ -53,13 +59,13 @@ TEST(BanDbTest, ClearBanDb)
 
 TEST(BanDbTest, SweepBannedAddrs)
 {
-    btclite::network::NetAddr addr;
+    NetAddr addr;
     addr.SetIpv4(inet_addr("1.2.3.4"));
     SubNet subnet(addr);
     proto_banmap::BanEntry ban_entry;
     ban_entry.set_version(1);
-    ban_entry.set_create_time(btclite::utility::util_time::GetTimeSeconds()-2);
-    ban_entry.set_ban_until(btclite::utility::util_time::GetTimeSeconds()-1);
+    ban_entry.set_create_time(util::GetTimeSeconds()-2);
+    ban_entry.set_ban_until(util::GetTimeSeconds()-1);
     ban_entry.set_ban_reason(
         static_cast<std::underlying_type_t<BanDb::BanReason> >(
             BanDb::BanReason::NodeMisbehaving));
@@ -89,7 +95,7 @@ TEST(BanDbTest, SweepBannedAddrs)
 
 TEST(BanDbTest, DumpAndLoadBanList)
 {    
-    btclite::network::NetAddr addr;
+    NetAddr addr;
     proto_banmap::BanEntry ban_entry;
     proto_banmap::BanMap ban_map;
     char buf[10];
@@ -100,8 +106,8 @@ TEST(BanDbTest, DumpAndLoadBanList)
         addr.SetIpv4(inet_addr(buf));
         SubNet subnet(addr);
         ban_entry.set_version(i);
-        ban_entry.set_create_time(btclite::utility::util_time::GetTimeSeconds());
-        ban_entry.set_ban_until(btclite::utility::util_time::GetTimeSeconds()+kDefaultMisbehavingBantime);
+        ban_entry.set_create_time(util::GetTimeSeconds());
+        ban_entry.set_ban_until(util::GetTimeSeconds()+kDefaultMisbehavingBantime);
         ban_entry.set_ban_reason(
             static_cast<std::underlying_type_t<BanDb::BanReason> >(
                 BanDb::BanReason::ManuallyAdded));
@@ -131,7 +137,7 @@ TEST(BanDbTest, DumpAndLoadBanList)
 
 TEST(BanDbTest, AddrIsBanned)
 {
-    btclite::network::NetAddr addr;
+    NetAddr addr;
     proto_banmap::BanEntry ban_entry;
     proto_banmap::BanMap ban_map;
     char buf[10];
@@ -141,8 +147,8 @@ TEST(BanDbTest, AddrIsBanned)
         std::sprintf(buf, "1.2.3.%d", i);
         addr.SetIpv4(inet_addr(buf));
         ban_entry.set_version(i);
-        ban_entry.set_create_time(btclite::utility::util_time::GetTimeSeconds());
-        ban_entry.set_ban_until(btclite::utility::util_time::GetTimeSeconds()+kDefaultMisbehavingBantime);
+        ban_entry.set_create_time(util::GetTimeSeconds());
+        ban_entry.set_ban_until(util::GetTimeSeconds()+kDefaultMisbehavingBantime);
         ban_entry.set_ban_reason(
             static_cast<std::underlying_type_t<BanDb::BanReason> >(
                 BanDb::BanReason::NodeMisbehaving));
@@ -165,3 +171,6 @@ TEST(BanDbTest, AddrIsBanned)
     addr.SetIpv4(inet_addr("1.2.3.10"));
     EXPECT_FALSE(ban_db2.IsBanned(addr));
 }
+
+} // namespace unit_test
+} // namespace btclite

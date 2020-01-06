@@ -6,7 +6,8 @@
 #include "protocol/address.h"
 
 
-using namespace btclite::network::protocol;
+namespace btclite {
+namespace unit_test {
 
 class AddrTest : public ::testing::Test {
 protected:
@@ -18,7 +19,10 @@ protected:
         msg_addr2_.mutable_addr_list()->push_back(addr_);
     }
     
-    btclite::network::NetAddr addr_;
-    Addr msg_addr1_;
-    Addr msg_addr2_;
+    network::NetAddr addr_;
+    network::protocol::Addr msg_addr1_;
+    network::protocol::Addr msg_addr2_;
 };
+
+} // namespace unit_test
+} // namespace btclit

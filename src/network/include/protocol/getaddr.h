@@ -9,7 +9,9 @@ namespace btclite {
 namespace network {
 namespace protocol {
 
-class getaddress : public MessageData {
+namespace private_getaddress {
+
+class GetAddress : public MessageData {
 public:
     bool RecvHandler(std::shared_ptr<Node> src_node) const;
     
@@ -37,7 +39,9 @@ public:
     void Deserialize(Stream& in) {}
 };
 
-using GetAddr = Hashable<getaddress>;
+} // namespace private_getaddress
+
+using GetAddr = crypto::Hashable<private_getaddress::GetAddress>;
 
 } // namespace protocol
 } // namespace network

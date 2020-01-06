@@ -6,10 +6,19 @@
 #include "network_address.h"
 #include "stream.h"
 
+#include "btclite-config.h"
+
 
 namespace btclite {
 namespace network {
 namespace protocol {
+
+inline std::string FormatUserAgent()
+{
+    std::stringstream ss;
+    ss << "/" << PACKAGE_NAME << ":" << PACKAGE_VERSION << "/";
+    return ss.str();
+}
 
 enum VersionCode : uint32_t {
     kUnknownProtoVersion = 0,
@@ -53,8 +62,8 @@ public:
     Version() = default;
     
     Version(VersionCode version, ServiceFlags services, uint64_t timestamp,
-            const btclite::network::NetAddr& addr_recv,
-            const btclite::network::NetAddr& addr_from,
+            const NetAddr& addr_recv,
+            const NetAddr& addr_from,
             uint64_t nonce, const std::string& user_agent,
             uint32_t start_height, bool relay)
         : protocol_version_(version), services_(services), timestamp_(timestamp),
@@ -62,8 +71,8 @@ public:
           user_agent_(user_agent), start_height_(start_height), relay_(relay) {}
     
     Version(VersionCode version, ServiceFlags services, uint64_t timestamp,
-            btclite::network::NetAddr&& addr_recv,
-            btclite::network::NetAddr&& addr_from,
+            NetAddr&& addr_recv,
+            NetAddr&& addr_from,
             uint64_t nonce, std::string&& user_agent,
             uint32_t start_height, bool relay) noexcept
         : protocol_version_(version), services_(services), timestamp_(timestamp),
@@ -123,28 +132,28 @@ public:
         timestamp_ = timestamp;
     }
     
-    const btclite::network::NetAddr& addr_recv() const
+    const NetAddr& addr_recv() const
     {
         return addr_recv_;
     }
-    void set_addr_recv(const btclite::network::NetAddr& addr)
+    void set_addr_recv(const NetAddr& addr)
     {
         addr_recv_ = addr;
     }
-    void set_addr_recv(btclite::network::NetAddr&& addr) noexcept
+    void set_addr_recv(NetAddr&& addr) noexcept
     {
         addr_recv_ = std::move(addr);
     }
 
-    const btclite::network::NetAddr& addr_from() const
+    const NetAddr& addr_from() const
     {
         return addr_from_;
     }
-    void set_addr_from(const btclite::network::NetAddr& addr)
+    void set_addr_from(const NetAddr& addr)
     {
         addr_from_ = addr;
     }
-    void set_addr_from(btclite::network::NetAddr&& addr) noexcept
+    void set_addr_from(NetAddr&& addr) noexcept
     {
         addr_from_ = std::move(addr);
     }
@@ -193,10 +202,10 @@ private:
     VersionCode protocol_version_ = kUnknownProtoVersion;
     ServiceFlags services_ = kNodeNone;
     uint64_t timestamp_ = 0;
-    btclite::network::NetAddr addr_recv_;
+    NetAddr addr_recv_;
     
     // Fields below require version ≥ 106
-    btclite::network::NetAddr addr_from_;
+    NetAddr addr_from_;
     uint64_t nonce_ = 0;
     std::string user_agent_;
     uint32_t start_height_ = 0;
@@ -208,7 +217,7 @@ private:
 template <typename Stream>
 void Version::Serialize(Stream& out) const
 {
-    Serializer<Stream> serializer(out);
+    util::Serializer<Stream> serializer(out);
     
     serializer.SerialWrite(protocol_version_);
     serializer.SerialWrite(services_);
@@ -228,7 +237,7 @@ void Version::Serialize(Stream& out) const
 template <typename Stream>
 void Version::Deserialize(Stream& in)
 {
-    Deserializer<Stream> deserializer(in);
+    util::Deserializer<Stream> deserializer(in);
     
     deserializer.SerialRead(&protocol_version_);
     deserializer.SerialRead(&services_);
@@ -246,7 +255,7 @@ void Version::Deserialize(Stream& in)
 
 } // namespace private_version
 
-using Version = Hashable<private_version::Version>;
+using Version = crypto::Hashable<private_version::Version>;
 
 } // namespace protocol
 } // namespace network

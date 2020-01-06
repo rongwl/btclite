@@ -15,9 +15,9 @@
 namespace btclite {
 namespace network {
 
-class P2P : Uncopyable {
+class P2P : util::Uncopyable {
 public:
-    explicit P2P(const ExecutorConfig& config);
+    explicit P2P(const util::ExecutorConfig& config);
     
     bool Init();
     bool Start();

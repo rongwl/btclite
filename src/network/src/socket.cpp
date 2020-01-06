@@ -6,6 +6,9 @@
 #include <sys/socket.h>
 
 
+namespace btclite {
+namespace network {
+
 bool Socket::Create(int domain, int type, int protocol)
 {
     if (sock_fd_ > 0) {
@@ -102,7 +105,7 @@ bool Socket::SetSockNonBlocking()
     return true;
 }
 
-bool Socket::GetBindAddr(btclite::network::NetAddr *out)
+bool Socket::GetBindAddr(NetAddr *out)
 {
     struct sockaddr_storage sockaddr_bind;
     socklen_t len = sizeof(sockaddr_bind);
@@ -111,8 +114,11 @@ bool Socket::GetBindAddr(btclite::network::NetAddr *out)
         if (!getsockname(sock_fd_, (struct sockaddr*)&sockaddr_bind, &len))
             return out->FromSockAddr(reinterpret_cast<const struct sockaddr*>(&sockaddr_bind));
         else 
-            BTCLOG_MOD(LOG_LEVEL_WARNING, Logging::NET) << "Warning: get bind addr failed";
+            BTCLOG_MOD(LOG_LEVEL_WARNING, util::Logging::NET) << "Warning: get bind addr failed";
     }
     
     return false;
 }
+
+} // namespace network
+} // namespace btclite

@@ -3,7 +3,10 @@
 #include "compact.h"
 
 
-using namespace btclite::chain;
+namespace btclite {
+namespace unit_test {
+
+using namespace chain;
 
 TEST(CompactTest, Constructor)
 {
@@ -101,3 +104,6 @@ TEST(CompactTest, Negative)
     EXPECT_TRUE(Compact::Negative(0x00800001));
     EXPECT_FALSE(Compact::Negative(0x00800000));
 }
+
+} // namespace unit_test
+} // namespace btclit

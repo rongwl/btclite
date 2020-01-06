@@ -10,9 +10,11 @@ namespace btclite {
 namespace network {
 namespace protocol {
 
-class address : public MessageData {
+namespace private_address {
+
+class Address : public MessageData {
 public:
-    using List = std::vector<btclite::network::NetAddr>;
+    using List = std::vector<NetAddr>;
     
     //-------------------------------------------------------------------------
     bool RecvHandler(std::shared_ptr<Node> src_node) const;
@@ -35,12 +37,12 @@ public:
     size_t SerializedSize() const;
     
     //-------------------------------------------------------------------------
-    bool operator==(const address& b) const
+    bool operator==(const Address& b) const
     {
         return (addr_list_ == b.addr_list_);
     }
     
-    bool operator!=(const address& b) const
+    bool operator!=(const Address& b) const
     {
         return !(*this == b);
     }
@@ -49,14 +51,14 @@ public:
     template <typename Stream>
     void Serialize(Stream& out) const
     {
-        Serializer<Stream> serializer(out);
+        util::Serializer<Stream> serializer(out);
         serializer.SerialWrite(addr_list_);
     }
     
     template <typename Stream>
     void Deserialize(Stream& in)
     {
-        Deserializer<Stream> deserializer(in);
+        util::Deserializer<Stream> deserializer(in);
         deserializer.SerialRead(&addr_list_);
     }
     
@@ -75,7 +77,9 @@ private:
     List addr_list_;
 };
 
-using Addr = Hashable<address>;
+} // namespace private_address
+
+using Addr = crypto::Hashable<private_address::Address>;
 
 } // namespace protocol
 } // namespace network

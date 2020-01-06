@@ -123,7 +123,7 @@ private:
 template <typename Stream>
 void MessageHeader::Serialize(Stream& out) const
 {
-    Serializer<Stream> serializer(out);
+    util::Serializer<Stream> serializer(out);
     serializer.SerialWrite(magic_);
     serializer.SerialWrite(command_);
     serializer.SerialWrite(payload_length_);
@@ -133,7 +133,7 @@ void MessageHeader::Serialize(Stream& out) const
 template <typename Stream>
 void MessageHeader::Deserialize(Stream& in)
 {
-    Deserializer<Stream> deserializer(in);
+    util::Deserializer<Stream> deserializer(in);
     deserializer.SerialRead(&magic_);
     deserializer.SerialRead(&command_);
     deserializer.SerialRead(&payload_length_);

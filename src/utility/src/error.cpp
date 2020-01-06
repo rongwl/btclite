@@ -3,6 +3,9 @@
 #include <unordered_map>
 
 
+namespace btclite {
+namespace util {
+
 std::error_code make_error_code(ErrorCode e)
 {
     return std::error_code(static_cast<std::underlying_type_t<ErrorCode> >(e),
@@ -28,3 +31,6 @@ std::string BtcliteErrCategory::message(int code) const noexcept
     const auto message = messages.find(code);
     return message != messages.end() ? message->second : "invalid code";
 }
+
+} // namespace util
+} // namespace btclite

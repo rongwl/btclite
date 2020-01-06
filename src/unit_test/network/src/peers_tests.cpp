@@ -8,7 +8,10 @@
 #include "constants.h"
 
 
-using namespace btclite::network;
+namespace btclite {
+namespace unit_test {
+
+using namespace network;
 
 TEST(PeersTest, Constructor)
 {
@@ -51,7 +54,7 @@ TEST(PeersTest, AddPeer)
     bool is_new, is_tried;
     proto_peers::Peer peer;
     std::vector<uint64_t> rand_order_keys;
-    uint64_t now = btclite::utility::util_time::GetAdjustedTime();
+    uint64_t now = util::GetAdjustedTime();
     
     addr.SetIpv4(inet_addr("1.2.3.4"));
     addr.set_timestamp(now-4000);
@@ -111,10 +114,10 @@ TEST(PeersTest, AddPeer)
     
 
     // add mutiple addrs
-    std::vector<btclite::network::NetAddr> vec;
-    vec.push_back(btclite::network::NetAddr());
+    std::vector<NetAddr> vec;
+    vec.push_back(NetAddr());
     vec[0].SetIpv4(inet_addr("1.1.1.1"));
-    vec.push_back(btclite::network::NetAddr());
+    vec.push_back(NetAddr());
     vec[1].SetIpv4(inet_addr("2.2.2.2"));
     ASSERT_TRUE(peers.Add(vec, source));
     ASSERT_TRUE(peers.Find(vec[0], &peer, &is_new, &is_tried));
@@ -258,8 +261,8 @@ TEST(PeersTest, GetAddresses)
 {
     Peers peers;
     NetAddr addr, source;
-    int64_t now = btclite::utility::util_time::GetAdjustedTime();
-    std::vector<btclite::network::NetAddr> addrs, addrs2;
+    int64_t now = util::GetAdjustedTime();
+    std::vector<NetAddr> addrs, addrs2;
     
     ASSERT_TRUE(peers.GetAddrs(&addrs));
     EXPECT_TRUE(addrs.empty());
@@ -288,7 +291,7 @@ TEST(PeersTest, GetAddresses)
         int octet1 = i % 256;
         int octet2 = i >> 8 % 256;
         std::string str_addr = std::to_string(octet1) + "." + std::to_string(octet2) + ".1.23";
-        btclite::network::NetAddr addr;
+        NetAddr addr;
         addr.SetIpv4(inet_addr(str_addr.c_str()));
         addr.set_timestamp(now);
         peers.Add(addr, source);
@@ -348,7 +351,7 @@ TEST(PeersDbTest, DumpAndLoadPeers)
 {
     Peers& peers = SingletonPeers::GetInstance();
     NetAddr addr, source;
-    int64_t now = btclite::utility::util_time::GetAdjustedTime();
+    int64_t now = util::GetAdjustedTime();
     
     source.SetIpv4(inet_addr("250.1.2.1"));
     addr.SetIpv4(inet_addr("250.250.2.1"));
@@ -377,3 +380,6 @@ TEST(PeersDbTest, DumpAndLoadPeers)
     fs::remove(peers_db.path_peers());
     peers.Clear();
 }
+
+} // namespace unit_test
+} // namespace btclite

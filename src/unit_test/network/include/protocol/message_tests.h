@@ -3,7 +3,8 @@
 #include "protocol/message.h"
 
 
-using namespace btclite::network::protocol;
+namespace btclite {
+namespace unit_test {
 
 class MessageHeaderTest : public ::testing::Test {
 protected:
@@ -21,7 +22,10 @@ protected:
     uint32_t payload_length_ = 0;
     uint32_t checksum_ = 0;
     
-    MessageHeader header1_;
-    MessageHeader header2_;
-    MessageHeader header3_;
+    network::protocol::MessageHeader header1_;
+    network::protocol::MessageHeader header2_;
+    network::protocol::MessageHeader header3_;
 };
+
+} // namespace unit_test
+} // namespace btclite

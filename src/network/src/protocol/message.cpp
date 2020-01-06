@@ -10,7 +10,7 @@ namespace protocol {
 MessageHeader::MessageHeader(const uint8_t *raw_data)
 {
     std::vector<uint8_t> vec;
-    ByteSource<std::vector<uint8_t> > byte_source(vec);
+    util::ByteSource<std::vector<uint8_t> > byte_source(vec);
     
     std::memset(command_.begin(), 0, kCommandSize);
     vec.reserve(kSize);
@@ -20,7 +20,7 @@ MessageHeader::MessageHeader(const uint8_t *raw_data)
 
 bool MessageHeader::IsValid() const
 {
-    if (magic_ != btclite::network::SingletonParams::GetInstance().msg_magic()) {
+    if (magic_ != SingletonParams::GetInstance().msg_magic()) {
         BTCLOG(LOG_LEVEL_WARNING) << "MessageHeader::magic_(" << magic_ << ") is invalid";
         return false;
     }
@@ -34,9 +34,9 @@ bool MessageHeader::IsValid() const
             cmd != kMsgMerkleBlock &&
             cmd != kMsgGetBlocks &&
             cmd != kMsgGetHeaders &&
-            cmd != ::kMsgTx &&
+            cmd != btclite::kMsgTx &&
             cmd != kMsgHeaders &&
-            cmd != ::kMsgBlock &&
+            cmd != btclite::kMsgBlock &&
             cmd != kMsgGetAddr &&
             cmd != kMsgMempool &&
             cmd != kMsgPing &&

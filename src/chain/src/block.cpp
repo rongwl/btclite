@@ -4,12 +4,13 @@
 #include <sstream>
 
 
-using namespace btclite::utility::string_encoding;
+namespace btclite {
+namespace chain {
 
-const Hash256& BlockHeader::Hash() const
+const crypto::Hash256& BlockHeader::Hash() const
 {
     if (hash_cache_.IsNull()) {
-        HashOStream hs;
+        crypto::HashOStream hs;
         hs << *this;
         hs.DoubleSha256(&hash_cache_);
     }
@@ -73,10 +74,10 @@ std::string Block::ToString() const
     return ss.str();
 }
 
-Hash256 Block::ComputeMerkleRoot() const
+crypto::Hash256 Block::ComputeMerkleRoot() const
 {
-    std::vector<Hash256> leaves;
-    std::vector<Hash256> swap;
+    std::vector<crypto::Hash256> leaves;
+    std::vector<crypto::Hash256> swap;
     for_each(transactions_.begin(), transactions_.end(), [&leaves](const Transaction& tx)
                                                          { leaves.push_back(tx.Hash()); });
     
@@ -86,8 +87,8 @@ Hash256 Block::ComputeMerkleRoot() const
         if (leaves.size() % 2 != 0)
             leaves.push_back(leaves.back());
         for (auto it = leaves.begin(); it != leaves.end(); it += 2) {
-            Hash256 hash;
-            btclite::crypto::hash::DoubleSha256(it[0].ToString()+it[1].ToString(), &hash);
+            crypto::Hash256 hash;
+            crypto::DoubleSha256(it[0].ToString()+it[1].ToString(), &hash);
             swap.push_back(hash);
         }
         std::swap(leaves, swap);
@@ -119,7 +120,7 @@ Block CreateGenesisBlock(const std::string& coinbase, const Script& output_scrip
     transactions.push_back(std::move(tx_new));
 
     Block genesis(std::move(transactions));
-    BlockHeader header(version, Hash256(), genesis.ComputeMerkleRoot(), time, bits, nonce);    
+    BlockHeader header(version, crypto::Hash256(), genesis.ComputeMerkleRoot(), time, bits, nonce);    
     genesis.set_header(std::move(header));
     
     return genesis;
@@ -140,8 +141,13 @@ Block CreateGenesisBlock(uint32_t time, uint32_t nonce, uint32_t bits, int32_t v
 {
     const std::string coinbase = "The Times 03/Jan/2009 Chancellor on brink of second bailout for banks";
     Script output_script;
-    output_script.Push(DecodeHex("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f"));
+    output_script.Push(
+        util::DecodeHex(
+            "04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f"));
     output_script.Push(Opcode::OP_CHECKSIG);
 
     return CreateGenesisBlock(coinbase, output_script, time, nonce, bits, version, reward);
 }
+
+} // namespace chain
+} // namespace btclite

@@ -20,14 +20,14 @@ const BloomFilter *NodeFilter::bloom_filter() const
     return bloom_filter_.get();
 }
 
-Node::Node(const struct bufferevent *bev, const btclite::network::NetAddr& addr,
+Node::Node(const struct bufferevent *bev, const NetAddr& addr,
            bool is_inbound, bool manual, std::string host_name)
     : id_(SingletonNodes::GetInstance().GetNewNodeId()),
       services_(SingletonLocalNetCfg::GetInstance().local_services()),
       bev_(const_cast<struct bufferevent*>(bev)), addr_(addr),
-      local_host_nonce_(btclite::utility::GetUint64()),
+      local_host_nonce_(util::GetUint64()),
       host_name_(host_name), is_inbound_(is_inbound), manual_(manual), known_addrs_(3000),
-      time_(btclite::utility::util_time::GetTimeSeconds())
+      time_(util::GetTimeSeconds())
 {
     time_.ping_time.min_ping_usec_time = std::numeric_limits<int64_t>::max();
 }
@@ -42,7 +42,7 @@ Node::~Node()
         
         if (SingletonBlockSync::GetInstance().IsExist(id_)) {
             auto task = std::bind(&BlockSync::EraseSyncState, &(SingletonBlockSync::GetInstance()), std::placeholders::_1);
-            SingletonThreadPool::GetInstance().AddTask(std::function<void(NodeId)>(task), id_);
+            util::SingletonThreadPool::GetInstance().AddTask(std::function<void(NodeId)>(task), id_);
         }
     }
 }
@@ -83,7 +83,7 @@ bool Node::CheckBanned()
     return true;
 }
 
-bool Node::PushAddrToSend(const btclite::network::NetAddr& addr)
+bool Node::PushAddrToSend(const NetAddr& addr)
 {
     LOCK(cs_addrs_);
     
@@ -93,7 +93,7 @@ bool Node::PushAddrToSend(const btclite::network::NetAddr& addr)
         return false;
     
     if (addrs_to_send_.size() >= kMaxAddrToSend) {
-        addrs_to_send_[btclite::utility::GetUint64(addrs_to_send_.size())] = addr;
+        addrs_to_send_[util::GetUint64(addrs_to_send_.size())] = addr;
     } else {
         addrs_to_send_.push_back(addr);
     }
@@ -136,11 +136,11 @@ void Nodes::AddNode(std::shared_ptr<Node> node)
     BTCLOG(LOG_LEVEL_VERBOSE) << "Added node, id:" << node->id() << " addr:" << node->addr().ToString();
 }
 
-std::shared_ptr<Node> Nodes::InitializeNode(const struct bufferevent *bev, const btclite::network::NetAddr& addr,
+std::shared_ptr<Node> Nodes::InitializeNode(const struct bufferevent *bev, const NetAddr& addr,
                                             bool is_inbound, bool manual)
 {
     auto node = std::make_shared<Node>(bev, addr, is_inbound, manual);
-    node->mutable_timers()->no_msg_timer = SingletonTimerMng::GetInstance().
+    node->mutable_timers()->no_msg_timer = util::SingletonTimerMng::GetInstance().
                                            StartTimer(kNoMsgTimeout*1000, 0, Node::InactivityTimeoutCb, node);
     
     AddNode(node);    
@@ -174,7 +174,7 @@ std::shared_ptr<Node> Nodes::GetNode(struct bufferevent *bev)
     return nullptr;
 }
 
-std::shared_ptr<Node> Nodes::GetNode(const btclite::network::NetAddr& addr)
+std::shared_ptr<Node> Nodes::GetNode(const NetAddr& addr)
 {
     LOCK(cs_nodes_);
     for (auto it = list_.begin(); it != list_.end(); ++it)

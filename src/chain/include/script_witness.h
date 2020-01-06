@@ -5,6 +5,10 @@
 #include <vector>
 #include <utility>
 
+
+namespace btclite {
+namespace chain {
+
 class ScriptWitness {
 public:
     ScriptWitness() {}
@@ -72,5 +76,8 @@ public:
 private:
     std::vector<std::vector<uint8_t> > stack_;
 };
+
+} // namespace chain
+} // namespace btclite
 
 #endif // BTCLITE_TRANSACTION_SCRIPT_WITNESS_H

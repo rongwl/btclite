@@ -5,10 +5,14 @@ namespace btclite {
 namespace network {
 namespace protocol {
 
-bool sendcmpct::RecvHandler(std::shared_ptr<Node> src_node) const
+namespace private_sendcmpct {
+
+bool SendCmpct::RecvHandler(std::shared_ptr<Node> src_node) const
 {
     return true;
 }
+
+} // private_sendcmpct
 
 } // namespace protocol
 } // namespace network

@@ -13,10 +13,10 @@
 #include "serialize.h"
 
 
-using IpAddr = Bytes<kIpByteSize>;
-
 namespace btclite {
 namespace network {
+
+using IpAddr = util::Bytes<kIpByteSize>;
 
 enum AddrFamily {
     kAfUnroutable = 0,
@@ -106,7 +106,7 @@ public:
     bool SetInternal(const std::string& name);
     AddrFamily GetFamily() const;
     int GetReachability(const NetAddr& addr_partner) const;
-    Hash256 GetHash() const;
+    crypto::Hash256 GetHash() const;
     
     //-------------------------------------------------------------------------
     template <typename Stream>
@@ -194,7 +194,7 @@ private:
 template <typename Stream>
 void NetAddr::Serialize(Stream& out) const
 {
-    Serializer<Stream> serializer(out);
+    util::Serializer<Stream> serializer(out);
     uint16_t port = static_cast<uint16_t>(proto_addr_.port());
     
     serializer.SerialWrite(proto_addr_.timestamp());
@@ -206,7 +206,7 @@ void NetAddr::Serialize(Stream& out) const
 template <typename Stream>
 void NetAddr::Deserialize(Stream& in)
 {
-    Deserializer<Stream> deserializer(in);
+    util::Deserializer<Stream> deserializer(in);
     uint32_t timestamp;
     uint64_t services;
     uint16_t port;
@@ -221,9 +221,6 @@ void NetAddr::Deserialize(Stream& in)
     proto_addr_.set_port(port);
 }
 
-} // namespace network
-} // namespace btclite
-
 class SubNet {
 public:
     static constexpr size_t netmask_byte_size = 16;    
@@ -235,20 +232,20 @@ public:
         std::memset(netmask_, 0, sizeof(netmask_));
     }
     
-    SubNet(const btclite::network::NetAddr& addr)
+    SubNet(const NetAddr& addr)
         : net_addr_(addr), valid_(addr.IsValid())
     {
         std::memset(netmask_, 0xff, sizeof(netmask_));
     }
     
-    SubNet(btclite::network::NetAddr&& addr) noexcept
+    SubNet(NetAddr&& addr) noexcept
         : net_addr_(std::move(addr)), valid_(addr.IsValid())
     {
         std::memset(netmask_, 0xff, sizeof(netmask_));
     }
     
-    SubNet(const btclite::network::NetAddr& addr, int32_t mask);
-    SubNet(const btclite::network::NetAddr &addr, const btclite::network::NetAddr &mask);
+    SubNet(const NetAddr& addr, int32_t mask);
+    SubNet(const NetAddr &addr, const NetAddr &mask);
     
     //-------------------------------------------------------------------------
     bool IsValid() const
@@ -263,7 +260,7 @@ public:
         valid_ = false;
     }
     
-    bool Match(const btclite::network::NetAddr& addr) const;
+    bool Match(const NetAddr& addr) const;
     std::string ToString() const;
     
     //-------------------------------------------------------------------------
@@ -278,7 +275,7 @@ public:
     }
     
     //-------------------------------------------------------------------------
-    const btclite::network::NetAddr& net_addr() const
+    const NetAddr& net_addr() const
     {
         return net_addr_;
     }
@@ -289,10 +286,13 @@ public:
     }
     
 private:
-    btclite::network::NetAddr net_addr_;
+    NetAddr net_addr_;
     uint8_t netmask_[netmask_byte_size];
     bool valid_;
 };
+
+} // namespace network
+} // namespace btclite
 
 
 #endif // BTCLITE_NETWORK_ADDRESS_H

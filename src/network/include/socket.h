@@ -6,6 +6,9 @@
 #include "util.h"
 
 
+namespace btclite {
+namespace network {
+
 // for mock
 class SocketInterface {
 public:
@@ -20,7 +23,7 @@ public:
     virtual int sock_fd() const = 0;
 };
 
-class Socket : public SocketInterface, Uncopyable {
+class Socket : public SocketInterface, util::Uncopyable {
 public:
     using Fd = int;
     
@@ -39,7 +42,7 @@ public:
     bool Close();    
     bool SetSockNoDelay();
     bool SetSockNonBlocking();
-    bool GetBindAddr(btclite::network::NetAddr *out);
+    bool GetBindAddr(NetAddr *out);
     
     //-------------------------------------------------------------------------
     Fd sock_fd() const
@@ -51,7 +54,7 @@ private:
     Socket::Fd sock_fd_;
 };
 
-class SingletonListenSocket : Uncopyable {
+class SingletonListenSocket : util::Uncopyable {
 public:
     static Socket& GetInstance()
     {
@@ -62,5 +65,8 @@ public:
 private:
     SingletonListenSocket() {}
 };
+
+} // namespace network
+} // namespace btclite
 
 #endif // BTCLITE_SOCKET_H

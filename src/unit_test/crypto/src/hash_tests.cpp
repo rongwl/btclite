@@ -4,7 +4,11 @@
 #include "transaction.h"
 
 
-using namespace btclite::crypto::hash;
+namespace btclite {
+namespace unit_test {
+
+using namespace crypto;
+using namespace chain;
 
 TEST(HashWStreamTest, Sha256)
 {
@@ -78,8 +82,11 @@ TEST(SipHasherTest, Constructor1)
 
 TEST(SipHasherTest, Constructor2)
 {
-    Uint128 key(0x12345678, 0x12345678);
+    util::Uint128 key(0x12345678, 0x12345678);
     SipHasher sip_hasher(key);
     uint64_t tag = sip_hasher.Update(0x1122334455667788).Final();
     ASSERT_EQ(tag, 0xb0bc17a3d48ce99a);
 }
+
+} // namespace unit_test
+} // namespace btclit

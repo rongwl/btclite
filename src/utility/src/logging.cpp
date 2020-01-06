@@ -1,6 +1,9 @@
 #include "utility/include/logging.h"
 
 
+namespace btclite {
+namespace util {
+
 std::atomic<uint32_t> Logging::log_module_ = 0;
 
 const std::array<uint8_t, LOG_LEVEL_MAX> Logging::map_loglevel_ = {
@@ -32,3 +35,6 @@ void Logging::Init(char *argv0)
     FLAGS_logtostderr = 1;
     FLAGS_v = map_loglevel_[std::stoi(DEFAULT_LOG_LEVEL)];
 }
+
+} // namespace util
+} // namespace btclite

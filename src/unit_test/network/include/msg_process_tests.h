@@ -10,6 +10,9 @@
 #include "network_address.h"
 
 
+namespace btclite {
+namespace unit_test {
+
 class MsgProcessTest : public ::testing::Test {
 protected:
     void SetUp() override
@@ -26,5 +29,8 @@ protected:
     
     struct event_base *base_ = nullptr;
     struct bufferevent *pair_[2] = {};
-    btclite::network::NetAddr addr_;
+    network::NetAddr addr_;
 };
+
+} // namespace unit_test
+} // namespace btclit

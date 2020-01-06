@@ -1,6 +1,9 @@
 #include "thread.h"
 
 
+namespace btclite {
+namespace util {
+
 void SetThreadName(const char* name)
 {
 
@@ -133,3 +136,6 @@ ThreadPool::~ThreadPool()
     for(std::thread &worker: threads_)
         worker.join();
 }
+
+} // namespace util
+} // namespace btclite

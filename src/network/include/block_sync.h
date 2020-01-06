@@ -16,13 +16,13 @@ using NodeId = int64_t;
 struct BlockReject {
     uint8_t reject_code = 0;
     std::string reject_reason;
-    Hash256 block_hash;
+    crypto::Hash256 block_hash;
 };
 
 /* Blocks that are in flight, and that are in the queue to be downloaded. */
 struct QueuedBlock {
-    Hash256 hash;
-    const btclite::chain::BlockIndex *index = nullptr;
+    crypto::Hash256 hash;
+    const chain::BlockIndex *index = nullptr;
     
     // Whether this block has validated headers at the time of request.
     bool has_validated_headers;
@@ -58,7 +58,7 @@ struct SyncTimeoutState {
     int64_t timeout = 0;
     
     // A header with the work we require on our peer's chain
-    const btclite::chain::BlockIndex *work_header = nullptr;
+    const chain::BlockIndex *work_header = nullptr;
     
     // After timeout is reached, set to true after sending getheaders
     bool sent_getheaders = false;
@@ -82,16 +82,16 @@ struct SyncTimeState {
 
 struct SyncProcessState {
     //! The best known block we know this peer has announced.
-    const  btclite::chain::BlockIndex *best_known_block_index = nullptr;
+    const  chain::BlockIndex *best_known_block_index = nullptr;
     
     //! The last full block we both have.
-    const  btclite::chain::BlockIndex *last_common_block_index = nullptr;
+    const  chain::BlockIndex *last_common_block_index = nullptr;
     
     //! The best header we have sent our peer.
-    const  btclite::chain::BlockIndex *best_header_sent_index = nullptr;
+    const  chain::BlockIndex *best_header_sent_index = nullptr;
     
     //! The hash of the last unknown block this peer has announced.
-    Hash256 last_unknown_block_hash;
+    crypto::Hash256 last_unknown_block_hash;
 };
 
 struct BlocksInFlight {
@@ -140,10 +140,10 @@ struct DownloadState {
 // Maintain validation-specific state about block sync
 class BlockSyncState {
 public:
-    BlockSyncState(const btclite::network::NetAddr& addr, const std::string& addr_name)
+    BlockSyncState(const NetAddr& addr, const std::string& addr_name)
         : node_addr_(addr), node_name_(addr_name) {}
     
-    const btclite::network::NetAddr& node_addr() const
+    const NetAddr& node_addr() const
     {
         return node_addr_;
     }
@@ -209,7 +209,7 @@ public:
     }
     
 private:    
-    const btclite::network::NetAddr node_addr_;    
+    const NetAddr node_addr_;    
     const std::string node_name_;    
     SyncBasicState basic_state_;    
     SyncStats stats_;    
@@ -219,13 +219,13 @@ private:
     DownloadState download_state_;   
 };
 
-class BlockSync : Uncopyable {
+class BlockSync : util::Uncopyable {
 public:
     using MapPeerSyncState = std::map<NodeId, BlockSyncState>;
-    using MapBlockInFlight = std::map<Hash256, std::pair<NodeId, BlocksInFlight::iterator> >;
+    using MapBlockInFlight = std::map<crypto::Hash256, std::pair<NodeId, BlocksInFlight::iterator> >;
     
     //-------------------------------------------------------------------------
-    void AddSyncState(NodeId id, const btclite::network::NetAddr& addr, const std::string& addr_name);    
+    void AddSyncState(NodeId id, const NetAddr& addr, const std::string& addr_name);    
     void EraseSyncState(NodeId id);    
     bool ShouldUpdateTime(NodeId id);
     void Misbehaving(NodeId id, int howmuch);
@@ -238,7 +238,7 @@ public:
     }
     
     //-------------------------------------------------------------------------
-    bool GetNodeAddr(NodeId id, btclite::network::NetAddr *out);
+    bool GetNodeAddr(NodeId id, NetAddr *out);
     
     //-------------------------------------------------------------------------
     int sync_started_count() const
@@ -302,8 +302,8 @@ public:
     // sync timeout state
     bool GetTimeOut(NodeId id, int64_t *out);
     bool SetTimeout(NodeId id, int64_t timeout);
-    const  btclite::chain::BlockIndex *GetWorkHeader(NodeId id);
-    bool SetWorkHeader(NodeId id, const  btclite::chain::BlockIndex *index);
+    const  chain::BlockIndex *GetWorkHeader(NodeId id);
+    bool SetWorkHeader(NodeId id, const  chain::BlockIndex *index);
     bool GetSentGetheaders(NodeId id, bool *out);
     bool SetSentGetheaders(NodeId id, bool sent_getheaders);
     bool GetProtect(NodeId id, bool *out);
@@ -320,14 +320,14 @@ public:
     
     //-------------------------------------------------------------------------
     // sync process state
-    const  btclite::chain::BlockIndex *GetBestKnownBlockIndex(NodeId id);
-    bool SetBestKnownBlockIndex(NodeId id, const  btclite::chain::BlockIndex *index);
-    const  btclite::chain::BlockIndex *GetLastCommonBlockIndex(NodeId id);
-    bool SetLastCommonBlockIndex(NodeId id, const  btclite::chain::BlockIndex *index);
-    const  btclite::chain::BlockIndex *GetBestHeaderSentIndex(NodeId id);
-    bool SetBestHeaderSentIndex(NodeId id, const  btclite::chain::BlockIndex *index);
-    bool GetLastUnknownBlockHash(NodeId id, Hash256 *out);
-    bool SetLastUnknownBlockHash(NodeId id, const Hash256& last_unknown_block_hash);
+    const  chain::BlockIndex *GetBestKnownBlockIndex(NodeId id);
+    bool SetBestKnownBlockIndex(NodeId id, const  chain::BlockIndex *index);
+    const  chain::BlockIndex *GetLastCommonBlockIndex(NodeId id);
+    bool SetLastCommonBlockIndex(NodeId id, const  chain::BlockIndex *index);
+    const  chain::BlockIndex *GetBestHeaderSentIndex(NodeId id);
+    bool SetBestHeaderSentIndex(NodeId id, const  chain::BlockIndex *index);
+    bool GetLastUnknownBlockHash(NodeId id, crypto::Hash256 *out);
+    bool SetLastUnknownBlockHash(NodeId id, const crypto::Hash256& last_unknown_block_hash);
     
     //-------------------------------------------------------------------------
     // blocks in flight
@@ -355,7 +355,7 @@ public:
     bool SetSupportsDesiredCmpctVersion(NodeId id, bool supports_desired_cmpct_version);
     
 private:
-    mutable CriticalSection cs_block_sync_;
+    mutable util::CriticalSection cs_block_sync_;
     
     // Number of nodes with SyncBasicState::sync_started.
     int sync_started_count_ = 0;
@@ -386,7 +386,7 @@ struct IterLess
 };
 
 struct OrphanTx {
-    using TxSharedPtr = std::shared_ptr<const Transaction>;
+    using TxSharedPtr = std::shared_ptr<const chain::Transaction>;
     
     // When modifying, adapt the copy of this definition in unit tests.
     TxSharedPtr tx;
@@ -394,24 +394,25 @@ struct OrphanTx {
     int64_t time_expire;
 };
 
-class Orphans : Uncopyable {
+class Orphans : util::Uncopyable {
 public:
-    using MapOrphanTxs = std::map<Hash256, OrphanTx>;
-    using MapPrevOrphanTxs = std::map<OutPoint, std::set<MapOrphanTxs::iterator, IterLess<MapOrphanTxs::iterator> > >;
+    using MapOrphanTxs = std::map<crypto::Hash256, OrphanTx>;
+    using MapPrevOrphanTxs = std::map<chain::OutPoint, 
+          std::set<MapOrphanTxs::iterator, IterLess<MapOrphanTxs::iterator> > >;
     
     bool AddOrphanTx(OrphanTx::TxSharedPtr tx, NodeId id);
     void EraseOrphansFor(NodeId id);
     uint32_t LimitOrphanTxSize(uint32_t max_orphans);
     
 private:
-    mutable CriticalSection cs_orphans_;
+    mutable util::CriticalSection cs_orphans_;
     MapOrphanTxs map_orphan_txs_;
     MapPrevOrphanTxs map_prev_orphan_txs_;
     
-    int EraseOrphanTx(const Hash256& hash);
+    int EraseOrphanTx(const crypto::Hash256& hash);
 };
 
-class SingletonOrphans : Uncopyable {
+class SingletonOrphans : util::Uncopyable {
 public:
     static Orphans& GetInstance()
     {
@@ -426,20 +427,21 @@ private:
 
 bool IsInitialBlockDownload();
 
-} // namespace network 
-} // namespace block_sync
 
-
-class SingletonBlockSync : Uncopyable {
+class SingletonBlockSync : util::Uncopyable {
 public:
-    static btclite::network::BlockSync& GetInstance()
+    static BlockSync& GetInstance()
     {
-        static btclite::network::BlockSync block_sync;
+        static BlockSync block_sync;
         return block_sync;
     }
     
 private:
     SingletonBlockSync() {}
 };
+
+} // namespace network 
+} // namespace block_sync
+
 
 #endif // BTCLITE_BLOCK_SYNC_H

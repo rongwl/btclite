@@ -5,7 +5,7 @@
 
 
 namespace btclite {
-namespace utility {
+namespace util {
 
 uint64_t GetUint64(uint64_t max)
 {
@@ -19,10 +19,10 @@ uint64_t GetUint64(uint64_t max)
     return dis(rng);
 }
 
-Uint256 GetUint256() 
+util::Uint256 GetUint256() 
 {
     Botan::System_RNG rng;
-    Uint256 hash;
+    util::Uint256 hash;
     rng.randomize(hash.data(), hash.size());
     
     return hash;
@@ -35,7 +35,7 @@ FastRandomContext::FastRandomContext(bool deterministic)
     if (!deterministic) {
         return;
     }
-    Uint256 seed;
+    util::Uint256 seed;
     rng_.add_entropy(seed.data(), seed.size());
 }
 
@@ -69,7 +69,7 @@ uint64_t FastRandomContext::RandRange(uint64_t range)
 
 void FastRandomContext::RandomSeed()
 {
-    Uint256 seed = GetUint256();
+    util::Uint256 seed = GetUint256();
     rng_.add_entropy(seed.data(), seed.size());
     requires_seed_ = false;
 }
@@ -84,12 +84,12 @@ std::vector<unsigned char> FastRandomContext::RandBytes(size_t len)
     return ret;
 }
 
-Uint256 FastRandomContext::Rand256()
+util::Uint256 FastRandomContext::Rand256()
 {
     if (bytebuf_size_ < 32) {
         FillByteBuffer();
     }
-    Uint256 ret;
+    util::Uint256 ret;
     memcpy(ret.begin(), bytebuf_ + 64 - bytebuf_size_, 32);
     bytebuf_size_ -= 32;
     
@@ -117,5 +117,5 @@ uint64_t FastRandomContext::CountBits(uint64_t x)
     return ret;
 }
 
-} // namespace utility
+} // namespace util
 } // namespace btclite

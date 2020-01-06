@@ -3,7 +3,10 @@
 #include "utiltime.h"
 
 
-bool BanDb::Add(const btclite::network::NetAddr& addr, const BanReason& ban_reason, bool dump_list)
+namespace btclite {
+namespace network {
+
+bool BanDb::Add(const NetAddr& addr, const BanReason& ban_reason, bool dump_list)
 {
     return Add(SubNet(addr), ban_reason, dump_list);
 }
@@ -12,9 +15,9 @@ bool BanDb::Add(const SubNet& sub_net, const BanReason& ban_reason, bool dump_li
 {
     proto_banmap::BanEntry ban_entry;
     
-    ban_entry.set_create_time(btclite::utility::util_time::GetTimeSeconds());
+    ban_entry.set_create_time(util::GetTimeSeconds());
     ban_entry.set_ban_reason(static_cast<std::underlying_type_t<BanReason> >(ban_reason));
-    ban_entry.set_ban_until(btclite::utility::util_time::GetTimeSeconds() + kDefaultMisbehavingBantime);
+    ban_entry.set_ban_until(util::GetTimeSeconds() + kDefaultMisbehavingBantime);
     
     if (!Add_(sub_net, ban_entry))
         return false;
@@ -27,7 +30,7 @@ bool BanDb::Add(const SubNet& sub_net, const BanReason& ban_reason, bool dump_li
     return true;
 }
 
-bool BanDb::Erase(const btclite::network::NetAddr& addr, bool dump_list)
+bool BanDb::Erase(const NetAddr& addr, bool dump_list)
 {
     return Erase(SubNet(addr), dump_list);
 }
@@ -68,7 +71,7 @@ bool BanDb::Add_(const SubNet& sub_net, const proto_banmap::BanEntry& ban_entry)
 
 void BanDb::SweepBanned()
 {
-    int64_t now = btclite::utility::util_time::GetTimeSeconds();
+    int64_t now = util::GetTimeSeconds();
     
     LOCK(cs_ban_map_);
     for (auto it = ban_map_.map().begin(); it != ban_map_.map().end(); ++it) {
@@ -115,15 +118,18 @@ bool BanDb::LoadBanList()
     return ban_map_.ParseFromIstream(&fs);
 }
 
-bool BanDb::IsBanned(btclite::network::NetAddr addr)
+bool BanDb::IsBanned(NetAddr addr)
 {
     LOCK(cs_ban_map_);
     
     for (auto it = ban_map_.map().begin(); it != ban_map_.map().end(); ++it) {
-        if (SubNet(addr).ToString() == it->first && btclite::utility::util_time::GetTimeSeconds() < it->second.ban_until()) {
+        if (SubNet(addr).ToString() == it->first && util::GetTimeSeconds() < it->second.ban_until()) {
             return true;
         }
     }
     
     return false;
 }
+
+} // namespace network
+} // namespace btclite

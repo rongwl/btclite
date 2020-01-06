@@ -28,6 +28,9 @@
 #define GLOBAL_OPTION_REGTEST  "regtest"
 
 
+namespace btclite {
+namespace util {
+
 void SetupEnvironment();
 
 class SigMonitor {
@@ -204,6 +207,9 @@ T MedianFilter<T>::Median() const
         return (sorted_[sorted_size / 2 - 1] + sorted_[sorted_size / 2]) / 2;
     }
 }
+
+} // namespace util
+} // namespace btclite
 
 
 #endif // BTCLITE_UTIL_H

@@ -57,14 +57,14 @@ public:
     template <typename Stream>
     void Serialize(Stream& out) const
     {
-        Serializer<Stream> serializer(out);
+        util::Serializer<Stream> serializer(out);
         serializer.SerialWrite(nonce_);
     }
     
     template <typename Stream>
     void Deserialize(Stream& in)
     {
-        Deserializer<Stream> deserializer(in);
+        util::Deserializer<Stream> deserializer(in);
         deserializer.SerialRead(&nonce_);
     }
     
@@ -85,7 +85,7 @@ private:
 
 } // namespace private_pong
 
-using Pong = Hashable<private_pong::Pong>;
+using Pong = crypto::Hashable<private_pong::Pong>;
 
 } // namespace protocol
 } // namespace network

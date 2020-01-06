@@ -2,8 +2,7 @@
 
 
 namespace btclite {
-namespace utility {
-namespace serialize {
+namespace util {
 
 size_t VarIntSize(size_t vec_size)
 {
@@ -17,6 +16,5 @@ size_t VarIntSize(size_t vec_size)
         return 9;
 }
 
-} // namespace serialize
-} // namespace utility
+} // namespace util
 } // namespace btclite

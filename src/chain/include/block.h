@@ -4,6 +4,9 @@
 #include "transaction.h"
 
 
+namespace btclite {
+namespace chain {
+
 /** Nodes collect new transactions into a block, hash them into a hash tree,
  * and scan through nonce values to make the block's hash satisfy proof-of-work
  * requirements.  When they solve the proof-of-work, they broadcast the block
@@ -18,7 +21,7 @@ public:
         Clear();
     }
     
-    BlockHeader(int32_t version, const Hash256& prev_block_hash, const Hash256& merkle_root_hash,
+    BlockHeader(int32_t version, const crypto::Hash256& prev_block_hash, const crypto::Hash256& merkle_root_hash,
                 uint32_t time, uint32_t bits, uint32_t nonce)
         : version_(version), 
           prev_block_hash_(prev_block_hash), merkle_root_hash_(merkle_root_hash),
@@ -56,7 +59,7 @@ public:
     template <typename Stream> void Deserialize(Stream& is);
     
     //-------------------------------------------------------------------------
-    const Hash256& Hash() const;
+    const crypto::Hash256& Hash() const;
     
     //-------------------------------------------------------------------------
     BlockHeader& operator=(const BlockHeader& b);
@@ -73,22 +76,22 @@ public:
         hash_cache_.Clear();
     }
     
-    const Hash256& hashPrevBlock() const
+    const crypto::Hash256& hashPrevBlock() const
     {
         return prev_block_hash_;
     }
-    void set_hashPrevBlock(const Hash256& hash)
+    void set_hashPrevBlock(const crypto::Hash256& hash)
     {
         prev_block_hash_ = hash;
         hash_cache_.Clear();
     }
     
-    const Hash256& hashMerkleRoot() const
+    const crypto::Hash256& hashMerkleRoot() const
     {
         return merkle_root_hash_;
         hash_cache_.Clear();
     }
-    void set_hashMerkleRoot(const Hash256& hash)
+    void set_hashMerkleRoot(const crypto::Hash256& hash)
     {
         merkle_root_hash_ = hash;
         hash_cache_.Clear();
@@ -126,19 +129,19 @@ public:
     
 private:
     int32_t version_;
-    Hash256 prev_block_hash_;
-    Hash256 merkle_root_hash_;
+    crypto::Hash256 prev_block_hash_;
+    crypto::Hash256 merkle_root_hash_;
     uint32_t time_;
     uint32_t nBits_;
     uint32_t nonce_;
     
-    mutable Hash256 hash_cache_;
+    mutable crypto::Hash256 hash_cache_;
 };
 
 template <typename Stream>
 void BlockHeader::Serialize(Stream& os) const
 {
-    Serializer<Stream> serializer(os);
+    util::Serializer<Stream> serializer(os);
     serializer.SerialWrite(static_cast<uint32_t>(version_));
     serializer.SerialWrite(prev_block_hash_);
     serializer.SerialWrite(merkle_root_hash_);
@@ -150,7 +153,7 @@ void BlockHeader::Serialize(Stream& os) const
 template <typename Stream>
 void BlockHeader::Deserialize(Stream& is)
 {
-    Deserializer<Stream> deserializer(is);
+    util::Deserializer<Stream> deserializer(is);
     deserializer.SerialRead(&version_);
     deserializer.SerialRead(&prev_block_hash_);
     deserializer.SerialRead(&merkle_root_hash_);
@@ -188,20 +191,20 @@ public:
         transactions_.clear();
     }
     std::string ToString() const;
-    Hash256 ComputeMerkleRoot() const;
+    crypto::Hash256 ComputeMerkleRoot() const;
     
     //-------------------------------------------------------------------------
     template <typename Stream>
     void Serialize(Stream& os) const
     {
-        Serializer<Stream> serializer(os);
+        util::Serializer<Stream> serializer(os);
         serializer.SerialWrite(header_);
         serializer.SerialWrite(transactions_);
     }
     template <typename Stream>
     void Deserialize(Stream& is)
     {
-        Deserializer<Stream> deserializer(is);
+        util::Deserializer<Stream> deserializer(is);
         deserializer.SerialRead(&header_);
         deserializer.SerialRead(&transactions_);
     }
@@ -246,5 +249,8 @@ private:
 Block CreateGenesisBlock(const std::string& coinbase, const Script& output_script, uint32_t time,
                          uint32_t nonce, uint32_t bits, int32_t version, uint64_t reward);
 Block CreateGenesisBlock(uint32_t time, uint32_t nonce, uint32_t bits, int32_t version, uint64_t reward);
+
+} // namespace chain
+} // namespace btclite
 
 #endif // BTCLITE_BLOCK_H

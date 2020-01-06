@@ -1,43 +1,41 @@
 #include "chain/include/params.h"
 
 
+namespace btclite {
+namespace consensus {
+
 void Bip9Params::UpdateVersionBitsParameters(Bip9Deployment::Deployment d, int64_t start_time, int64_t timeout)
 {
 
 }
-
-namespace btclite {
-namespace consensus {
-
-using namespace btclite::utility::string_encoding;
 
 Params::Params(BaseEnv env)
 {
 
 }
 
-void Params::CreateGenesisBlock(const std::string& coinbase, const Script& output_script,
+void Params::CreateGenesisBlock(const std::string& coinbase, const chain::Script& output_script,
                          uint32_t time, uint32_t nonce, uint32_t bits, int32_t version,
                          uint64_t reward)
 {
-    Script script;    
+    chain::Script script;    
     script.Push(0x1d00ffff);
-    script.Push(ScriptInt(4));
+    script.Push(chain::ScriptInt(4));
     script.Push(std::vector<uint8_t>(coinbase.begin(), coinbase.end()));
 
-    std::vector<TxIn> inputs;
-    TxIn input(std::move(OutPoint()), std::move(script));
+    std::vector<chain::TxIn> inputs;
+    chain::TxIn input(std::move(chain::OutPoint()), std::move(script));
     inputs.push_back(std::move(input));
 
-    std::vector<TxOut> outputs;
-    outputs.push_back(TxOut(reward, output_script));
+    std::vector<chain::TxOut> outputs;
+    outputs.push_back(chain::TxOut(reward, output_script));
 
-    std::vector<Transaction> transactions;
-    Transaction tx_new(1, std::move(inputs), std::move(outputs), 0);
+    std::vector<chain::Transaction> transactions;
+    chain::Transaction tx_new(1, std::move(inputs), std::move(outputs), 0);
     transactions.push_back(std::move(tx_new));
 
     genesis_.set_transactions(std::move(transactions));
-    BlockHeader header(version, Hash256(), genesis_.ComputeMerkleRoot(), time, bits, nonce);    
+    chain::BlockHeader header(version, crypto::Hash256(), genesis_.ComputeMerkleRoot(), time, bits, nonce);    
     genesis_.set_header(std::move(header));
 }
 
@@ -55,9 +53,11 @@ void Params::CreateGenesisBlock(const std::string& coinbase, const Script& outpu
 void Params::CreateGenesisBlock(uint32_t time, uint32_t nonce, uint32_t bits, int32_t version, uint64_t reward)
 {
     const std::string coinbase = "The Times 03/Jan/2009 Chancellor on brink of second bailout for banks";
-    Script output_script;
-    output_script.Push(DecodeHex("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f"));
-    output_script.Push(Opcode::OP_CHECKSIG);
+    chain::Script output_script;
+    output_script.Push(
+        util::DecodeHex(
+            "04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f"));
+    output_script.Push(chain::Opcode::OP_CHECKSIG);
 
     CreateGenesisBlock(coinbase, output_script, time, nonce, bits, version, reward);
 }

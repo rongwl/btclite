@@ -23,7 +23,7 @@ public:
     bool GetLocalAddr(const NetAddr& peer_addr, ServiceFlags services, NetAddr *out);
     int GetAddrScore(const NetAddr& peer_addr);    
     
-    bool IsLocal(const btclite::network::NetAddr& addr)
+    bool IsLocal(const NetAddr& addr)
     {
         LOCK(cs_local_net_config_);
         return (map_local_addrs_.count(addr) > 0);
@@ -43,23 +43,23 @@ public:
         local_services_ = flags;
     }
     
-    std::map<btclite::network::NetAddr, int> map_local_addrs() const // thread safe copy
+    std::map<NetAddr, int> map_local_addrs() const // thread safe copy
     {
         LOCK(cs_local_net_config_);
         return map_local_addrs_;
     }
     
 private:
-    mutable CriticalSection cs_local_net_config_;
+    mutable util::CriticalSection cs_local_net_config_;
     ServiceFlags local_services_;
-    std::map<btclite::network::NetAddr, int> map_local_addrs_;
+    std::map<NetAddr, int> map_local_addrs_;
     
-    bool AddLocalHost(const btclite::network::NetAddr& addr, int score);
+    bool AddLocalHost(const NetAddr& addr, int score);
 };
 
 class NetArgs {
 public:
-    explicit NetArgs(const Args& args);
+    explicit NetArgs(const util::Args& args);
     
     bool listening() const
     {
@@ -97,15 +97,12 @@ void BroadcastAddrsTimeoutCb(std::shared_ptr<Node> node);
 // Return a time interavl for send in the future (in microseconds) for exponentially distributed events.
 int64_t IntervalNextSend(int average_interval_seconds);
 
-} // namespace network
-} // namespace btclite
 
-
-class SingletonLocalNetCfg : Uncopyable {
+class SingletonLocalNetCfg : util::Uncopyable {
 public:
-    static btclite::network::LocalNetConfig& GetInstance()
+    static LocalNetConfig& GetInstance()
     {
-        static btclite::network::LocalNetConfig config;
+        static LocalNetConfig config;
         return config;
     }
     
@@ -113,11 +110,11 @@ private:
     SingletonLocalNetCfg() {}
 };
 
-class SingletonNetInterrupt : Uncopyable {
+class SingletonNetInterrupt : util::Uncopyable {
 public:
-    static ThreadInterrupt& GetInstance()
+    static util::ThreadInterrupt& GetInstance()
     {
-        static ThreadInterrupt interrupt;
+        static util::ThreadInterrupt interrupt;
         return interrupt;
     }
     
@@ -125,16 +122,19 @@ private:
     SingletonNetInterrupt() {}
 };
 
-class SingletonNetArgs : Uncopyable {
+class SingletonNetArgs : util::Uncopyable {
 public:
-    static btclite::network::NetArgs& GetInstance(const Args& args = Args())
+    static NetArgs& GetInstance(const util::Args& args = util::Args())
     {
-        static btclite::network::NetArgs net_args(args);
+        static NetArgs net_args(args);
         return net_args;
     }
     
 private:
     SingletonNetArgs() {}
 };
+
+} // namespace network
+} // namespace btclite
 
 #endif // BTCLITE_NET_H

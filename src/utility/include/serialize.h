@@ -13,8 +13,7 @@
 
 
 namespace btclite {
-namespace utility {
-namespace serialize {
+namespace util {
 
 size_t VarIntSize(size_t vec_size);
 
@@ -58,9 +57,6 @@ inline float BinaryToFloat(uint32_t i)
     return tmp.f;
 }
 
-} // namespace serialize
-} // namespace utility
-} // namespace btclite
 
 template <typename Stream>
 class Serializer {
@@ -81,13 +77,13 @@ private:
     // for double
     void Serialize(const double& in) 
     {
-        SerWriteData(btclite::utility::serialize::DoubleToBinary(in));
+        SerWriteData(DoubleToBinary(in));
     }
     
     // for float
     void Serialize(const float& in)
     {
-        SerWriteData(btclite::utility::serialize::FloatToBinary(in));
+        SerWriteData(FloatToBinary(in));
     }
         
     //for string
@@ -216,7 +212,7 @@ private:
     {
         uint64_t i;
         SerReadData(&i);
-        *out = btclite::utility::serialize::BinaryToDouble(i);        
+        *out = BinaryToDouble(i);        
     }
     
     // for float
@@ -224,7 +220,7 @@ private:
     {
         uint32_t i;
         SerReadData(&i);
-        *out = btclite::utility::serialize::BinaryToFloat(i);
+        *out = BinaryToFloat(i);
     }
     
     // for string
@@ -387,5 +383,7 @@ void Deserializer<Stream>::SerReadData(T *obj)
     FromLittleEndian(data.begin(), data.end(), obj);
 }
 
+} // namespace util
+} // namespace btclite
 
 #endif // BTCLITE_SERIALIZE_H

@@ -15,6 +15,9 @@
 #include "util.h"
 
 
+namespace btclite {
+namespace util {
+
 void SetThreadName(const char* name);
 
 /*
@@ -155,5 +158,8 @@ void TraceThread(const std::string& name,  Func&& func)
         throw;
     }
 }
+
+} // namespace util
+} // namespace btclite
 
 #endif // BTCLITE_THREAD_INTERRUPT_H

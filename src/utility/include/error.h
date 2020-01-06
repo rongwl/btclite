@@ -4,6 +4,9 @@
 #include <system_error>
 
 
+namespace btclite {
+namespace util {
+
 enum class ErrorCode {
     success = 0,
     
@@ -38,13 +41,6 @@ public:
     }
 };
 
-namespace std {
-
-template <>
-struct is_error_code_enum<ErrorCode> : public true_type {};
-
-} // namespace std
-
 
 class Exception : public std::runtime_error {
 public :
@@ -60,5 +56,15 @@ public :
 private:
     std::error_code code_;
 };
+
+} // namespace util
+} // namespace btclite
+
+namespace std {
+
+template <>
+struct is_error_code_enum<btclite::util::ErrorCode> : public true_type {};
+
+} // namespace std
 
 #endif // BTCLITE_ERROR_H

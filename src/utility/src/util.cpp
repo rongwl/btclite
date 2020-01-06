@@ -12,6 +12,9 @@
 #include "error.h"
 
 
+namespace btclite {
+namespace util {
+
 volatile std::sig_atomic_t SigMonitor::received_signal_ = 0;
 
 
@@ -266,3 +269,5 @@ void SetupEnvironment()
     }
 }
 
+} // namespace util
+} // namespace btclite

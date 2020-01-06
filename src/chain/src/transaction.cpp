@@ -4,15 +4,19 @@
 #include <numeric>
 
 
+namespace btclite {
+namespace chain {
+
 std::string TxIn::ToString() const
 {
-    using namespace btclite::utility::string_encoding;
     std::stringstream ss;
     ss << "TxIn(" << prevout_.ToString() << ", ";
     if (prevout_.IsNull())
-        ss << "coinbase=" << EncodeHex(script_sig_.begin(), script_sig_.end());
+        ss << "coinbase=" << util::EncodeHex(
+               script_sig_.begin(), script_sig_.end());
     else
-        ss << "scriptSig=" << EncodeHex(script_sig_.begin(), script_sig_.end()).substr(0, 24);
+        ss << "scriptSig=" << util::EncodeHex(
+               script_sig_.begin(), script_sig_.end()).substr(0, 24);
     if (sequence_no_ != default_sequence_no)
         ss << ", sequence_no=" << sequence_no_;
     ss << ")";
@@ -26,7 +30,7 @@ std::string TxOut::ToString() const
     ss << "TxOut(value=" << (value_ / kSatoshiPerBitcoin) << "."
        << std::setw(8) << std::setfill('0') << (value_ % kSatoshiPerBitcoin) << ", "
        << "scriptPubKey=" 
-       << btclite::utility::string_encoding::EncodeHex(script_pub_key_.begin(),
+       << util::EncodeHex(script_pub_key_.begin(),
                script_pub_key_.end()) 
        << ")";
     return std::move(ss.str());
@@ -35,7 +39,7 @@ std::string TxOut::ToString() const
 template <typename Stream>
 void Transaction::Serialize(Stream& os, bool witness) const
 {
-    Serializer<Stream> serializer(os);
+    util::Serializer<Stream> serializer(os);
     serializer.SerialWrite(version_);
     serializer.SerialWrite(inputs_);
     serializer.SerialWrite(outputs_);
@@ -45,7 +49,7 @@ void Transaction::Serialize(Stream& os, bool witness) const
 template <typename Stream>
 void Transaction::Deserialize(Stream& is, bool witness)
 {
-    Deserializer<Stream> deserializer(is);
+    util::Deserializer<Stream> deserializer(is);
     deserializer.SerialRead(&version_);
     deserializer.SerialRead(&inputs_);
     deserializer.SerialRead(&outputs_);
@@ -100,9 +104,9 @@ size_t Transaction::SerializedSize() const
     };
     
     return sizeof(version_) + sizeof(lock_time_)
-           + btclite::utility::serialize::VarIntSize(inputs_.size())
+           + util::VarIntSize(inputs_.size())
            + std::accumulate(inputs_.begin(), inputs_.end(), size_t{0}, ins)
-           + btclite::utility::serialize::VarIntSize(outputs_.size())
+           + util::VarIntSize(outputs_.size())
            + std::accumulate(outputs_.begin(), outputs_.end(), size_t{0}, outs);
 }
 
@@ -124,10 +128,10 @@ std::string Transaction::ToString() const
     return std::move(ss.str());
 }
 
-const Hash256& Transaction::Hash() const
+const crypto::Hash256& Transaction::Hash() const
 {
     if (hash_cache_.IsNull()) {
-        HashOStream hs;
+        crypto::HashOStream hs;
         hs << *this;
         hs.DoubleSha256(&hash_cache_);
     }
@@ -135,7 +139,10 @@ const Hash256& Transaction::Hash() const
     return hash_cache_;
 }
 
-const Hash256& Transaction::WitnessHash() const
+const crypto::Hash256& Transaction::WitnessHash() const
 {
     return witness_hash_cache_;
 }
+
+} // namespace chain
+} // namespace btclite

@@ -21,7 +21,7 @@
 #define DEFAULT_DNSSEED   "1"
 
 
-class FullNodeConfig : public ExecutorConfig {
+class FullNodeConfig : public btclite::util::ExecutorConfig {
 public:    
     void ParseParameters(int argc, const char* const argv[]);
     bool InitDataDir();

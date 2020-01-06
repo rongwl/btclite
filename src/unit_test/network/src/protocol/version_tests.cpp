@@ -5,15 +5,19 @@
 #include <event2/buffer.h>
 
 
-using namespace btclite::network;
+namespace btclite {
+namespace unit_test {
+
+using namespace network;
+using namespace network::protocol;
 
 TEST_F(VersionTest, Constructor)
 {
     EXPECT_EQ(version1_.protocol_version(), 0);
     EXPECT_EQ(version1_.services(), 0);
     EXPECT_EQ(version1_.timestamp(), 0);
-    EXPECT_EQ(version1_.addr_recv(), btclite::network::NetAddr());
-    EXPECT_EQ(version1_.addr_from(), btclite::network::NetAddr());
+    EXPECT_EQ(version1_.addr_recv(), NetAddr());
+    EXPECT_EQ(version1_.addr_from(), NetAddr());
     EXPECT_EQ(version1_.nonce(), 0);
     EXPECT_EQ(version1_.user_agent(), "");
     EXPECT_EQ(version1_.start_height(), 0);
@@ -60,12 +64,12 @@ TEST_F(VersionTest, OperatorEqual)
     
     version2_.set_timestamp(version3_.timestamp());
     EXPECT_EQ(version2_, version3_);
-    version2_.set_addr_recv(std::move(btclite::network::NetAddr()));
+    version2_.set_addr_recv(std::move(NetAddr()));
     EXPECT_NE(version2_, version3_);
     
     version2_.set_addr_recv(std::move(version3_.addr_recv()));
     EXPECT_EQ(version2_, version3_);
-    version2_.set_addr_from(std::move(btclite::network::NetAddr()));
+    version2_.set_addr_from(std::move(NetAddr()));
     EXPECT_NE(version2_, version3_);
     
     version2_.set_addr_from(version3_.addr_from());
@@ -102,10 +106,10 @@ TEST_F(VersionTest, Set)
     version1_.set_relay(version2_.relay());
     EXPECT_EQ(version1_, version2_);
     
-    version1_.set_addr_recv(btclite::network::NetAddr());
-    version1_.set_addr_recv(std::move(btclite::network::NetAddr(version2_.addr_recv())));
-    version1_.set_addr_from(btclite::network::NetAddr());
-    version1_.set_addr_from(std::move(btclite::network::NetAddr(version2_.addr_from())));
+    version1_.set_addr_recv(NetAddr());
+    version1_.set_addr_recv(std::move(NetAddr(version2_.addr_recv())));
+    version1_.set_addr_from(NetAddr());
+    version1_.set_addr_from(std::move(NetAddr(version2_.addr_from())));
     version1_.set_user_agent("");
     version1_.set_user_agent(std::move(std::string(version2_.user_agent())));
     EXPECT_EQ(version1_, version2_);
@@ -129,10 +133,10 @@ TEST_F(VersionTest, IsValid)
     
     version2_.set_protocol_version(kMinPeerProtoVersion);
     EXPECT_TRUE(version2_.IsValid());
-    version2_.set_addr_recv(std::move(btclite::network::NetAddr()));
+    version2_.set_addr_recv(std::move(NetAddr()));
     EXPECT_FALSE(version2_.IsValid());
     
-    version2_.set_addr_recv(std::move(btclite::network::NetAddr(addr_recv_)));
+    version2_.set_addr_recv(std::move(NetAddr(addr_recv_)));
     EXPECT_TRUE(version2_.IsValid());
     version2_.set_services(kNodeNone);
     EXPECT_FALSE(version2_.IsValid());
@@ -151,8 +155,8 @@ TEST_F(VersionTest, IsValid)
 TEST_F(VersionTest, Serialize)
 {
     std::vector<uint8_t> vec;
-    ByteSink<std::vector<uint8_t> > byte_sink(vec);
-    ByteSource<std::vector<uint8_t> > byte_source(vec);    
+    util::ByteSink<std::vector<uint8_t> > byte_sink(vec);
+    util::ByteSource<std::vector<uint8_t> > byte_source(vec);    
     MessageHeader header1(0x12345678, kMsgVersion, 1000, 0x12345678), header2;
     
     header1.Serialize(byte_sink);
@@ -171,7 +175,7 @@ TEST_F(VersionTest, Serialize)
 
 TEST_F(VersionTest, SerializedSize)
 {
-    MemOstream ms;
+    util::MemOstream ms;
     
     ms << version2_;
     EXPECT_EQ(version2_.SerializedSize(), ms.vec().size());
@@ -189,3 +193,6 @@ TEST_F(VersionTest, Received)
     //bufferevent_enable(pair_[1], EV_READ);
     //auto node = std::make_shared<Node>(pair[0], addr_from_, false);
 }
+
+} // namespace unit_test
+} // namespace btclit

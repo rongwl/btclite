@@ -3,7 +3,6 @@
 
 namespace btclite {
 namespace crypto {
-namespace hash {
 
 void Sha256(const uint8_t in[], size_t length, Hash256 *out)
 {
@@ -94,9 +93,6 @@ Hash256 DoubleSha256(const std::string &in)
     return hash;
 }
 
-} // namespace hash
-} // namespace crypto
-} // namespace btclite
 
 void HashOStream::Sha256(Hash256 *out) const
 {
@@ -164,3 +160,5 @@ uint64_t SipHasher::Final()
     return ret;
 }
 
+} // namespace crypto
+} // namespace btclite

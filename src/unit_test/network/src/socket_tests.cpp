@@ -26,7 +26,7 @@ TEST(BasicSocketTest, MethodCreate)
 TEST(BasicSocketTest, MethodGetBindAddr)
 {
     Socket::Fd sock_fd;
-    btclite::network::NetAddr addr;
+    network::NetAddr addr;
     struct sockaddr_in sock_addr1, sock_addr2;
     struct sockaddr_in6 sock_addr3, sock_addr4;
     

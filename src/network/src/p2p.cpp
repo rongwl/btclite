@@ -5,10 +5,10 @@
 namespace btclite {
 namespace network {
 
-P2P::P2P(const ExecutorConfig& config)
+P2P::P2P(const util::ExecutorConfig& config)
     : peers_db_(config.path_data_dir())
 {
-    btclite::network::SingletonParams::GetInstance(config.env());
+    SingletonParams::GetInstance(config.env());
     SingletonNetArgs::GetInstance(config.args());
     //SingletonLocalNetCfg::GetInstance();
     //SingletonNodes::GetInstance();
@@ -62,11 +62,11 @@ bool P2P::Start()
     SingletonNetInterrupt::GetInstance().Reset();
     
     // start acceptor
-    thread_acceptor_loop_ = std::thread(&TraceThread<std::function<void()> >, "acceptor",
+    thread_acceptor_loop_ = std::thread(&util::TraceThread<std::function<void()> >, "acceptor",
                                         std::function<void()>(std::bind(&Acceptor::StartEventLoop, &acceptor_)));
     
     // start connector
-    thread_connector_loop_ = std::thread(&TraceThread<std::function<void()> >, "connector",
+    thread_connector_loop_ = std::thread(&util::TraceThread<std::function<void()> >, "connector",
                                          std::function<void()>(std::bind(&Connector::StartEventLoop, &connector_)));
     if (!net_args.specified_outgoing().empty()) {
         if (!connector_.ConnectNodes(net_args.specified_outgoing()), true)
@@ -89,7 +89,7 @@ void P2P::Interrupt()
     BTCLOG(LOG_LEVEL_INFO) << "Interrupting p2p network...";
     
     SingletonNetInterrupt::GetInstance()();
-    SingletonTimerMng::GetInstance().set_stop(true);
+    util::SingletonTimerMng::GetInstance().set_stop(true);
     acceptor_.ExitEventLoop();
     connector_.ExitEventLoop();    
     

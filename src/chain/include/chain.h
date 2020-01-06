@@ -77,7 +77,7 @@ public:
         return header_;
     }
     
-    const Hash256 *phash_block() const
+    const crypto::Hash256 *phash_block() const
     {
         return phash_block_;
     }
@@ -97,7 +97,7 @@ public:
         return height_;
     }
     
-    const uint256_t& chain_work() const
+    const util::uint256_t& chain_work() const
     {
         return chain_work_;
     }
@@ -131,7 +131,7 @@ private:
     BlockHeader header_;
     
     // pointer to the hash of the block, if any. Memory is owned by this BlockIndex
-    const Hash256 *phash_block_ = nullptr;
+    const crypto::Hash256 *phash_block_ = nullptr;
     
     // pointer to the index of the predecessor of this block
     BlockIndex *prev_ = nullptr;
@@ -143,7 +143,7 @@ private:
     size_t height_ = 0;
 
     // (memory only) Total amount of work (expected number of hashes) in the chain up to and including this block
-    uint256_t chain_work_ = 0;
+    util::uint256_t chain_work_ = 0;
     
     // Number of transactions in this block.
     // Note: in a potential headers-first mode, this number cannot be relied upon
@@ -165,7 +165,7 @@ private:
 };
 
 // An in-memory indexed chain of blocks.
-class BlockChain : Uncopyable {
+class BlockChain : util::Uncopyable {
 public:
     // Returns the index entry for the genesis block of this chain, 
     // or nullptr if none.
@@ -244,19 +244,19 @@ private:
     std::vector<BlockIndex*> chain_;
 };
 
-} // namespace chain
-} // namespace btclite
-
-class SingletonBlockChain : Uncopyable {
+class SingletonBlockChain : util::Uncopyable {
 public:
-    static btclite::chain::BlockChain& GetInstance()
+    static chain::BlockChain& GetInstance()
     {
-        static btclite::chain::BlockChain chain;
+        static chain::BlockChain chain;
         return chain;
     }
     
 private:
     SingletonBlockChain() {}
 };
+
+} // namespace chain
+} // namespace btclite
 
 #endif // BTCLITE_CHAIN_H

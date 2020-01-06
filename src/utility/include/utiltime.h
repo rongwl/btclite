@@ -6,6 +6,15 @@
 #include "util.h"
 
 
+namespace btclite {
+namespace util {
+
+int64_t GetTimeSeconds();
+int64_t GetTimeMillis();
+int64_t GetTimeMicros();
+int64_t GetAdjustedTime();
+void AddTimeData(const network::NetAddr& addr, int64_t offset_sample);
+
 class TimeOffset {
 public:
     int64_t time_offset() const
@@ -37,17 +46,6 @@ private:
     SingletonTimeOffset() {}
 };
 
-namespace btclite {
-namespace utility {
-namespace util_time {
-
-int64_t GetTimeSeconds();
-int64_t GetTimeMillis();
-int64_t GetTimeMicros();
-int64_t GetAdjustedTime();
-void AddTimeData(const btclite::network::NetAddr& addr, int64_t offset_sample);
-
-} // namespace time
 } // namespace util
 } // namespace btclite
 

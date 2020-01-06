@@ -8,8 +8,7 @@
 
 
 namespace btclite {
-namespace utility {
-namespace util_time {
+namespace util {
 
 int64_t GetTimeSeconds()
 {
@@ -37,7 +36,7 @@ int64_t GetAdjustedTime()
     return GetTimeSeconds() + SingletonTimeOffset::GetInstance().time_offset();
 }
 
-void AddTimeData(const btclite::network::NetAddr& addr, int64_t offset_sample)
+void AddTimeData(const network::NetAddr& addr, int64_t offset_sample)
 {
     // Ignore duplicates
     static std::set<std::string> set_known;
@@ -64,6 +63,5 @@ void AddTimeData(const btclite::network::NetAddr& addr, int64_t offset_sample)
     }    
 }
 
-} // namespace util_time
-} // namespace utility
+} // namespace util
 } // namespace btclite

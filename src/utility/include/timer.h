@@ -12,6 +12,9 @@
 #include "utiltime.h"
 
 
+namespace btclite {
+namespace util {
+
 class TimerCfg {
 public:
     TimerCfg(uint32_t t, uint32_t i, uint64_t e, const std::function<void()>& c)
@@ -125,7 +128,7 @@ TimerMng::TimerPtr TimerMng::StartTimer(uint32_t timeout, uint32_t interval, Fun
     if (timeout == 0)
         return nullptr;
 
-    int64_t now = btclite::utility::util_time::GetTimeMillis();
+    int64_t now = GetTimeMillis();
     auto func = std::function<void()>(std::bind(std::forward<Func>(f), std::forward<Args>(args)...));
     std::lock_guard<std::mutex> lock(mutex_);
     timers_.emplace_back(std::make_shared<TimerCfg>(timeout, interval, now+timeout, func));
@@ -144,5 +147,7 @@ private:
     SingletonTimerMng() {}
 };
 
+} // namespace util
+} // namespace btclite
 
 #endif // BTCLITE_TIMER_H

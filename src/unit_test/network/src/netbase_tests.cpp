@@ -7,9 +7,14 @@
 #include "network/include/params.h"
 
 
+namespace btclite {
+namespace unit_test {
+
+using namespace network;
+
 TEST(NetBaseTest, LookupHost)
 {
-    btclite::network::NetAddr addr;
+    NetAddr addr;
     uint8_t buf[sizeof(struct in6_addr)];
     uint8_t out[kIpByteSize];
     
@@ -17,14 +22,14 @@ TEST(NetBaseTest, LookupHost)
     ASSERT_TRUE(addr.IsIpv4());
     EXPECT_EQ(addr.GetIpv4(), inet_addr("127.0.0.1"));
     EXPECT_EQ(addr.port(), 
-              btclite::network::SingletonParams::GetInstance(BaseEnv::testnet).default_port());
+              SingletonParams::GetInstance(BaseEnv::testnet).default_port());
     
     addr.Clear();
     LookupHost("::FFFF:192.168.1.1", &addr, false);
     ASSERT_TRUE(addr.IsIpv4());
     EXPECT_EQ(addr.GetIpv4(), inet_addr("192.168.1.1"));
     EXPECT_EQ(addr.port(), 
-              btclite::network::SingletonParams::GetInstance(BaseEnv::testnet).default_port());
+              SingletonParams::GetInstance(BaseEnv::testnet).default_port());
     
     addr.Clear();
     memset(buf, 0, sizeof(buf));
@@ -35,7 +40,7 @@ TEST(NetBaseTest, LookupHost)
     addr.GetIpv6(out);
     EXPECT_EQ(std::memcmp(buf, out, sizeof(out)), 0);
     EXPECT_EQ(addr.port(), 
-              btclite::network::SingletonParams::GetInstance(BaseEnv::testnet).default_port());
+              SingletonParams::GetInstance(BaseEnv::testnet).default_port());
     
     addr.Clear();
     LookupHost("bitcoin.org", &addr, true);
@@ -310,3 +315,6 @@ TEST(NetBaseTest, LookupSubNet)
     ASSERT_TRUE(subnet2.IsValid());
     EXPECT_EQ(subnet2.ToString(), "1:2:3:4:5:6:7:8/ffff:ffff:ffff:fffe:ffff:ffff:ffff:ff0f");
 }
+
+} // namespace unit_test
+} // namespace btclite

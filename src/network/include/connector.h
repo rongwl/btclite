@@ -31,16 +31,16 @@ public:
     bool StartOutboundTimer();
     bool OutboundTimeOutCb();
     bool ConnectNodes(const std::vector<std::string>& str_addrs, bool manual = false);
-    bool ConnectNodes(const std::vector<btclite::network::NetAddr>& addrs, bool manual = false);
-    bool GetHostAddr(const std::string& host_name, btclite::network::NetAddr *out);
+    bool ConnectNodes(const std::vector<NetAddr>& addrs, bool manual = false);
+    bool GetHostAddr(const std::string& host_name, NetAddr *out);
     static bool DnsLookup(const std::vector<Seed>& seeds);
     
 private:
     struct event_base *base_;
     struct bufferevent *bev_;
-    TimerMng::TimerPtr outbound_timer_;
+    util::TimerMng::TimerPtr outbound_timer_;
     
-    bool ConnectNode(const btclite::network::NetAddr& addr, bool manual = false);
+    bool ConnectNode(const NetAddr& addr, bool manual = false);
 };
 
 } // namespace network

@@ -4,6 +4,9 @@
 #include "p2p.h"
 
 
+namespace btclite {
+namespace unit_test {
+
 TEST(P2PTest, MethodInitArgs)
 {
     /*P2P p2p;
@@ -28,3 +31,6 @@ TEST(P2PTest, MethodInitArgs)
     EXPECT_FALSE(p2p.network_args().is_dnsseed_);
     EXPECT_EQ(p2p.network_args().specified_outgoing_, ip);*/
 }
+
+} // namespace unit_test
+} // namespace btclit

@@ -10,7 +10,10 @@
 #include "stream.h"
 
 
-using namespace btclite::network;
+namespace btclite {
+namespace unit_test {
+
+using namespace network;
 
 TEST(NetAddrTest, Constructor)
 {
@@ -443,7 +446,7 @@ TEST(NetAddrTest, Clear)
 
 TEST(NetAddrTest, SerializedSize)
 {
-    MemOstream ms;
+    util::MemOstream ms;
     NetAddr addr;
     ms << addr;
     EXPECT_EQ(addr.SerializedSize(), ms.vec().size());
@@ -452,8 +455,8 @@ TEST(NetAddrTest, SerializedSize)
 TEST(NetAddrTest, Serialize)
 {
     std::vector<uint8_t> vec;
-    ByteSink<std::vector<uint8_t> > byte_sink(vec);
-    ByteSource<std::vector<uint8_t> > byte_source(vec);
+    util::ByteSink<std::vector<uint8_t> > byte_sink(vec);
+    util::ByteSource<std::vector<uint8_t> > byte_source(vec);
     NetAddr addr1(0x1234, kNodeNetwork, 
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 0x1, 0x2, 0x3, 0x4},
     8333), addr2;
@@ -485,7 +488,7 @@ TEST(SubNetTest, NetmaskBits)
 
 TEST(SubNetTest, Constructor)
 {
-    btclite::network::NetAddr addr, netmask;
+    NetAddr addr, netmask;
     SubNet subnet;
     uint8_t mask[16];
 
@@ -546,7 +549,7 @@ TEST(SubNetTest, Constructor)
 
 TEST(SubNetTest, Match)
 {
-    btclite::network::NetAddr addr;
+    NetAddr addr;
     uint8_t buf[sizeof(struct in6_addr)];
     
     addr.SetIpv4(inet_addr("1.2.3.4"));
@@ -627,7 +630,7 @@ TEST(SubNetTest, Match)
 
 TEST(SubNetTest, IsValid)
 {
-    btclite::network::NetAddr addr;
+    NetAddr addr;
     uint8_t buf[sizeof(struct in6_addr)];
     
     addr.SetIpv4(inet_addr("1.2.3.0"));
@@ -656,7 +659,7 @@ TEST(SubNetTest, IsValid)
 
 TEST(SubNetTest, OperatorEqual)
 {
-    btclite::network::NetAddr addr, netmask;
+    NetAddr addr, netmask;
     uint8_t buf[sizeof(struct in6_addr)];
     
     addr.SetIpv4(inet_addr("1.2.3.0"));
@@ -683,7 +686,7 @@ TEST(SubNetTest, OperatorEqual)
 
 TEST(SubNetTest, ToString)
 {
-    btclite::network::NetAddr addr, netmask;
+    NetAddr addr, netmask;
     uint8_t buf[sizeof(struct in6_addr)];
     
     addr.SetIpv4(inet_addr("1.2.3.4"));
@@ -711,3 +714,5 @@ TEST(SubNetTest, ToString)
     EXPECT_EQ(subnet8.ToString(), "0:0:0:0:0:0:0:0/0");
 }
 
+} // namespace unit_test
+} // namespace btclite

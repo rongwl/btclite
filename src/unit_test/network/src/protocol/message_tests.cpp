@@ -3,6 +3,11 @@
 #include "stream.h"
 
 
+namespace btclite {
+namespace unit_test {
+
+using namespace network::protocol;
+
 TEST_F(MessageHeaderTest, Constructor)
 {
     EXPECT_EQ(0, header1_.magic());
@@ -23,7 +28,7 @@ TEST_F(MessageHeaderTest, Constructor)
 
 TEST_F(MessageHeaderTest, ConstructFromRaw)
 {
-    MemOstream os;
+    util::MemOstream os;
     os << header2_;
     
     MessageHeader header(os.vec().data());
@@ -107,10 +112,13 @@ TEST_F(MessageHeaderTest, ValidateHeader)
 TEST_F(MessageHeaderTest, Serialize)
 {
     std::vector<uint8_t> vec;
-    ByteSink<std::vector<uint8_t> > byte_sink(vec);
-    ByteSource<std::vector<uint8_t> > byte_source(vec);
+    util::ByteSink<std::vector<uint8_t> > byte_sink(vec);
+    util::ByteSource<std::vector<uint8_t> > byte_source(vec);
     
     header2_.Serialize(byte_sink);
     header1_.Deserialize(byte_source);
     EXPECT_EQ(header1_, header2_);
 }
+
+} // namespace unit_test
+} // namespace btclite

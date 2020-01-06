@@ -3,6 +3,11 @@
 #include "util.h"
 
 
+namespace btclite {
+namespace unit_test {
+
+using namespace util;
+
 TEST(ArgsTest, MethodSetArg)
 {
     Args args;
@@ -68,4 +73,5 @@ TEST(MedianFilterTest, MethordMedian)
     EXPECT_EQ(filter.Median(), 7);
 }
 
-
+} // namespace unit_test
+} // namespace btclit

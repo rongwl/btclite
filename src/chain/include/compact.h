@@ -38,7 +38,7 @@ public:
     }
 
     // Construct from a 256 bit number
-    explicit Compact(const uint256_t& normal)
+    explicit Compact(const util::uint256_t& normal)
         : normal_(normal)
     {
         GetCompact();
@@ -51,7 +51,7 @@ public:
     }
     
     //-------------------------------------------------------------------------
-    const uint256_t& normal() const
+    const util::uint256_t& normal() const
     {
         return normal_;
     }
@@ -67,7 +67,7 @@ public:
     }
     
 private:
-    uint256_t normal_ = 0;
+    util::uint256_t normal_ = 0;
     uint32_t compact_ = 0;
     bool overflowed_ = false;
     

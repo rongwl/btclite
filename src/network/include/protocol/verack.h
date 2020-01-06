@@ -41,7 +41,7 @@ public:
 
 } // namespace private_verack
 
-using Verack = Hashable<private_verack::Verack>;
+using Verack = crypto::Hashable<private_verack::Verack>;
 
 } // namespace protocol
 } // namespace network

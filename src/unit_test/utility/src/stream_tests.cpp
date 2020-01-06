@@ -3,15 +3,18 @@
 #include <gtest/gtest.h>
 
 
+namespace btclite {
+namespace unit_test {
+
 TEST(MemIOstreamTest, OperatorIO)
 {
-    MemOstream ostream;
+    util::MemOstream ostream;
     std::string str_input = "hello world", str_output;
     std::array<int, 3> arr_input = { 1, 2, 3 };
     std::array<int, 3> arr_output;
     std::vector<uint8_t> vec;
-    ByteSource<std::vector<uint8_t> > byte_source(vec);
-    MemIstream<ByteSource<std::vector<uint8_t> > > istream(byte_source);
+    util::ByteSource<std::vector<uint8_t> > byte_source(vec);
+    util::MemIstream<util::ByteSource<std::vector<uint8_t> > > istream(byte_source);
     int num1, num2;
     
     ostream << 11 << 22 << str_input << arr_input;
@@ -22,3 +25,6 @@ TEST(MemIOstreamTest, OperatorIO)
     EXPECT_EQ(str_output, str_input);
     EXPECT_EQ(arr_output, arr_input);
 }
+
+} // namespace unit_test
+} // namespace btclit

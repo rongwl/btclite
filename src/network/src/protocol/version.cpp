@@ -14,8 +14,6 @@ namespace protocol{
 
 namespace private_version {
 
-using namespace btclite::network::msg_process;
-
 bool Version::RecvHandler(std::shared_ptr<Node> src_node) const
 {
     Verack verack;
@@ -30,7 +28,7 @@ bool Version::RecvHandler(std::shared_ptr<Node> src_node) const
         SingletonPeers::GetInstance().SetServices(src_node->addr(), services_);
     }
     if (!src_node->is_inbound() && !src_node->manual() 
-            && !btclite::network::IsServiceFlagDesirable(services_)) {
+            && !IsServiceFlagDesirable(services_)) {
         BTCLOG(LOG_LEVEL_INFO) << "Disconnecting peer " << src_node->id() 
                                << " for not offering the expected services ("
                                << std::showbase << std::hex << services_
@@ -44,7 +42,7 @@ bool Version::RecvHandler(std::shared_ptr<Node> src_node) const
     }
     
     if (services_ & ((1 << 7) | (1 << 5))) {
-        if (btclite::utility::util_time::GetTimeSeconds() < 1533096000) {
+        if (util::GetTimeSeconds() < 1533096000) {
             // Immediately disconnect peers that use service bits 6 or 8 until August 1st, 2018
             // These bits have been used as a flag to indicate that a node is running incompatible
             // consensus rules instead of changing the network magic, so we're stuck disconnecting
@@ -91,13 +89,13 @@ bool Version::RecvHandler(std::shared_ptr<Node> src_node) const
         // Advertise our address
         if (SingletonNetArgs::GetInstance().listening() && !IsInitialBlockDownload()) {
             LocalNetConfig& net_config = SingletonLocalNetCfg::GetInstance();
-            btclite::network::NetAddr addr;
+            NetAddr addr;
             if (net_config.GetLocalAddr(src_node->addr(), net_config.local_services(), &addr)) {
                 if (addr.IsRoutable())
                 {
                     BTCLOG(LOG_LEVEL_INFO) << "Advertising address " << addr.ToString();
                     src_node->PushAddrToSend(addr);
-                } else if (btclite::network::IsPeerLocalAddrGood(src_node)) {
+                } else if (IsPeerLocalAddrGood(src_node)) {
                     BTCLOG(LOG_LEVEL_INFO) << "Advertising address " << addr_recv_.ToString();
                     src_node->PushAddrToSend(addr_recv_);
                 }
@@ -119,8 +117,8 @@ bool Version::RecvHandler(std::shared_ptr<Node> src_node) const
                            << ", addr_me=" << addr_recv_.ToString()
                            << ", peer=" << src_node->id();
     
-    btclite::utility::util_time::AddTimeData(src_node->addr(), 
-            timestamp_ - btclite::utility::util_time::GetTimeSeconds());
+    util::AddTimeData(src_node->addr(), 
+            timestamp_ - util::GetTimeSeconds());
     
     return true;
 }
@@ -167,7 +165,7 @@ size_t Version::SerializedSize() const
     size_t size = sizeof(protocol_version_) + sizeof(services_) + 
                   sizeof(timestamp_) + addr_recv_.SerializedSize() + 
                   addr_from_.SerializedSize() + sizeof(nonce_) + 
-                  btclite::utility::serialize::VarIntSize(user_agent_.size()) +
+                  util::VarIntSize(user_agent_.size()) +
                   user_agent_.size() + sizeof(start_height_);
     if (protocol_version_ >= kRelayedTxsVersion)
         size += sizeof(bool);

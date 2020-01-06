@@ -5,7 +5,10 @@
 #include "bandb.h"
 
 
-using namespace btclite::network;
+namespace btclite {
+namespace unit_test {
+
+using namespace network;
 
 TEST(AcceptorTest, Constructor)
 {
@@ -13,7 +16,7 @@ TEST(AcceptorTest, Constructor)
     const struct sockaddr_in6& sock_addr = acceptor.sock_addr();
     ASSERT_EQ(sock_addr.sin6_family, AF_INET6);
     ASSERT_EQ(sock_addr.sin6_port,
-              htons(btclite::network::SingletonParams::GetInstance(BaseEnv::testnet).default_port()));
+              htons(SingletonParams::GetInstance(BaseEnv::testnet).default_port()));
     ASSERT_EQ(std::memcmp(sock_addr.sin6_addr.s6_addr, in6addr_any.s6_addr, 16), 0);
     ASSERT_EQ(sock_addr.sin6_scope_id, 0);
 }
@@ -45,7 +48,7 @@ TEST(AcceptorTest, MethordAcceptConnCb)
     for (int i = 1; i < kMaxInboundConnections; i++) {
         std::string str_addr = "::ffff:1.2.3." + std::to_string(i);
         inet_pton(AF_INET6, str_addr.c_str(), client_addr.sin6_addr.s6_addr);
-        btclite::network::NetAddr addr(client_addr);
+        NetAddr addr(client_addr);
         acceptor.AcceptConnCb(listener, fd, (struct sockaddr*)&client_addr, sizeof(client_addr), nullptr);
         ASSERT_EQ(SingletonNodes::GetInstance().CountInbound(), i);
         count = i;
@@ -56,13 +59,13 @@ TEST(AcceptorTest, MethordAcceptConnCb)
         
         BlockSync &block_sync = SingletonBlockSync::GetInstance();
         ASSERT_TRUE(block_sync.IsExist(pnode->id()));
-        btclite::network::NetAddr addr2;
+        NetAddr addr2;
         block_sync.GetNodeAddr(pnode->id(), &addr2);
         ASSERT_EQ(addr, addr2);
     }
     
     inet_pton(AF_INET6, "::ffff:1.2.3.250", client_addr.sin6_addr.s6_addr);
-    btclite::network::NetAddr addr(client_addr);
+    NetAddr addr(client_addr);
     SingletonBanDb::GetInstance().Add(addr, BanDb::BanReason::NodeMisbehaving);
     acceptor.AcceptConnCb(listener, fd, (struct sockaddr*)&client_addr, sizeof(client_addr), nullptr);
     EXPECT_EQ(SingletonNodes::GetInstance().CountInbound(), count);  
@@ -75,7 +78,7 @@ TEST(AcceptorTest, MethordAcceptConnCb)
     EXPECT_EQ(pnode->addr(), addr);
     BlockSync &block_sync = SingletonBlockSync::GetInstance();
     ASSERT_TRUE(block_sync.IsExist(pnode->id()));
-    btclite::network::NetAddr addr3;
+    NetAddr addr3;
     block_sync.GetNodeAddr(pnode->id(), &addr3);
     ASSERT_EQ(addr, addr3);
     
@@ -87,3 +90,6 @@ TEST(AcceptorTest, MethordAcceptConnCb)
     evconnlistener_free(listener);
     event_base_free(base);
 }
+
+} // namespace unit_test
+} // namespace btclit

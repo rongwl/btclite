@@ -5,7 +5,10 @@
 #include <arpa/inet.h>
 
 
-using namespace btclite::network;
+namespace btclite {
+namespace unit_test {
+
+using namespace network;
 
 TEST_F(LocalNetConfigTest, Constructor)
 {
@@ -20,10 +23,10 @@ TEST_F(LocalNetConfigTest, GetAndSetLocalServiecs)
 
 TEST_F(LocalNetConfigTest, ValidateLocalAddrs)
 {
-    btclite::network::NetAddr addr;
+    NetAddr addr;
     
     ASSERT_FALSE(config_.map_local_addrs().empty());
-    std::map<btclite::network::NetAddr, int> map = config_.map_local_addrs();
+    std::map<NetAddr, int> map = config_.map_local_addrs();
     for (auto it = map.begin(); it != map.end(); ++it)
         EXPECT_TRUE(config_.IsLocal(it->first));
     
@@ -33,7 +36,7 @@ TEST_F(LocalNetConfigTest, ValidateLocalAddrs)
 
 TEST_F(LocalNetConfigTest, GetLocalAddr)
 {
-    btclite::network::NetAddr peer_addr, addr;
+    NetAddr peer_addr, addr;
     
     ASSERT_FALSE(config_.map_local_addrs().empty());
     peer_addr.SetIpv4(inet_addr("1.2.3.4"));
@@ -41,3 +44,6 @@ TEST_F(LocalNetConfigTest, GetLocalAddr)
     EXPECT_TRUE(config_.IsLocal(addr));
     EXPECT_EQ(addr.services(), kNodeNetwork);
 }
+
+} // namespace unit_test
+} // namespace btclit

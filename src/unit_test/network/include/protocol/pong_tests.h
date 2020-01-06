@@ -3,7 +3,8 @@
 #include "protocol/pong.h"
 
 
-using namespace btclite::network::protocol;
+namespace btclite {
+namespace unit_test {
 
 class PongTest : public ::testing::Test {
 protected:
@@ -11,6 +12,9 @@ protected:
         : nonce_(0x1122334455667788), pong1_(), pong2_(nonce_) {}
     
     uint64_t nonce_ = 0;
-    Pong pong1_;
-    Pong pong2_;
+    network::protocol::Pong pong1_;
+    network::protocol::Pong pong2_;
 };
+
+} // namespace unit_test
+} // namespace btclit

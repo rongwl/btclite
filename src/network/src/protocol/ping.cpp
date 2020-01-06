@@ -12,8 +12,6 @@ namespace protocol {
 
 namespace private_ping {
 
-using namespace btclite::network::msg_process;
-
 bool Ping::RecvHandler(std::shared_ptr<Node> src_node) const
 {
     if (src_node->protocol_version() >= VersionCode::kBip31Version)
@@ -42,19 +40,19 @@ void Ping::PingTimeoutCb(std::shared_ptr<Node> node)
         return;
     
     if (node->disconnected() || !node->conn_established()) {
-        SingletonTimerMng::GetInstance().StopTimer(node->timers().ping_timer);
+        util::SingletonTimerMng::GetInstance().StopTimer(node->timers().ping_timer);
         return;
     }
     
     if (node->time().ping_time.ping_nonce_sent) {
         BTCLOG(LOG_LEVEL_WARNING) << "Peer " << node->id() << " ping timeout.";
-        SingletonTimerMng::GetInstance().StopTimer(node->timers().ping_timer);
+        util::SingletonTimerMng::GetInstance().StopTimer(node->timers().ping_timer);
         node->set_disconnected(true);
         return;
     }
     
     // send ping
-    btclite::network::protocol::Ping ping(btclite::utility::GetUint64());
+    protocol::Ping ping(util::GetUint64());
     if (node->protocol_version() < VersionCode::kBip31Version)
         ping.set_protocol_version(0);
     SendMsg(ping, node);

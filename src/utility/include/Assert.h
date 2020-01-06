@@ -4,6 +4,9 @@
 #include <cassert>
 #include <type_traits>
 
+
+namespace btclite {
+
 #define ASSERT_UNSIGNED(T) static_assert(std::is_unsigned<T>::value, \
                                          "This function requires unsigned type")
 #define ASSERT_ARITHMETIC(T) static_assert(std::is_arithmetic<T>::value, \
@@ -14,5 +17,7 @@
                                          "This function requires signed type")
 
 #define ASSERT_NULL(OUT) assert(OUT != nullptr)
+
+} // namespace btclite
 
 #endif // BTCLITE_ASSERT_H

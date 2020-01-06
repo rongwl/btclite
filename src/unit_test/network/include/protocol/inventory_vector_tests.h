@@ -4,16 +4,21 @@
 #include "random.h"
 
 
-using namespace btclite::network::protocol;
+namespace btclite {
+namespace unit_test {
 
 class InvVectTest : public ::testing::Test {
 protected:
     InvVectTest()
-        : type_(DataMsgType::kMsgTx), hash_(btclite::utility::GetUint256()),
+        : type_(network::protocol::DataMsgType::kMsgTx), 
+          hash_(util::GetUint256()),
           inv_vect1_(), inv_vect2_(type_, hash_) {}
     
-    DataMsgType type_;
-    Hash256 hash_;
-    InvVect inv_vect1_;
-    InvVect inv_vect2_;
+    network::protocol::DataMsgType type_;
+    crypto::Hash256 hash_;
+    network::protocol::InvVect inv_vect1_;
+    network::protocol::InvVect inv_vect2_;
 };
+
+} // namespace unit_test
+} // namespace btclit

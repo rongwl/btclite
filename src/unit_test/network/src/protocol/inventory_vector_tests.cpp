@@ -2,6 +2,11 @@
 #include "stream.h"
 
 
+namespace btclite {
+namespace unit_test {
+
+using namespace network::protocol;
+
 TEST_F(InvVectTest, Constructor)
 {
     EXPECT_EQ(inv_vect1_.type(), 0);
@@ -14,8 +19,8 @@ TEST_F(InvVectTest, Constructor)
 TEST_F(InvVectTest, Serialize)
 {
     std::vector<uint8_t> vec;
-    ByteSink<std::vector<uint8_t> > byte_sink(vec);
-    ByteSource<std::vector<uint8_t> > byte_source(vec);
+    util::ByteSink<std::vector<uint8_t> > byte_sink(vec);
+    util::ByteSource<std::vector<uint8_t> > byte_source(vec);
     
     ASSERT_NE(inv_vect1_, inv_vect2_);
     inv_vect2_.Serialize(byte_sink);
@@ -25,7 +30,7 @@ TEST_F(InvVectTest, Serialize)
 
 TEST_F(InvVectTest, SerializedSize)
 {
-    MemOstream ms;
+    util::MemOstream ms;
     ms << inv_vect1_;
     EXPECT_EQ(inv_vect1_.SerializedSize(), ms.vec().size());
 }
@@ -35,3 +40,6 @@ TEST_F(InvVectTest, Clear)
     inv_vect2_.Clear();
     EXPECT_EQ(inv_vect1_, inv_vect2_);
 }
+
+} // namespace unit_test
+} // namespace btclit

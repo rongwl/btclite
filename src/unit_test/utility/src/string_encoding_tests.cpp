@@ -3,7 +3,10 @@
 #include "string_encoding.h"
 
 
-using namespace btclite::utility::string_encoding;
+namespace btclite {
+namespace unit_test {
+
+using namespace util;
 
 static const unsigned char hex_expected[65] = {
     0x04, 0x67, 0x8a, 0xfd, 0xb0, 0xfe, 0x55, 0x48, 0x27, 0x19, 0x67, 0xf1, 0xa6, 0x71, 0x30, 0xb7,
@@ -190,3 +193,6 @@ TEST(StringEncodingTest, DecodeUint64)
     EXPECT_FALSE(DecodeUint64("-9223372036854775808", &n));
     EXPECT_FALSE(DecodeUint64("-1234", &n));
 }
+
+} // namespace unit_test
+} // namespace btclit

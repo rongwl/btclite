@@ -5,12 +5,14 @@ namespace btclite {
 namespace network {
 namespace protocol {
 
-bool reject::RecvHandler(std::shared_ptr<Node> src_node) const
+namespace private_reject {
+
+bool Reject::RecvHandler(std::shared_ptr<Node> src_node) const
 {
     return true;
 }
 
-bool reject::IsValid() const
+bool Reject::IsValid() const
 {
     if (ccode_ != CCode::kRejectMalformed &&
         ccode_ != CCode::kRejectInvalid &&
@@ -25,7 +27,7 @@ bool reject::IsValid() const
     return true;
 }
 
-void reject::Clear()
+void Reject::Clear()
 {
     message_.clear();
     ccode_ = CCode::kRejectUnknown;
@@ -33,20 +35,20 @@ void reject::Clear()
     data_.Clear();
 }
 
-size_t reject::SerializedSize() const
+size_t Reject::SerializedSize() const
 {
-    size_t result = btclite::utility::serialize::VarIntSize(message_.size()) +
-                    btclite::utility::serialize::VarIntSize(reason_.size()) +
+    size_t result = util::VarIntSize(message_.size()) +
+                    util::VarIntSize(reason_.size()) +
                     message_.size() + reason_.size() + sizeof(ccode_);
-    if (message_ == ::kMsgBlock || message_ == ::kMsgTx)
+    if (message_ == btclite::kMsgBlock || message_ == btclite::kMsgTx)
         result += data_.size();
     
     return result;
 }
 
-bool reject::operator==(const reject& b) const
+bool Reject::operator==(const Reject& b) const
 {
-    if (message_ == ::kMsgBlock || message_ == ::kMsgTx)
+    if (message_ == btclite::kMsgBlock || message_ == btclite::kMsgTx)
         return (message_ == b.message_ &&
                 ccode_ == b.ccode_ &&
                 reason_ == b.reason_ &&
@@ -57,10 +59,12 @@ bool reject::operator==(const reject& b) const
             reason_ == b.reason_);
 }
 
-bool reject::operator!=(const reject& b) const
+bool Reject::operator!=(const Reject& b) const
 {
     return !(*this == b);
 }
+
+} // namespace private_reject
 
 } // namespace protocol
 } // namespace network

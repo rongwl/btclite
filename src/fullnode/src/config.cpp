@@ -7,6 +7,8 @@
 #include "utility/include/logging.h"
 
 
+using namespace btclite::util;
+
 void FullNodeConfig::ParseParameters(int argc, const char* const argv[])
 {
     CheckOptions(argc, argv);

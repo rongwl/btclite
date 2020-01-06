@@ -6,9 +6,9 @@
 namespace btclite {
 namespace network {
 
-using namespace btclite::chain;
+using namespace chain;
 
-void BlockSync::AddSyncState(NodeId id, const btclite::network::NetAddr& addr, const std::string& addr_name)
+void BlockSync::AddSyncState(NodeId id, const NetAddr& addr, const std::string& addr_name)
 {
     LOCK(cs_block_sync_);
     map_sync_state_.emplace_hint(map_sync_state_.end(), std::piecewise_construct,
@@ -101,7 +101,7 @@ void BlockSync::Misbehaving(NodeId id, int howmuch)
                                << state->stats().misbehavior_score;
 }
 
-bool BlockSync::GetNodeAddr(NodeId id, btclite::network::NetAddr *out)
+bool BlockSync::GetNodeAddr(NodeId id, NetAddr *out)
 {
     LOCK(cs_block_sync_);
     
@@ -535,7 +535,7 @@ bool BlockSync::SetBestHeaderSentIndex(NodeId id, const BlockIndex *index)
     return true;
 }
 
-bool BlockSync::GetLastUnknownBlockHash(NodeId id, Hash256 *out) 
+bool BlockSync::GetLastUnknownBlockHash(NodeId id, crypto::Hash256 *out) 
 {
     LOCK(cs_block_sync_);
     
@@ -548,7 +548,7 @@ bool BlockSync::GetLastUnknownBlockHash(NodeId id, Hash256 *out)
     return true;
 }
 
-bool BlockSync::SetLastUnknownBlockHash(NodeId id, const Hash256& last_unknown_block_hash)
+bool BlockSync::SetLastUnknownBlockHash(NodeId id, const crypto::Hash256& last_unknown_block_hash)
 {
     LOCK(cs_block_sync_);
     
@@ -812,7 +812,7 @@ bool Orphans::AddOrphanTx(OrphanTx::TxSharedPtr tx, NodeId id)
 {
     LOCK(cs_orphans_);
 
-    const Hash256& hash = tx->Hash();
+    const crypto::Hash256& hash = tx->Hash();
     if (map_orphan_txs_.count(hash))
         return false;
 
@@ -866,7 +866,7 @@ uint32_t Orphans::LimitOrphanTxSize(uint32_t max_orphans)
 
     uint32_t evicted_count = 0;
     static int64_t next_sweep;
-    int64_t now = btclite::utility::util_time::GetTimeSeconds();
+    int64_t now = util::GetTimeSeconds();
     if (next_sweep <= now) {
         // Sweep out expired orphan pool entries:
         int erased_count = 0;
@@ -890,7 +890,7 @@ uint32_t Orphans::LimitOrphanTxSize(uint32_t max_orphans)
     while (map_orphan_txs_.size() > max_orphans)
     {
         // Evict a random orphan:
-        Uint256 randomhash = btclite::utility::GetUint256();
+        util::Uint256 randomhash = util::GetUint256();
         auto it = map_orphan_txs_.lower_bound(randomhash);
         if (it == map_orphan_txs_.end())
             it = map_orphan_txs_.begin();
@@ -901,7 +901,7 @@ uint32_t Orphans::LimitOrphanTxSize(uint32_t max_orphans)
     return evicted_count;
 }
 
-int Orphans::EraseOrphanTx(const Hash256& hash)
+int Orphans::EraseOrphanTx(const crypto::Hash256& hash)
 {
     auto it = map_orphan_txs_.find(hash);
     if (it == map_orphan_txs_.end())

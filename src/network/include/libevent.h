@@ -10,6 +10,9 @@
 #include "socket.h"
 
 
+namespace btclite {
+namespace network {
+
 // for mock
 class EventInterface {
 public:
@@ -36,7 +39,7 @@ public:
     virtual void EvconnlistenerFree(struct evconnlistener *lev) = 0;
 };
 
-class LibEvent : public EventInterface, Uncopyable {
+class LibEvent : public EventInterface, util::Uncopyable {
 public:
     
     //-------------------------------------------------------------------------
@@ -60,14 +63,9 @@ public:
     void EvconnlistenerFree(struct evconnlistener *lev);
 };
 
-namespace btclite {
-namespace network {
-namespace libevent {
-
 void ConnReadCb(struct bufferevent *bev, void *ctx);
 void ConnEventCb(struct bufferevent *bev, short events, void *ctx);
 
-} // namespace libevent
 } // namespace network
 } // namespace btclite
 

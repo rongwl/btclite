@@ -7,6 +7,10 @@
 
 #include "string_encoding.h"
 
+
+namespace btclite {
+namespace util {
+
 template <size_t size>
 using Bytes = std::array<uint8_t, size>;
 
@@ -85,12 +89,12 @@ public:
     
     std::string Hex() const
     {
-        return std::move(btclite::utility::string_encoding::EncodeHex(this->begin(), this->end()));
+        return std::move(util::EncodeHex(this->begin(), this->end()));
     }
     /*void SetHex(const std::string& str)
     {
         Clear();
-        btclite::utility::string_encoding::DecodeHex(str, this->begin(), this->end());
+        util::DecodeHex(str, this->begin(), this->end());
     }*/
 
 private:
@@ -161,5 +165,8 @@ std::streamsize ContainerSource<Container, SourceType, CharType>::read(CharType 
 
 template <typename Container>
 using ByteSource = ContainerSource<Container, uint8_t, char>;
+
+} // namespace util
+} // namespace btclite
 
 #endif // BTCLITE_BLOB_H

@@ -11,8 +11,7 @@
 
 
 namespace btclite {
-namespace utility {
-namespace string_encoding {
+namespace util {
 
 bool ParsePrechecks(const std::string& str);
 
@@ -91,8 +90,7 @@ void DecodeHex(const std::string& in, Iterator begin, Iterator end)
 
 std::vector<uint8_t> DecodeHex(const std::string& in);
 
-} // namespace string_encoding
-} // namespace utility
+} // namespace util
 } // namespace btclite
 
 

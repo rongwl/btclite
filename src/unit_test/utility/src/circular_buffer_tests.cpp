@@ -1,6 +1,9 @@
 #include "circular_buffer_tests.h"
 
 
+namespace btclite {
+namespace unit_test {
+
 TEST_F(CircularBufferTest, Constructor)
 {
     EXPECT_EQ(buf0_.capacity(), 3);
@@ -61,3 +64,5 @@ TEST_F(CircularBufferTest, Exist)
     EXPECT_FALSE(buf3_.exist(4));
 }
 
+} // namespace unit_test
+} // namespace btclit

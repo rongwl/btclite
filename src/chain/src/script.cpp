@@ -1,6 +1,9 @@
 #include "script.h"
 
 
+namespace btclite {
+namespace chain {
+
 ScriptInt::ScriptInt(const std::vector<uint8_t>& v, bool minimal)
 {
     if (v.size() == 0)
@@ -90,14 +93,14 @@ void Script::Push(const std::vector<uint8_t>& b)
     }
     else if (b.size() <= 0xffff) {
         data_.push_back(static_cast<uint8_t>(Opcode::OP_PUSHDATA2));
-        Bytes<sizeof(uint16_t)> bytes;
-        ToLittleEndian(static_cast<uint16_t>(b.size()), &bytes);
+        util::Bytes<sizeof(uint16_t)> bytes;
+        util::ToLittleEndian(static_cast<uint16_t>(b.size()), &bytes);
         data_.insert(data_.end(), bytes.begin(), bytes.end());
     }
     else {
         data_.push_back(static_cast<uint8_t>(Opcode::OP_PUSHDATA4));
-        Bytes<sizeof(uint32_t)> bytes;
-        ToLittleEndian(static_cast<uint32_t>(b.size()), &bytes);
+        util::Bytes<sizeof(uint32_t)> bytes;
+        util::ToLittleEndian(static_cast<uint32_t>(b.size()), &bytes);
         data_.insert(data_.end(), bytes.begin(), bytes.end());
     }
     data_.insert(data_.end(), b.begin(), b.end());
@@ -133,13 +136,13 @@ bool Script::Pop(std::vector<uint8_t>::const_iterator& pc, const Opcode& in, std
     else if (in == Opcode::OP_PUSHDATA2) {
         if (pc + 2 > data_.end())
             return false;
-        size = FromLittleEndian<uint16_t>(pc);
+        size = util::FromLittleEndian<uint16_t>(pc);
         pc += 2;
     }
     else if (in == Opcode::OP_PUSHDATA4) {
         if (pc + 4 > data_.end())
             return false;
-        size = FromLittleEndian<uint32_t>(pc);
+        size = util::FromLittleEndian<uint32_t>(pc);
         pc += 4;
     }
     
@@ -149,3 +152,6 @@ bool Script::Pop(std::vector<uint8_t>::const_iterator& pc, const Opcode& in, std
     
     return true;
 }
+
+} // namespace chain
+} // namespace btclite

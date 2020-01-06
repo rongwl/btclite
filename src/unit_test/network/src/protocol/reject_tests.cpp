@@ -2,6 +2,11 @@
 #include "stream.h"
 
 
+namespace btclite {
+namespace unit_test {
+
+using namespace network::protocol;
+
 TEST_F(RejectTest, Constructor)
 {
     EXPECT_EQ(reject1_.message(), "");
@@ -40,7 +45,7 @@ TEST_F(RejectTest, OperatorEqual)
     
     reject2_.set_reason(std::move(reject3_.reason()));
     EXPECT_EQ(reject2_, reject3_);
-    reject2_.set_data(btclite::utility::GetUint256());
+    reject2_.set_data(util::GetUint256());
     EXPECT_NE(reject2_, reject3_);
     
     reject2_.set_message(kMsgVersion);
@@ -79,8 +84,8 @@ TEST_F(RejectTest, IsValid)
 TEST_F(RejectTest, Serialize)
 {
     std::vector<uint8_t> vec;
-    ByteSink<std::vector<uint8_t> > byte_sink(vec);
-    ByteSource<std::vector<uint8_t> > byte_source(vec);
+    util::ByteSink<std::vector<uint8_t> > byte_sink(vec);
+    util::ByteSource<std::vector<uint8_t> > byte_source(vec);
     
     reject2_.Serialize(byte_sink);
     reject1_.Deserialize(byte_source);
@@ -95,7 +100,7 @@ TEST_F(RejectTest, Serialize)
 
 TEST_F(RejectTest, SerializedSize)
 {
-    MemOstream ms;
+    util::MemOstream ms;
 
     ms << reject2_;
     EXPECT_EQ(reject2_.SerializedSize(), ms.vec().size());
@@ -105,3 +110,6 @@ TEST_F(RejectTest, SerializedSize)
     ms << reject2_;
     EXPECT_EQ(reject2_.SerializedSize(), ms.vec().size());
 }
+
+} // namespace unit_test
+} // namespace btclit

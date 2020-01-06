@@ -4,8 +4,7 @@
 
 
 namespace btclite {
-namespace utility {
-namespace string_encoding {
+namespace util {
 
 std::vector<uint8_t> DecodeHex(const std::string& in)
 {
@@ -124,6 +123,5 @@ bool DecodeDouble(const std::string& str, double *out)
     return text.eof() && !text.fail();
 }
 
-} // namespace string_encoding
-} // namespace utility
+} // namespace util
 } // namespace btclite

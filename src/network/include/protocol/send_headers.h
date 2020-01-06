@@ -9,7 +9,9 @@ namespace btclite {
 namespace network {
 namespace protocol {
 
-class sendheaders : public MessageData {
+namespace private_sendheaders {
+
+class SendHeaders : public MessageData {
 public:
     bool RecvHandler(std::shared_ptr<Node> src_node) const;
     
@@ -37,7 +39,9 @@ public:
     void Deserialize(Stream& in) {}
 };
 
-using SendHeaders = Hashable<sendheaders>;
+} // namespace private_sendheaders
+
+using SendHeaders = crypto::Hashable<private_sendheaders::SendHeaders>;
 
 } // namespace protocol
 } // namespace network

@@ -9,6 +9,9 @@
 #include "serialize.h"
 
 
+namespace btclite {
+namespace chain {
+
 enum class Opcode : uint8_t {
     // push value
     OP_0 = 0x00,
@@ -154,7 +157,7 @@ enum class Opcode : uint8_t {
     OP_INVALIDOPCODE = 0xff,
 };
 
-class ScriptInt : public ArithType<int64_t> {
+class ScriptInt : public util::Integral<int64_t> {
 public:
     static constexpr size_t max_size = 4;
     
@@ -196,13 +199,13 @@ public:
     template <typename Stream>
     void Serialize(Stream& os) const
     {
-        Serializer<Stream> serializer(os);
+        util::Serializer<Stream> serializer(os);
         serializer.SerialWrite(data_);
     }
     template <typename Stream>
     void Deserialize(Stream& is)
     {
-        Deserializer<Stream> deserializer(is);
+        util::Deserializer<Stream> deserializer(is);
         deserializer.SerialRead(&data_);
     }
     
@@ -269,13 +272,16 @@ public:
     size_t SerializedSize() const
     {
         size_t result = data_.size();
-        result += btclite::utility::serialize::VarIntSize(result);
+        result += util::VarIntSize(result);
         return result;
     }
     
 private:
     std::vector<uint8_t> data_;
 };
+
+} // namespace chain
+} // namespace btclite
 
 
 #endif // BTCLITE_SCRIPT_H

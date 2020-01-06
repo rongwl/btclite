@@ -9,14 +9,12 @@
 namespace btclite {
 namespace network {
 
-using namespace btclite::network::libevent;
-
 Acceptor::Acceptor()
     : base_(nullptr), listener_(nullptr), sock_addr_()
 {
     memset(&sock_addr_, 0, sizeof(sock_addr_));
     sock_addr_.sin6_family = AF_INET6;
-    sock_addr_.sin6_port = htons(btclite::network::SingletonParams::GetInstance().default_port());
+    sock_addr_.sin6_port = htons(SingletonParams::GetInstance().default_port());
     sock_addr_.sin6_addr = in6addr_any;
     sock_addr_.sin6_scope_id = 0;
 }
@@ -66,7 +64,7 @@ void Acceptor::StartEventLoop()
 void Acceptor::AcceptConnCb(struct evconnlistener *listener, evutil_socket_t fd,
                            struct sockaddr *sock_addr, int socklen, void *arg)
 {
-    btclite::network::NetAddr addr;
+    NetAddr addr;
     struct event_base *base;
     struct bufferevent *bev;
     struct event *ev_timeout;
@@ -128,7 +126,7 @@ void Acceptor::CheckingTimeoutCb(evutil_socket_t fd, short event, void *arg)
     // increase reference count
     std::shared_ptr<Node> pnode(*(reinterpret_cast<std::shared_ptr<Node>*>(arg)));
     
-    int64_t now = btclite::utility::util_time::GetTimeSeconds();
+    int64_t now = util::GetTimeSeconds();
     if (pnode->time().time_last_recv == 0 || pnode->time().time_last_send == 0)
     {
         BTCLOG(LOG_LEVEL_INFO) << "socket no message in first 60 seconds, "
@@ -142,14 +140,14 @@ void Acceptor::CheckingTimeoutCb(evutil_socket_t fd, short event, void *arg)
         pnode->set_disconnected(true);
     }
     else if (now - pnode->time().time_last_recv > (pnode->protocol_version() > 
-             btclite::network::protocol::kBip31Version ? kConnTimeoutInterval : 90*60))
+             protocol::kBip31Version ? kConnTimeoutInterval : 90*60))
     {
         BTCLOG(LOG_LEVEL_INFO) << "socket receive timeout: " << (now - pnode->time().time_last_recv);
         pnode->set_disconnected(true);
     }
     else if (pnode->time().ping_time.ping_nonce_sent &&
              pnode->time().ping_time.ping_usec_start + kConnTimeoutInterval * 1000000 < 
-             btclite::utility::util_time::GetTimeMicros())
+             util::GetTimeMicros())
     {
         BTCLOG(LOG_LEVEL_INFO) << "ping timeout: " 
                                << (now - pnode->time().ping_time.ping_usec_start / 1000000);

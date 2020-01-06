@@ -4,23 +4,27 @@
 #include "random.h"
 
 
-using namespace btclite::network::protocol;
+namespace btclite {
+namespace unit_test {
 
 class RejectTest : public ::testing::Test {
 protected:
     RejectTest()
-        : message_(::kMsgBlock), ccode_(CCode::kRejectDuplicate), reason_("foo"), 
-          data_(btclite::utility::GetUint256()),
+        : message_(kMsgBlock), ccode_(network::protocol::CCode::kRejectDuplicate), 
+          reason_("foo"), data_(util::GetUint256()),
           reject1_(), reject2_(message_, ccode_, reason_, data_),
           reject3_(std::move(std::string(message_)), ccode_,
                    std::move(std::string(reason_)), data_) {}
     
     std::string message_;
-    CCode ccode_ = CCode::kRejectUnknown;
+    network::protocol::CCode ccode_ = network::protocol::CCode::kRejectUnknown;
     std::string reason_;
-    Hash256 data_;
+    crypto::Hash256 data_;
     
-    Reject reject1_;
-    Reject reject2_;
-    Reject reject3_;
+    network::protocol::Reject reject1_;
+    network::protocol::Reject reject2_;
+    network::protocol::Reject reject3_;
 };
+
+} // namespace unit_test
+} // namespace btclit

@@ -8,9 +8,12 @@
 #include "string_encoding.h"
 
 
-bool LookupHost(const char *psz_name, btclite::network::NetAddr *out, bool allow_lookup)
+namespace btclite {
+namespace network {
+
+bool LookupHost(const char *psz_name, NetAddr *out, bool allow_lookup)
 {
-    std::vector<btclite::network::NetAddr> vip;
+    std::vector<NetAddr> vip;
     LookupHost(psz_name, &vip, 1, allow_lookup);
     if(vip.empty())
         return false;
@@ -19,7 +22,7 @@ bool LookupHost(const char *psz_name, btclite::network::NetAddr *out, bool allow
     return true;
 }
 
-bool LookupHost(const char *psz_name, std::vector<btclite::network::NetAddr> *out,
+bool LookupHost(const char *psz_name, std::vector<NetAddr> *out,
                                 unsigned int max_solutions, bool allow_lookup)
 {
     std::string str_host(psz_name);
@@ -38,19 +41,19 @@ bool LookupSubNet(const char* psz_name, SubNet *out)
 {
     std::string str_subnet(psz_name);
     size_t slash = str_subnet.find_last_of('/');
-    std::vector<btclite::network::NetAddr> vip;
+    std::vector<NetAddr> vip;
 
     std::string str_addr = str_subnet.substr(0, slash);
     if (LookupHost(str_addr.c_str(), &vip, 1, false))
     {
-        btclite::network::NetAddr network = vip[0];
+        NetAddr network = vip[0];
         if (slash != str_subnet.npos)
         {
             std::string str_netmask = str_subnet.substr(slash + 1);
             int32_t n;
             // IPv4 addresses start at offset 12, and first 12 bytes must match, so just offset n
             // If valid number, assume /24 syntax
-            if (btclite::utility::string_encoding::DecodeInt32(str_netmask, &n)) {                
+            if (util::DecodeInt32(str_netmask, &n)) {                
                 *out = SubNet(network, n);
                 return out->IsValid();
             }
@@ -73,7 +76,7 @@ bool LookupSubNet(const char* psz_name, SubNet *out)
     return false;
 }
 
-bool LookupIntern(const char *psz_name, std::vector<btclite::network::NetAddr> *out,
+bool LookupIntern(const char *psz_name, std::vector<NetAddr> *out,
                                   unsigned int max_solutions, bool allow_lookup)
 {
     struct addrinfo aiHint;
@@ -93,7 +96,7 @@ bool LookupIntern(const char *psz_name, std::vector<btclite::network::NetAddr> *
     struct addrinfo *aiTrav = aiRes;
     while (aiTrav != nullptr && (max_solutions == 0 || out->size() < max_solutions))
     {
-        btclite::network::NetAddr resolved;
+        NetAddr resolved;
         if (aiTrav->ai_family == AF_INET)
         {
             assert(aiTrav->ai_addrlen >= sizeof(sockaddr_in));
@@ -108,7 +111,7 @@ bool LookupIntern(const char *psz_name, std::vector<btclite::network::NetAddr> *
         }
         /* Never allow resolving to an internal address. Consider any such result invalid */
         if (!resolved.IsInternal()) {
-            resolved.set_port(btclite::network::SingletonParams::GetInstance().default_port());
+            resolved.set_port(SingletonParams::GetInstance().default_port());
             out->push_back(resolved);
         }
 
@@ -119,3 +122,6 @@ bool LookupIntern(const char *psz_name, std::vector<btclite::network::NetAddr> *
 
     return (out->size() > 0);
 }
+
+} // namespace network
+} // namespace btclite

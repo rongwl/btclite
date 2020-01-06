@@ -3,6 +3,9 @@
 #include "circular_buffer.h"
 
 
+namespace btclite {
+namespace unit_test {
+
 class CircularBufferTest : public ::testing::Test {
 protected:
     CircularBufferTest()
@@ -20,8 +23,11 @@ protected:
         buf3_.push_back(3);
     }
     
-    CircularBuffer<int> buf0_;
-    CircularBuffer<int> buf1_;
-    CircularBuffer<int> buf2_;
-    CircularBuffer<int> buf3_;
+    util::CircularBuffer<int> buf0_;
+    util::CircularBuffer<int> buf1_;
+    util::CircularBuffer<int> buf2_;
+    util::CircularBuffer<int> buf3_;
 };
+
+} // namespace unit_test
+} // namespace btclit

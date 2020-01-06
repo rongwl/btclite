@@ -5,6 +5,10 @@
 #include <mutex>
 #include <thread>
 
+
+namespace btclite {
+namespace util {
+
 #ifdef CHECK_LOCKORDER
 void EnterCritical(const char*, const char*, int, void*, bool try_lock = false);
 void LeaveCritical();
@@ -79,8 +83,8 @@ using CriticalBlock = MutexLock<CriticalSection>;
 #define PASTE(x, y) x ## y
 #define PASTE2(x, y) PASTE(x, y)
 
-#define LOCK(cs) CriticalBlock PASTE2(criticalblock, __COUNTER__)(cs, #cs, __FILE__, __LINE__)
-#define TRY_LOCK(cs, name) CriticalBlock name(cs, #cs, __FILE__, __LINE__, true)
+#define LOCK(cs) btclite::util::CriticalBlock PASTE2(criticalblock, __COUNTER__)(cs, #cs, __FILE__, __LINE__)
+#define TRY_LOCK(cs, name) btclite::util::CriticalBlock name(cs, #cs, __FILE__, __LINE__, true)
 
 
 class Semaphore
@@ -180,6 +184,9 @@ private:
     Semaphore *sem_;
     bool have_grant_;
 };
+
+} // namespace util
+} // namespace btclite
 
 
 #endif // BTCLITE_SYNC_H

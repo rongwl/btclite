@@ -6,6 +6,9 @@
 #include "block_sync.h"
 
 
+namespace btclite {
+namespace unit_test {
+
 class BlockSyncTest : public ::testing::Test {
 protected:
     void SetUp() override 
@@ -18,8 +21,11 @@ protected:
         block_sync_.AddSyncState(3, addr3_, "");
     }
     
-    btclite::network::BlockSync block_sync_;
-    btclite::network::NetAddr addr1_;
-    btclite::network::NetAddr addr2_;
-    btclite::network::NetAddr addr3_;
+    network::BlockSync block_sync_;
+    network::NetAddr addr1_;
+    network::NetAddr addr2_;
+    network::NetAddr addr3_;
 };
+
+} // namespace unit_test
+} // namespace btclit

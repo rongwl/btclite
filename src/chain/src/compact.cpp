@@ -3,7 +3,7 @@
 namespace btclite {
 namespace chain {
 
-inline size_t LogicalSize(uint256_t value)
+inline size_t LogicalSize(util::uint256_t value)
 {
     size_t byte = 0;
 

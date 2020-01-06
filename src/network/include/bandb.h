@@ -8,6 +8,9 @@
 #include "util.h"
 
 
+namespace btclite {
+namespace network {
+
 class BanDb {
 public:
     enum class BanReason {
@@ -25,9 +28,9 @@ public:
           ban_map_(ban_map), dirty_(true) {}
     
     //-------------------------------------------------------------------------
-    bool Add(const btclite::network::NetAddr& addr, const BanReason& ban_reason, bool dump_list = true);
+    bool Add(const NetAddr& addr, const BanReason& ban_reason, bool dump_list = true);
     bool Add(const SubNet& sub_net, const BanReason& ban_reason, bool dump_list = true);
-    bool Erase(const btclite::network::NetAddr& addr, bool dump_list = true);
+    bool Erase(const NetAddr& addr, bool dump_list = true);
     bool Erase(const SubNet& sub_net, bool dump_list = true);
     void Clear();
     
@@ -41,7 +44,7 @@ public:
     void SweepBanned();
     bool DumpBanList();
     bool LoadBanList();
-    bool IsBanned(btclite::network::NetAddr addr);
+    bool IsBanned(NetAddr addr);
     
     //-------------------------------------------------------------------------
     const fs::path& path_ban_list() const
@@ -71,14 +74,14 @@ private:
     const std::string default_ban_list = "banlist.dat";
     
     fs::path path_ban_list_;
-    mutable CriticalSection cs_ban_map_;
+    mutable util::CriticalSection cs_ban_map_;
     proto_banmap::BanMap ban_map_;
     bool dirty_;
     
     bool Add_(const SubNet& sub_net, const proto_banmap::BanEntry& ban_entry);
 };
 
-class SingletonBanDb : Uncopyable {
+class SingletonBanDb : util::Uncopyable {
 public:
     static BanDb& GetInstance(fs::path path = fs::path())
     {
@@ -89,5 +92,8 @@ public:
 private:
     SingletonBanDb() {}
 };
+
+} //namespace network
+} //namespace btclite
 
 #endif // BTCLITE_NETWORK_BANDB_H

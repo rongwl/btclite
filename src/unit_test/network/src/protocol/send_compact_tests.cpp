@@ -2,6 +2,11 @@
 #include "stream.h"
 
 
+namespace btclite {
+namespace unit_test {
+
+using namespace network::protocol;
+
 TEST_F(SendCmpctTest, Constructor)
 {
     EXPECT_FALSE(send_compact1_.high_bandwidth_mode());
@@ -35,8 +40,8 @@ TEST_F(SendCmpctTest, IsValid)
 TEST_F(SendCmpctTest, Serialize)
 {
     std::vector<uint8_t> vec;
-    ByteSink<std::vector<uint8_t> > byte_sink(vec);
-    ByteSource<std::vector<uint8_t> > byte_source(vec);
+    util::ByteSink<std::vector<uint8_t> > byte_sink(vec);
+    util::ByteSource<std::vector<uint8_t> > byte_source(vec);
     
     send_compact2_.Serialize(byte_sink);
     send_compact1_.Deserialize(byte_source);
@@ -45,8 +50,11 @@ TEST_F(SendCmpctTest, Serialize)
 
 TEST_F(SendCmpctTest, SerializedSize)
 {
-    MemOstream ms;
+    util::MemOstream ms;
     
     ms << send_compact2_;
     EXPECT_EQ(send_compact2_.SerializedSize(), ms.vec().size());
 }
+
+} // namespace unit_test
+} // namespace btclit

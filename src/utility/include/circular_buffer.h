@@ -6,6 +6,9 @@
 #include <memory>
 
 
+namespace btclite {
+namespace util {
+
 template <typename T>
 class CircularBuffer {
 public:
@@ -108,5 +111,8 @@ size_t CircularBuffer<T>::size() const
     
     return size;
 }
+
+} // namespace util
+} // namespace btclit
 
 #endif // BTCLITE_CIRCULAR_BUFFER_H

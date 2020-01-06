@@ -3,7 +3,10 @@
 #include "bandb.h"
 
 
-using namespace btclite::network;
+namespace btclite {
+namespace unit_test {
+
+using namespace network;
 
 TEST_F(NodesTest, InitializeNode)
 {
@@ -62,7 +65,7 @@ TEST_F(NodesTest, CheckIncomingNonce)
 
 TEST_F(NodesTest, DisconnectNode)
 {
-    btclite::network::NetAddr addr1, addr2, addr3, netmask;
+    NetAddr addr1, addr2, addr3, netmask;
     
     addr1.SetIpv4(inet_addr("1.1.2.1"));
     nodes_.InitializeNode(nullptr, addr1);
@@ -99,7 +102,7 @@ TEST_F(NodesTest, DisconnectNode)
 
 TEST_F(NodesTest, InboundCount)
 {
-    btclite::network::NetAddr addr;
+    NetAddr addr;
     
     addr.SetIpv4(inet_addr("1.1.1.4"));
     nodes_.InitializeNode(nullptr, addr, false);
@@ -162,7 +165,7 @@ TEST_F(NodeTest, PushAddrToSend)
 
 TEST(DestructNodeTest, destructor)
 {
-    btclite::network::NetAddr addr;
+    NetAddr addr;
     Nodes& nodes = SingletonNodes::GetInstance();
     BlockSync& block_sync = SingletonBlockSync::GetInstance();
     NodeId id;
@@ -181,3 +184,6 @@ TEST(DestructNodeTest, destructor)
     
     block_sync.Clear();
 }
+
+} // namespace unit_test
+} // namespace btclit

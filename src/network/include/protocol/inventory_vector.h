@@ -26,11 +26,13 @@ enum DataMsgType : uint32_t {
     kMsgFilteredWitnessBlock = kMsgFilteredBlock | kMsgWitnessFlag,
 };
 
+namespace private_invvect {
+
 class InvVect {
 public:
     InvVect() = default;
     
-    InvVect(DataMsgType type, const Hash256& hash)
+    InvVect(DataMsgType type, const crypto::Hash256& hash)
         : type_(type), hash_(hash) {}
     
     //-------------------------------------------------------------------------
@@ -60,7 +62,7 @@ public:
     template <typename Stream>
     void Serialize(Stream& out) const
     {
-        Serializer<Stream> serializer(out);
+        util::Serializer<Stream> serializer(out);
         serializer.SerialWrite(type_);
         serializer.SerialWrite(hash_);
     }
@@ -68,7 +70,7 @@ public:
     template <typename Stream>
     void Deserialize(Stream& in)
     {
-        Deserializer<Stream> deserializer(in);
+        util::Deserializer<Stream> deserializer(in);
         deserializer.SerialRead(&type_);
         deserializer.SerialRead(&hash_);
     }
@@ -79,15 +81,19 @@ public:
         return type_;
     }
     
-    const Hash256& hash() const
+    const crypto::Hash256& hash() const
     {
         return hash_;
     }
     
 private:
     DataMsgType type_ = kUndefined;
-    Hash256 hash_;
+    crypto::Hash256 hash_;
 };
+
+} // private_invvect
+
+using InvVect = crypto::Hashable<private_invvect::InvVect>;
 
 } // namespace protocol
 } // namespace network

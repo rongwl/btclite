@@ -10,6 +10,9 @@
 #include <glog/logging.h>
 
 
+namespace btclite {
+namespace util {
+
 class Logging;
 
 #define DEFAULT_LOG_LEVEL  "3"
@@ -25,22 +28,22 @@ class Logging;
 #define GLOG_LOG_LEVEL_FATAL   LOG(FATAL)
 #define GLOG_LOG_LEVEL_ERROR   LOG(ERROR)
 #define GLOG_LOG_LEVEL_WARNING LOG(WARNING)
-#define GLOG_LOG_LEVEL_INFO    VLOG(Logging::VERBOSE0)
-#define GLOG_LOG_LEVEL_DEBUG   VLOG(Logging::VERBOSE1)
-#define GLOG_LOG_LEVEL_VERBOSE VLOG(Logging::VERBOSE2)
+#define GLOG_LOG_LEVEL_INFO    VLOG(btclite::util::Logging::VERBOSE0)
+#define GLOG_LOG_LEVEL_DEBUG   VLOG(btclite::util::Logging::VERBOSE1)
+#define GLOG_LOG_LEVEL_VERBOSE VLOG(btclite::util::Logging::VERBOSE2)
 
 #define GLOG_LOG_LEVEL_FATAL_MOD(module) \
-LOG_IF(FATAL, module & Logging::log_module())
+LOG_IF(FATAL, module & btclite::util::Logging::log_module())
 #define GLOG_LOG_LEVEL_ERROR_MOD(module) \
-LOG_IF(ERROR, module & Logging::log_module())
+LOG_IF(ERROR, module & btclite::util::Logging::log_module())
 #define GLOG_LOG_LEVEL_WARNING_MOD(module) \
-LOG_IF(WARNING, module & Logging::log_module())
+LOG_IF(WARNING, module & btclite::util::Logging::log_module())
 #define GLOG_LOG_LEVEL_INFO_MOD(module) \
-VLOG_IF(Logging::VERBOSE0, module & Logging::log_module())
+VLOG_IF(Logging::VERBOSE0, module & btclite::util::Logging::log_module())
 #define GLOG_LOG_LEVEL_DEBUG_MOD(module) \
-VLOG_IF(Logging::VERBOSE1, module & Logging::log_module())
+VLOG_IF(Logging::VERBOSE1, module & btclite::util::Logging::log_module())
 #define GLOG_LOG_LEVEL_VERBOSE_MOD(module) \
-VLOG_IF(Logging::VERBOSE2, module & Logging::log_module())
+VLOG_IF(Logging::VERBOSE2, module & btclite::util::Logging::log_module())
 
 #define BTCLOG(level) GLOG_##level
 #define BTCLOG_MOD(level, module) GLOG_##level##_MOD(module)
@@ -101,6 +104,9 @@ private:
     static const std::array<uint8_t, LOG_LEVEL_MAX> map_loglevel_;
     static const std::map<std::string, Module> map_module_;
 };
+
+} // namespace util
+} // namespace btclite
 
 
 #endif // BTCLITE_LOGGING_H

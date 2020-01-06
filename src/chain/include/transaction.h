@@ -7,15 +7,18 @@
 #include "serialize.h"
 
 
+namespace btclite {
+namespace chain {
+
 /** An outpoint - a combination of a transaction hash and an index n into its vout */
 class OutPoint {
 public:
     OutPoint()
         : index_(std::numeric_limits<uint32_t>::max()) {}
     
-    OutPoint(const Hash256& hash, uint32_t index)
+    OutPoint(const crypto::Hash256& hash, uint32_t index)
         : prev_hash_(hash), index_(index) {}
-    OutPoint(Hash256&& hash, uint32_t index) noexcept
+    OutPoint(crypto::Hash256&& hash, uint32_t index) noexcept
         : prev_hash_(std::move(hash)), index_(index) {}
     
     OutPoint(const OutPoint& op)
@@ -88,7 +91,7 @@ public:
     template <typename Stream>
     void Serialize(Stream& os) const
     {
-        Serializer<Stream> serializer(os);
+        util::Serializer<Stream> serializer(os);
         serializer.SerialWrite(prev_hash_);
         serializer.SerialWrite(index_);
     }
@@ -96,21 +99,21 @@ public:
     template <typename Stream>
     void Deserialize(Stream& is)
     {
-        Deserializer<Stream> deserializer(is);
+        util::Deserializer<Stream> deserializer(is);
         deserializer.SerialRead(&prev_hash_);
         deserializer.SerialRead(&index_);
     }
     
     //-------------------------------------------------------------------------
-    const Hash256& prev_hash() const
+    const crypto::Hash256& prev_hash() const
     {
         return prev_hash_;
     }
-    void set_prevHash(const Hash256& hash)
+    void set_prevHash(const crypto::Hash256& hash)
     {
         prev_hash_ = hash;
     }
-    void set_prevHash(Hash256&& hash)
+    void set_prevHash(crypto::Hash256&& hash)
     {
         prev_hash_ = std::move(hash);
     }
@@ -125,7 +128,7 @@ public:
     }
     
 private:
-    Hash256 prev_hash_;
+    crypto::Hash256 prev_hash_;
     uint32_t index_;
 };
 
@@ -163,7 +166,7 @@ public:
     template <typename Stream>
     void Serialize(Stream& os) const
     {
-        Serializer<Stream> serializer(os);
+        util::Serializer<Stream> serializer(os);
         serializer.SerialWrite(prevout_);
         serializer.SerialWrite(script_sig_);
         serializer.SerialWrite(sequence_no_);
@@ -172,7 +175,7 @@ public:
     template <typename Stream>
     void Deserialize(Stream& is)
     {
-        Deserializer<Stream> deserializer(is);
+        util::Deserializer<Stream> deserializer(is);
         deserializer.SerialRead(&prevout_);
         deserializer.SerialRead(&script_sig_);
         deserializer.SerialRead(&sequence_no_);
@@ -322,14 +325,14 @@ public:
     template <typename Stream>
     void Serialize(Stream& os) const
     {
-        Serializer<Stream> serializer(os);
+        util::Serializer<Stream> serializer(os);
         serializer.SerialWrite(value_);
         serializer.SerialWrite(script_pub_key_);
     }
     template <typename Stream>
     void Deserialize(Stream& is)
     {
-        Deserializer<Stream> deserializer(is);
+        util::Deserializer<Stream> deserializer(is);
         deserializer.SerialRead(&value_);
         deserializer.SerialRead(&script_pub_key_);
     }
@@ -436,8 +439,8 @@ public:
     Transaction& operator=(Transaction&& b) noexcept;
     
     //-------------------------------------------------------------------------
-    const Hash256& Hash() const;
-    const Hash256& WitnessHash() const;
+    const crypto::Hash256& Hash() const;
+    const crypto::Hash256& WitnessHash() const;
     
     //-------------------------------------------------------------------------
     bool IsNull() const
@@ -511,11 +514,14 @@ private:
     std::vector<TxOut> outputs_;
     uint32_t lock_time_;
     
-    mutable Hash256 hash_cache_;
-    mutable Hash256 witness_hash_cache_;
+    mutable crypto::Hash256 hash_cache_;
+    mutable crypto::Hash256 witness_hash_cache_;
     
     // Default transaction version.
     static constexpr uint32_t default_version = 2;
 };
+
+} // namespace chain
+} // namespace btclite
 
 #endif // BTCLITE_TRANSACTION_H

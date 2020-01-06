@@ -7,15 +7,8 @@
 #include <cstdint>
 #include <sstream>
 
-#include "btclite-config.h"
 
-
-inline std::string FormatUserAgent()
-{
-    std::stringstream ss;
-    ss << "/" << PACKAGE_NAME << ":" << PACKAGE_VERSION << "/";
-    return ss.str();
-}
+namespace btclite {
 
 constexpr size_t kMaxVardataSize = 0x02000000;
 constexpr size_t kMaxBlockSize = 1000000;
@@ -127,5 +120,8 @@ constexpr char kMsgGetBlockTxn[] = "getblocktxn";
 constexpr char kMsgBlockTxn[] = "blocktxn";
 
 constexpr uint32_t kDefaultBanscoreThreshold = 100;
+
+} // namespace btclite
+
 
 #endif // BTCLITE_CONSTANTS_H

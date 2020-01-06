@@ -6,16 +6,16 @@
 
 int main(int argc, char **argv)
 {
-    Logging fullnode_logging;
+    btclite::util::Logging fullnode_logging;
     fullnode_logging.Init(argv[0]);
     
     FullNodeConfig config;
     try {
         config.ParseParameters(argc, argv);
     }
-    catch (const Exception& e) {
+    catch (const btclite::util::Exception& e) {
         if (e.code().value() != 
-                static_cast<std::underlying_type_t<ErrorCode> >(ErrorCode::show_help))
+                static_cast<std::underlying_type_t<btclite::util::ErrorCode> >(btclite::util::ErrorCode::show_help))
             fprintf(stderr, "%s: %s\n", argv[0], e.what());
         FullNodeHelpInfo::PrintUsage();
         exit(e.code().value());
@@ -34,7 +34,7 @@ int main(int argc, char **argv)
         if (ret)
             ret = fullnode.Start();
     }
-    catch (const Exception& e) {
+    catch (const btclite::util::Exception& e) {
         fprintf(stderr, "Error: %s\n", e.what());
     }
     catch (const std::exception& e) {

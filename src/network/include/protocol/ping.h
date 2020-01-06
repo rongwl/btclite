@@ -99,7 +99,7 @@ template <typename Stream>
 void Ping::Serialize(Stream& out) const
 {
     if (protocol_version_ >= VersionCode::kBip31Version) {
-        Serializer<Stream> serializer(out);
+        util::Serializer<Stream> serializer(out);
         serializer.SerialWrite(nonce_);
     }
 }
@@ -108,14 +108,14 @@ template <typename Stream>
 void Ping::Deserialize(Stream& in)
 {
     if (protocol_version_ >= VersionCode::kBip31Version) {
-        Deserializer<Stream> deserializer(in);
+        util::Deserializer<Stream> deserializer(in);
         deserializer.SerialRead(&nonce_);
     }
 }
 
 } // namespace private_ping
 
-using Ping = Hashable<private_ping::Ping>;
+using Ping = crypto::Hashable<private_ping::Ping>;
 
 } // namespace protocol
 } // namespace network

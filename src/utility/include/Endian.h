@@ -6,6 +6,9 @@
 #include "blob.h"
 
 
+namespace btclite {
+namespace util {
+
 template <typename T>
 void ToBigEndian(T in, Bytes<sizeof(T)> *out)
 {
@@ -70,5 +73,8 @@ void FromLittleEndian(Iterator begin, Iterator end, T *out)
     while (i < sizeof(T) && begin != end) 
         *out |= (static_cast<T>(*begin++) << (8 * i++));
 }
+
+} // namespace util
+} // namespace btclite
 
 #endif // BTCLITE_ENDIAN_H

@@ -6,6 +6,9 @@
 #include "protocol/message.h"
 
 
+namespace btclite {
+namespace network {
+
 struct Seed {
     std::string host;
     uint16_t port;
@@ -20,9 +23,6 @@ struct Seed {
         return !(*this == b);
     }
 };
-
-namespace btclite {
-namespace network {
 
 class Params {
 public:
@@ -50,7 +50,7 @@ private:
     std::vector<Seed> seeds_;
 };
 
-class SingletonParams : Uncopyable {
+class SingletonParams : util::Uncopyable {
 public:
     static Params& GetInstance(BaseEnv env = BaseEnv::mainnet)
     {

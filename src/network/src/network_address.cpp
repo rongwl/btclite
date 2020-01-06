@@ -550,9 +550,9 @@ AddrFamily NetAddr::GetExtFamily() const
     return GetFamily();
 }
 
-Hash256 NetAddr::GetHash() const
+crypto::Hash256 NetAddr::GetHash() const
 {
-    HashOStream hs;
+    crypto::HashOStream hs;
     
     for (const auto& raw : proto_addr_.ip())
         hs << raw;
@@ -561,10 +561,7 @@ Hash256 NetAddr::GetHash() const
     return hs.Sha256();
 }
 
-} // namespace network
-} // namespace btclite
-
-SubNet::SubNet(const btclite::network::NetAddr& addr, int32_t mask)
+SubNet::SubNet(const NetAddr& addr, int32_t mask)
     : net_addr_(addr), valid_(true)
 {
     // Default to /32 (IPv4) or /128 (IPv6), i.e. match single address
@@ -588,7 +585,7 @@ SubNet::SubNet(const btclite::network::NetAddr& addr, int32_t mask)
         net_addr_.SetByte(x, (net_addr_.GetByte(x) & netmask_[x]));
 }
 
-SubNet::SubNet(const btclite::network::NetAddr &addr, const btclite::network::NetAddr &mask)
+SubNet::SubNet(const NetAddr &addr, const NetAddr &mask)
     : net_addr_(addr), valid_(true)
 {
     // Default to /32 (IPv4) or /128 (IPv6), i.e. match single address
@@ -605,7 +602,7 @@ SubNet::SubNet(const btclite::network::NetAddr &addr, const btclite::network::Ne
         net_addr_.SetByte(x, (net_addr_.GetByte(x) & netmask_[x]));
 }
 
-bool SubNet::Match(const btclite::network::NetAddr& addr) const
+bool SubNet::Match(const NetAddr& addr) const
 {
     if (!valid_ || !addr.IsValid())
         return false;
@@ -682,3 +679,6 @@ int SubNet::NetmaskBits(uint8_t x)
     
     return bits;
 }
+
+} // namespace network
+} // namespace btclite

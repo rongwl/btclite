@@ -9,11 +9,13 @@ namespace btclite {
 namespace network {
 namespace protocol {
 
-class sendcmpct : public MessageData {
+namespace private_sendcmpct {
+
+class SendCmpct : public MessageData {
 public:
-    sendcmpct() = default;
+    SendCmpct() = default;
     
-    sendcmpct(bool high_bandwidth_mode, uint64_t version)
+    SendCmpct(bool high_bandwidth_mode, uint64_t version)
         : high_bandwidth_mode_(high_bandwidth_mode), version_(version) {}
     
     //-------------------------------------------------------------------------
@@ -41,13 +43,13 @@ public:
     }
     
     //-------------------------------------------------------------------------
-    bool operator==(const sendcmpct& b) const
+    bool operator==(const SendCmpct& b) const
     {
         return (high_bandwidth_mode_ == b.high_bandwidth_mode_ &&
                 version_ == b.version_);
     }
     
-    bool operator!=(const sendcmpct &b) const
+    bool operator!=(const SendCmpct &b) const
     {
         return !(*this == b);
     }
@@ -56,7 +58,7 @@ public:
     template <typename Stream>
     void Serialize(Stream& out) const 
     {
-        Serializer<Stream> serializer(out);
+        util::Serializer<Stream> serializer(out);
         serializer.SerialWrite(high_bandwidth_mode_);
         serializer.SerialWrite(version_);
     }
@@ -64,7 +66,7 @@ public:
     template <typename Stream>
     void Deserialize(Stream& in)
     {
-        Deserializer<Stream> deserializer(in);
+        util::Deserializer<Stream> deserializer(in);
         deserializer.SerialRead(&high_bandwidth_mode_);
         deserializer.SerialRead(&version_);
     }
@@ -95,7 +97,9 @@ private:
     uint64_t version_ = 0;
 };
 
-using SendCmpct = Hashable<sendcmpct>;
+} // namespace private_sendcmpct
+
+using SendCmpct = crypto::Hashable<private_sendcmpct::SendCmpct>;
 
 } // namespace protocol
 } // namespace network
