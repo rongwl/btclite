@@ -48,8 +48,8 @@ TEST_F(RejectTest, OperatorEqual)
     reject2_.set_data(util::GetUint256());
     EXPECT_NE(reject2_, reject3_);
     
-    reject2_.set_message(kMsgVersion);
-    reject3_.set_message(kMsgVersion);
+    reject2_.set_message(msg_command::kMsgVersion);
+    reject3_.set_message(msg_command::kMsgVersion);
     EXPECT_EQ(reject2_, reject3_);
 }
 
@@ -92,7 +92,7 @@ TEST_F(RejectTest, Serialize)
     EXPECT_EQ(reject1_, reject2_);
     
     reject1_.Clear();
-    reject2_.set_message(kMsgVersion);
+    reject2_.set_message(msg_command::kMsgVersion);
     reject2_.Serialize(byte_sink);
     reject1_.Deserialize(byte_source);
     EXPECT_EQ(reject1_, reject2_);
@@ -106,7 +106,7 @@ TEST_F(RejectTest, SerializedSize)
     EXPECT_EQ(reject2_.SerializedSize(), ms.vec().size());
     
     ms.Clear();
-    reject2_.set_message(kMsgVersion);
+    reject2_.set_message(msg_command::kMsgVersion);
     ms << reject2_;
     EXPECT_EQ(reject2_.SerializedSize(), ms.vec().size());
 }

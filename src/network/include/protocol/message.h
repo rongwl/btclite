@@ -147,6 +147,8 @@ public:
     virtual size_t SerializedSize() const = 0;
     virtual bool IsValid() const = 0;
     virtual ~MessageData() {}
+    
+    static const std::string kCommand;
 };
 
 bool CheckMisbehaving(const std::string command, std::shared_ptr<Node> src_node);

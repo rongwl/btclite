@@ -58,12 +58,11 @@ constexpr VersionCode kMinPeerProtoVersion = kGetheadersVersion;
 namespace private_version {
 
 class Version : public MessageData {
-public:
+public:    
     Version() = default;
     
     Version(VersionCode version, ServiceFlags services, uint64_t timestamp,
-            const NetAddr& addr_recv,
-            const NetAddr& addr_from,
+            const NetAddr& addr_recv, const NetAddr& addr_from,
             uint64_t nonce, const std::string& user_agent,
             uint32_t start_height, bool relay)
         : protocol_version_(version), services_(services), timestamp_(timestamp),
@@ -85,7 +84,7 @@ public:
     
     std::string Command() const
     {
-        return kMsgVersion;
+        return msg_command::kMsgVersion;
     }
     
     bool IsValid() const;

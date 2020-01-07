@@ -18,7 +18,7 @@ public:
     
     std::string Command() const
     {
-        return kMsgInv;
+        return msg_command::kMsgInv;
     }
     
     size_t SerializedSize() const;

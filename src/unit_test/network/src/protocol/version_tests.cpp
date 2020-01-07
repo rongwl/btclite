@@ -157,7 +157,7 @@ TEST_F(VersionTest, Serialize)
     std::vector<uint8_t> vec;
     util::ByteSink<std::vector<uint8_t> > byte_sink(vec);
     util::ByteSource<std::vector<uint8_t> > byte_source(vec);    
-    MessageHeader header1(0x12345678, kMsgVersion, 1000, 0x12345678), header2;
+    MessageHeader header1(0x12345678, msg_command::kMsgVersion, 1000, 0x12345678), header2;
     
     header1.Serialize(byte_sink);
     version2_.Serialize(byte_sink);
@@ -189,7 +189,7 @@ TEST_F(VersionTest, Received)
     //base = event_base_new();
     //ASSERT_NE(base, nullptr);
     //ASSERT_NE(bufferevent_pair_new(base, BEV_OPT_CLOSE_ON_FREE, pair), 0);
-    //bufferevent_setcb(pair_[1], SendCmpctReadCb, NULL, NULL, const_cast<char*>(kMsgSendCmpct));
+    //bufferevent_setcb(pair_[1], SendCmpctReadCb, NULL, NULL, const_cast<char*>(msg_command::kMsgSendCmpct));
     //bufferevent_enable(pair_[1], EV_READ);
     //auto node = std::make_shared<Node>(pair[0], addr_from_, false);
 }

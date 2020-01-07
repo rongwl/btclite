@@ -23,7 +23,7 @@ public:
     
     std::string Command() const
     {
-        return kMsgSendCmpct;
+        return msg_command::kMsgSendCmpct;
     }
     
     bool IsValid() const

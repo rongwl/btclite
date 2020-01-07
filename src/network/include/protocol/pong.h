@@ -24,7 +24,7 @@ public:
     
     std::string Command() const
     {
-        return kMsgPong;
+        return msg_command::kMsgPong;
     }
     
     bool IsValid() const

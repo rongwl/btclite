@@ -52,7 +52,7 @@ public:
     
     std::string Command() const
     {
-        return kMsgReject;
+        return msg_command::kMsgReject;
     }
     
     bool IsValid() const;
@@ -138,7 +138,7 @@ void Reject::Serialize(Stream& out) const
     else
         serializer.SerialWrite(reason_);
     
-    if (message_ == btclite::kMsgBlock || message_ == btclite::kMsgTx)
+    if (message_ == msg_command::kMsgBlock || message_ == msg_command::kMsgTx)
         serializer.SerialWrite(data_);
 }
 
@@ -157,7 +157,7 @@ void Reject::Deserialize(Stream& in)
     if (reason_.size() > kMaxRejectMessageLength)
         reason_.resize(kMaxRejectMessageLength);
     
-    if (message_ == btclite::kMsgBlock || message_ == btclite::kMsgTx)
+    if (message_ == msg_command::kMsgBlock || message_ == msg_command::kMsgTx)
         deserializer.SerialRead(&data_);
 }
 

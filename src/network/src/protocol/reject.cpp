@@ -40,7 +40,7 @@ size_t Reject::SerializedSize() const
     size_t result = util::VarIntSize(message_.size()) +
                     util::VarIntSize(reason_.size()) +
                     message_.size() + reason_.size() + sizeof(ccode_);
-    if (message_ == btclite::kMsgBlock || message_ == btclite::kMsgTx)
+    if (message_ == msg_command::kMsgBlock || message_ == msg_command::kMsgTx)
         result += data_.size();
     
     return result;
@@ -48,7 +48,7 @@ size_t Reject::SerializedSize() const
 
 bool Reject::operator==(const Reject& b) const
 {
-    if (message_ == btclite::kMsgBlock || message_ == btclite::kMsgTx)
+    if (message_ == msg_command::kMsgBlock || message_ == msg_command::kMsgTx)
         return (message_ == b.message_ &&
                 ccode_ == b.ccode_ &&
                 reason_ == b.reason_ &&

@@ -17,7 +17,7 @@ public:
     
     std::string Command() const
     {
-        return kMsgSendHeaders;
+        return msg_command::kMsgSendHeaders;
     }
     
     bool IsValid() const

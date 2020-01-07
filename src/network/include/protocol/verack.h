@@ -17,7 +17,7 @@ public:
     
     std::string Command() const
     {
-        return kMsgVerack;
+        return msg_command::kMsgVerack;
     }
     
     bool IsValid() const

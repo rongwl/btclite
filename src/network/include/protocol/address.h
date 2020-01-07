@@ -21,7 +21,7 @@ public:
     
     std::string Command() const
     {
-        return kMsgAddr;
+        return msg_command::kMsgAddr;
     }
     
     bool IsValid() const

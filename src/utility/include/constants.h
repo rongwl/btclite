@@ -91,7 +91,8 @@ constexpr uint32_t kMaxGetaddrCount = 2500;
 constexpr uint32_t kOutboundConnectionTimeout = 500;
 constexpr uint32_t kOutboundConnectionInterval = 500;
 
-// message types
+// message command
+namespace msg_command {
 constexpr char kMsgVersion[] = "version";
 constexpr char kMsgVerack[] = "verack";
 constexpr char kMsgAddr[] = "addr";
@@ -118,6 +119,7 @@ constexpr char kMsgSendCmpct[] = "sendcmpct";
 constexpr char kMsgCmpctBlock[] = "cmpctblock";
 constexpr char kMsgGetBlockTxn[] = "getblocktxn";
 constexpr char kMsgBlockTxn[] = "blocktxn";
+} // namespace msg_command
 
 constexpr uint32_t kDefaultBanscoreThreshold = 100;
 

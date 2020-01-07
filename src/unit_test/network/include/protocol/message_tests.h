@@ -9,7 +9,7 @@ namespace unit_test {
 class MessageHeaderTest : public ::testing::Test {
 protected:
     MessageHeaderTest()
-        : magic_(kMainMagic), command_(kMsgVersion),
+        : magic_(kMainMagic), command_(msg_command::kMsgVersion),
           payload_length_(kMaxMessageSize), checksum_(0x12345678),
           header1_(), 
           header2_(magic_, command_,

@@ -26,32 +26,32 @@ bool MessageHeader::IsValid() const
     }
     
     std::string cmd = command();
-    if (cmd != kMsgVersion &&
-            cmd != kMsgVerack &&
-            cmd != kMsgAddr &&
-            cmd != kMsgInv &&
-            cmd != kMsgGetData &&
-            cmd != kMsgMerkleBlock &&
-            cmd != kMsgGetBlocks &&
-            cmd != kMsgGetHeaders &&
-            cmd != btclite::kMsgTx &&
-            cmd != kMsgHeaders &&
-            cmd != btclite::kMsgBlock &&
-            cmd != kMsgGetAddr &&
-            cmd != kMsgMempool &&
-            cmd != kMsgPing &&
-            cmd != kMsgPong &&
-            cmd != kMsgNotFound &&
-            cmd != kMsgFilterLoad &&
-            cmd != kMsgFilterAdd &&
-            cmd != kMsgFilterClear &&
-            cmd != kMsgReject &&
-            cmd != kMsgSendHeaders &&
-            cmd != kMsgFeeFilter &&
-            cmd != kMsgSendCmpct &&
-            cmd != kMsgCmpctBlock &&
-            cmd != kMsgGetBlockTxn &&
-            cmd != kMsgBlockTxn) {
+    if (cmd != msg_command::kMsgVersion &&
+            cmd != msg_command::kMsgVerack &&
+            cmd != msg_command::kMsgAddr &&
+            cmd != msg_command::kMsgInv &&
+            cmd != msg_command::kMsgGetData &&
+            cmd != msg_command::kMsgMerkleBlock &&
+            cmd != msg_command::kMsgGetBlocks &&
+            cmd != msg_command::kMsgGetHeaders &&
+            cmd != msg_command::kMsgTx &&
+            cmd != msg_command::kMsgHeaders &&
+            cmd != msg_command::kMsgBlock &&
+            cmd != msg_command::kMsgGetAddr &&
+            cmd != msg_command::kMsgMempool &&
+            cmd != msg_command::kMsgPing &&
+            cmd != msg_command::kMsgPong &&
+            cmd != msg_command::kMsgNotFound &&
+            cmd != msg_command::kMsgFilterLoad &&
+            cmd != msg_command::kMsgFilterAdd &&
+            cmd != msg_command::kMsgFilterClear &&
+            cmd != msg_command::kMsgReject &&
+            cmd != msg_command::kMsgSendHeaders &&
+            cmd != msg_command::kMsgFeeFilter &&
+            cmd != msg_command::kMsgSendCmpct &&
+            cmd != msg_command::kMsgCmpctBlock &&
+            cmd != msg_command::kMsgGetBlockTxn &&
+            cmd != msg_command::kMsgBlockTxn) {
         BTCLOG(LOG_LEVEL_WARNING) << "MessageHeader::command_(" << cmd << ") is invalid";
         return false;
     }
@@ -75,11 +75,11 @@ void MessageHeader::Clear()
 bool CheckMisbehaving(const std::string command, std::shared_ptr<Node> src_node)
 {
     // Must have a version message before anything else
-    if (command != kMsgVersion && src_node->protocol_version() == 0)
+    if (command != msg_command::kMsgVersion && src_node->protocol_version() == 0)
         return false;
     
     // Must have a verack message before anything else
-    if (command != kMsgVersion && command != kMsgVerack &&
+    if (command != msg_command::kMsgVersion && command != msg_command::kMsgVerack &&
             !src_node->conn_established())
         return false;
     

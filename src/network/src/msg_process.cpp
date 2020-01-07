@@ -30,16 +30,16 @@ MessageData *MsgDataFactory(const uint8_t *raw, const MessageHeader& header,
         return nullptr;
     
     if (!raw && 
-            header.command() != kMsgVerack &&
-            header.command() != kMsgGetAddr &&
-            header.command() != kMsgSendHeaders &&
-            (header.command() == kMsgPing && protocol_version >= VersionCode::kBip31Version))
+            header.command() != msg_command::kMsgVerack &&
+            header.command() != msg_command::kMsgGetAddr &&
+            header.command() != msg_command::kMsgSendHeaders &&
+            (header.command() == msg_command::kMsgPing && protocol_version >= VersionCode::kBip31Version))
         return nullptr;        
     
     vec.reserve(header.payload_length());
     vec.assign(raw, raw + header.payload_length());
     
-    if (header.command() == kMsgVersion) {        
+    if (header.command() == msg_command::kMsgVersion) {        
         Version *version = new Version();
         version->Deserialize(byte_source);
         if (header.checksum() != version->GetHash().GetLow32()) {
@@ -50,7 +50,7 @@ MessageData *MsgDataFactory(const uint8_t *raw, const MessageHeader& header,
         }
         msg = version;
     }
-    else if (header.command() == kMsgVerack) {
+    else if (header.command() == msg_command::kMsgVerack) {
         Verack *verack = new Verack();
         verack->Deserialize(byte_source);
         if (header.checksum() != verack->GetHash().GetLow32()) {
@@ -61,7 +61,7 @@ MessageData *MsgDataFactory(const uint8_t *raw, const MessageHeader& header,
         }
         msg = verack;
     }
-    else if (header.command() == kMsgAddr) {
+    else if (header.command() == msg_command::kMsgAddr) {
         Addr *addr = new Addr();
         addr->Deserialize(byte_source);
         if (header.checksum() != addr->GetHash().GetLow32()) {
@@ -72,7 +72,7 @@ MessageData *MsgDataFactory(const uint8_t *raw, const MessageHeader& header,
         }
         msg = addr;
     }
-    else if (header.command() == kMsgInv) {
+    else if (header.command() == msg_command::kMsgInv) {
         Inv *inv = new Inv();
         inv->Deserialize(byte_source);
         if (header.checksum() != inv->GetHash().GetLow32()) {
@@ -83,7 +83,7 @@ MessageData *MsgDataFactory(const uint8_t *raw, const MessageHeader& header,
         }
         msg = inv;
     }
-    else if (header.command() == kMsgGetAddr) {
+    else if (header.command() == msg_command::kMsgGetAddr) {
         GetAddr *getaddr = new GetAddr();
         getaddr->Deserialize(byte_source);
         if (header.checksum() != getaddr->GetHash().GetLow32()) {
@@ -94,7 +94,7 @@ MessageData *MsgDataFactory(const uint8_t *raw, const MessageHeader& header,
         }
         msg = getaddr;
     }
-    else if (header.command() == kMsgPing) {
+    else if (header.command() == msg_command::kMsgPing) {
         Ping *ping = new Ping();
         ping->set_protocol_version(protocol_version);
         ping->Deserialize(byte_source);
@@ -106,7 +106,7 @@ MessageData *MsgDataFactory(const uint8_t *raw, const MessageHeader& header,
         }
         msg = ping;
     }
-    else if (header.command() == kMsgPong) {
+    else if (header.command() == msg_command::kMsgPong) {
         Pong *pong = new Pong();
         pong->Deserialize(byte_source);
         if (header.checksum() != pong->GetHash().GetLow32()) {
@@ -117,7 +117,7 @@ MessageData *MsgDataFactory(const uint8_t *raw, const MessageHeader& header,
         }
         msg = pong;
     }
-    else if (header.command() == kMsgReject) {
+    else if (header.command() == msg_command::kMsgReject) {
         Reject *reject = new Reject();
         reject->Deserialize(byte_source);
         if (header.checksum() != reject->GetHash().GetLow32()) {
@@ -128,7 +128,7 @@ MessageData *MsgDataFactory(const uint8_t *raw, const MessageHeader& header,
         }
         msg = reject;
     }
-    else if (header.command() == kMsgSendHeaders) {
+    else if (header.command() == msg_command::kMsgSendHeaders) {
         SendHeaders *send_headers = new SendHeaders();
         send_headers->Deserialize(byte_source);
         if (header.checksum() != send_headers->GetHash().GetLow32()) {
@@ -139,7 +139,7 @@ MessageData *MsgDataFactory(const uint8_t *raw, const MessageHeader& header,
         }
         msg = send_headers;
     }
-    else if (header.command() == kMsgSendCmpct) {
+    else if (header.command() == msg_command::kMsgSendCmpct) {
         SendCmpct *send_compact = new SendCmpct();
         send_compact->Deserialize(byte_source);
         if (header.checksum() != send_compact->GetHash().GetLow32()) {
