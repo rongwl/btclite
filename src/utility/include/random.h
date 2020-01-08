@@ -5,7 +5,7 @@
 #include <cstdint>
 
 #include "arithmetic.h"
-#include "Endian.h"
+#include "util_endian.h"
 
 
 namespace btclite {

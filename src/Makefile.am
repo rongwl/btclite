@@ -79,7 +79,6 @@ BTCLITE_HEADER_FILES = \
                        utility/include/blob.h \
                        utility/include/circular_buffer.h \
                        utility/include/constants.h \
-                       utility/include/Endian.h \
                        utility/include/error.h \
                        utility/include/fs.h \
                        utility/include/logging.h \
@@ -92,7 +91,9 @@ BTCLITE_HEADER_FILES = \
                        utility/include/stream.h \
                        utility/include/string_encoding.h \
                        utility/include/timer.h \
-                       utility/include/utiltime.h 
+                       utility/include/util_assert.h \
+                       utility/include/util_endian.h \
+                       utility/include/util_time.h 
 
 
 dist_noinst_DATA = network/proto/network_address.proto \
@@ -126,7 +127,7 @@ utility_src_libbtclite_util_a_SOURCES = utility/src/error.cpp \
                                         utility/src/thread.cpp \
                                         utility/src/timer.cpp \
                                         utility/src/util.cpp \
-                                        utility/src/utiltime.cpp 
+                                        utility/src/util_time.cpp 
 
 
 chain_src_libbtclite_chain_a_CPPFLAGS = $(AM_CXXFLAGS) \

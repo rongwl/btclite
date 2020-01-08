@@ -7,7 +7,7 @@
 #include "peers.pb.h"
 #include "random.h"
 #include "sync.h"
-#include "utiltime.h"
+#include "util_time.h"
 
 
 namespace btclite {

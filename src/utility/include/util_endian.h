@@ -2,7 +2,7 @@
 #define BTCLITE_ENDIAN_H
 
 #include <cstddef>
-#include "Assert.h"
+#include "util_assert.h"
 #include "blob.h"
 
 
