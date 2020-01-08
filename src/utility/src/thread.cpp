@@ -19,7 +19,7 @@ void ThreadInterrupt::Reset()
     flag.store(false, std::memory_order_release);
 }
 
-void ThreadInterrupt::operator()()
+void ThreadInterrupt::Interrupt()
 {
     {
         std::unique_lock<std::mutex> lock(mut);

@@ -88,7 +88,7 @@ void P2P::Interrupt()
 {
     BTCLOG(LOG_LEVEL_INFO) << "Interrupting p2p network...";
     
-    SingletonNetInterrupt::GetInstance()();
+    SingletonNetInterrupt::GetInstance().Interrupt();
     util::SingletonTimerMng::GetInstance().set_stop(true);
     acceptor_.ExitEventLoop();
     connector_.ExitEventLoop();    

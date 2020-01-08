@@ -29,7 +29,7 @@ class ThreadInterrupt
 {
 public:
     explicit operator bool() const;
-    void operator()();
+    void Interrupt();
     void Reset();
     bool Sleep_for(std::chrono::milliseconds rel_time);
     bool Sleep_for(std::chrono::seconds rel_time);

@@ -6,6 +6,7 @@
 
 
 namespace btclite {
+namespace util {
 
 #define ASSERT_UNSIGNED(T) static_assert(std::is_unsigned<T>::value, \
                                          "This function requires unsigned type")
@@ -18,6 +19,7 @@ namespace btclite {
 
 #define ASSERT_NULL(OUT) assert(OUT != nullptr)
 
+} // namespace util
 } // namespace btclite
 
 #endif // BTCLITE_ASSERT_H

@@ -16,7 +16,7 @@ namespace network {
 class Peers {
 public:
     Peers()
-        : key_(std::move(util::GetUint256()))
+        : key_(util::GetUint256())
     {
         proto_peers_.mutable_key()->Resize(4, 0);
         std::memcpy(proto_peers_.mutable_key()->begin(), key_.begin(), key_.Size());
@@ -141,15 +141,17 @@ private:
 class PeersDb : util::Uncopyable {
 public:
     explicit PeersDb(const fs::path& path)
-        : path_peers_(path / default_peers_file),
-          peers_(SingletonPeers::GetInstance()) {}
+        : path_peers_(path / default_peers_file)
+    {
+        SingletonPeers::GetInstance();
+    }
     
     bool DumpPeers();
     bool LoadPeers();
     
     size_t Size() const
     {
-        return peers_.Size();
+        return SingletonPeers::GetInstance().Size();
     }
     
     const fs::path& path_peers() const
@@ -161,7 +163,6 @@ private:
     const std::string default_peers_file = "peers.dat";
     
     fs::path path_peers_;
-    Peers& peers_;
 };
 
 } // namespace network
