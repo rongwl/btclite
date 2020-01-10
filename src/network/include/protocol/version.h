@@ -20,40 +20,8 @@ inline std::string FormatUserAgent()
     return ss.str();
 }
 
-enum VersionCode : uint32_t {
-    kUnknownProtoVersion = 0,
-    
-    // initial proto version, to be increased after version/verack negotiation
-    kInitProtoVersion = 209,
-    
-    // timestamp field added to NetAddr, starting with this version;
-    // if possible, avoid requesting addresses nodes older than this
-    kAddrTimeVersion = 31402,
-    
-    // In this version, 'getheaders' was introduced.
-    kGetheadersVersion = 31800,
-    
-    // BIP 0031, pong message, is enabled for all versions AFTER this one
-    kBip31Version = 60000,
-    
-    // BIP 0037, whether the remote peer should announce relayed transactions or not
-    kRelayedTxsVersion = 70001,
-    
-    // "filter*" commands are disabled without kNodeBloom after and including this version
-    kNoBloomVersion = 70011,
-    
-    // "sendheaders" command and announcing blocks with headers starts with this version
-    kSendheadersVersion = 70012,
-    
-    // "feefilter" tells peers to filter invs to you by fee starts with this version
-    kShortIdsBlocksVersion = 70014,
-    
-    // not banning for invalid compact blocks starts with this version
-    kInvalidCbNoBanVersion = 70015
-};
-
-constexpr VersionCode kProtocolVersion = kInvalidCbNoBanVersion;
-constexpr VersionCode kMinPeerProtoVersion = kGetheadersVersion;
+constexpr ProtocolVersion kProtocolVersion = kInvalidCbNoBanVersion;
+constexpr ProtocolVersion kMinPeerProtoVersion = kGetheadersVersion;
 
 namespace private_version {
 
@@ -61,7 +29,7 @@ class Version : public MessageData {
 public:    
     Version() = default;
     
-    Version(VersionCode version, ServiceFlags services, uint64_t timestamp,
+    Version(ProtocolVersion version, ServiceFlags services, uint64_t timestamp,
             const NetAddr& addr_recv, const NetAddr& addr_from,
             uint64_t nonce, const std::string& user_agent,
             uint32_t start_height, bool relay)
@@ -69,7 +37,7 @@ public:
           addr_recv_(addr_recv), addr_from_(addr_from), nonce_(nonce),
           user_agent_(user_agent), start_height_(start_height), relay_(relay) {}
     
-    Version(VersionCode version, ServiceFlags services, uint64_t timestamp,
+    Version(ProtocolVersion version, ServiceFlags services, uint64_t timestamp,
             NetAddr&& addr_recv,
             NetAddr&& addr_from,
             uint64_t nonce, std::string&& user_agent,
@@ -104,11 +72,11 @@ public:
     void Deserialize(Stream& in);
     
     //-------------------------------------------------------------------------
-    VersionCode protocol_version() const
+    ProtocolVersion protocol_version() const
     {
         return protocol_version_;
     }
-    void set_protocol_version(VersionCode version)
+    void set_protocol_version(ProtocolVersion version)
     {
         protocol_version_ = version;
     }
@@ -198,7 +166,7 @@ public:
     }
 
 private:
-    VersionCode protocol_version_ = kUnknownProtoVersion;
+    ProtocolVersion protocol_version_ = kUnknownProtoVersion;
     ServiceFlags services_ = kNodeNone;
     uint64_t timestamp_ = 0;
     NetAddr addr_recv_;

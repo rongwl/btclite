@@ -101,8 +101,7 @@ void ConnReadCb(struct bufferevent *bev, void *ctx)
         timer_mng.StopTimer(pnode->timers().no_msg_timer);
         pnode->mutable_timers()->no_msg_timer.reset();
         
-        uint32_t timeout = (pnode->protocol_version() >
-                            protocol::kBip31Version) ? 
+        uint32_t timeout = (pnode->protocol().version() > kBip31Version) ? 
                             kNoReceivingTimeoutBip31 : kNoReceivingTimeout;
         pnode->mutable_timers()->no_receiving_timer = 
             timer_mng.StartTimer(timeout*1000, 0, Node::InactivityTimeoutCb, pnode);
@@ -123,20 +122,20 @@ void ConnEventCb(struct bufferevent *bev, short events, void *ctx)
         
     }
     else if (events & BEV_EVENT_EOF) {
-        if (!pnode->disconnected())
+        if (!pnode->connection().disconnected())
             BTCLOG(LOG_LEVEL_WARNING) << "peer " << pnode->id() << " socket closed";
-        pnode->set_conn_established(false);
-        pnode->set_disconnected(true);
+        pnode->mutable_connection()->set_established(false);
+        pnode->mutable_connection()->set_disconnected(true);
     }
     else if (events & BEV_EVENT_ERROR) {
         if (errno != EWOULDBLOCK && errno != EMSGSIZE && errno != EINTR && errno != EINPROGRESS)
         {
-            if (!pnode->disconnected()) {
+            if (!pnode->connection().disconnected()) {
                 BTCLOG(LOG_LEVEL_ERROR) << "peer " << pnode->id() << " socket recv error:"
                                         << std::string(strerror(errno));
             }
-            pnode->set_conn_established(false);
-            pnode->set_disconnected(true);
+            pnode->mutable_connection()->set_established(false);
+            pnode->mutable_connection()->set_disconnected(true);
         }
     }
 }

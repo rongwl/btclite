@@ -55,7 +55,7 @@ TEST(AcceptorTest, MethordAcceptConnCb)
         
         std::shared_ptr<Node> pnode = SingletonNodes::GetInstance().GetNode(addr);
         ASSERT_NE(pnode, nullptr);
-        ASSERT_EQ(pnode->addr(), addr);
+        ASSERT_EQ(pnode->connection().addr(), addr);
         
         BlockSync &block_sync = SingletonBlockSync::GetInstance();
         ASSERT_TRUE(block_sync.IsExist(pnode->id()));
@@ -75,7 +75,7 @@ TEST(AcceptorTest, MethordAcceptConnCb)
     EXPECT_EQ(SingletonNodes::GetInstance().CountInbound(), ++count);
     std::shared_ptr<Node> pnode = SingletonNodes::GetInstance().GetNode(addr);
     ASSERT_NE(pnode, nullptr);
-    EXPECT_EQ(pnode->addr(), addr);
+    EXPECT_EQ(pnode->connection().addr(), addr);
     BlockSync &block_sync = SingletonBlockSync::GetInstance();
     ASSERT_TRUE(block_sync.IsExist(pnode->id()));
     NetAddr addr3;

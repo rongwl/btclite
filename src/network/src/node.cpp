@@ -10,80 +10,13 @@
 namespace btclite {
 namespace network {
 
-const BloomFilter *NodeFilter::bloom_filter() const
+void NodeConnection::set_disconnected(bool disconnected)
 {
-    LOCK(cs_bloom_filter_);
-    
-    if (!bloom_filter_)
-        return nullptr;
-    
-    return bloom_filter_.get();
+    disconnected_ = disconnected;
+    SingletonNodes::GetInstance().EraseNode(node_id_);
 }
 
-Node::Node(const struct bufferevent *bev, const NetAddr& addr,
-           bool is_inbound, bool manual, std::string host_name)
-    : id_(SingletonNodes::GetInstance().GetNewNodeId()),
-      services_(SingletonLocalNetCfg::GetInstance().local_services()),
-      bev_(const_cast<struct bufferevent*>(bev)), addr_(addr),
-      local_host_nonce_(util::GetUint64()),
-      host_name_(host_name), is_inbound_(is_inbound), manual_(manual), known_addrs_(3000),
-      time_(util::GetTimeSeconds())
-{
-    time_.ping_time.min_ping_usec_time = std::numeric_limits<int64_t>::max();
-}
-
-Node::~Node()
-{
-    if (bev_)
-        bufferevent_free(bev_);
-    if (!SingletonNetInterrupt::GetInstance()) {
-        if (SingletonBlockSync::GetInstance().ShouldUpdateTime(id_))
-            SingletonPeers::GetInstance().UpdateTime(addr_);
-        
-        if (SingletonBlockSync::GetInstance().IsExist(id_)) {
-            auto task = std::bind(&BlockSync::EraseSyncState, &(SingletonBlockSync::GetInstance()), std::placeholders::_1);
-            util::SingletonThreadPool::GetInstance().AddTask(std::function<void(NodeId)>(task), id_);
-        }
-    }
-}
-
-void Node::InactivityTimeoutCb(std::shared_ptr<Node> node)
-{
-    if (SingletonNetInterrupt::GetInstance())
-        return;
-
-    BTCLOG(LOG_LEVEL_WARNING) << "Peer " << node->id() << " inactive timeout.";
-    node->set_disconnected(true);
-}
-
-bool Node::CheckBanned()
-{
-    BlockSync &block_sync = SingletonBlockSync::GetInstance();
-    bool should_ban = false;
-    
-    if (!block_sync.GetShouldBan(id_, &should_ban) || !should_ban)
-        return false;
-    
-    block_sync.SetShouldBan(id_, false);
-    if (manual_) {
-        BTCLOG(LOG_LEVEL_WARNING) << "Can not punishing manually-connected peer "
-                                  << addr_.ToString();
-    }
-    else {
-        set_disconnected(true);
-        if (addr_.IsLocal()) {
-            BTCLOG(LOG_LEVEL_WARNING) << "Can not banning local peer "
-                                      << addr_.ToString();
-        }
-        else {
-            SingletonBanDb::GetInstance().Add(addr_, BanDb::BanReason::NodeMisbehaving);
-        }
-    }
-    
-    return true;
-}
-
-bool Node::PushAddrToSend(const NetAddr& addr)
+bool BroadcastAddrs::PushAddrToSend(const NetAddr& addr)
 {
     LOCK(cs_addrs_);
     
@@ -101,7 +34,7 @@ bool Node::PushAddrToSend(const NetAddr& addr)
     return true;
 }
 
-void Node::ClearSentAddr()
+void BroadcastAddrs::ClearSentAddr()
 {
     LOCK(cs_addrs_);
     addrs_to_send_.clear();
@@ -111,7 +44,7 @@ void Node::ClearSentAddr()
         addrs_to_send_.shrink_to_fit();
 }
 
-bool Node::AddKnownAddr(const NetAddr& addr)
+bool BroadcastAddrs::AddKnownAddr(const NetAddr& addr)
 {
     LOCK(cs_addrs_);
     
@@ -123,25 +56,95 @@ bool Node::AddKnownAddr(const NetAddr& addr)
     return true;
 }
 
-void Node::set_disconnected(bool disconnected)
+const BloomFilter *NodeFilter::bloom_filter() const
 {
-    disconnected_ = disconnected;
-    SingletonNodes::GetInstance().EraseNode(id_);
+    LOCK(cs_bloom_filter_);
+    
+    if (!bloom_filter_)
+        return nullptr;
+    
+    return bloom_filter_.get();
+}
+
+Node::Node(const struct bufferevent *bev, const NetAddr& addr,
+           bool is_inbound, bool manual, std::string host_name)
+    : id_(SingletonNodes::GetInstance().GetNewNodeId()),
+      local_host_nonce_(util::GetUint64()),
+      connection_(id_, bev, addr, is_inbound, manual, host_name),
+      time_(util::GetTimeSeconds())
+{
+    time_.ping_time.min_ping_usec_time = std::numeric_limits<int64_t>::max();
+}
+
+Node::~Node()
+{
+    if (!SingletonNetInterrupt::GetInstance()) {
+        if (SingletonBlockSync::GetInstance().ShouldUpdateTime(id_))
+            SingletonPeers::GetInstance().UpdateTime(connection_.addr());
+        
+        if (SingletonBlockSync::GetInstance().IsExist(id_)) {
+            auto task = std::bind(&BlockSync::EraseSyncState, 
+                                  &(SingletonBlockSync::GetInstance()), 
+                                  std::placeholders::_1);
+            util::SingletonThreadPool::GetInstance().AddTask(
+                std::function<void(NodeId)>(task), id_);
+        }
+    }
+}
+
+void Node::InactivityTimeoutCb(std::shared_ptr<Node> node)
+{
+    if (SingletonNetInterrupt::GetInstance())
+        return;
+
+    BTCLOG(LOG_LEVEL_WARNING) << "Peer " << node->id() << " inactive timeout.";
+    node->mutable_connection()->set_disconnected(true);
+}
+
+bool Node::CheckBanned()
+{
+    BlockSync &block_sync = SingletonBlockSync::GetInstance();
+    bool should_ban = false;
+    
+    if (!block_sync.GetShouldBan(id_, &should_ban) || !should_ban)
+        return false;
+    
+    block_sync.SetShouldBan(id_, false);
+    if (connection_.manual()) {
+        BTCLOG(LOG_LEVEL_WARNING) << "Can not punishing manually-connected peer "
+                                  << connection_.addr().ToString();
+    }
+    else {
+        connection_.set_disconnected(true);
+        if (connection_.addr().IsLocal()) {
+            BTCLOG(LOG_LEVEL_WARNING) << "Can not banning local peer "
+                                      << connection_.addr().ToString();
+        }
+        else {
+            SingletonBanDb::GetInstance().Add(connection_.addr(),
+                                              BanDb::BanReason::NodeMisbehaving);
+        }
+    }
+    
+    return true;
 }
 
 void Nodes::AddNode(std::shared_ptr<Node> node)
 {
     LOCK(cs_nodes_);
     list_.push_back(node);
-    BTCLOG(LOG_LEVEL_VERBOSE) << "Added node, id:" << node->id() << " addr:" << node->addr().ToString();
+    BTCLOG(LOG_LEVEL_VERBOSE) << "Added node, id:" << node->id() 
+                              << " addr:" << node->connection().addr().ToString();
 }
 
-std::shared_ptr<Node> Nodes::InitializeNode(const struct bufferevent *bev, const NetAddr& addr,
+std::shared_ptr<Node> Nodes::InitializeNode(const struct bufferevent *bev, 
+                                            const NetAddr& addr,
                                             bool is_inbound, bool manual)
 {
     auto node = std::make_shared<Node>(bev, addr, is_inbound, manual);
-    node->mutable_timers()->no_msg_timer = util::SingletonTimerMng::GetInstance().
-                                           StartTimer(kNoMsgTimeout*1000, 0, Node::InactivityTimeoutCb, node);
+    node->mutable_timers()->no_msg_timer = 
+        util::SingletonTimerMng::GetInstance().StartTimer(
+            kNoMsgTimeout*1000, 0, Node::InactivityTimeoutCb, node);
     
     AddNode(node);    
     if (!GetNode(node->id())) {
@@ -149,7 +152,8 @@ std::shared_ptr<Node> Nodes::InitializeNode(const struct bufferevent *bev, const
         return nullptr;
     }
     
-    SingletonBlockSync::GetInstance().AddSyncState(node->id(), node->addr(), node->host_name());
+    SingletonBlockSync::GetInstance().AddSyncState(node->id(), node->connection().addr(),
+                                                   node->connection().host_name());
     
     return node;
 }
@@ -168,7 +172,7 @@ std::shared_ptr<Node> Nodes::GetNode(struct bufferevent *bev)
 {
     LOCK(cs_nodes_);
     for (auto it = list_.begin(); it != list_.end(); ++it)
-        if ((*it)->bev() == bev)
+        if ((*it)->connection().bev() == bev)
             return (*it);
     
     return nullptr;
@@ -178,7 +182,7 @@ std::shared_ptr<Node> Nodes::GetNode(const NetAddr& addr)
 {
     LOCK(cs_nodes_);
     for (auto it = list_.begin(); it != list_.end(); ++it)
-        if ((*it)->addr() == addr)
+        if ((*it)->connection().addr() == addr)
             return (*it);
     
     return nullptr;
@@ -211,7 +215,7 @@ void Nodes::ClearDisconnected()
     LOCK(cs_nodes_);
     
     for (auto it = list_.begin(); it != list_.end(); ++it) {
-        if ((*it)->disconnected()) {
+        if ((*it)->connection().disconnected()) {
         
         }
     }
@@ -222,8 +226,8 @@ void Nodes::DisconnectNode(const SubNet& subnet)
     LOCK(cs_nodes_);
     
     for (auto it = list_.begin(); it != list_.end(); ++it) {
-        if (subnet.Match((*it)->addr()))
-            (*it)->set_disconnected(true);
+        if (subnet.Match((*it)->connection().addr()))
+            (*it)->mutable_connection()->set_disconnected(true);
     }
 }
 
@@ -343,7 +347,7 @@ int Nodes::CountInbound()
     
     LOCK(cs_nodes_);    
     for (auto it = list_.begin(); it != list_.end(); ++it) {
-        if ((*it)->is_inbound())
+        if ((*it)->connection().is_inbound())
             num++;
     }
     
@@ -362,7 +366,9 @@ bool Nodes::ShouldDnsLookup()
     
     LOCK(cs_nodes_);
     for (auto it = list_.begin(); it != list_.end(); ++it) {
-        if ((*it)->conn_established() && !(*it)->manual() && !(*it)->is_inbound())
+        if ((*it)->connection().established() && 
+                !(*it)->connection().manual() && 
+                !(*it)->connection().is_inbound())
             count++;
     }
     
@@ -373,7 +379,8 @@ bool Nodes::CheckIncomingNonce(uint64_t nonce)
 {
     LOCK(cs_nodes_);
     for (auto it = list_.begin(); it != list_.end(); ++it) {
-        if (!(*it)->conn_established() && !(*it)->is_inbound() &&
+        if (!(*it)->connection().established() && 
+                !(*it)->connection().is_inbound() &&
                 (*it)->local_host_nonce() == nonce)
             return false;
     }

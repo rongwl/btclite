@@ -253,7 +253,8 @@ bool Connector::ConnectNode(const NetAddr& addr, bool manual)
 
     std::memset(&sock_addr, 0, sizeof(sock_addr));
     addr.ToSockAddr(reinterpret_cast<struct sockaddr*>(&sock_addr));
-    len = (sock_addr.ss_family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6);    
+    len = (sock_addr.ss_family == AF_INET) ? 
+          sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6);    
     if (bufferevent_socket_connect(bev, (struct sockaddr*)&sock_addr, len) < 0) {
         BTCLOG(LOG_LEVEL_WARNING) << "Connecting to " << addr.ToString()
                                   << " failed: " << strerror(errno);
@@ -298,7 +299,7 @@ bool Connector::GetHostAddr(const std::string& host_name, NetAddr *out)
     auto pnode = SingletonNodes::GetInstance().GetNode(addr);
     if (pnode)
     {
-        pnode->set_host_name(host_name);
+        pnode->mutable_connection()->set_host_name(host_name);
         BTCLOG(LOG_LEVEL_WARNING) << "Failed to open new connection because it was already connected";
         return false;
     }

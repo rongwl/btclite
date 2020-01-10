@@ -33,7 +33,8 @@ MessageData *MsgDataFactory(const uint8_t *raw, const MessageHeader& header,
             header.command() != msg_command::kMsgVerack &&
             header.command() != msg_command::kMsgGetAddr &&
             header.command() != msg_command::kMsgSendHeaders &&
-            (header.command() == msg_command::kMsgPing && protocol_version >= VersionCode::kBip31Version))
+            (header.command() == msg_command::kMsgPing && 
+             protocol_version >= kBip31Version))
         return nullptr;        
     
     vec.reserve(header.payload_length());
@@ -167,13 +168,14 @@ bool ParseMsg(std::shared_ptr<Node> src_node)
     struct evbuffer *buf;
     uint8_t *raw = nullptr;
     
-    if (!src_node->bev())
+    if (!src_node->connection().bev())
         return false;
     
-    if (nullptr == (buf = bufferevent_get_input(src_node->mutable_bev())))
+    if (nullptr == (buf = bufferevent_get_input(
+                              src_node->mutable_connection()->mutable_bev())))
         return false;
 
-    if (src_node->disconnected())
+    if (src_node->connection().disconnected())
         return false;
     
     if (nullptr == (raw = evbuffer_pullup(buf, MessageHeader::kSize)))
@@ -186,13 +188,13 @@ bool ParseMsg(std::shared_ptr<Node> src_node)
         if (header.payload_length() > kMaxMessageSize) {
             BTCLOG(LOG_LEVEL_ERROR) << "Oversized message from peer "                                    
                                     << src_node->id() << ", disconnecting";
-            src_node->set_disconnected(true);
+            src_node->mutable_connection()->set_disconnected(true);
             return false;
         }
         
         if (nullptr == (raw = evbuffer_pullup(buf, header.payload_length())))
             return false;       
-        MessageData *message = MsgDataFactory(raw, header, src_node->protocol_version());
+        MessageData *message = MsgDataFactory(raw, header, src_node->protocol().version());
         evbuffer_drain(buf, header.payload_length());
         
         // validate header and data second
@@ -226,9 +228,9 @@ bool ParseMsg(std::shared_ptr<Node> src_node)
 
 bool SendVersion(std::shared_ptr<Node> dst_node)
 {
-    ServiceFlags services = dst_node->services();
+    ServiceFlags services = dst_node->protocol().services();
     uint32_t start_height = chain::SingletonBlockChain::GetInstance().Height();
-    NetAddr addr_recv(dst_node->addr());
+    NetAddr addr_recv(dst_node->connection().addr());
     NetAddr addr_from;
     
     addr_from.set_services(services);
@@ -259,7 +261,7 @@ void UpdatePreferredDownload(std::shared_ptr<Node> node)
 {
     BlockSync& block_sync = SingletonBlockSync::GetInstance();
     bool old_state;
-    bool new_state = (!node->is_inbound() && !node->IsClient());
+    bool new_state = (!node->connection().is_inbound() && !node->protocol().IsClient());
     
     if (!block_sync.GetPreferredDownload(node->id(), &old_state))
         return;

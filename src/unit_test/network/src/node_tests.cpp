@@ -12,7 +12,7 @@ TEST_F(NodesTest, InitializeNode)
 {
     std::shared_ptr<Node> result = nodes_.GetNode(addr3_);
     ASSERT_NE(result, nullptr);
-    EXPECT_EQ(result->addr(), addr3_);
+    EXPECT_EQ(result->connection().addr(), addr3_);
     EXPECT_TRUE(SingletonBlockSync::GetInstance().IsExist(id3_)); 
 }
 
@@ -20,14 +20,14 @@ TEST_F(NodesTest, GetNodeByAddr)
 {
     std::shared_ptr<Node> result = nodes_.GetNode(addr1_);
     ASSERT_NE(result, nullptr);
-    EXPECT_EQ(result->addr(), addr1_);
+    EXPECT_EQ(result->connection().addr(), addr1_);
 }
 
 TEST_F(NodesTest, GetNodeById)
 {
     std::shared_ptr<Node> result = nodes_.GetNode(id2_);
     ASSERT_NE(result, nullptr);
-    EXPECT_EQ(result->addr(), addr2_);
+    EXPECT_EQ(result->connection().addr(), addr2_);
 }
 
 TEST_F(NodesTest, EraseNodeByPtr)
@@ -59,7 +59,7 @@ TEST_F(NodesTest, CheckIncomingNonce)
     EXPECT_FALSE(nodes_.CheckIncomingNonce(node1->local_host_nonce()));
     EXPECT_TRUE(nodes_.CheckIncomingNonce(1234));
     EXPECT_TRUE(nodes_.CheckIncomingNonce(node2->local_host_nonce()));
-    node1->set_conn_established(true);
+    node1->mutable_connection()->set_established(true);
     EXPECT_TRUE(nodes_.CheckIncomingNonce(node1->local_host_nonce()));
 }
 
@@ -79,22 +79,22 @@ TEST_F(NodesTest, DisconnectNode)
     nodes_.DisconnectNode(subnet);
     
     std::shared_ptr<Node> node = nodes_.GetNode(addr1_);
-    EXPECT_FALSE(node->disconnected());
+    EXPECT_FALSE(node->connection().disconnected());
     
     node = nodes_.GetNode(addr2_);
-    EXPECT_FALSE(node->disconnected());
+    EXPECT_FALSE(node->connection().disconnected());
     
     node = nodes_.GetNode(addr3_);
-    EXPECT_FALSE(node->disconnected());
+    EXPECT_FALSE(node->connection().disconnected());
     
     node = nodes_.GetNode(addr1);
-    EXPECT_TRUE(node->disconnected());
+    EXPECT_TRUE(node->connection().disconnected());
     
     node = nodes_.GetNode(addr2);
-    EXPECT_TRUE(node->disconnected());
+    EXPECT_TRUE(node->connection().disconnected());
     
     node = nodes_.GetNode(addr3);
-    EXPECT_TRUE(node->disconnected());
+    EXPECT_TRUE(node->connection().disconnected());
     
     SingletonBlockSync::GetInstance().Clear();
     SingletonNodes::GetInstance().Clear();
@@ -117,8 +117,8 @@ TEST_F(NodeTest, Disconnect)
     Nodes& nodes = SingletonNodes::GetInstance();
     std::shared_ptr<Node> node = nodes.GetNode(id_);
     ASSERT_NE(node, nullptr);
-    node->set_disconnected(true);
-    EXPECT_TRUE(node->disconnected());
+    node->mutable_connection()->set_disconnected(true);
+    EXPECT_TRUE(node->connection().disconnected());
     EXPECT_EQ(nodes.GetNode(id_), nullptr);
 }
 
@@ -128,7 +128,7 @@ TEST_F(NodeTest, HandleInactiveTimeout)
     std::shared_ptr<Node> node = nodes.GetNode(id_);
     ASSERT_NE(node, nullptr);
     node->InactivityTimeoutCb(node);
-    EXPECT_TRUE(node->disconnected());
+    EXPECT_TRUE(node->connection().disconnected());
     EXPECT_EQ(nodes.GetNode(node->id()), nullptr);
 }
 
@@ -144,7 +144,7 @@ TEST_F(NodeTest, CheckBanned)
     ASSERT_FALSE(node->CheckBanned());    
     block_sync.SetShouldBan(id_, true);
     ASSERT_TRUE(node->CheckBanned());
-    EXPECT_TRUE(node->disconnected());
+    EXPECT_TRUE(node->connection().disconnected());
     EXPECT_TRUE(SingletonBanDb::GetInstance().IsBanned(addr_));
     
     block_sync.Clear();
@@ -155,12 +155,12 @@ TEST_F(NodeTest, PushAddrToSend)
 {
     Nodes& nodes = SingletonNodes::GetInstance();
     std::shared_ptr<Node> node = nodes.GetNode(id_);
-    node->AddKnownAddr(addr_);
-    EXPECT_FALSE(node->PushAddrToSend(addr_));
+    node->mutable_broadcast_addrs()->AddKnownAddr(addr_);
+    EXPECT_FALSE(node->mutable_broadcast_addrs()->PushAddrToSend(addr_));
     
     addr_.set_port(8333);
-    ASSERT_TRUE(node->PushAddrToSend(addr_));
-    EXPECT_EQ(node->addrs_to_send().front(), addr_);
+    ASSERT_TRUE(node->mutable_broadcast_addrs()->PushAddrToSend(addr_));
+    EXPECT_EQ(node->broadcast_addrs().addrs_to_send().front(), addr_);
 }
 
 TEST(DestructNodeTest, destructor)
@@ -174,7 +174,8 @@ TEST(DestructNodeTest, destructor)
     {
         std::shared_ptr<Node> node = std::make_shared<Node>(nullptr, addr);
         nodes.AddNode(node);
-        block_sync.AddSyncState(node->id(), node->addr(), node->host_name());
+        block_sync.AddSyncState(node->id(), node->connection().addr(), 
+                                node->connection().host_name());
         ASSERT_TRUE(block_sync.IsExist(node->id()));
         node->InactivityTimeoutCb(node);
         id = node->id();

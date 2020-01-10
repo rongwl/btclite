@@ -132,18 +132,18 @@ void Acceptor::CheckingTimeoutCb(evutil_socket_t fd, short event, void *arg)
         BTCLOG(LOG_LEVEL_INFO) << "socket no message in first 60 seconds, "
                                << pnode->time().time_last_recv << " " << pnode->time().time_last_send
                                << " from " << pnode->id();
-        pnode->set_disconnected(true);
+        pnode->mutable_connection()->set_disconnected(true);
     }
     else if (now - pnode->time().time_last_send > kConnTimeoutInterval)
     {
         BTCLOG(LOG_LEVEL_INFO) << "socket sending timeout: " << (now - pnode->time().time_last_send);
-        pnode->set_disconnected(true);
+        pnode->mutable_connection()->set_disconnected(true);
     }
-    else if (now - pnode->time().time_last_recv > (pnode->protocol_version() > 
-             protocol::kBip31Version ? kConnTimeoutInterval : 90*60))
+    else if (now - pnode->time().time_last_recv > (pnode->protocol().version() > 
+             kBip31Version ? kConnTimeoutInterval : 90*60))
     {
         BTCLOG(LOG_LEVEL_INFO) << "socket receive timeout: " << (now - pnode->time().time_last_recv);
-        pnode->set_disconnected(true);
+        pnode->mutable_connection()->set_disconnected(true);
     }
     else if (pnode->time().ping_time.ping_nonce_sent &&
              pnode->time().ping_time.ping_usec_start + kConnTimeoutInterval * 1000000 < 
@@ -151,12 +151,12 @@ void Acceptor::CheckingTimeoutCb(evutil_socket_t fd, short event, void *arg)
     {
         BTCLOG(LOG_LEVEL_INFO) << "ping timeout: " 
                                << (now - pnode->time().ping_time.ping_usec_start / 1000000);
-        pnode->set_disconnected(true);
+        pnode->mutable_connection()->set_disconnected(true);
     }
-    else if (!pnode->conn_established())
+    else if (!pnode->connection().established())
     {
         BTCLOG(LOG_LEVEL_INFO) << "version handshake timeout from " << pnode->id();
-        pnode->set_disconnected(true);
+        pnode->mutable_connection()->set_disconnected(true);
     }
 }
 

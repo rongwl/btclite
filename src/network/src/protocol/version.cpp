@@ -19,15 +19,16 @@ bool Version::RecvHandler(std::shared_ptr<Node> src_node) const
     Verack verack;
     
     // Each connection can only send one version message
-    if (src_node->protocol_version() != 0) {
+    if (src_node->protocol().version() != 0) {
         SingletonBlockSync::GetInstance().Misbehaving(src_node->id(), 1);
         return false;
     }
     
-    if (!src_node->is_inbound()) {
-        SingletonPeers::GetInstance().SetServices(src_node->addr(), services_);
+    if (!src_node->connection().is_inbound()) {
+        SingletonPeers::GetInstance().SetServices(src_node->connection().addr(), 
+                                                  services_);
     }
-    if (!src_node->is_inbound() && !src_node->manual() 
+    if (!src_node->connection().is_inbound() && !src_node->connection().manual() 
             && !IsServiceFlagDesirable(services_)) {
         BTCLOG(LOG_LEVEL_INFO) << "Disconnecting peer " << src_node->id() 
                                << " for not offering the expected services ("
@@ -37,7 +38,7 @@ bool Version::RecvHandler(std::shared_ptr<Node> src_node) const
         std::stringstream ss;
         ss << "Expected to offer services " << std::showbase << std::hex 
            << kDesirableServiceFlags;
-        src_node->set_disconnected(true);
+        src_node->mutable_connection()->set_disconnected(true);
         return false;
     }
     
@@ -47,69 +48,76 @@ bool Version::RecvHandler(std::shared_ptr<Node> src_node) const
             // These bits have been used as a flag to indicate that a node is running incompatible
             // consensus rules instead of changing the network magic, so we're stuck disconnecting
             // based on these service bits, at least for a while.
-            src_node->set_disconnected(true);
+            src_node->mutable_connection()->set_disconnected(true);
             return false;
         }
     }
     
     if (protocol_version_ < kMinPeerProtoVersion) {
         BTCLOG(LOG_LEVEL_INFO) << "Disconnecting peer " << src_node->id()
-                               << " for using obsolete version " << protocol_version_  << '.';
+                               << " for using obsolete version " 
+                               << protocol_version_  << '.';
         std::stringstream ss;
         ss << "Version must be " << kMinPeerProtoVersion << " or greater";
-        src_node->set_disconnected(true);
+        src_node->mutable_connection()->set_disconnected(true);
         return false;
     }
     
-    if (src_node->is_inbound() && !SingletonNodes::GetInstance().CheckIncomingNonce(nonce_))
+    if (src_node->connection().is_inbound() && 
+            !SingletonNodes::GetInstance().CheckIncomingNonce(nonce_))
     {
         BTCLOG(LOG_LEVEL_INFO) << "Disconnecting peer " << src_node->id()
-                               << " for connecting to self at " << src_node->addr().ToString();
-        src_node->set_disconnected(true);
+                               << " for connecting to self at " 
+                               << src_node->connection().addr().ToString();
+        src_node->mutable_connection()->set_disconnected(true);
         return true;
     }
     
-    if (src_node->is_inbound())
+    if (src_node->connection().is_inbound())
         SendVersion(src_node);
     
     SendMsg(verack, src_node);
     
-    src_node->set_services(static_cast<ServiceFlags>(services_));
-    src_node->set_local_addr(addr_recv_);
-    src_node->set_start_height(start_height_);
+    src_node->mutable_protocol()->set_services(services_);
+    src_node->mutable_connection()->set_local_addr(addr_recv_);
+    src_node->mutable_protocol()->set_start_height(start_height_);
     src_node->mutable_filter()->set_relay_txes(relay_);
-    src_node->set_protocol_version(protocol_version_);
+    src_node->mutable_protocol()->set_version(protocol_version_);
     
     if (services_ & kNodeWitness)
         SingletonBlockSync::GetInstance().SetIsWitness(src_node->id(), true);
     
     UpdatePreferredDownload(src_node);
     
-    if (!src_node->is_inbound()) {
+    if (!src_node->connection().is_inbound()) {
         // Advertise our address
-        if (SingletonNetArgs::GetInstance().listening() && !IsInitialBlockDownload()) {
+        if (SingletonNetArgs::GetInstance().listening() && 
+                !IsInitialBlockDownload()) {
             LocalNetConfig& net_config = SingletonLocalNetCfg::GetInstance();
             NetAddr addr;
-            if (net_config.GetLocalAddr(src_node->addr(), net_config.local_services(), &addr)) {
+            if (net_config.GetLocalAddr(src_node->connection().addr(), 
+                                        net_config.local_services(), &addr)) {
                 if (addr.IsRoutable())
                 {
-                    BTCLOG(LOG_LEVEL_INFO) << "Advertising address " << addr.ToString();
-                    src_node->PushAddrToSend(addr);
+                    BTCLOG(LOG_LEVEL_INFO) << "Advertising address " 
+                                           << addr.ToString();
+                    src_node->mutable_broadcast_addrs()->PushAddrToSend(addr);
                 } else if (IsPeerLocalAddrGood(src_node)) {
-                    BTCLOG(LOG_LEVEL_INFO) << "Advertising address " << addr_recv_.ToString();
-                    src_node->PushAddrToSend(addr_recv_);
+                    BTCLOG(LOG_LEVEL_INFO) << "Advertising address " 
+                                           << addr_recv_.ToString();
+                    src_node->mutable_broadcast_addrs()->PushAddrToSend(addr_recv_);
                 }
             }
         }
         
         // Get recent addresses
-        if (src_node->protocol_version() >= VersionCode::kAddrTimeVersion || 
+        if (src_node->protocol().version() >= ProtocolVersion::kAddrTimeVersion || 
                 SingletonPeers::GetInstance().Size() < 1000) {
             GetAddr getaddr;
             SendMsg(getaddr, src_node);
-            src_node->set_getaddr(true);
+            src_node->mutable_broadcast_addrs()->set_sent_getaddr(true);
         }
-        SingletonPeers::GetInstance().MakeTried(src_node->addr());
+        SingletonPeers::GetInstance().MakeTried(src_node->connection().addr());
     }
     
     BTCLOG(LOG_LEVEL_INFO) << "Receive version message: version=" << protocol_version_
@@ -117,7 +125,7 @@ bool Version::RecvHandler(std::shared_ptr<Node> src_node) const
                            << ", addr_me=" << addr_recv_.ToString()
                            << ", peer=" << src_node->id();
     
-    util::AddTimeData(src_node->addr(), 
+    util::AddTimeData(src_node->connection().addr(), 
             timestamp_ - util::GetTimeSeconds());
     
     return true;

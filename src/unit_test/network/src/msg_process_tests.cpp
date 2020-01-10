@@ -65,8 +65,7 @@ void TestVersion(const MessageData *msg)
     NetAddr addr_recv, addr_from;
     addr_recv.SetIpv4(inet_addr("1.2.3.4"));
     EXPECT_EQ(version->protocol_version(), kProtocolVersion);
-    EXPECT_EQ(version->services(),
-              SingletonLocalNetCfg::GetInstance().local_services());
+    EXPECT_EQ(version->services(), kNodeNetwork);
     EXPECT_EQ(version->addr_recv(), addr_recv);
     EXPECT_EQ(version->addr_from(), addr_from);
     EXPECT_EQ(version->nonce(), version_nonce);
@@ -371,6 +370,7 @@ TEST_F(MsgProcessTest, SendVersion)
     bufferevent_setcb(pair_[1], VersionReadCb, NULL, NULL, const_cast<char*>(msg_command::kMsgVersion));
     bufferevent_enable(pair_[1], EV_READ);
     auto node = std::make_shared<Node>(pair_[0], addr_, false);
+    node->mutable_protocol()->set_services(kNodeNetwork);
     version_nonce = node->local_host_nonce();
     ASSERT_TRUE(SendVersion(node));
     

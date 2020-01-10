@@ -22,7 +22,7 @@ bool SendMsg(const Message& msg, std::shared_ptr<Node> dst_node)
     
     util::MemOstream ms;
         
-    if (!dst_node->bev())
+    if (!dst_node->connection().bev())
         return false;
 
     MessageHeader header(SingletonParams::GetInstance().msg_magic(),
@@ -38,8 +38,10 @@ bool SendMsg(const Message& msg, std::shared_ptr<Node> dst_node)
 
     //bufferevent_lock(dst_node->mutable_bev());
 
-    if (bufferevent_write(dst_node->mutable_bev(), ms.vec().data(), ms.vec().size())) {
-        BTCLOG(LOG_LEVEL_ERROR) << "Writing message to bufferevent failed, peer:" << dst_node->id();
+    if (bufferevent_write(dst_node->mutable_connection()->mutable_bev(),
+                          ms.vec().data(), ms.vec().size())) {
+        BTCLOG(LOG_LEVEL_ERROR) << "Writing message to bufferevent failed, peer:" 
+                                << dst_node->id();
         return false;
     }
 

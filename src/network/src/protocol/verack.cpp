@@ -17,16 +17,16 @@ namespace private_verack {
 
 bool Verack::RecvHandler(std::shared_ptr<Node> src_node) const
 {
-    if (!src_node->is_inbound()) {
+    if (!src_node->connection().is_inbound()) {
         // Mark this node as currently connected, so we update its timestamp later.
         SingletonBlockSync::GetInstance().SetConnected(src_node->id(), true);
         BTCLOG(LOG_LEVEL_INFO) << "New outbound peer connected: version="
-                               << src_node->protocol_version() << ", start_height="
-                               << src_node->start_height() << ", peer="
+                               << src_node->protocol().version() << ", start_height="
+                               << src_node->protocol().start_height() << ", peer="
                                << src_node->id();
     }
 
-    if (src_node->protocol_version() >= VersionCode::kSendheadersVersion) {
+    if (src_node->protocol().version() >= kSendheadersVersion) {
         // Tell our peer we prefer to receive headers rather than inv's
         // We send this to non-NODE NETWORK peers as well, because even
         // non-NODE NETWORK peers can announce blocks (such as pruning
@@ -34,7 +34,7 @@ bool Verack::RecvHandler(std::shared_ptr<Node> src_node) const
         SendHeaders send_headers;
         SendMsg(send_headers, src_node);
     }
-    if (src_node->protocol_version() >= VersionCode::kShortIdsBlocksVersion) {
+    if (src_node->protocol().version() >= kShortIdsBlocksVersion) {
         // Tell our peer we are willing to provide version 1 or 2 cmpctblocks
         // However, we do not request new block announcements using
         // cmpctblock messages.
@@ -46,11 +46,11 @@ bool Verack::RecvHandler(std::shared_ptr<Node> src_node) const
         send_compact.set_version(1);
         SendMsg(send_compact, src_node);
     }
-    src_node->set_conn_established(true);
+    src_node->mutable_connection()->set_established(true);
     
     // send ping
     Ping ping(util::GetUint64());
-    if (src_node->protocol_version() < VersionCode::kBip31Version)
+    if (src_node->protocol().version() < kBip31Version)
         ping.set_protocol_version(0);
     SendMsg(ping, src_node);
     // start ping timer

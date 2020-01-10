@@ -112,7 +112,7 @@ void LocalNetConfig::BroadcastTimeoutCb(std::shared_ptr<Node> node)
     if (SingletonNetInterrupt::GetInstance())
         return;
     
-    if (node->disconnected() || !node->conn_established()) 
+    if (node->connection().disconnected() || !node->connection().established()) 
         return;
     
     if (!IsInitialBlockDownload())
@@ -156,7 +156,8 @@ NetArgs::NetArgs(const util::Args& args)
 bool IsPeerLocalAddrGood(std::shared_ptr<Node> node)
 {    
     return (SingletonNetArgs::GetInstance().should_discover() && 
-            node->addr().IsRoutable() && node->local_addr().IsRoutable());
+            node->connection().addr().IsRoutable() && 
+            node->connection().local_addr().IsRoutable());
 }
 
 void AdvertiseLocalAddr(std::shared_ptr<Node> node)
@@ -164,11 +165,11 @@ void AdvertiseLocalAddr(std::shared_ptr<Node> node)
     NetAddr addr_local;
     
     if (!SingletonNetArgs::GetInstance().listening() ||
-        !node->conn_established())
+        !node->connection().established())
         return;
     
     if (!SingletonLocalNetCfg::GetInstance().GetLocalAddr(
-                node->addr(), node->services(), &addr_local))
+                node->connection().addr(), node->protocol().services(), &addr_local))
         return;
     
     int score = SingletonLocalNetCfg::GetInstance().GetAddrScore(addr_local);
@@ -178,12 +179,12 @@ void AdvertiseLocalAddr(std::shared_ptr<Node> node)
     if (IsPeerLocalAddrGood(node) && (!addr_local.IsRoutable() ||
                                        util::GetUint64(
                                            (score > kAcManual) ? 8:2) == 0))
-        addr_local = std::move(node->local_addr());
+        addr_local = std::move(node->connection().local_addr());
     
     if (addr_local.IsRoutable())
     {
         BTCLOG(LOG_LEVEL_INFO) << "Advertising local address " << addr_local.ToString();
-        node->PushAddrToSend(addr_local);
+        node->mutable_broadcast_addrs()->PushAddrToSend(addr_local);
     }
 }
 
@@ -192,15 +193,15 @@ void BroadcastAddrsTimeoutCb(std::shared_ptr<Node> node)
     if (SingletonNetInterrupt::GetInstance())
         return;
     
-    if (node->disconnected() || !node->conn_established()) 
+    if (node->connection().disconnected() || !node->connection().established()) 
         return;
     
-    std::vector<NetAddr> addrs_to_send = std::move(node->addrs_to_send());
+    std::vector<NetAddr> addrs_to_send = std::move(node->broadcast_addrs().addrs_to_send());
     protocol::Addr addr_msg;
     addr_msg.mutable_addr_list()->reserve(addrs_to_send.size());
     for (const NetAddr& addr : addrs_to_send) {
-        if (!node->IsKnownAddr(addr)) {
-            node->AddKnownAddr(addr);
+        if (!node->broadcast_addrs().IsKnownAddr(addr)) {
+            node->mutable_broadcast_addrs()->AddKnownAddr(addr);
             addr_msg.mutable_addr_list()->push_back(addr);
             // receiver rejects addr messages larger than 1000
             if (addr_msg.addr_list().size() >= 1000) {
@@ -211,7 +212,7 @@ void BroadcastAddrsTimeoutCb(std::shared_ptr<Node> node)
     }
     if (!addr_msg.addr_list().empty())
         SendMsg(addr_msg, node);
-    node->ClearSentAddr();
+    node->mutable_broadcast_addrs()->ClearSentAddr();
     
     node->mutable_timers()->broadcast_addr_timer->set_interval(
         IntervalNextSend(kAvgAddrBcInterval)*1000);

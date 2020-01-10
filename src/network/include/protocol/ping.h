@@ -33,7 +33,7 @@ public:
     
     bool IsValid() const
     {
-        if (protocol_version_ < VersionCode::kBip31Version)
+        if (protocol_version_ < kBip31Version)
             return true;
         return (nonce_ != 0);
     }
@@ -45,7 +45,7 @@ public:
     
     size_t SerializedSize() const
     {
-        if (protocol_version_ < VersionCode::kBip31Version)
+        if (protocol_version_ < kBip31Version)
             return 0;
         return sizeof(nonce_);
     }
@@ -98,7 +98,7 @@ private:
 template <typename Stream>
 void Ping::Serialize(Stream& out) const
 {
-    if (protocol_version_ >= VersionCode::kBip31Version) {
+    if (protocol_version_ >= kBip31Version) {
         util::Serializer<Stream> serializer(out);
         serializer.SerialWrite(nonce_);
     }
@@ -107,7 +107,7 @@ void Ping::Serialize(Stream& out) const
 template <typename Stream>
 void Ping::Deserialize(Stream& in)
 {
-    if (protocol_version_ >= VersionCode::kBip31Version) {
+    if (protocol_version_ >= kBip31Version) {
         util::Deserializer<Stream> deserializer(in);
         deserializer.SerialRead(&nonce_);
     }

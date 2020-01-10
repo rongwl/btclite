@@ -15,6 +15,38 @@
 namespace btclite {
 namespace network {
 
+enum ProtocolVersion : uint32_t {
+    kUnknownProtoVersion = 0,
+    
+    // initial proto version, to be increased after version/verack negotiation
+    kInitProtoVersion = 209,
+    
+    // timestamp field added to NetAddr, starting with this version;
+    // if possible, avoid requesting addresses nodes older than this
+    kAddrTimeVersion = 31402,
+    
+    // In this version, 'getheaders' was introduced.
+    kGetheadersVersion = 31800,
+    
+    // BIP 0031, pong message, is enabled for all versions AFTER this one
+    kBip31Version = 60000,
+    
+    // BIP 0037, whether the remote peer should announce relayed transactions or not
+    kRelayedTxsVersion = 70001,
+    
+    // "filter*" commands are disabled without kNodeBloom after and including this version
+    kNoBloomVersion = 70011,
+    
+    // "sendheaders" command and announcing blocks with headers starts with this version
+    kSendheadersVersion = 70012,
+    
+    // "feefilter" tells peers to filter invs to you by fee starts with this version
+    kShortIdsBlocksVersion = 70014,
+    
+    // not banning for invalid compact blocks starts with this version
+    kInvalidCbNoBanVersion = 70015
+};
+
 /* Services flags */
 enum ServiceFlags : uint64_t {
     // Nothing
@@ -67,6 +99,187 @@ static inline bool IsServiceFlagDesirable(uint64_t services) {
     return !(kDesirableServiceFlags & (~services));
 }
 
+class NodeProtocol {
+public:
+    bool IsClient() const
+    {
+        return !(services_ & kNodeNetwork);
+    }
+    
+    ProtocolVersion version() const
+    {
+        return version_;
+    }
+    
+    void set_version(ProtocolVersion version)
+    {
+        version_ = version;
+    }
+    
+    ServiceFlags services() const
+    {
+        return services_;
+    }
+    
+    void set_services(ServiceFlags services)
+    {
+        services_ = services;
+    }
+    
+    int start_height() const
+    {
+        return start_height_;
+    }
+    
+    void set_start_height(int start_height)
+    {
+        start_height_ = start_height;
+    }
+    
+private:
+    std::atomic<ProtocolVersion> version_ = kUnknownProtoVersion;
+    std::atomic<ServiceFlags> services_ = kNodeNone;
+    std::atomic<int> start_height_ = 0;
+};
+
+class NodeConnection {
+public:
+    NodeConnection(NodeId id, const struct bufferevent *bev, const NetAddr& addr,
+                   bool is_inbound, bool manual, std::string host_name)
+        : node_id_(id), bev_(const_cast<struct bufferevent*>(bev)), addr_(addr),
+          host_name_(host_name), is_inbound_(is_inbound), manual_(manual) {}
+    
+    ~NodeConnection()
+    {
+        if (bev_)
+            bufferevent_free(bev_);
+    }
+    
+    const struct bufferevent* const bev() const
+    {
+        return bev_;
+    }
+    
+    struct bufferevent *mutable_bev()
+    {
+        return bev_;
+    }
+    
+    const NetAddr& addr() const
+    {
+        return addr_;
+    }
+    
+    std::string host_name() const // thread safe copy
+    {
+        LOCK(cs_host_name_);
+        return host_name_;
+    }
+    
+    void set_host_name(const std::string& name)
+    {
+        LOCK(cs_host_name_);
+        host_name_ = name;
+    }
+    
+    NetAddr local_addr() const // thread safe copy
+    {
+        LOCK(cs_local_addr_);
+        return local_addr_;
+    }
+    
+    void set_local_addr(const NetAddr& addr)
+    {
+        LOCK(cs_local_addr_);
+        if (!local_addr_.IsValid())
+            local_addr_ = addr;
+    }
+    
+    bool is_inbound() const
+    {
+        return is_inbound_;
+    }
+    
+    bool manual() const
+    {
+        return manual_;
+    }
+    
+    bool established() const
+    {
+        return established_;
+    }
+    
+    void set_established(bool established)
+    {
+        established_ = established;
+    }
+    
+    bool disconnected() const
+    {
+        return disconnected_;
+    }
+    
+    void set_disconnected(bool disconnected);
+    
+private:
+    const NodeId node_id_;
+    struct bufferevent *bev_ = nullptr;    
+    const NetAddr addr_;
+    //const uint64_t keyed_net_group_;  
+    
+    mutable util::CriticalSection cs_host_name_;
+    std::string host_name_;
+    
+    mutable util::CriticalSection cs_local_addr_;
+    NetAddr local_addr_;    
+    
+    const bool is_inbound_;
+    const bool manual_;
+    std::atomic<bool> established_ = false;
+    std::atomic<bool> disconnected_ = false;
+};
+
+class BroadcastAddrs {
+public:
+    BroadcastAddrs()
+        : known_addrs_(3000) {}
+    
+    //-------------------------------------------------------------------------
+    bool PushAddrToSend(const NetAddr& addr);    
+    void ClearSentAddr();    
+    bool AddKnownAddr(const NetAddr& addr);
+    
+    bool IsKnownAddr(const NetAddr& addr) const
+    {
+        LOCK(cs_addrs_);
+        return (std::find(known_addrs_.begin(), known_addrs_.end(), 
+                          addr.GetHash().GetLow64()) != known_addrs_.end());
+    }
+    
+    //-------------------------------------------------------------------------
+    std::vector<NetAddr> addrs_to_send() const
+    {
+        LOCK(cs_addrs_);
+        return addrs_to_send_;
+    }
+    
+    bool sent_getaddr() const
+    {        
+        return sent_getaddr_;
+    }
+    
+    void set_sent_getaddr(bool sent_getaddr)
+    {
+        sent_getaddr_ = sent_getaddr;
+    }
+    
+private:
+    mutable util::CriticalSection cs_addrs_;
+    std::vector<NetAddr> addrs_to_send_;
+    boost::circular_buffer<uint64_t> known_addrs_;
+    bool sent_getaddr_ = false;
+};
 
 class NodeFilter {
 public:
@@ -142,32 +355,16 @@ struct NodeTimers {
 };
 
 /* Information about a connected peer */
-class Node {
+class Node : util::Uncopyable {
 public:
     Node(const struct bufferevent *bev, const NetAddr& addr,
          bool is_inbound = true, bool manual = false, 
-         std::string host_name = "");
+         std::string host_name = "");    
     ~Node();
     
     //-------------------------------------------------------------------------
     static void InactivityTimeoutCb(std::shared_ptr<Node> node);
     bool CheckBanned();
-    bool PushAddrToSend(const NetAddr& addr);    
-    void ClearSentAddr();
-    
-    bool AddKnownAddr(const NetAddr& addr);
-    
-    bool IsKnownAddr(const NetAddr& addr)
-    {
-        LOCK(cs_addrs_);
-        return (std::find(known_addrs_.begin(), known_addrs_.end(), 
-                         addr.GetHash().GetLow64()) != known_addrs_.end());
-    }
-    
-    bool IsClient() const
-    {
-        return !(services_ & kNodeNetwork);
-    }
     
     //-------------------------------------------------------------------------   
     NodeId id() const
@@ -175,53 +372,29 @@ public:
         return id_;
     }
     
-    int protocol_version() const
-    {
-        return protocol_version_;
-    }
-    
-    void set_protocol_version(int version)
-    {
-        protocol_version_ = version;
-    }
-    
-    ServiceFlags services() const
-    {
-        return services_;
-    }
-    void set_services(ServiceFlags services)
-    {
-        services_ = services;
-    }
-    
-    int start_height() const
-    {
-        return start_height_;
-    }
-    
-    void set_start_height(int start_height)
-    {
-        start_height_ = start_height;
-    }
-    
-    const struct bufferevent* const bev() const
-    {
-        return bev_;
-    }
-    
-    struct bufferevent *mutable_bev()
-    {
-        return bev_;
-    }
-    
-    const NetAddr& addr() const
-    {
-        return addr_;
-    }
-    
     uint64_t local_host_nonce() const
     {
         return local_host_nonce_;
+    }
+    
+    const NodeProtocol& protocol() const
+    {
+        return protocol_;
+    }
+    
+    NodeProtocol *mutable_protocol()
+    {
+        return &protocol_;
+    }
+    
+    const NodeConnection& connection() const
+    {
+        return connection_;
+    }
+    
+    NodeConnection *mutable_connection()
+    {
+        return &connection_;
     }
     
     /*uint64_t keyed_net_group() const
@@ -229,72 +402,14 @@ public:
         return keyed_net_group_;
     }*/
     
-    std::string host_name() const // thread safe copy
+    const BroadcastAddrs& broadcast_addrs() const
     {
-        LOCK(cs_host_name_);
-        return host_name_;
+        return broadcast_addrs_;
     }
     
-    void set_host_name(const std::string& name)
+    BroadcastAddrs *mutable_broadcast_addrs()
     {
-        LOCK(cs_host_name_);
-        host_name_ = name;
-    }
-    
-    NetAddr local_addr() const // thread safe copy
-    {
-        LOCK(cs_local_addr_);
-        return local_addr_;
-    }
-    
-    void set_local_addr(const NetAddr& addr)
-    {
-        LOCK(cs_local_addr_);
-        if (!local_addr_.IsValid())
-            local_addr_ = addr;
-    }
-    
-    bool is_inbound() const
-    {
-        return is_inbound_;
-    }
-    
-    bool manual() const
-    {
-        return manual_;
-    }
-        
-    bool conn_established() const
-    {
-        return conn_established_;
-    }
-    
-    void set_conn_established(bool established)
-    {
-        conn_established_ = established;
-    }
-    
-    bool disconnected() const
-    {
-        return disconnected_;
-    }
-    
-    void set_disconnected(bool disconnected);
-    
-    std::vector<NetAddr> addrs_to_send() const
-    {
-        LOCK(cs_addrs_);
-        return addrs_to_send_;
-    }
-    
-    bool getaddr() const
-    {
-        return getaddr_;
-    }
-    
-    void set_getaddr(bool getaddr)
-    {
-        getaddr_ = getaddr;
+        return &broadcast_addrs_;
     }
     
     const NodeFilter& filter() const
@@ -329,30 +444,13 @@ public:
     
 private:
     const NodeId id_;
-    std::atomic<int> protocol_version_ = 0;
-    std::atomic<ServiceFlags> services_ = kNodeNone;
-    std::atomic<int> start_height_ = 0;
-    struct bufferevent *bev_ = nullptr;    
-    const NetAddr addr_;
-    //const uint64_t keyed_net_group_;
-    const uint64_t local_host_nonce_;    
-    
-    mutable util::CriticalSection cs_host_name_;
-    std::string host_name_;
-    
-    mutable util::CriticalSection cs_local_addr_;
-    NetAddr local_addr_;    
-        
-    const bool is_inbound_;
-    const bool manual_;
-    std::atomic<bool> conn_established_ = false;
-    std::atomic<bool> disconnected_ = false;
-    
+    const uint64_t local_host_nonce_;  
+    NodeProtocol protocol_;
+    NodeConnection connection_;
+    //const uint64_t keyed_net_group_;  
+
     // flood addrs relay
-    mutable util::CriticalSection cs_addrs_;
-    std::vector<NetAddr> addrs_to_send_;
-    boost::circular_buffer<uint64_t> known_addrs_;
-    bool getaddr_ = false;
+    BroadcastAddrs broadcast_addrs_;
     
     NodeFilter filter_;    
     NodeTime time_;    

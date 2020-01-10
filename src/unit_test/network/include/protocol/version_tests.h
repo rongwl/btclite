@@ -30,7 +30,7 @@ protected:
                     nonce_, std::move(std::string(user_agent_)),
                     start_height_, relay_) {}
     
-    network::protocol::VersionCode version_ = network::protocol::kUnknownProtoVersion;
+    network::ProtocolVersion version_ = network::kUnknownProtoVersion;
     network::ServiceFlags services_ = network::kNodeNone;
     uint64_t timestamp_ = 0;
     network::NetAddr addr_recv_;
