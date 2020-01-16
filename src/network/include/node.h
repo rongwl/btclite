@@ -9,11 +9,14 @@
 
 #include "bloom.h"
 #include "block_sync.h"
+#include "netbase.h"
 #include "timer.h"
 
 
 namespace btclite {
 namespace network {
+
+bool IsInitialBlockDownload();
 
 enum ProtocolVersion : uint32_t {
     kUnknownProtoVersion = 0,
@@ -98,6 +101,24 @@ constexpr uint64_t kDesirableServiceFlags = (kNodeNetwork | kNodeWitness);
 static inline bool IsServiceFlagDesirable(uint64_t services) {
     return !(kDesirableServiceFlags & (~services));
 }
+
+struct BlockReject {
+    uint8_t reject_code = 0;
+    std::string reject_reason;
+    crypto::Hash256 block_hash;
+};
+
+/* Blocks that are in flight, and that are in the queue to be downloaded. */
+struct QueuedBlock {
+    crypto::Hash256 hash;
+    const chain::BlockIndex *index = nullptr;
+    
+    // Whether this block has validated headers at the time of request.
+    bool has_validated_headers;
+    
+    // Optional, used for CMPCTBLOCK downloads
+    //std::unique_ptr<PartiallyDownloadedBlock> partialBlock;
+};
 
 class NodeProtocol {
 public:
@@ -220,7 +241,10 @@ public:
         return disconnected_;
     }
     
-    void set_disconnected(bool disconnected);
+    void set_disconnected(bool disconnected)
+    {
+        disconnected_ = disconnected;
+    }
     
 private:
     const NodeId node_id_;
@@ -252,7 +276,7 @@ public:
     
     bool IsKnownAddr(const NetAddr& addr) const
     {
-        LOCK(cs_addrs_);
+        LOCK(cs_);
         return (std::find(known_addrs_.begin(), known_addrs_.end(), 
                           addr.GetHash().GetLow64()) != known_addrs_.end());
     }
@@ -260,7 +284,7 @@ public:
     //-------------------------------------------------------------------------
     std::vector<NetAddr> addrs_to_send() const
     {
-        LOCK(cs_addrs_);
+        LOCK(cs_);
         return addrs_to_send_;
     }
     
@@ -275,7 +299,7 @@ public:
     }
     
 private:
-    mutable util::CriticalSection cs_addrs_;
+    mutable util::CriticalSection cs_;
     std::vector<NetAddr> addrs_to_send_;
     boost::circular_buffer<uint64_t> known_addrs_;
     bool sent_getaddr_ = false;
@@ -285,20 +309,20 @@ class NodeFilter {
 public:
     bool relay_txes() const
     {
-        LOCK(cs_bloom_filter_);
+        LOCK(cs_);
         return relay_txes_;
     }
     
     void set_relay_txes(bool relay_txes)
     {
-        LOCK(cs_bloom_filter_);
+        LOCK(cs_);
         relay_txes_ = relay_txes;
     }
     
     const BloomFilter *bloom_filter() const;
     
 private:
-    mutable util::CriticalSection cs_bloom_filter_;
+    mutable util::CriticalSection cs_;
     
     // We use fRelayTxes for two purposes -
     // a) it allows us to not relay tx invs before receiving the peer's version message
@@ -341,6 +365,15 @@ struct NodeTime {
     
     // Ping time measurement
     PingTime ping_time;
+    
+    //! When to potentially disconnect peer for stalling headers download
+    std::atomic<int64_t> headers_sync_timeout = 0;
+    
+    //! Since when we're stalling block download progress (in microseconds), or 0.
+    std::atomic<int64_t> stalling_since = 0;
+    
+    //! Time of last new block announcement
+    std::atomic<int64_t> last_block_announcement = 0;
 };
 
 struct NodeTimers {
@@ -354,17 +387,283 @@ struct NodeTimers {
     util::TimerMng::TimerPtr broadcast_addr_timer;
 };
 
+class Misbehavior {
+public:    
+    void Misbehaving(NodeId id, int howmuch);
+    
+    //-------------------------------------------------------------------------
+    bool should_ban() const
+    {
+        LOCK(cs_);
+        return should_ban_;
+    }
+    
+    void set_should_ban(bool should_ban)
+    {
+        LOCK(cs_);
+        should_ban_ = should_ban;
+    }
+    
+    int score() const
+    {
+        LOCK(cs_);
+        return score_;
+    }
+    
+    void set_score(int score)
+    {
+        LOCK(cs_);
+        score_ = score;
+    }
+    
+    int unconnection_headers_len() const
+    {
+        LOCK(cs_);
+        return unconnecting_headers_len_;
+    }
+    
+    void set_unconnection_headers_len(int unconnecting_headers_len)
+    {
+        LOCK(cs_);
+        unconnecting_headers_len_ = unconnecting_headers_len;
+    }
+    
+private:
+    mutable util::CriticalSection cs_;
+    
+    //! Whether this peer should be disconnected and banned (unless whitelisted).
+    bool should_ban_ = false;  
+    
+    //! Accumulated misbehaviour score for this peer.
+    int score_ = 0;
+    
+    //! Length of current-streak of unconnecting headers announcements
+    int unconnecting_headers_len_ = 0; 
+};
+
+class BlockSyncTimeout {
+public:
+    int64_t timeout() const
+    {
+        LOCK(cs_);
+        return timeout_;
+    }
+    
+    void set_timeout(int64_t timeout)
+    {
+        LOCK(cs_);
+        timeout_ = timeout;
+    }
+    
+    const chain::BlockIndex *work_header() const
+    {
+        LOCK(cs_);
+        return work_header_;
+    }
+    
+    void set_work_header(const chain::BlockIndex *const work_header)
+    {
+        LOCK(cs_);
+        work_header_ = work_header;
+    }
+    
+    bool sent_getheaders() const
+    {
+        LOCK(cs_);
+        return sent_getheaders_;
+    }
+    
+    void set_sent_getheaders(bool sent_getheaders)
+    {
+        LOCK(cs_);
+        sent_getheaders_ = sent_getheaders;
+    }
+    
+    bool protect() const
+    {
+        LOCK(cs_);
+        return protect_;
+    }
+    
+    void set_protect(bool protect)
+    {
+        LOCK(cs_);
+        protect_ = protect;
+    }
+    
+private:
+    mutable util::CriticalSection cs_;
+    
+    // A timeout used for checking whether our peer has sufficiently synced
+    int64_t timeout_ = 0;
+    
+    // A header with the work we require on our peer's chain
+    const chain::BlockIndex *work_header_ = nullptr;
+    
+    // After timeout is reached, set to true after sending getheaders
+    bool sent_getheaders_ = false;
+    
+    // Whether this peer is protected from disconnection due to a bad/slow chain
+    bool protect_ = false;
+};
+
+class BlockSyncState1 {
+public:
+    bool sync_started() const
+    {
+        return sync_started_;
+    }
+    
+    void set_sync_started(bool sync_started)
+    {
+        sync_started_ = sync_started;
+    }
+    
+    const chain::BlockIndex *best_known_block_index() const
+    {
+        return best_known_block_index_;
+    }
+    
+    void set_best_known_block_index(const chain::BlockIndex* const index)
+    {
+        best_known_block_index_ = index;
+    }
+    
+    const chain::BlockIndex *last_common_block_index() const
+    {
+        return last_common_block_index_;
+    }
+    
+    void set_last_common_block_index(const chain::BlockIndex* const index)
+    {
+        last_common_block_index_ = index;
+    }
+    
+    const chain::BlockIndex *best_header_sent_index() const
+    {
+        return best_header_sent_index_;
+    }
+    
+    void set_best_header_sent_index(const chain::BlockIndex* const index)
+    {
+        best_header_sent_index_ = index;
+    }
+    
+    crypto::Hash256 last_unknown_block_hash() const
+    {
+        LOCK(cs_lash_unknown_);
+        return last_unknown_block_hash_;
+    }
+    
+    void set_last_unknown_block_hash(crypto::Hash256 hash)
+    {
+        LOCK(cs_lash_unknown_);
+        last_unknown_block_hash_ = hash;
+    }
+    
+private:
+    //! Whether we've started headers synchronization with this peer.
+    std::atomic<bool> sync_started_ = false;
+    
+    //! The best known block we know this peer has announced.
+    std::atomic<const chain::BlockIndex*> best_known_block_index_ = nullptr;
+    
+    //! The last full block we both have.
+    std::atomic<const chain::BlockIndex*> last_common_block_index_ = nullptr;
+    
+    //! The best header we have sent our peer.
+    std::atomic<const chain::BlockIndex*> best_header_sent_index_ = nullptr;
+    
+    //! The hash of the last unknown block this peer has announced.
+    mutable util::CriticalSection cs_lash_unknown_;
+    crypto::Hash256 last_unknown_block_hash_;
+};
+
+class NodeBlocksInFlight {
+public:
+    using iterator = std::list<QueuedBlock>::iterator;
+    
+    std::list<QueuedBlock> list() const // thread safe copy
+    {
+        LOCK(cs_);
+        return list_;
+    }
+    
+    int valid_headers_count() const
+    {
+        LOCK(cs_);
+        return valid_headers_count_;
+    }
+    
+    void set_valid_headers_count(int valid_headers_count)
+    {
+        LOCK(cs_);
+        valid_headers_count_ = valid_headers_count;
+    }
+    
+private:
+    mutable util::CriticalSection cs_;
+    std::list<QueuedBlock> list_;
+    
+    //! When the first entry in BlocksInFlight started downloading. Don't care when BlocksInFlight is empty.
+    int64_t downloading_since_ = 0;
+    
+    int valid_headers_count_ = 0;
+};
+
+struct RelayState {
+    //! Whether we consider this a preferred download peer.
+    std::atomic<bool> preferred_download = false;
+    
+    //! Whether this peer wants invs or headers (when possible) for block announcements.
+    std::atomic<bool> prefer_headers = false;
+    
+    //! Whether this peer wants invs or cmpctblocks (when possible) for block announcements.
+    std::atomic<bool> prefer_header_and_ids = false;
+    
+    /*
+      * Whether this peer will send us cmpctblocks if we request them.
+      * This is not used to gate request logic, as we really only care about supports_desired_cmpct_version_,
+      * but is used as a flag to "lock in" the version of compact blocks (fWantsCmpctWitness) we send.
+      */
+    std::atomic<bool> provides_header_and_ids = false;
+    
+    //! Whether this peer can give us witnesses
+    std::atomic<bool> is_witness = false;
+    
+    //! Whether this peer wants witnesses in cmpctblocks/blocktxns
+    std::atomic<bool> wants_cmpct_witness = false;
+    
+    /*
+     * If we've announced kNodeWitness to this peer: whether the peer sends witnesses in cmpctblocks/blocktxns,
+     * otherwise: whether this peer sends non-witnesses in cmpctblocks/blocktxns.
+     */
+    std::atomic<bool> supports_desired_cmpct_version = false;
+};
+
 /* Information about a connected peer */
 class Node : util::Uncopyable {
 public:
     Node(const struct bufferevent *bev, const NetAddr& addr,
          bool is_inbound = true, bool manual = false, 
-         std::string host_name = "");    
-    ~Node();
+         std::string host_name = "");
     
     //-------------------------------------------------------------------------
     static void InactivityTimeoutCb(std::shared_ptr<Node> node);
     bool CheckBanned();
+    
+    bool ShouldUpdateTime()
+    {
+        if (misbehavior_.score() == 0 && connection_.established())
+            return true;
+        return false;
+    }
+    
+    inline void UpdatePreferredDownload()
+    {
+        relay_state_.preferred_download =
+            (!connection_.is_inbound() && !protocol_.IsClient());
+    }
     
     //-------------------------------------------------------------------------   
     NodeId id() const
@@ -442,19 +741,71 @@ public:
         return &timers_;
     }
     
+    const Misbehavior& misbehavior() const
+    {
+        return misbehavior_;
+    }
+    
+    Misbehavior *mutable_misbehavior()
+    {
+        return &misbehavior_;
+    }
+    
+    const BlockSyncTimeout& block_sync_timeout() const
+    {
+        return block_sync_timeout_;
+    }
+    
+    BlockSyncTimeout *mutable_block_sync_timeout()
+    {
+        return &block_sync_timeout_;
+    }
+    
+    const BlockSyncState1& block_sync_state() const
+    {
+        return block_sync_state_;
+    }
+    
+    BlockSyncState1 *mutable_block_sync_state()
+    {
+        return &block_sync_state_;
+    }
+    
+    const NodeBlocksInFlight& blocks_in_flight() const
+    {
+        return blocks_in_flight_;
+    }
+    
+    NodeBlocksInFlight *mutable_blocks_in_flight()
+    {
+        return &blocks_in_flight_;
+    }
+    
+    const RelayState& relay_state() const
+    {
+        return relay_state_;
+    }
+    
+    RelayState *mutable_relay_state()
+    {
+        return &relay_state_;
+    }
+     
 private:
     const NodeId id_;
     const uint64_t local_host_nonce_;  
     NodeProtocol protocol_;
     NodeConnection connection_;
-    //const uint64_t keyed_net_group_;  
-
-    // flood addrs relay
-    BroadcastAddrs broadcast_addrs_;
-    
+    //const uint64_t keyed_net_group_;      
+    BroadcastAddrs broadcast_addrs_; // flood addrs relay    
     NodeFilter filter_;    
     NodeTime time_;    
     NodeTimers timers_;
+    Misbehavior misbehavior_;
+    BlockSyncTimeout block_sync_timeout_;
+    BlockSyncState1 block_sync_state_;
+    NodeBlocksInFlight blocks_in_flight_;
+    RelayState relay_state_;
 };
 
 struct NodeEvictionCandidate
@@ -472,7 +823,7 @@ struct NodeEvictionCandidate
 };
 
 class Nodes : util::Uncopyable {
-public:
+public:    
     Nodes()
         : list_() {}
     
@@ -505,23 +856,42 @@ public:
         list_.clear();
     }
     
-    void ClearDisconnected();    
+    void ClearDisconnected(std::vector<std::shared_ptr<Node> > *out); 
     void DisconnectNode(const SubNet& subnet);
     
     //-------------------------------------------------------------------------
     //bool AttemptToEvictConnection();
     int CountInbound();
     int CountOutbound();
+    int CountSyncStarted();
+    int CountPreferredDownload();
+    int CountValidatedDownload();
+    int CountProtectedOutbound();
     bool ShouldDnsLookup();
     bool CheckIncomingNonce(uint64_t nonce);
     
 private:
     mutable util::CriticalSection cs_nodes_;
     std::list<std::shared_ptr<Node> > list_;
-
+    
     //void MakeEvictionCandidate(std::vector<NodeEvictionCandidate> *out);
 };
 
+class BlocksInFlight1 {
+public:
+    using MapBlocksInFlight = 
+        std::map<crypto::Hash256, std::pair<NodeId, NodeBlocksInFlight::iterator> >;
+    
+    void Erase(const crypto::Hash256& hash)
+    {
+        LOCK(cs_);
+        map_blocks_in_flight_.erase(hash);
+    }
+    
+private:
+    mutable util::CriticalSection cs_;
+    MapBlocksInFlight map_blocks_in_flight_;    
+};
 
 // Singleton pattern, thread safe after c++11
 class SingletonNodes : util::Uncopyable {
@@ -535,6 +905,19 @@ public:
 private:
     SingletonNodes() {}    
 };
+
+class SingletonBlocksInFlight : util::Uncopyable {
+public:
+    static BlocksInFlight1& GetInstance()
+    {
+        static BlocksInFlight1 blocks_in_flight;
+        return blocks_in_flight;
+    }
+    
+private:
+    SingletonBlocksInFlight() {}
+};
+
 
 } // namespace network
 } // namespace btclite

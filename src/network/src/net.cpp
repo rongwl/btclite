@@ -12,6 +12,7 @@
 #include "constants.h"
 #include "msg_process.h"
 #include "network/include/params.h"
+#include "peers.h"
 #include "protocol/address.h"
 #include "random.h"
 
@@ -224,6 +225,26 @@ int64_t IntervalNextSend(int average_interval_seconds)
     long double log = log1p(util::GetUint64(1ULL << 48) * 
                        -0.0000000000000035527136788 /* -1/2^48 */);
     return static_cast<int64_t>(log * average_interval_seconds * -1000000.0 + 0.5);
+}
+
+void CollectionTimer::CheckDisconnectedNodes()
+{
+    std::vector<std::shared_ptr<Node> > disconnected_nodes;
+    
+    if (SingletonNetInterrupt::GetInstance())
+        return;
+    
+    SingletonNodes::GetInstance().ClearDisconnected(&disconnected_nodes);
+    for (auto& node : disconnected_nodes) {
+        if (node->ShouldUpdateTime())                
+            SingletonPeers::GetInstance().UpdateTime(node->connection().addr());
+        
+        for (auto& entry : node->blocks_in_flight().list()) {
+            SingletonBlocksInFlight::GetInstance().Erase(entry.hash);
+        }
+        
+        SingletonOrphans::GetInstance().EraseOrphansFor(node->id());
+    }
 }
 
 } // namespace network

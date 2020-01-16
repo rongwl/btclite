@@ -52,13 +52,11 @@ unit_test_test_network_SOURCES = unit_test/network/src/test_network.cpp \
                                  unit_test/network/src/protocol/send_compact_tests.cpp \
                                  unit_test/network/src/protocol/version_tests.cpp \
                                  unit_test/network/src/msg_process_tests.cpp \
-                                 unit_test/network/src/block_sync_tests.cpp \
                                  unit_test/network/src/node_tests.cpp \
                                  unit_test/network/src/acceptor_tests.cpp \
                                  unit_test/network/src/connector_tests.cpp \
                                  unit_test/network/src/p2p_tests.cpp \
                                  unit_test/network/src/socket_tests.cpp \
-                                 unit_test/network/include/block_sync_tests.h \
                                  unit_test/network/include/msg_process.h \
                                  unit_test/network/include/net_tests.h \
                                  unit_test/network/include/node_tests.h \

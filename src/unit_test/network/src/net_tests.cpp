@@ -45,5 +45,20 @@ TEST_F(LocalNetConfigTest, GetLocalAddr)
     EXPECT_EQ(addr.services(), kNodeNetwork);
 }
 
+TEST(CollectionTimerTest, CheckDisconnectedNodes)
+{
+    Nodes& nodes = SingletonNodes::GetInstance();
+    NetAddr addr;
+    
+    addr.SetIpv4(inet_addr("1.1.1.1"));
+    std::shared_ptr<Node> node = std::make_shared<Node>(nullptr, addr);
+    node->mutable_connection()->set_disconnected(true);
+    nodes.AddNode(node);
+    
+    EXPECT_NE(nodes.GetNode(node->id()), nullptr);
+    CollectionTimer::CheckDisconnectedNodes();    
+    EXPECT_EQ(nodes.GetNode(node->id()), nullptr);
+}
+
 } // namespace unit_test
 } // namespace btclit

@@ -53,7 +53,6 @@ bool SendMsg(const Message& msg, std::shared_ptr<Node> dst_node)
 bool SendVersion(std::shared_ptr<Node> dst_node);
 bool SendAddr(std::shared_ptr<Node> dst_node);
 
-void UpdatePreferredDownload(std::shared_ptr<Node> node);
 
 } // namespace network
 } // namespace btclite

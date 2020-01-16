@@ -20,7 +20,7 @@ bool Version::RecvHandler(std::shared_ptr<Node> src_node) const
     
     // Each connection can only send one version message
     if (src_node->protocol().version() != 0) {
-        SingletonBlockSync::GetInstance().Misbehaving(src_node->id(), 1);
+        src_node->mutable_misbehavior()->Misbehaving(src_node->id(), 1);
         return false;
     }
     
@@ -64,8 +64,7 @@ bool Version::RecvHandler(std::shared_ptr<Node> src_node) const
     }
     
     if (src_node->connection().is_inbound() && 
-            !SingletonNodes::GetInstance().CheckIncomingNonce(nonce_))
-    {
+            !SingletonNodes::GetInstance().CheckIncomingNonce(nonce_)) {
         BTCLOG(LOG_LEVEL_INFO) << "Disconnecting peer " << src_node->id()
                                << " for connecting to self at " 
                                << src_node->connection().addr().ToString();
@@ -73,8 +72,9 @@ bool Version::RecvHandler(std::shared_ptr<Node> src_node) const
         return true;
     }
     
-    if (src_node->connection().is_inbound())
+    if (src_node->connection().is_inbound()) {
         SendVersion(src_node);
+    }
     
     SendMsg(verack, src_node);
     
@@ -84,10 +84,11 @@ bool Version::RecvHandler(std::shared_ptr<Node> src_node) const
     src_node->mutable_filter()->set_relay_txes(relay_);
     src_node->mutable_protocol()->set_version(protocol_version_);
     
-    if (services_ & kNodeWitness)
-        SingletonBlockSync::GetInstance().SetIsWitness(src_node->id(), true);
+    if (services_ & kNodeWitness) {
+        src_node->mutable_relay_state()->is_witness = true;
+    }
     
-    UpdatePreferredDownload(src_node);
+    src_node->UpdatePreferredDownload();
     
     if (!src_node->connection().is_inbound()) {
         // Advertise our address

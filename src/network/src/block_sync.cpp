@@ -8,6 +8,7 @@ namespace network {
 
 using namespace chain;
 
+#if 0
 void BlockSync::AddSyncState(NodeId id, const NetAddr& addr, const std::string& addr_name)
 {
     LOCK(cs_block_sync_);
@@ -807,6 +808,7 @@ bool BlockSync::SetSupportsDesiredCmpctVersion(NodeId id, bool supports_desired_
     
     return true;
 }
+#endif
 
 bool Orphans::AddOrphanTx(OrphanTx::TxSharedPtr tx, NodeId id)
 {
@@ -921,11 +923,6 @@ int Orphans::EraseOrphanTx(const crypto::Hash256& hash)
     return 1;
 }
 
-
-bool IsInitialBlockDownload()
-{
-    return false;
-}
 
 } // namespace network 
 } // namespace block_sync

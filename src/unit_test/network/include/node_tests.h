@@ -9,6 +9,21 @@
 namespace btclite {
 namespace unit_test {
 
+class BroadcastAddrsTest : public ::testing::Test {
+protected:
+    void SetUp() override 
+    {
+        sent_addr_.SetIpv4(inet_addr("1.1.1.1"));
+        known_addr_.SetIpv4(inet_addr("1.1.1.2"));
+        broadcast_addrs_.PushAddrToSend(sent_addr_);
+        broadcast_addrs_.AddKnownAddr(known_addr_);
+    }
+    
+    network::BroadcastAddrs broadcast_addrs_;
+    network::NetAddr sent_addr_;
+    network::NetAddr known_addr_;
+};
+
 class NodesTest : public ::testing::Test {
 protected:
     void SetUp() override 
@@ -30,7 +45,6 @@ protected:
     
     void TearDown() override
     {
-        network::SingletonBlockSync::GetInstance().Clear();
         network::SingletonNodes::GetInstance().Clear();
     }
     

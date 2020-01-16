@@ -7,6 +7,8 @@
 namespace btclite {
 namespace network {
 
+using NodeId = int64_t;
+
 bool LookupHost(const char *psz_name, NetAddr *out, bool allow_lookup);
 bool LookupHost(const char *psz_name, std::vector<NetAddr> *out, unsigned int max_solutions, bool allow_lookup);
 bool LookupSubNet(const char* pszName, SubNet *out);

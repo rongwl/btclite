@@ -12,6 +12,15 @@
 namespace btclite {
 namespace network {
 
+bool IsPeerLocalAddrGood(std::shared_ptr<Node> node);
+void AdvertiseLocalAddr(std::shared_ptr<Node> node);
+
+void BroadcastAddrsTimeoutCb(std::shared_ptr<Node> node);
+
+// Return a time interavl for send in the future (in microseconds) for exponentially distributed events.
+int64_t IntervalNextSend(int average_interval_seconds);
+
+
 class LocalNetConfig {
 public:
     LocalNetConfig()
@@ -88,14 +97,18 @@ private:
     std::vector<std::string> specified_outgoing_;
 };
 
-
-bool IsPeerLocalAddrGood(std::shared_ptr<Node> node);
-void AdvertiseLocalAddr(std::shared_ptr<Node> node);
-
-void BroadcastAddrsTimeoutCb(std::shared_ptr<Node> node);
-
-// Return a time interavl for send in the future (in microseconds) for exponentially distributed events.
-int64_t IntervalNextSend(int average_interval_seconds);
+class CollectionTimer : util::Uncopyable {
+public:
+    CollectionTimer()
+        : disconnected_nodes_timer_(
+              util::SingletonTimerMng::GetInstance().StartTimer(
+                  60*1000, 60*1000, CheckDisconnectedNodes)) {}
+    
+    static void CheckDisconnectedNodes();
+    
+private:
+    util::TimerMng::TimerPtr disconnected_nodes_timer_;
+};
 
 
 class SingletonLocalNetCfg : util::Uncopyable {

@@ -212,7 +212,7 @@ bool ParseMsg(std::shared_ptr<Node> src_node)
         }        
         
         if (!CheckMisbehaving(header.command(), src_node)) {
-            SingletonBlockSync::GetInstance().Misbehaving(src_node->id(), 1);
+            src_node->mutable_misbehavior()->Misbehaving(src_node->id(), 1);
             raw = evbuffer_pullup(buf, MessageHeader::kSize);
             continue;
         }
@@ -257,21 +257,6 @@ bool SendAddr(std::shared_ptr<Node> dst_node)
     return true;
 }
 
-void UpdatePreferredDownload(std::shared_ptr<Node> node)
-{
-    BlockSync& block_sync = SingletonBlockSync::GetInstance();
-    bool old_state;
-    bool new_state = (!node->connection().is_inbound() && !node->protocol().IsClient());
-    
-    if (!block_sync.GetPreferredDownload(node->id(), &old_state))
-        return;
-    
-    block_sync.SetPreferredDownload(node->id(), new_state);
-    if (!old_state && new_state)
-        block_sync.set_preferred_download_count(block_sync.preferred_download_count()+1);
-    else if (old_state && !new_state)
-        block_sync.set_preferred_download_count(block_sync.preferred_download_count()-1);
-}
 
 } // namespace network
 } // namespace btclite

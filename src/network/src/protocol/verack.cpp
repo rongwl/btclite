@@ -17,15 +17,6 @@ namespace private_verack {
 
 bool Verack::RecvHandler(std::shared_ptr<Node> src_node) const
 {
-    if (!src_node->connection().is_inbound()) {
-        // Mark this node as currently connected, so we update its timestamp later.
-        SingletonBlockSync::GetInstance().SetConnected(src_node->id(), true);
-        BTCLOG(LOG_LEVEL_INFO) << "New outbound peer connected: version="
-                               << src_node->protocol().version() << ", start_height="
-                               << src_node->protocol().start_height() << ", peer="
-                               << src_node->id();
-    }
-
     if (src_node->protocol().version() >= kSendheadersVersion) {
         // Tell our peer we prefer to receive headers rather than inv's
         // We send this to non-NODE NETWORK peers as well, because even

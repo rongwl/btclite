@@ -10,15 +10,14 @@
 namespace btclite {
 namespace network {
 
-void NodeConnection::set_disconnected(bool disconnected)
+bool IsInitialBlockDownload()
 {
-    disconnected_ = disconnected;
-    SingletonNodes::GetInstance().EraseNode(node_id_);
+    return false;
 }
 
 bool BroadcastAddrs::PushAddrToSend(const NetAddr& addr)
 {
-    LOCK(cs_addrs_);
+    LOCK(cs_);
     
     if (!addr.IsValid() || 
             std::find(known_addrs_.begin(), known_addrs_.end(), 
@@ -36,7 +35,7 @@ bool BroadcastAddrs::PushAddrToSend(const NetAddr& addr)
 
 void BroadcastAddrs::ClearSentAddr()
 {
-    LOCK(cs_addrs_);
+    LOCK(cs_);
     addrs_to_send_.clear();
     
     // we only send the big addr message once
@@ -46,7 +45,7 @@ void BroadcastAddrs::ClearSentAddr()
 
 bool BroadcastAddrs::AddKnownAddr(const NetAddr& addr)
 {
-    LOCK(cs_addrs_);
+    LOCK(cs_);
     
     if (!addr.IsValid())
         return false;
@@ -58,12 +57,30 @@ bool BroadcastAddrs::AddKnownAddr(const NetAddr& addr)
 
 const BloomFilter *NodeFilter::bloom_filter() const
 {
-    LOCK(cs_bloom_filter_);
+    LOCK(cs_);
     
     if (!bloom_filter_)
         return nullptr;
     
     return bloom_filter_.get();
+}
+
+void Misbehavior::Misbehaving(NodeId id, int howmuch)
+{
+    if (howmuch == 0)
+        return;
+    
+    LOCK(cs_);
+    
+    score_ += howmuch;
+    if (score_ >= kDefaultBanscoreThreshold &&
+            score_ - howmuch < kDefaultBanscoreThreshold) {
+        should_ban_ = true;
+        BTCLOG(LOG_LEVEL_INFO) << "ban threshold exceeded, peer:" << id 
+                               << " misbehavior_score:" << score_;
+    }
+    else
+        BTCLOG(LOG_LEVEL_INFO) << "peer " << id << " misbehavior, score:" << score_;
 }
 
 Node::Node(const struct bufferevent *bev, const NetAddr& addr,
@@ -74,22 +91,6 @@ Node::Node(const struct bufferevent *bev, const NetAddr& addr,
       time_(util::GetTimeSeconds())
 {
     time_.ping_time.min_ping_usec_time = std::numeric_limits<int64_t>::max();
-}
-
-Node::~Node()
-{
-    if (!SingletonNetInterrupt::GetInstance()) {
-        if (SingletonBlockSync::GetInstance().ShouldUpdateTime(id_))
-            SingletonPeers::GetInstance().UpdateTime(connection_.addr());
-        
-        if (SingletonBlockSync::GetInstance().IsExist(id_)) {
-            auto task = std::bind(&BlockSync::EraseSyncState, 
-                                  &(SingletonBlockSync::GetInstance()), 
-                                  std::placeholders::_1);
-            util::SingletonThreadPool::GetInstance().AddTask(
-                std::function<void(NodeId)>(task), id_);
-        }
-    }
 }
 
 void Node::InactivityTimeoutCb(std::shared_ptr<Node> node)
@@ -103,13 +104,10 @@ void Node::InactivityTimeoutCb(std::shared_ptr<Node> node)
 
 bool Node::CheckBanned()
 {
-    BlockSync &block_sync = SingletonBlockSync::GetInstance();
-    bool should_ban = false;
-    
-    if (!block_sync.GetShouldBan(id_, &should_ban) || !should_ban)
+    if (!misbehavior_.should_ban())
         return false;
     
-    block_sync.SetShouldBan(id_, false);
+    misbehavior_.set_should_ban(false);
     if (connection_.manual()) {
         BTCLOG(LOG_LEVEL_WARNING) << "Can not punishing manually-connected peer "
                                   << connection_.addr().ToString();
@@ -150,10 +148,7 @@ std::shared_ptr<Node> Nodes::InitializeNode(const struct bufferevent *bev,
     if (!GetNode(node->id())) {
         BTCLOG(LOG_LEVEL_WARNING) << "Save new node to nodes failed.";
         return nullptr;
-    }
-    
-    SingletonBlockSync::GetInstance().AddSyncState(node->id(), node->connection().addr(),
-                                                   node->connection().host_name());
+    }   
     
     return node;
 }
@@ -210,14 +205,22 @@ void Nodes::EraseNode(NodeId id)
     }
 }
 
-void Nodes::ClearDisconnected()
+void Nodes::ClearDisconnected(std::vector<std::shared_ptr<Node> > *out)
 {
+    std::vector<std::list<std::shared_ptr<Node> >::iterator> vec;
+    out->clear();
+    
     LOCK(cs_nodes_);
     
     for (auto it = list_.begin(); it != list_.end(); ++it) {
         if ((*it)->connection().disconnected()) {
-        
+            out->push_back(*it);
+            vec.push_back(it);
         }
+    }
+    
+    for (auto it : vec) {
+        list_.erase(it);
     }
 }
 
@@ -226,10 +229,12 @@ void Nodes::DisconnectNode(const SubNet& subnet)
     LOCK(cs_nodes_);
     
     for (auto it = list_.begin(); it != list_.end(); ++it) {
-        if (subnet.Match((*it)->connection().addr()))
+        if (subnet.Match((*it)->connection().addr())) {
             (*it)->mutable_connection()->set_disconnected(true);
+        }
     }
 }
+
 
 /*
 static bool ReverseCompareNodeMinPingTime(const NodeEvictionCandidate &a, const NodeEvictionCandidate &b)
@@ -347,7 +352,8 @@ int Nodes::CountInbound()
     
     LOCK(cs_nodes_);    
     for (auto it = list_.begin(); it != list_.end(); ++it) {
-        if ((*it)->connection().is_inbound())
+        if (!(*it)->connection().disconnected() && 
+                (*it)->connection().is_inbound())
             num++;
     }
     
@@ -356,8 +362,72 @@ int Nodes::CountInbound()
 
 int Nodes::CountOutbound()
 {
+    int num = 0;
+    
     LOCK(cs_nodes_);
-    return list_.size() - CountInbound();
+    for (auto it = list_.begin(); it != list_.end(); ++it) {
+        if (!(*it)->connection().disconnected() && 
+                !(*it)->connection().is_inbound())
+            num++;
+    }
+    
+    return num;
+}
+
+int Nodes::CountSyncStarted()
+{
+    int num = 0;
+    
+    LOCK(cs_nodes_);
+    for (auto it = list_.begin(); it != list_.end(); ++it) {
+        if (!(*it)->connection().disconnected() &&
+                (*it)->block_sync_state().sync_started())
+            num++;
+    }
+    
+    return num;
+}
+
+int Nodes::CountPreferredDownload()
+{
+    int num = 0;
+    
+    LOCK(cs_nodes_);
+    for (auto it = list_.begin(); it != list_.end(); ++it) {
+        if (!(*it)->connection().disconnected() &&
+                (*it)->relay_state().preferred_download)
+            num++;
+    }
+    
+    return num;
+}
+
+int Nodes::CountValidatedDownload()
+{
+    int num = 0;
+    
+    LOCK(cs_nodes_);
+    for (auto it = list_.begin(); it != list_.end(); ++it) {
+        if (!(*it)->connection().disconnected() &&
+                (*it)->blocks_in_flight().valid_headers_count() > 0)
+            num++;
+    }
+    
+    return num;
+}
+
+int Nodes::CountProtectedOutbound()
+{
+    int num = 0;
+    
+    LOCK(cs_nodes_);
+    for (auto it = list_.begin(); it != list_.end(); ++it) {
+        if (!(*it)->connection().disconnected() &&
+                (*it)->block_sync_timeout().protect())
+            num++;
+    }
+    
+    return num;
 }
 
 bool Nodes::ShouldDnsLookup()
@@ -407,6 +477,7 @@ void Nodes::MakeEvictionCandidate(std::vector<NodeEvictionCandidate> *out)
     }
 }
 */
+
 
 } // namespace network
 } // namespace btclite

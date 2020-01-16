@@ -5,32 +5,12 @@
 #include <list>
 
 #include "chain.h"
-#include "network_address.h"
+#include "netbase.h"
 
 
 namespace btclite {
 namespace network {
-
-using NodeId = int64_t;
-
-struct BlockReject {
-    uint8_t reject_code = 0;
-    std::string reject_reason;
-    crypto::Hash256 block_hash;
-};
-
-/* Blocks that are in flight, and that are in the queue to be downloaded. */
-struct QueuedBlock {
-    crypto::Hash256 hash;
-    const chain::BlockIndex *index = nullptr;
-    
-    // Whether this block has validated headers at the time of request.
-    bool has_validated_headers;
-    
-    // Optional, used for CMPCTBLOCK downloads
-    //std::unique_ptr<PartiallyDownloadedBlock> partialBlock;
-};
-
+#if 0
 struct SyncBasicState {
     //! Whether we have a fully established connection.
     bool connected = false;
@@ -375,6 +355,7 @@ private:
     // requires cs_block_sync_
     BlockSyncState *GetSyncState(NodeId id);
 };
+#endif
 
 template <typename Iter>
 struct IterLess
@@ -425,9 +406,7 @@ private:
 };
 
 
-bool IsInitialBlockDownload();
-
-
+#if 0
 class SingletonBlockSync : util::Uncopyable {
 public:
     static BlockSync& GetInstance()
@@ -439,6 +418,7 @@ public:
 private:
     SingletonBlockSync() {}
 };
+#endif
 
 } // namespace network 
 } // namespace block_sync
