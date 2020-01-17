@@ -71,7 +71,7 @@ BTCLITE_HEADER_FILES = \
                        network/include/params.h \
                        network/include/peers.h \
                        network/include/net.h \
-                       network/include/netbase.h \
+                       network/include/net_base.h \
                        network/include/network_address.h \
                        network/include/socket.h \
                        crypto/include/hash.h \
@@ -176,7 +176,7 @@ network_src_libbtclite_network_a_SOURCES = network/proto/banmap.pb.cc \
                                            network/src/protocol/verack.cpp \
                                            network/src/protocol/version.cpp \
                                            network/src/msg_process.cpp \
-                                           network/src/netbase.cpp \
+                                           network/src/net_base.cpp \
                                            network/src/network_address.cpp \
                                            network/src/params.cpp \
                                            network/src/peers.cpp \

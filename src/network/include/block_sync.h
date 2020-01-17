@@ -5,7 +5,7 @@
 #include <list>
 
 #include "chain.h"
-#include "netbase.h"
+#include "net_base.h"
 
 
 namespace btclite {

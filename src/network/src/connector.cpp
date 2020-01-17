@@ -3,7 +3,7 @@
 #include "bandb.h"
 #include "msg_process.h"
 #include "net.h"
-#include "netbase.h"
+#include "net_base.h"
 #include "peers.h"
 #include "random.h"
 #include <arpa/inet.h>

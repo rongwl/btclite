@@ -6,7 +6,7 @@
 #include "connector.h"
 #include "bandb.h"
 #include "net.h"
-#include "netbase.h"
+#include "net_base.h"
 #include "peers.h"
 
 
