@@ -50,6 +50,11 @@ public:
         return width_;
     }
     
+    size_t SerializedSize() const
+    {
+        return Size();
+    }
+    
     int Compare(const Blob& b) const
     {
         return std::memcmp(this->data(), b.data(), width_);

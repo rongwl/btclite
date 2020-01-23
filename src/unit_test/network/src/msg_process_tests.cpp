@@ -1,5 +1,6 @@
 #include "msg_process_tests.h"
 
+#include "chain_state.h"
 #include "msg_process.h"
 #include "net.h"
 #include "network/include/params.h"
@@ -71,7 +72,7 @@ void TestVersion(const MessageData *msg)
     EXPECT_EQ(version->nonce(), version_nonce);
     EXPECT_EQ(version->user_agent(), protocol::FormatUserAgent());
     EXPECT_EQ(version->start_height(), 
-              chain::SingletonBlockChain::GetInstance().Height());
+              chain::SingletonChainState::GetInstance().active_chain().Height());
     EXPECT_TRUE(version->relay());
 }
 

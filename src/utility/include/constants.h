@@ -10,6 +10,9 @@
 
 namespace btclite {
 
+// Common bitcoin hash container sizes.
+constexpr size_t kHashSize = 32;
+
 constexpr size_t kMaxVardataSize = 0x02000000;
 constexpr size_t kMaxBlockSize = 1000000;
 // Maximum length of incoming protocol messages (no message over 4 MB is currently acceptable).

@@ -1,4 +1,4 @@
-#include "chain.h"
+#include "block_chain.h"
 
 
 namespace btclite {

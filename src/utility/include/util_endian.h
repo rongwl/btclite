@@ -1,5 +1,5 @@
-#ifndef BTCLITE_ENDIAN_H
-#define BTCLITE_ENDIAN_H
+#ifndef BTCLITE_UTIL_ENDIAN_H
+#define BTCLITE_UTIL_ENDIAN_H
 
 #include <cstddef>
 #include "util_assert.h"
@@ -77,4 +77,4 @@ void FromLittleEndian(Iterator begin, Iterator end, T *out)
 } // namespace util
 } // namespace btclite
 
-#endif // BTCLITE_ENDIAN_H
+#endif // BTCLITE_UTIL_ENDIAN_H

@@ -134,7 +134,7 @@ bool Version::RecvHandler(std::shared_ptr<Node> src_node) const
 
 bool Version::IsValid() const
 {
-    return (protocol_version_ != 0 &&
+    return (protocol_version_ != kUnknownProtoVersion &&
             services_ != 0 &&
             timestamp_ != 0 &&
             addr_recv_.IsValid() &&

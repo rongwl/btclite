@@ -2,6 +2,7 @@
 
 #include <event2/buffer.h>
 
+#include "chain_state.h"
 #include "protocol/address.h"
 #include "protocol/getaddr.h"
 #include "protocol/inventory.h"
@@ -229,7 +230,7 @@ bool ParseMsg(std::shared_ptr<Node> src_node)
 bool SendVersion(std::shared_ptr<Node> dst_node)
 {
     ServiceFlags services = dst_node->protocol().services();
-    uint32_t start_height = chain::SingletonBlockChain::GetInstance().Height();
+    uint32_t start_height = chain::SingletonChainState::GetInstance().active_chain().Height();
     NetAddr addr_recv(dst_node->connection().addr());
     NetAddr addr_from;
     

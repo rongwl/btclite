@@ -1,11 +1,14 @@
 #ifndef BTCLITE_BLOCK_H
 #define BTCLITE_BLOCK_H
 
+
 #include "transaction.h"
 
 
 namespace btclite {
 namespace chain {
+
+using BlockLocator = std::vector<crypto::Hash256>;
 
 /** Nodes collect new transactions into a block, hash them into a hash tree,
  * and scan through nonce values to make the block's hash satisfy proof-of-work
@@ -245,6 +248,7 @@ private:
     BlockHeader header_;
     std::vector<Transaction> transactions_;
 };
+
 
 Block CreateGenesisBlock(const std::string& coinbase, const Script& output_script, uint32_t time,
                          uint32_t nonce, uint32_t bits, int32_t version, uint64_t reward);

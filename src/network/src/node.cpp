@@ -1,7 +1,6 @@
 #include "node.h"
 
 #include "bandb.h"
-#include "chain.h"
 #include "net.h"
 #include "peers.h"
 #include "thread.h"

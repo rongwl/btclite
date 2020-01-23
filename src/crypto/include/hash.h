@@ -15,6 +15,17 @@ namespace crypto {
 
 using Hash256 = util::Uint256;
 
+// for std::hash<util::Uint256/Uint128> in std::unordered_map
+template <typename T>
+class Hasher {
+public:
+    size_t operator()(const T& val) const
+    {
+        return val.GetLow64();
+    }
+};
+
+
 void Sha256(const uint8_t in[], size_t length, Hash256 *out);
 Hash256 Sha256(const uint8_t in[], size_t length);
 void Sha256(const std::vector<uint8_t>& in, Hash256 *out);

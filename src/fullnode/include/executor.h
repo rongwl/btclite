@@ -2,7 +2,6 @@
 #define BTCLITE_FULLNODE_EXECUTOR_H
 
 
-#include "chain.h"
 #include "chain/include/params.h"
 #include "fullnode/include/config.h"
 #include "p2p.h"
@@ -14,7 +13,7 @@ public:
         : network_(config)
     {
         btclite::chain::SingletonParams::GetInstance(config.env());
-        //SingletonBlockChain::GetInstance();
+        //SingletonChainState::GetInstance();
     }
 
     //-------------------------------------------------------------------------

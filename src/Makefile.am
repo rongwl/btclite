@@ -38,7 +38,8 @@ bin_PROGRAMS = btc-fullnode
 
 BTCLITE_HEADER_FILES = \
                        chain/include/block.h \
-                       chain/include/chain.h \
+                       chain/include/block_chain.h \
+                       chain/include/chain_state.h \
                        chain/include/compact.h \
                        chain/include/params.h \
                        chain/include/script.h \
@@ -58,6 +59,7 @@ BTCLITE_HEADER_FILES = \
                        network/include/protocol/inventory.h \
                        network/include/protocol/inventory_vector.h \
                        network/include/protocol/getaddr.h \
+                       network/include/protocol/getblocks.h \
                        network/include/protocol/ping.h \
                        network/include/protocol/pong.h \
                        network/include/protocol/reject.h \
@@ -138,7 +140,7 @@ chain_src_libbtclite_chain_a_CPPFLAGS = $(AM_CXXFLAGS) \
                                         $(BTCLITE_NETWORK_INCLUDES) \
                                         $(BTCLITE_UTIL_INCLUDES)
 chain_src_libbtclite_chain_a_SOURCES = chain/src/block.cpp \
-                                       chain/src/chain.cpp \
+                                       chain/src/block_chain.cpp \
                                        chain/src/compact.cpp \
                                        chain/src/script.cpp \
                                        chain/src/script_witness.cpp \
@@ -168,6 +170,7 @@ network_src_libbtclite_network_a_SOURCES = network/proto/banmap.pb.cc \
                                            network/src/protocol/address.cpp \
                                            network/src/protocol/inventory.cpp \
                                            network/src/protocol/getaddr.cpp \
+                                           network/src/protocol/getblocks.cpp \
                                            network/src/protocol/ping.cpp \
                                            network/src/protocol/pong.cpp \
                                            network/src/protocol/reject.cpp \

@@ -1,5 +1,5 @@
-#ifndef BTCLITE_ASSERT_H
-#define BTCLITE_ASSERT_H
+#ifndef BTCLITE_UTIL_ASSERT_H
+#define BTCLITE_UTIL_ASSERT_H
 
 #include <cassert>
 #include <type_traits>
@@ -22,4 +22,4 @@ namespace util {
 } // namespace util
 } // namespace btclite
 
-#endif // BTCLITE_ASSERT_H
+#endif // BTCLITE_UTIL_ASSERT_H

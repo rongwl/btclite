@@ -1,5 +1,5 @@
-#ifndef BTCLITE_UTILTIME_H
-#define BTCLITE_UTILTIME_H
+#ifndef BTCLITE_UTIL_TIME_H
+#define BTCLITE_UTIL_TIME_H
 
 
 #include "network_address.h"
@@ -50,4 +50,4 @@ private:
 } // namespace btclite
 
 
-#endif // BTCLITE_UTILTIME_H
+#endif // BTCLITE_UTIL_TIME_H

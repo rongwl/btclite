@@ -8,6 +8,7 @@
 #include <queue>
 
 #include "bloom.h"
+#include "block_chain.h"
 #include "block_sync.h"
 #include "net_base.h"
 #include "timer.h"

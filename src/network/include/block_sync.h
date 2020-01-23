@@ -4,8 +4,10 @@
 
 #include <list>
 
-#include "chain.h"
 #include "net_base.h"
+#include "sync.h"
+#include "transaction.h"
+#include "util.h"
 
 
 namespace btclite {
