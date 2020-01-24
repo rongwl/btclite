@@ -15,6 +15,8 @@ constexpr size_t kHashSize = 32;
 
 constexpr size_t kMaxVardataSize = 0x02000000;
 constexpr size_t kMaxBlockSize = 1000000;
+// Max number of elements in BlockLoactor vector.
+constexpr size_t kMaxBlockLoactorSize = 32;
 // Maximum length of incoming protocol messages (no message over 4 MB is currently acceptable).
 constexpr size_t kMaxMessageSize = 4 * 1000 * 1000;
 // Maximum length of strSubVer in `version` message
@@ -23,6 +25,7 @@ constexpr size_t kMaxSubVersionSize = 256;
 constexpr size_t kMaxRejectMessageLength = 111;
 // The maximum number of new addresses to accumulate before announcing.
 constexpr uint16_t kMaxAddrToSend = 1000;
+
 
 constexpr uint8_t kVarint16bits = 0xfd;
 constexpr uint8_t kVarint32bits = 0xfe;

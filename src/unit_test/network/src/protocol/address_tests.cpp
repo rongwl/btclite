@@ -32,10 +32,10 @@ TEST_F(AddrTest, Serialize)
 
 TEST_F(AddrTest, SerializedSize)
 {
-    util::MemOstream ms;
+    util::MemoryStream ms;
 
     ms << msg_addr2_;
-    EXPECT_EQ(msg_addr2_.SerializedSize(), ms.vec().size());
+    EXPECT_EQ(msg_addr2_.SerializedSize(), ms.Size());
 }
 
 } // namespace unit_test

@@ -45,6 +45,7 @@ unit_test_test_network_SOURCES = unit_test/network/src/test_network.cpp \
                                  unit_test/network/src/protocol/message_tests.cpp \
                                  unit_test/network/src/protocol/address_tests.cpp \
                                  unit_test/network/src/protocol/getblocks_tests.cpp \
+                                 unit_test/network/src/protocol/getheaders_tests.cpp \
                                  unit_test/network/src/protocol/inventory_vector_tests.cpp \
                                  unit_test/network/src/protocol/inventory_tests.cpp \
                                  unit_test/network/src/protocol/ping_tests.cpp \

@@ -185,7 +185,7 @@ void SendCmpctReadCb(struct bufferevent *bev, void *ctx)
 
 TEST(MsgFactoryTest, VersionFactory)
 {
-    util::MemOstream os;
+    util::MemoryStream ms;
     NetAddr addr_recv(0x1234, kNodeNetwork, 
     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 0x1, 0x2, 0x3, 0x4},
     8333);
@@ -198,8 +198,8 @@ TEST(MsgFactoryTest, VersionFactory)
     MessageHeader header(SingletonParams::GetInstance().msg_magic(),
                          msg_command::kMsgVersion, msg_out.SerializedSize(), msg_out.GetHash().GetLow32());
     
-    os << msg_out;    
-    MessageData *msg_in= MsgDataFactory(os.vec().data(), header, 0);
+    ms << msg_out;    
+    MessageData *msg_in= MsgDataFactory(ms.Data(), header, 0);
     ASSERT_NE(msg_in, nullptr);
     EXPECT_EQ(msg_out, *reinterpret_cast<Version*>(msg_in));
     delete msg_in;
@@ -219,7 +219,7 @@ TEST(MsgFactoryTest, VerackFactory)
 
 TEST(MsgFactoryTest, AddrFactory)
 {
-    util::MemOstream os;
+    util::MemoryStream ms;
     Addr msg_addr;
     NetAddr addr1, addr2;
     
@@ -229,9 +229,9 @@ TEST(MsgFactoryTest, AddrFactory)
     msg_addr.mutable_addr_list()->push_back(addr2);
     MessageHeader header(SingletonParams::GetInstance().msg_magic(),
                          msg_command::kMsgAddr, msg_addr.SerializedSize(), msg_addr.GetHash().GetLow32());
-    os << msg_addr;
+    ms << msg_addr;
     
-    MessageData *msg_in= MsgDataFactory(os.vec().data(), header, 0);
+    MessageData *msg_in= MsgDataFactory(ms.Data(), header, 0);
     ASSERT_NE(msg_in, nullptr);
     EXPECT_EQ(*reinterpret_cast<Addr*>(msg_in), msg_addr);
     delete msg_in;
@@ -251,7 +251,7 @@ TEST(MsgFactoryTest, GetAddrFactory)
 
 TEST(MsgFactoryTest, InvFactory)
 {
-    util::MemOstream os;
+    util::MemoryStream ms;
     Inv msg_out;
     msg_out.mutable_inv_vects()->emplace_back(DataMsgType::kMsgTx, 
                                               util::GetUint256());
@@ -260,8 +260,8 @@ TEST(MsgFactoryTest, InvFactory)
     MessageHeader header(SingletonParams::GetInstance().msg_magic(),
                          msg_command::kMsgInv, msg_out.SerializedSize(), msg_out.GetHash().GetLow32());
     
-    os << msg_out;  
-    MessageData *msg_in= MsgDataFactory(os.vec().data(), header, 0);
+    ms << msg_out;  
+    MessageData *msg_in= MsgDataFactory(ms.Data(), header, 0);
     ASSERT_NE(msg_in, nullptr);
     EXPECT_EQ(msg_out, *reinterpret_cast<Inv*>(msg_in));
     delete msg_in;    
@@ -269,13 +269,13 @@ TEST(MsgFactoryTest, InvFactory)
 
 TEST(MsgFactoryTest, PingFactory)
 {
-    util::MemOstream ms;    
+    util::MemoryStream ms;    
     Ping msg_out(0x1122334455667788);
     MessageHeader header(SingletonParams::GetInstance().msg_magic(),
                          msg_command::kMsgPing, msg_out.SerializedSize(), msg_out.GetHash().GetLow32());
     
     ms << msg_out;
-    MessageData *msg_in = MsgDataFactory( ms.vec().data(), header, msg_out.protocol_version());
+    MessageData *msg_in = MsgDataFactory( ms.Data(), header, msg_out.protocol_version());
     ASSERT_NE(msg_in, nullptr);
     EXPECT_EQ(msg_out, *reinterpret_cast<Ping*>(msg_in));
     delete msg_in;
@@ -293,13 +293,13 @@ TEST(MsgFactoryTest, PingFactory)
 
 TEST(MsgFactoryTest, PongFactory)
 {
-    util::MemOstream ms;    
+    util::MemoryStream ms;    
     Pong msg_out(0x1122334455667788);
     MessageHeader header(SingletonParams::GetInstance().msg_magic(),
                          msg_command::kMsgPong, msg_out.SerializedSize(), msg_out.GetHash().GetLow32());
     
     ms << msg_out;
-    MessageData *msg_in = MsgDataFactory(ms.vec().data(), header, 0);
+    MessageData *msg_in = MsgDataFactory(ms.Data(), header, 0);
     ASSERT_NE(msg_in, nullptr);
     EXPECT_EQ(msg_out, *reinterpret_cast<Pong*>(msg_in));
     delete msg_in;
@@ -307,14 +307,14 @@ TEST(MsgFactoryTest, PongFactory)
 
 TEST(MsgFactoryTest, RejectFactory)
 {
-    util::MemOstream os;
+    util::MemoryStream ms;
     Reject msg_out(msg_command::kMsgVersion, CCode::kRejectDuplicate, "Duplicate version message",
                    std::move(util::GetUint256()));
     MessageHeader header(SingletonParams::GetInstance().msg_magic(),
                          msg_command::kMsgReject, msg_out.SerializedSize(), msg_out.GetHash().GetLow32());
     
-    os << msg_out;    
-    MessageData *msg_in = MsgDataFactory(os.vec().data(), header, 0);
+    ms << msg_out;    
+    MessageData *msg_in = MsgDataFactory(ms.Data(), header, 0);
     ASSERT_NE(msg_in, nullptr);
     EXPECT_EQ(msg_out, *reinterpret_cast<Reject*>(msg_in));
     delete msg_in;
@@ -322,14 +322,14 @@ TEST(MsgFactoryTest, RejectFactory)
 
 TEST(MsgFactoryTest, SendHeadersFactory)
 {
-    util::MemOstream os;
+    util::MemoryStream ms;
     SendHeaders send_headers;
     MessageHeader header(SingletonParams::GetInstance().msg_magic(),
                          msg_command::kMsgSendHeaders, send_headers.SerializedSize(), 
                          send_headers.GetHash().GetLow32());
     
-    os << send_headers;    
-    MessageData *msg = MsgDataFactory(os.vec().data(), header, 0);
+    ms << send_headers;    
+    MessageData *msg = MsgDataFactory(ms.Data(), header, 0);
     ASSERT_NE(msg, nullptr);
     EXPECT_EQ(msg->Command(), msg_command::kMsgSendHeaders);
     delete msg;
@@ -337,14 +337,14 @@ TEST(MsgFactoryTest, SendHeadersFactory)
 
 TEST(MsgFactoryTest, SendCmpctFactory)
 {
-    util::MemOstream os;
+    util::MemoryStream ms;
     SendCmpct send_compact(true, 1);
     MessageHeader header(SingletonParams::GetInstance().msg_magic(),
                          msg_command::kMsgSendCmpct, send_compact.SerializedSize(), 
                          send_compact.GetHash().GetLow32());
     
-    os << send_compact;    
-    MessageData *msg = MsgDataFactory( os.vec().data(), header, 0);
+    ms << send_compact;    
+    MessageData *msg = MsgDataFactory( ms.Data(), header, 0);
     ASSERT_NE(msg, nullptr);
     EXPECT_EQ(*reinterpret_cast<SendCmpct*>(msg), send_compact);
 }

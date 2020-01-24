@@ -446,10 +446,10 @@ TEST(NetAddrTest, Clear)
 
 TEST(NetAddrTest, SerializedSize)
 {
-    util::MemOstream ms;
+    util::MemoryStream ms;
     NetAddr addr;
     ms << addr;
-    EXPECT_EQ(addr.SerializedSize(), ms.vec().size());
+    EXPECT_EQ(addr.SerializedSize(), ms.Size());
 }
 
 TEST(NetAddrTest, Serialize)

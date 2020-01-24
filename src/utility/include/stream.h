@@ -3,34 +3,41 @@
 
 
 #include "serialize.h"
+#include "util.h"
 
 
 namespace btclite {
 namespace util {
 
-/* 
- * Minimal stream for overwriting and/or appending to an existing byte vector
- * The referenced vector will grow as necessary
- */
-class MemOstream {
+// memory input/output stream
+class MemoryStream : Uncopyable {
 public:
     using Container = std::vector<uint8_t>;
     using ByteSinkType = ByteSink<Container>;
+    using ByteSourceType = ByteSource<Container>;
     
-    MemOstream()
-        : vec_(), byte_sink_(vec_) {}    
+    MemoryStream()
+        : vec_(), byte_sink_(vec_), byte_source_(vec_) {}
     
     template <typename T>
-    MemOstream& operator<<(const T& obj)
+    MemoryStream& operator<<(const T& obj)
     {
         Serializer<ByteSinkType> serializer(byte_sink_);
         serializer.SerialWrite(obj);
         return *this;
     }
     
-    const Container& vec() const
+    template <typename T>
+    MemoryStream& operator>>(T& obj)
     {
-        return vec_;
+        util::Deserializer<ByteSourceType> deserializer(byte_source_);
+        deserializer.SerialRead(&obj);
+        return *this;
+    }
+    
+    uint8_t *Data()
+    {
+        return vec_.data();
     }
     
     void Clear()
@@ -38,28 +45,15 @@ public:
         vec_.clear();
     }
     
-private:
-    Container vec_;
-    ByteSinkType byte_sink_;
-};
-
-// memory input stream
-template <typename ByteSource>
-class MemIstream {
-public:    
-    MemIstream(ByteSource& source)
-        : byte_source_(source) {}
-    
-    template <typename T>
-    MemIstream& operator>>(T& obj)
+    size_t Size()
     {
-        util::Deserializer<ByteSource> deserializer(byte_source_);
-        deserializer.SerialRead(&obj);
-        return *this;
+        return vec_.size();
     }
     
 private:
-    ByteSource& byte_source_;
+    Container vec_;
+    ByteSinkType byte_sink_;
+    ByteSourceType byte_source_;
 };
 
 } // namespace util

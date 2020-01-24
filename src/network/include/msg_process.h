@@ -20,7 +20,7 @@ bool SendMsg(const Message& msg, std::shared_ptr<Node> dst_node)
 {
     using namespace protocol;
     
-    util::MemOstream ms;
+    util::MemoryStream ms;
         
     if (!dst_node->connection().bev())
         return false;
@@ -29,8 +29,8 @@ bool SendMsg(const Message& msg, std::shared_ptr<Node> dst_node)
                          msg.Command(), msg.SerializedSize(), msg.GetHash().GetLow32());
     ms << header << msg;
     
-    if (ms.vec().size() != MessageHeader::kSize + msg.SerializedSize()) {
-        BTCLOG(LOG_LEVEL_ERROR) << "Wrong serialized message size:" << ms.vec().size()
+    if (ms.Size() != MessageHeader::kSize + msg.SerializedSize()) {
+        BTCLOG(LOG_LEVEL_ERROR) << "Wrong serialized message size:" << ms.Size()
                                 << ", correct size:" << MessageHeader::kSize + msg.SerializedSize() 
                                 << ", message type:" << msg.Command();
         return false;
@@ -38,8 +38,7 @@ bool SendMsg(const Message& msg, std::shared_ptr<Node> dst_node)
 
     //bufferevent_lock(dst_node->mutable_bev());
 
-    if (bufferevent_write(dst_node->mutable_connection()->mutable_bev(),
-                          ms.vec().data(), ms.vec().size())) {
+    if (bufferevent_write(dst_node->mutable_connection()->mutable_bev(), ms.Data(), ms.Size())) {
         BTCLOG(LOG_LEVEL_ERROR) << "Writing message to bufferevent failed, peer:" 
                                 << dst_node->id();
         return false;

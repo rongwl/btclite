@@ -225,8 +225,8 @@ public:
     // Set/initialize a chain with a given tip.
     void SetTip(const BlockIndex *pindex);
 
-    // Return a CBlockLocator that refers to a block in this chain (by default the tip).
-    //BlockLocator GetLocator(const BlockIndex *pindex = nullptr) const;
+    // Return a BlockLocator that refers to a block in this chain (by default the tip).
+    bool GetLocator(BlockLocator *out, const BlockIndex *pindex = nullptr) const;
 
     // Find the last common block between this chain and a block index entry.
     const BlockIndex *FindFork(const BlockIndex *pindex) const;

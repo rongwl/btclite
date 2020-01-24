@@ -30,9 +30,9 @@ TEST_F(InvVectTest, Serialize)
 
 TEST_F(InvVectTest, SerializedSize)
 {
-    util::MemOstream ms;
+    util::MemoryStream ms;
     ms << inv_vect1_;
-    EXPECT_EQ(inv_vect1_.SerializedSize(), ms.vec().size());
+    EXPECT_EQ(inv_vect1_.SerializedSize(), ms.Size());
 }
 
 TEST_F(InvVectTest, Clear)

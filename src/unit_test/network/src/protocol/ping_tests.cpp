@@ -36,10 +36,10 @@ TEST_F(PingTest, Serialize)
 
 TEST_F(PingTest, SerializedSize)
 {
-    util::MemOstream ms;
+    util::MemoryStream ms;
     
     ms << ping2_;
-    EXPECT_EQ(ping2_.SerializedSize(), ms.vec().size());
+    EXPECT_EQ(ping2_.SerializedSize(), ms.Size());
     EXPECT_EQ(ping3_.SerializedSize(), 0);
 }
 

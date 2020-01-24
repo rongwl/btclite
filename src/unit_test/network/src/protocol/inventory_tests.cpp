@@ -32,10 +32,10 @@ TEST_F(InvTest, Serialize)
 
 TEST_F(InvTest, SerializedSize)
 {
-    util::MemOstream ms;
+    util::MemoryStream ms;
 
     ms << inv2_;
-    EXPECT_EQ(inv2_.SerializedSize(), ms.vec().size());
+    EXPECT_EQ(inv2_.SerializedSize(), ms.Size());
 }
 
 } // namespace unit_test

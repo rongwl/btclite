@@ -33,10 +33,10 @@ TEST_F(PongTest, Serialize)
 
 TEST_F(PongTest, SerializedSize)
 {
-    util::MemOstream ms;
+    util::MemoryStream ms;
     
     ms << pong2_;
-    EXPECT_EQ(pong2_.SerializedSize(), ms.vec().size());
+    EXPECT_EQ(pong2_.SerializedSize(), ms.Size());
 }
 
 } // namespace unit_test

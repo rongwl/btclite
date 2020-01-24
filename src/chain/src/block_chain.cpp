@@ -1,5 +1,7 @@
 #include "block_chain.h"
 
+#include <algorithm>
+
 
 namespace btclite {
 namespace chain {
@@ -80,6 +82,39 @@ void BlockChain::SetTip(const BlockIndex *pindex)
         chain_[pindex->height()] = const_cast<BlockIndex*>(pindex);
         pindex = pindex->prev();
     }
+}
+
+bool BlockChain::GetLocator(BlockLocator *out, const BlockIndex *pindex) const
+{
+    int step = 1;
+
+    if (!out)
+        return false;
+    
+    out->clear();
+    out->reserve(32);
+
+    if (!pindex)
+        pindex = Tip();
+    while (pindex) {
+        out->push_back(*pindex->phash_block());
+        // Stop when we have added the genesis block.
+        if (pindex->height() == 0)
+            break;
+        // Exponentially larger steps back, plus the genesis block.
+        int height = std::max(static_cast<int>(pindex->height()-step), 0);
+        if (IsExist(pindex)) {
+            // Use O(1) BlockChain index if possible.
+            pindex = (*this)[height];
+        } else {
+            // Otherwise, use O(log n) skiplist.
+            pindex = pindex->GetAncestor(height);
+        }
+        if (out->size() > 10)
+            step *= 2;
+    }
+    
+    return true;
 }
 
 const BlockIndex *BlockChain::FindFork(const BlockIndex *pindex) const

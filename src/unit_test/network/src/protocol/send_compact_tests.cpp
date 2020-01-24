@@ -50,10 +50,10 @@ TEST_F(SendCmpctTest, Serialize)
 
 TEST_F(SendCmpctTest, SerializedSize)
 {
-    util::MemOstream ms;
+    util::MemoryStream ms;
     
     ms << send_compact2_;
-    EXPECT_EQ(send_compact2_.SerializedSize(), ms.vec().size());
+    EXPECT_EQ(send_compact2_.SerializedSize(), ms.Size());
 }
 
 } // namespace unit_test

@@ -46,24 +46,20 @@ TEST_F(GetBlocksTest, IsValid)
 
 TEST_F(GetBlocksTest, Serialize)
 {
-    std::vector<uint8_t> vec;
-    util::ByteSink<std::vector<uint8_t> > byte_sink(vec);
-    util::ByteSource<std::vector<uint8_t> > byte_source(vec);    
+    util::MemoryStream ms;
     MessageHeader header1(0x12345678, msg_command::kMsgGetBlocks, 1000, 0x12345678), header2;
     
-    header1.Serialize(byte_sink);
-    getblocks2_.Serialize(byte_sink);
-    header2.Deserialize(byte_source);
-    getblocks1_.Deserialize(byte_source);
+    ms << header1 << getblocks2_;
+    EXPECT_NO_THROW(ms >> header2 >> getblocks1_);
     EXPECT_EQ(header1, header2);
     EXPECT_EQ(getblocks1_, getblocks2_);
 }
 
 TEST_F(GetBlocksTest, SerializedSize)
 {
-    util::MemOstream ms;
+    util::MemoryStream ms;
     ms << getblocks2_;
-    EXPECT_EQ(getblocks2_.SerializedSize(), ms.vec().size());
+    EXPECT_EQ(getblocks2_.SerializedSize(), ms.Size());
 }
 
 } // namespace unit_test

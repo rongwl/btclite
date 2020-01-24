@@ -28,10 +28,10 @@ TEST_F(MessageHeaderTest, Constructor)
 
 TEST_F(MessageHeaderTest, ConstructFromRaw)
 {
-    util::MemOstream os;
-    os << header2_;
+    util::MemoryStream ms;
+    ms << header2_;
     
-    MessageHeader header(os.vec().data());
+    MessageHeader header(ms.Data());
     EXPECT_EQ(header, header2_);
 }
 

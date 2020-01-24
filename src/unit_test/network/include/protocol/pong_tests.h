@@ -9,9 +9,9 @@ namespace unit_test {
 class PongTest : public ::testing::Test {
 protected:
     PongTest()
-        : nonce_(0x1122334455667788), pong1_(), pong2_(nonce_) {}
+        : pong1_(), pong2_(nonce_) {}
     
-    uint64_t nonce_ = 0;
+    uint64_t nonce_ = 0x1122334455667788;
     network::protocol::Pong pong1_;
     network::protocol::Pong pong2_;
 };

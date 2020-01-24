@@ -34,7 +34,8 @@ public:
     
     bool IsValid() const
     {
-        return (version_ != kUnknownProtoVersion && !hashes_.empty());
+        return (version_ != kUnknownProtoVersion && 
+                (!hashes_.empty() || hashes_.size() > kMaxBlockLoactorSize));
     }
     
     void Clear() 

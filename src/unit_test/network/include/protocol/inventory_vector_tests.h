@@ -10,12 +10,10 @@ namespace unit_test {
 class InvVectTest : public ::testing::Test {
 protected:
     InvVectTest()
-        : type_(network::protocol::DataMsgType::kMsgTx), 
-          hash_(util::GetUint256()),
-          inv_vect1_(), inv_vect2_(type_, hash_) {}
+        : inv_vect1_(), inv_vect2_(type_, hash_) {}
     
-    network::protocol::DataMsgType type_;
-    crypto::Hash256 hash_;
+    network::protocol::DataMsgType type_ = network::protocol::DataMsgType::kMsgTx;
+    crypto::Hash256 hash_ = util::GetUint256();
     network::protocol::InvVect inv_vect1_;
     network::protocol::InvVect inv_vect2_;
 };

@@ -175,10 +175,10 @@ TEST_F(VersionTest, Serialize)
 
 TEST_F(VersionTest, SerializedSize)
 {
-    util::MemOstream ms;
+    util::MemoryStream ms;
     
     ms << version2_;
-    EXPECT_EQ(version2_.SerializedSize(), ms.vec().size());
+    EXPECT_EQ(version2_.SerializedSize(), ms.Size());
 }
 
 TEST_F(VersionTest, Received)

@@ -100,15 +100,15 @@ TEST_F(RejectTest, Serialize)
 
 TEST_F(RejectTest, SerializedSize)
 {
-    util::MemOstream ms;
+    util::MemoryStream ms;
 
     ms << reject2_;
-    EXPECT_EQ(reject2_.SerializedSize(), ms.vec().size());
+    EXPECT_EQ(reject2_.SerializedSize(), ms.Size());
     
     ms.Clear();
     reject2_.set_message(msg_command::kMsgVersion);
     ms << reject2_;
-    EXPECT_EQ(reject2_.SerializedSize(), ms.vec().size());
+    EXPECT_EQ(reject2_.SerializedSize(), ms.Size());
 }
 
 } // namespace unit_test
