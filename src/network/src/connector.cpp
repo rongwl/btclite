@@ -194,7 +194,7 @@ bool Connector::DnsLookup(const std::vector<Seed>& seeds)
             addr.set_services(kDesirableServiceFlags);
             // use a random age between 3 and 7 days old
             int64_t time = util::GetTimeSeconds() - 3*24*60*60 
-                           - util::GetUint64(4*24*60*60);
+                           - util::RandUint64(4*24*60*60);
             addr.set_timestamp(time);
             found++;
         }
@@ -285,7 +285,7 @@ bool Connector::GetHostAddr(const std::string& host_name, NetAddr *out)
         return false;
     
     const NetAddr& addr = 
-        addrs[util::GetUint64(addrs.size()-1)];
+        addrs[util::RandUint64(addrs.size()-1)];
     if (!addr.IsValid()) {
         BTCLOG(LOG_LEVEL_WARNING) << "Invalide address " << addr.ToString() 
                                   << " for " << host_name;

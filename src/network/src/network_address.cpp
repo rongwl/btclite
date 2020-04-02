@@ -550,7 +550,7 @@ AddrFamily NetAddr::GetExtFamily() const
     return GetFamily();
 }
 
-crypto::Hash256 NetAddr::GetHash() const
+util::Hash256 NetAddr::GetHash() const
 {
     crypto::HashOStream hs;
     

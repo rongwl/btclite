@@ -178,7 +178,7 @@ void AdvertiseLocalAddr(std::shared_ptr<Node> node)
     // tells us that it sees us as in case it has a better idea of our
     // address than we do.
     if (IsPeerLocalAddrGood(node) && (!addr_local.IsRoutable() ||
-                                       util::GetUint64(
+                                       util::RandUint64(
                                            (score > kAcManual) ? 8:2) == 0))
         addr_local = std::move(node->connection().local_addr());
     
@@ -222,7 +222,7 @@ void BroadcastAddrsTimeoutCb(std::shared_ptr<Node> node)
 
 int64_t IntervalNextSend(int average_interval_seconds)
 {
-    long double log = log1p(util::GetUint64(1ULL << 48) * 
+    long double log = log1p(util::RandUint64(1ULL << 48) * 
                        -0.0000000000000035527136788 /* -1/2^48 */);
     return static_cast<int64_t>(log * average_interval_seconds * -1000000.0 + 0.5);
 }

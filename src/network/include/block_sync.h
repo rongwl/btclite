@@ -73,7 +73,7 @@ struct SyncProcessState {
     const  chain::BlockIndex *best_header_sent_index = nullptr;
     
     //! The hash of the last unknown block this peer has announced.
-    crypto::Hash256 last_unknown_block_hash;
+    util::Hash256 last_unknown_block_hash;
 };
 
 struct BlocksInFlight {
@@ -204,7 +204,7 @@ private:
 class BlockSync : util::Uncopyable {
 public:
     using MapPeerSyncState = std::map<NodeId, BlockSyncState>;
-    using MapBlockInFlight = std::map<crypto::Hash256, std::pair<NodeId, BlocksInFlight::iterator> >;
+    using MapBlockInFlight = std::map<util::Hash256, std::pair<NodeId, BlocksInFlight::iterator> >;
     
     //-------------------------------------------------------------------------
     void AddSyncState(NodeId id, const NetAddr& addr, const std::string& addr_name);    
@@ -308,8 +308,8 @@ public:
     bool SetLastCommonBlockIndex(NodeId id, const  chain::BlockIndex *index);
     const  chain::BlockIndex *GetBestHeaderSentIndex(NodeId id);
     bool SetBestHeaderSentIndex(NodeId id, const  chain::BlockIndex *index);
-    bool GetLastUnknownBlockHash(NodeId id, crypto::Hash256 *out);
-    bool SetLastUnknownBlockHash(NodeId id, const crypto::Hash256& last_unknown_block_hash);
+    bool GetLastUnknownBlockHash(NodeId id, util::Hash256 *out);
+    bool SetLastUnknownBlockHash(NodeId id, const util::Hash256& last_unknown_block_hash);
     
     //-------------------------------------------------------------------------
     // blocks in flight
@@ -379,7 +379,7 @@ struct OrphanTx {
 
 class Orphans : util::Uncopyable {
 public:
-    using MapOrphanTxs = std::map<crypto::Hash256, OrphanTx>;
+    using MapOrphanTxs = std::map<util::Hash256, OrphanTx>;
     using MapPrevOrphanTxs = std::map<chain::OutPoint, 
           std::set<MapOrphanTxs::iterator, IterLess<MapOrphanTxs::iterator> > >;
     
@@ -392,7 +392,7 @@ private:
     MapOrphanTxs map_orphan_txs_;
     MapPrevOrphanTxs map_prev_orphan_txs_;
     
-    int EraseOrphanTx(const crypto::Hash256& hash);
+    int EraseOrphanTx(const util::Hash256& hash);
 };
 
 class SingletonOrphans : util::Uncopyable {

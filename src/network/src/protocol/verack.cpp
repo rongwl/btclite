@@ -40,7 +40,7 @@ bool Verack::RecvHandler(std::shared_ptr<Node> src_node) const
     src_node->mutable_connection()->set_established(true);
     
     // send ping
-    Ping ping(util::GetUint64());
+    Ping ping(util::RandUint64());
     if (src_node->protocol().version() < kBip31Version)
         ping.set_protocol_version(0);
     SendMsg(ping, src_node);

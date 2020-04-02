@@ -24,7 +24,7 @@ bool BroadcastAddrs::PushAddrToSend(const NetAddr& addr)
         return false;
     
     if (addrs_to_send_.size() >= kMaxAddrToSend) {
-        addrs_to_send_[util::GetUint64(addrs_to_send_.size())] = addr;
+        addrs_to_send_[util::RandUint64(addrs_to_send_.size())] = addr;
     } else {
         addrs_to_send_.push_back(addr);
     }
@@ -85,7 +85,7 @@ void Misbehavior::Misbehaving(NodeId id, int howmuch)
 Node::Node(const struct bufferevent *bev, const NetAddr& addr,
            bool is_inbound, bool manual, std::string host_name)
     : id_(SingletonNodes::GetInstance().GetNewNodeId()),
-      local_host_nonce_(util::GetUint64()),
+      local_host_nonce_(util::RandUint64()),
       connection_(id_, bev, addr, is_inbound, manual, host_name),
       time_(util::GetTimeSeconds())
 {
@@ -394,7 +394,7 @@ int Nodes::CountPreferredDownload()
     LOCK(cs_nodes_);
     for (auto it = list_.begin(); it != list_.end(); ++it) {
         if (!(*it)->connection().disconnected() &&
-                (*it)->relay_state().preferred_download)
+                (*it)->IsPreferedDownload())
             num++;
     }
     

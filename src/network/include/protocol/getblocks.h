@@ -16,11 +16,11 @@ public:
     GetBlocks() = default;
     
     GetBlocks(ProtocolVersion version, const chain::BlockLocator& hashes,
-              const crypto::Hash256& hash_stop)
+              const util::Hash256& hash_stop)
         : version_(version), hashes_(hashes), hash_stop_(hash_stop) {}
     
     GetBlocks(ProtocolVersion version, chain::BlockLocator&& hashes,
-              const crypto::Hash256& hash_stop) noexcept
+              const util::Hash256& hash_stop) noexcept
         : version_(version), hashes_(std::move(hashes)), 
           hash_stop_(hash_stop) {}
     
@@ -95,12 +95,12 @@ public:
         hashes_ = std::move(hashes);
     }
     
-    const crypto::Hash256& hash_stop() const
+    const util::Hash256& hash_stop() const
     {
         return hash_stop_;
     }
     
-    void set_hash_stop(const crypto::Hash256& hash_stop)
+    void set_hash_stop(const util::Hash256& hash_stop)
     {
         hash_stop_ = hash_stop;
     }
@@ -108,7 +108,7 @@ public:
 private:
     ProtocolVersion version_ = kUnknownProtoVersion;
     chain::BlockLocator hashes_;
-    crypto::Hash256 hash_stop_;
+    util::Hash256 hash_stop_;
 };
 
 template <typename Stream>

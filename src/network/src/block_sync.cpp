@@ -536,7 +536,7 @@ bool BlockSync::SetBestHeaderSentIndex(NodeId id, const BlockIndex *index)
     return true;
 }
 
-bool BlockSync::GetLastUnknownBlockHash(NodeId id, crypto::Hash256 *out) 
+bool BlockSync::GetLastUnknownBlockHash(NodeId id, util::Hash256 *out) 
 {
     LOCK(cs_block_sync_);
     
@@ -549,7 +549,7 @@ bool BlockSync::GetLastUnknownBlockHash(NodeId id, crypto::Hash256 *out)
     return true;
 }
 
-bool BlockSync::SetLastUnknownBlockHash(NodeId id, const crypto::Hash256& last_unknown_block_hash)
+bool BlockSync::SetLastUnknownBlockHash(NodeId id, const util::Hash256& last_unknown_block_hash)
 {
     LOCK(cs_block_sync_);
     
@@ -814,7 +814,7 @@ bool Orphans::AddOrphanTx(OrphanTx::TxSharedPtr tx, NodeId id)
 {
     LOCK(cs_orphans_);
 
-    const crypto::Hash256& hash = tx->Hash();
+    const util::Hash256& hash = tx->Hash();
     if (map_orphan_txs_.count(hash))
         return false;
 
@@ -892,7 +892,7 @@ uint32_t Orphans::LimitOrphanTxSize(uint32_t max_orphans)
     while (map_orphan_txs_.size() > max_orphans)
     {
         // Evict a random orphan:
-        util::Uint256 randomhash = util::GetUint256();
+        util::Uint256 randomhash = util::RandHash256();
         auto it = map_orphan_txs_.lower_bound(randomhash);
         if (it == map_orphan_txs_.end())
             it = map_orphan_txs_.begin();
@@ -903,7 +903,7 @@ uint32_t Orphans::LimitOrphanTxSize(uint32_t max_orphans)
     return evicted_count;
 }
 
-int Orphans::EraseOrphanTx(const crypto::Hash256& hash)
+int Orphans::EraseOrphanTx(const util::Hash256& hash)
 {
     auto it = map_orphan_txs_.find(hash);
     if (it == map_orphan_txs_.end())

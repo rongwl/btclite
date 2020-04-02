@@ -140,9 +140,8 @@ TEST_F(NodesTest, CountPreferredDownload)
     auto node2 = nodes_.GetNode(id2_);
     
     EXPECT_EQ(nodes_.CountPreferredDownload(), 0);
-    node1->mutable_relay_state()->preferred_download = true;
-    node2->mutable_relay_state()->preferred_download = true;
-    EXPECT_EQ(nodes_.CountPreferredDownload(), 2);
+    node1->mutable_protocol()->set_services(kNodeNetwork);
+    EXPECT_EQ(nodes_.CountPreferredDownload(), 1);
 }
 
 TEST_F(NodesTest, CountValidatedDownload)

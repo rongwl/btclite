@@ -37,7 +37,7 @@ std::string BlockIndex::ToString() const
     std::stringstream ss;
     ss << "BlockIndex(pprev=" << prev_ << ", height=" << height_
        << ", merkle=" << header_.hashMerkleRoot().ToString()
-       << ", hashBlock=" << phash_block_->ToString() << ")";
+       << ", hashBlock=" << block_hash_.ToString() << ")";
     
     return ss.str();
 }
@@ -73,13 +73,13 @@ const BlockIndex *BlockIndex::GetAncestor(size_t height) const
 void BlockChain::SetTip(const BlockIndex *pindex)
 {
     if (pindex == nullptr) {
-        chain_.clear();
+        active_chain_.clear();
         return;
     }
     
-    chain_.resize(pindex->height() + 1);
-    while (pindex && chain_[pindex->height()] != pindex) {
-        chain_[pindex->height()] = const_cast<BlockIndex*>(pindex);
+    active_chain_.resize(pindex->height() + 1);
+    while (pindex && active_chain_[pindex->height()] != pindex) {
+        active_chain_[pindex->height()] = const_cast<BlockIndex*>(pindex);
         pindex = pindex->prev();
     }
 }
@@ -97,7 +97,7 @@ bool BlockChain::GetLocator(BlockLocator *out, const BlockIndex *pindex) const
     if (!pindex)
         pindex = Tip();
     while (pindex) {
-        out->push_back(*pindex->phash_block());
+        out->push_back(pindex->block_hash());
         // Stop when we have added the genesis block.
         if (pindex->height() == 0)
             break;
@@ -105,7 +105,7 @@ bool BlockChain::GetLocator(BlockLocator *out, const BlockIndex *pindex) const
         int height = std::max(static_cast<int>(pindex->height()-step), 0);
         if (IsExist(pindex)) {
             // Use O(1) BlockChain index if possible.
-            pindex = (*this)[height];
+            pindex = GetBlockIndex(height);
         } else {
             // Otherwise, use O(log n) skiplist.
             pindex = pindex->GetAncestor(height);
@@ -135,11 +135,11 @@ const BlockIndex *BlockChain::FindFork(const BlockIndex *pindex) const
 BlockIndex *BlockChain::FindEarliestAtLeast(int64_t time) const
 {
     std::vector<BlockIndex*>::const_iterator lower =
-        std::lower_bound(chain_.begin(), chain_.end(), time,
+        std::lower_bound(active_chain_.begin(), active_chain_.end(), time,
             [](BlockIndex* pblock, const int64_t& time2) -> 
             bool { return pblock->time_max() < time2; });
     
-    return (lower == chain_.end() ? nullptr : *lower);
+    return (lower == active_chain_.end() ? nullptr : *lower);
 }
 
 } // namespace chain

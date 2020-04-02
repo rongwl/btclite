@@ -106,12 +106,12 @@ static inline bool IsServiceFlagDesirable(uint64_t services) {
 struct BlockReject {
     uint8_t reject_code = 0;
     std::string reject_reason;
-    crypto::Hash256 block_hash;
+    util::Hash256 block_hash;
 };
 
 /* Blocks that are in flight, and that are in the queue to be downloaded. */
 struct QueuedBlock {
-    crypto::Hash256 hash;
+    util::Hash256 hash;
     const chain::BlockIndex *index = nullptr;
     
     // Whether this block has validated headers at the time of request.
@@ -550,13 +550,13 @@ public:
         best_header_sent_index_ = index;
     }
     
-    crypto::Hash256 last_unknown_block_hash() const
+    util::Hash256 last_unknown_block_hash() const
     {
         LOCK(cs_lash_unknown_);
         return last_unknown_block_hash_;
     }
     
-    void set_last_unknown_block_hash(crypto::Hash256 hash)
+    void set_last_unknown_block_hash(util::Hash256 hash)
     {
         LOCK(cs_lash_unknown_);
         last_unknown_block_hash_ = hash;
@@ -577,7 +577,7 @@ private:
     
     //! The hash of the last unknown block this peer has announced.
     mutable util::CriticalSection cs_lash_unknown_;
-    crypto::Hash256 last_unknown_block_hash_;
+    util::Hash256 last_unknown_block_hash_;
 };
 
 class NodeBlocksInFlight {
@@ -612,10 +612,7 @@ private:
     int valid_headers_count_ = 0;
 };
 
-struct RelayState {
-    //! Whether we consider this a preferred download peer.
-    std::atomic<bool> preferred_download = false;
-    
+struct RelayState {    
     //! Whether this peer wants invs or headers (when possible) for block announcements.
     std::atomic<bool> prefer_headers = false;
     
@@ -660,10 +657,9 @@ public:
         return false;
     }
     
-    inline void UpdatePreferredDownload()
+    bool IsPreferedDownload() const
     {
-        relay_state_.preferred_download =
-            (!connection_.is_inbound() && !protocol_.IsClient());
+        return (!connection_.is_inbound() && !protocol_.IsClient());
     }
     
     //-------------------------------------------------------------------------   
@@ -881,9 +877,9 @@ private:
 class BlocksInFlight1 {
 public:
     using MapBlocksInFlight = 
-        std::map<crypto::Hash256, std::pair<NodeId, NodeBlocksInFlight::iterator> >;
+        std::map<util::Hash256, std::pair<NodeId, NodeBlocksInFlight::iterator> >;
     
-    void Erase(const crypto::Hash256& hash)
+    void Erase(const util::Hash256& hash)
     {
         LOCK(cs_);
         map_blocks_in_flight_.erase(hash);

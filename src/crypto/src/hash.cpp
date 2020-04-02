@@ -4,39 +4,39 @@
 namespace btclite {
 namespace crypto {
 
-void Sha256(const uint8_t in[], size_t length, Hash256 *out)
+void Sha256(const uint8_t in[], size_t length, util::Hash256 *out)
 {
     std::unique_ptr<Botan::HashFunction> hash_func(Botan::HashFunction::create("SHA-256"));
     hash_func->update(in, length);
     hash_func->final(reinterpret_cast<uint8_t*>(out));
 }
 
-Hash256 Sha256(const uint8_t in[], size_t length)
+util::Hash256 Sha256(const uint8_t in[], size_t length)
 {
-    Hash256 hash;
+    util::Hash256 hash;
     
     Sha256(in, length, &hash);
     
     return hash;
 }
 
-void Sha256(const std::vector<uint8_t>& in, Hash256 *out)
+void Sha256(const std::vector<uint8_t>& in, util::Hash256 *out)
 {
     std::unique_ptr<Botan::HashFunction> hash_func(Botan::HashFunction::create("SHA-256"));
     hash_func->update(in);
     hash_func->final(reinterpret_cast<uint8_t*>(out));
 }
 
-Hash256 Sha256(const std::vector<uint8_t>& in)
+util::Hash256 Sha256(const std::vector<uint8_t>& in)
 {
-    Hash256 hash;
+    util::Hash256 hash;
     
     Sha256(in, &hash);
     
     return hash;
 }
 
-void DoubleSha256(const uint8_t in[], size_t length, Hash256 *out)
+void DoubleSha256(const uint8_t in[], size_t length, util::Hash256 *out)
 {
     std::unique_ptr<Botan::HashFunction> hash_func(Botan::HashFunction::create("SHA-256"));
     hash_func->update(in, length);
@@ -46,16 +46,16 @@ void DoubleSha256(const uint8_t in[], size_t length, Hash256 *out)
     hash_func->final(reinterpret_cast<uint8_t*>(out));
 }
 
-Hash256 DoubleSha256(const uint8_t in[], size_t length)
+util::Hash256 DoubleSha256(const uint8_t in[], size_t length)
 {
-    Hash256 hash;
+    util::Hash256 hash;
     
     DoubleSha256(in, length, &hash);
     
     return hash;
 }
 
-void DoubleSha256(const std::vector<uint8_t> &in, Hash256 *out)
+void DoubleSha256(const std::vector<uint8_t> &in, util::Hash256 *out)
 {
     std::unique_ptr<Botan::HashFunction> hash_func(Botan::HashFunction::create("SHA-256"));
     hash_func->update(in);
@@ -65,16 +65,16 @@ void DoubleSha256(const std::vector<uint8_t> &in, Hash256 *out)
     hash_func->final(reinterpret_cast<uint8_t*>(out));
 }
 
-Hash256 DoubleSha256(const std::vector<uint8_t> &in)
+util::Hash256 DoubleSha256(const std::vector<uint8_t> &in)
 {
-    Hash256 hash;
+    util::Hash256 hash;
     
     DoubleSha256(in, &hash);
     
     return hash;
 }
 
-void DoubleSha256(const std::string &in, Hash256 *out)
+void DoubleSha256(const std::string &in, util::Hash256 *out)
 {
     std::unique_ptr<Botan::HashFunction> hash_func(Botan::HashFunction::create("SHA-256"));
     hash_func->update(in);
@@ -84,9 +84,9 @@ void DoubleSha256(const std::string &in, Hash256 *out)
     hash_func->final(reinterpret_cast<uint8_t*>(out));
 }
 
-Hash256 DoubleSha256(const std::string &in)
+util::Hash256 DoubleSha256(const std::string &in)
 {
-    Hash256 hash;
+    util::Hash256 hash;
     
     DoubleSha256(in, &hash);
     
@@ -94,23 +94,23 @@ Hash256 DoubleSha256(const std::string &in)
 }
 
 
-void HashOStream::Sha256(Hash256 *out) const
+void HashOStream::Sha256(util::Hash256 *out) const
 {
     std::unique_ptr<Botan::HashFunction> hash_func(Botan::HashFunction::create("SHA-256"));
     hash_func->update(vec_);
     hash_func->final(reinterpret_cast<uint8_t*>(out));
 }
 
-Hash256 HashOStream::Sha256() const
+util::Hash256 HashOStream::Sha256() const
 {
-    Hash256 hash;
+    util::Hash256 hash;
     
     Sha256(&hash);
     
     return hash;
 }
 
-void HashOStream::DoubleSha256(Hash256 *out) const
+void HashOStream::DoubleSha256(util::Hash256 *out) const
 {
     std::unique_ptr<Botan::HashFunction> hash_func(Botan::HashFunction::create("SHA-256"));
     hash_func->update(vec_);
@@ -120,9 +120,9 @@ void HashOStream::DoubleSha256(Hash256 *out) const
     hash_func->final(reinterpret_cast<uint8_t*>(out));
 }
 
-Hash256 HashOStream::DoubleSha256() const
+util::Hash256 HashOStream::DoubleSha256() const
 {
-    Hash256 hash;
+    util::Hash256 hash;
     
     DoubleSha256(&hash);
     

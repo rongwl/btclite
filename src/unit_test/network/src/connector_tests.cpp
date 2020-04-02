@@ -80,7 +80,7 @@ TEST(ConnectorTest, ConnectOutbound)
     // connecting peer is local
     LocalNetConfig& config = SingletonLocalNetCfg::GetInstance();
     if (config.map_local_addrs().empty())
-        config.LookupLocalAddrs();
+        ASSERT_TRUE(config.LookupLocalAddrs());
     source.SetIpv4(inet_addr("1.2.3.4"));
     SingletonPeers::GetInstance().Add(config.map_local_addrs().begin()->first, source);
     ASSERT_FALSE(connector.OutboundTimeOutCb());
@@ -91,7 +91,7 @@ TEST(ConnectorTest, ConnectOutbound)
     addr.set_services(kDesirableServiceFlags);
     SingletonPeers::GetInstance().Add(addr, source);
     EXPECT_TRUE(connector.OutboundTimeOutCb());
-    
+
     SingletonPeers::GetInstance().Clear();
 }
 

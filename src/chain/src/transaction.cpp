@@ -128,7 +128,7 @@ std::string Transaction::ToString() const
     return std::move(ss.str());
 }
 
-const crypto::Hash256& Transaction::Hash() const
+const util::Hash256& Transaction::Hash() const
 {
     if (hash_cache_.IsNull()) {
         crypto::HashOStream hs;
@@ -139,7 +139,7 @@ const crypto::Hash256& Transaction::Hash() const
     return hash_cache_;
 }
 
-const crypto::Hash256& Transaction::WitnessHash() const
+const util::Hash256& Transaction::WitnessHash() const
 {
     return witness_hash_cache_;
 }

@@ -35,7 +35,7 @@ void Params::CreateGenesisBlock(const std::string& coinbase, const chain::Script
     transactions.push_back(std::move(tx_new));
 
     genesis_.set_transactions(std::move(transactions));
-    chain::BlockHeader header(version, crypto::Hash256(), genesis_.ComputeMerkleRoot(), time, bits, nonce);    
+    chain::BlockHeader header(version, util::Hash256(), genesis_.ComputeMerkleRoot(), time, bits, nonce);    
     genesis_.set_header(std::move(header));
 }
 

@@ -66,6 +66,11 @@ class Uint256 : public Blob<256> {
 public:
     using Blob<256>::Blob;
     
+    Uint256(uint64_t b)
+    {
+        std::memcpy(this->begin(), reinterpret_cast<uint8_t*>(&b), sizeof(b));
+    }
+    
     Uint256(const Uint128& low, const Uint128& high)
     {
         std::memcpy(this->begin(), low.begin(), low.size());
@@ -106,6 +111,8 @@ public:
         return (a.Compare(b) > 0);
     }
 };
+
+using Hash256 = Uint256;
 
 
 template <typename T>

@@ -118,7 +118,7 @@ private:
 
 namespace chain {
 
-using CheckPoint = std::map<uint32_t, crypto::Hash256>;
+using CheckPoint = std::map<uint32_t, util::Hash256>;
 
 /*
  * Holds various statistics on transactions within a chain.

@@ -32,7 +32,7 @@ class InvVect {
 public:
     InvVect() = default;
     
-    InvVect(DataMsgType type, const crypto::Hash256& hash)
+    InvVect(DataMsgType type, const util::Hash256& hash)
         : type_(type), hash_(hash) {}
     
     //-------------------------------------------------------------------------
@@ -81,14 +81,14 @@ public:
         return type_;
     }
     
-    const crypto::Hash256& hash() const
+    const util::Hash256& hash() const
     {
         return hash_;
     }
     
 private:
     DataMsgType type_ = kUndefined;
-    crypto::Hash256 hash_;
+    util::Hash256 hash_;
 };
 
 } // private_invvect

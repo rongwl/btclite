@@ -88,8 +88,6 @@ bool Version::RecvHandler(std::shared_ptr<Node> src_node) const
         src_node->mutable_relay_state()->is_witness = true;
     }
     
-    src_node->UpdatePreferredDownload();
-    
     if (!src_node->connection().is_inbound()) {
         // Advertise our address
         if (SingletonNetArgs::GetInstance().listening() && 

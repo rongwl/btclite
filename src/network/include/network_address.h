@@ -106,7 +106,7 @@ public:
     bool SetInternal(const std::string& name);
     AddrFamily GetFamily() const;
     int GetReachability(const NetAddr& addr_partner) const;
-    crypto::Hash256 GetHash() const;
+    util::Hash256 GetHash() const;
     
     //-------------------------------------------------------------------------
     template <typename Stream>

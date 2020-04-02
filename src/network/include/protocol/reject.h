@@ -4,7 +4,7 @@
 
 #include <cstdint>
 
-#include "hash.h"
+#include "arithmetic.h"
 #include "message.h"
 
 
@@ -39,11 +39,11 @@ public:
           data_() {}
     
     Reject(const std::string& message, CCode ccode, const std::string& reason,
-           const crypto::Hash256& data)
+           const util::Hash256& data)
         : message_(message), ccode_(ccode), reason_(reason), data_(data) {}
     
     Reject(std::string&& message, CCode ccode, std::string&& reason,
-           const crypto::Hash256& data) noexcept
+           const util::Hash256& data) noexcept
         : message_(std::move(message)), ccode_(ccode), reason_(std::move(reason)),
           data_(data) {}
     
@@ -105,11 +105,11 @@ public:
         reason_ = std::move(reason);
     }
     
-    const crypto::Hash256& data() const
+    const util::Hash256& data() const
     {
         return data_;
     }
-    void set_data(const crypto::Hash256& data)
+    void set_data(const util::Hash256& data)
     {
         data_ = data;
     }    
@@ -118,7 +118,7 @@ private:
     std::string message_;
     CCode ccode_ = CCode::kRejectUnknown;
     std::string reason_;
-    crypto::Hash256 data_;
+    util::Hash256 data_;
 };
 
 template <typename Stream>

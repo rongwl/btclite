@@ -11,7 +11,7 @@ TEST_F(GetBlocksTest, Constructor)
 {
     EXPECT_EQ(getblocks1_.version(), network::kUnknownProtoVersion);
     EXPECT_EQ(getblocks1_.hashes(), chain::BlockLocator());
-    EXPECT_EQ(getblocks1_.hash_stop(), crypto::Hash256());
+    EXPECT_EQ(getblocks1_.hash_stop(), util::Hash256());
 
     EXPECT_EQ(getblocks2_.version(), network::kInvalidCbNoBanVersion);
     EXPECT_EQ(getblocks2_.hashes(), hashes_);

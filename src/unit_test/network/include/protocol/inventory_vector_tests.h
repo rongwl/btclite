@@ -13,7 +13,7 @@ protected:
         : inv_vect1_(), inv_vect2_(type_, hash_) {}
     
     network::protocol::DataMsgType type_ = network::protocol::DataMsgType::kMsgTx;
-    crypto::Hash256 hash_ = util::GetUint256();
+    util::Hash256 hash_ = util::RandHash256();
     network::protocol::InvVect inv_vect1_;
     network::protocol::InvVect inv_vect2_;
 };

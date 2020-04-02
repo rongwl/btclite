@@ -13,9 +13,9 @@ protected:
         : inv1_(), inv2_()
     {
         inv2_.mutable_inv_vects()->emplace_back(network::protocol::DataMsgType::kMsgTx,
-                                                util::GetUint256());
+                                                util::RandHash256());
         inv2_.mutable_inv_vects()->emplace_back(network::protocol::DataMsgType::kMsgBlock, 
-                                                util::GetUint256());
+                                                util::RandHash256());
     }
     
     network::protocol::Inv inv1_;

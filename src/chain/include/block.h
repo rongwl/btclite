@@ -8,7 +8,7 @@
 namespace btclite {
 namespace chain {
 
-using BlockLocator = std::vector<crypto::Hash256>;
+using BlockLocator = std::vector<util::Hash256>;
 
 /** Nodes collect new transactions into a block, hash them into a hash tree,
  * and scan through nonce values to make the block's hash satisfy proof-of-work
@@ -24,7 +24,7 @@ public:
         Clear();
     }
     
-    BlockHeader(int32_t version, const crypto::Hash256& prev_block_hash, const crypto::Hash256& merkle_root_hash,
+    BlockHeader(int32_t version, const util::Hash256& prev_block_hash, const util::Hash256& merkle_root_hash,
                 uint32_t time, uint32_t bits, uint32_t nonce)
         : version_(version), 
           prev_block_hash_(prev_block_hash), merkle_root_hash_(merkle_root_hash),
@@ -62,7 +62,7 @@ public:
     template <typename Stream> void Deserialize(Stream& is);
     
     //-------------------------------------------------------------------------
-    const crypto::Hash256& Hash() const;
+    const util::Hash256& Hash() const;
     
     //-------------------------------------------------------------------------
     BlockHeader& operator=(const BlockHeader& b);
@@ -79,22 +79,22 @@ public:
         hash_cache_.Clear();
     }
     
-    const crypto::Hash256& hashPrevBlock() const
+    const util::Hash256& hashPrevBlock() const
     {
         return prev_block_hash_;
     }
-    void set_hashPrevBlock(const crypto::Hash256& hash)
+    void set_hashPrevBlock(const util::Hash256& hash)
     {
         prev_block_hash_ = hash;
         hash_cache_.Clear();
     }
     
-    const crypto::Hash256& hashMerkleRoot() const
+    const util::Hash256& hashMerkleRoot() const
     {
         return merkle_root_hash_;
         hash_cache_.Clear();
     }
-    void set_hashMerkleRoot(const crypto::Hash256& hash)
+    void set_hashMerkleRoot(const util::Hash256& hash)
     {
         merkle_root_hash_ = hash;
         hash_cache_.Clear();
@@ -132,13 +132,13 @@ public:
     
 private:
     int32_t version_;
-    crypto::Hash256 prev_block_hash_;
-    crypto::Hash256 merkle_root_hash_;
+    util::Hash256 prev_block_hash_;
+    util::Hash256 merkle_root_hash_;
     uint32_t time_;
     uint32_t nBits_;
     uint32_t nonce_;
     
-    mutable crypto::Hash256 hash_cache_;
+    mutable util::Hash256 hash_cache_;
 };
 
 template <typename Stream>
@@ -194,7 +194,7 @@ public:
         transactions_.clear();
     }
     std::string ToString() const;
-    crypto::Hash256 ComputeMerkleRoot() const;
+    util::Hash256 ComputeMerkleRoot() const;
     
     //-------------------------------------------------------------------------
     template <typename Stream>

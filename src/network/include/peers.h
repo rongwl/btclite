@@ -16,7 +16,7 @@ namespace network {
 class Peers {
 public:
     Peers()
-        : key_(util::GetUint256())
+        : key_(util::RandHash256())
     {
         proto_peers_.mutable_key()->Resize(4, 0);
         std::memcpy(proto_peers_.mutable_key()->begin(), key_.begin(), key_.Size());

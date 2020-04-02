@@ -7,7 +7,7 @@
 namespace btclite {
 namespace chain {
 
-const crypto::Hash256& BlockHeader::Hash() const
+const util::Hash256& BlockHeader::Hash() const
 {
     if (hash_cache_.IsNull()) {
         crypto::HashOStream hs;
@@ -74,10 +74,10 @@ std::string Block::ToString() const
     return ss.str();
 }
 
-crypto::Hash256 Block::ComputeMerkleRoot() const
+util::Hash256 Block::ComputeMerkleRoot() const
 {
-    std::vector<crypto::Hash256> leaves;
-    std::vector<crypto::Hash256> swap;
+    std::vector<util::Hash256> leaves;
+    std::vector<util::Hash256> swap;
     for_each(transactions_.begin(), transactions_.end(), [&leaves](const Transaction& tx)
                                                          { leaves.push_back(tx.Hash()); });
     
@@ -87,7 +87,7 @@ crypto::Hash256 Block::ComputeMerkleRoot() const
         if (leaves.size() % 2 != 0)
             leaves.push_back(leaves.back());
         for (auto it = leaves.begin(); it != leaves.end(); it += 2) {
-            crypto::Hash256 hash;
+            util::Hash256 hash;
             crypto::DoubleSha256(it[0].ToString()+it[1].ToString(), &hash);
             swap.push_back(hash);
         }
@@ -120,7 +120,7 @@ Block CreateGenesisBlock(const std::string& coinbase, const Script& output_scrip
     transactions.push_back(std::move(tx_new));
 
     Block genesis(std::move(transactions));
-    BlockHeader header(version, crypto::Hash256(), genesis.ComputeMerkleRoot(), time, bits, nonce);    
+    BlockHeader header(version, util::Hash256(), genesis.ComputeMerkleRoot(), time, bits, nonce);    
     genesis.set_header(std::move(header));
     
     return genesis;

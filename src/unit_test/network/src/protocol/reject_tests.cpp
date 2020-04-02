@@ -45,7 +45,7 @@ TEST_F(RejectTest, OperatorEqual)
     
     reject2_.set_reason(std::move(reject3_.reason()));
     EXPECT_EQ(reject2_, reject3_);
-    reject2_.set_data(util::GetUint256());
+    reject2_.set_data(util::RandHash256());
     EXPECT_NE(reject2_, reject3_);
     
     reject2_.set_message(msg_command::kMsgVersion);

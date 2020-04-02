@@ -8,12 +8,7 @@
 namespace btclite {
 namespace chain {
 
-class BlockMap {
-public:
-private:
-    mutable util::CriticalSection cs_;
-    std::unordered_map<crypto::Hash256, BlockIndex*, crypto::Hasher<crypto::Hash256> > map_;
-};
+
 
 class ChainState : util::Uncopyable {
 public:    
@@ -25,16 +20,6 @@ public:
     BlockChain *mutable_active_chain()
     {
         return &active_chain_;
-    }
-    
-    const BlockMap& map_block_index() const
-    {
-        return map_block_index_;
-    }
-    
-    BlockMap *mutable_map_block_index()
-    {
-        return &map_block_index_;
     }
     
     const BlockIndex *best_header_block_index() const
@@ -52,7 +37,6 @@ public:
 private:
     mutable util::CriticalSection cs_;
     BlockChain active_chain_;
-    BlockMap map_block_index_;
     BlockIndex *best_header_block_index_ = nullptr;
 };
 

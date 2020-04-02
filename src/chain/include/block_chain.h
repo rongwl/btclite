@@ -62,9 +62,6 @@ public:
     explicit BlockIndex(const BlockHeader& header)
         : header_(header) {}
     
-    explicit BlockIndex(BlockHeader&& header)
-        : header_(std::move(header)) {}
-    
     //-------------------------------------------------------------------------
     // Check whether this block index entry is valid up to the passed validity level.
     bool IsValid(BlockStatus upto = kBlockValidTransactions) const;
@@ -77,14 +74,24 @@ public:
         return header_;
     }
     
-    const crypto::Hash256 *phash_block() const
+    const util::Hash256& block_hash() const
     {
-        return phash_block_;
+        return block_hash_;
+    }
+    
+    void set_block_hash(const util::Hash256& hash)
+    {
+        block_hash_ = hash;
     }
     
     const BlockIndex *prev() const
     {
         return prev_;
+    }
+    
+    void set_prev(BlockIndex *prev)
+    {
+        prev_ = prev;
     }
     
     const BlockIndex* pskip() const
@@ -95,6 +102,11 @@ public:
     size_t height() const
     {
         return height_;
+    }
+    
+    void set_height(size_t height)
+    {
+        height_ = height;
     }
     
     const util::uint256_t& chain_work() const
@@ -130,8 +142,8 @@ public:
 private:
     BlockHeader header_;
     
-    // pointer to the hash of the block, if any. Memory is owned by this BlockIndex
-    const crypto::Hash256 *phash_block_ = nullptr;
+    // the hash of this block
+    util::Hash256 block_hash_;
     
     // pointer to the index of the predecessor of this block
     BlockIndex *prev_ = nullptr;
@@ -164,6 +176,13 @@ private:
     uint32_t time_max_ = 0;
 };
 
+class BlockMap {
+public:
+private:
+    mutable util::CriticalSection cs_;
+    std::unordered_map<util::Hash256, BlockIndex*, crypto::Hasher<util::Hash256> > map_;
+};
+
 // An in-memory indexed chain of blocks.
 class BlockChain : util::Uncopyable {
 public:
@@ -171,29 +190,29 @@ public:
     // or nullptr if none.
     BlockIndex *Genesis() const 
     {
-        return chain_.size() > 0 ? chain_[0] : nullptr;
+        return active_chain_.size() > 0 ? active_chain_[0] : nullptr;
     }
 
     // Returns the index entry for the tip of this chain, or nullptr if none.
     BlockIndex *Tip() const 
     {
-        return chain_.size() > 0 ? chain_[chain_.size() - 1] : nullptr;
+        return active_chain_.size() > 0 ? active_chain_[active_chain_.size() - 1] : nullptr;
     }
     
     // Returns the index entry at a particular height in this chain,
     // or nullptr if no such height exists.
-    BlockIndex *operator[](size_t height) const 
+    BlockIndex *GetBlockIndex(size_t height) const 
     {
-        if (height < 0 || height >= chain_.size())
+        if (height < 0 || height >= active_chain_.size())
             return nullptr;
-        return chain_[height];
+        return active_chain_[height];
     }
 
     // Compare two chains efficiently.
     friend bool operator==(const BlockChain& a, const BlockChain& b) 
     {
-        return a.chain_.size() == b.chain_.size() &&
-               a.chain_[a.chain_.size() - 1] == b.chain_[b.chain_.size() - 1];
+        return a.active_chain_.size() == b.active_chain_.size() &&
+               a.active_chain_[a.active_chain_.size() - 1] == b.active_chain_[b.active_chain_.size() - 1];
     }
     
     friend bool operator!=(const BlockChain& a, const BlockChain& b)
@@ -204,28 +223,25 @@ public:
     // Efficiently check whether a block is present in this chain.
     bool IsExist(const BlockIndex *pindex) const 
     {
-        return (*this)[pindex->height()] == pindex;
+        return GetBlockIndex(pindex->height()) == pindex;
     }
 
     // Find the successor of a block in this chain, 
     // or nullptr if the given index is not found or is the tip.
     BlockIndex *Next(const BlockIndex *pindex) const 
     {
-        if (IsExist(pindex))
-            return (*this)[pindex->height() + 1];
-        else
-            return nullptr;
+        return GetBlockIndex(pindex->height() + 1);
     }
     
     uint32_t Height() const
     {
-        return chain_.size() - 1;
+        return active_chain_.size() - 1;
     }
     
     // Set/initialize a chain with a given tip.
     void SetTip(const BlockIndex *pindex);
 
-    // Return a BlockLocator that refers to a block in this chain (by default the tip).
+    // Get a BlockLocator that refers to a block in this chain (by default the tip).
     bool GetLocator(BlockLocator *out, const BlockIndex *pindex = nullptr) const;
 
     // Find the last common block between this chain and a block index entry.
@@ -235,13 +251,14 @@ public:
     BlockIndex *FindEarliestAtLeast(int64_t time) const;
     
     //-------------------------------------------------------------------------
-    const std::vector<BlockIndex*>& chain() const
+    const std::vector<BlockIndex*>& active_chain() const
     {
-        return chain_;
+        return active_chain_;
     }
     
 private:
-    std::vector<BlockIndex*> chain_;
+    std::vector<BlockIndex*> active_chain_;
+    BlockMap map_block_index_;
 };
 
 class SingletonBlockChain : util::Uncopyable {

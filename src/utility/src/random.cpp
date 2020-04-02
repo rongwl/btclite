@@ -7,7 +7,7 @@
 namespace btclite {
 namespace util {
 
-uint64_t GetUint64(uint64_t max)
+uint64_t RandUint64(uint64_t max)
 {
     if (max == 0)
         return 0;
@@ -19,7 +19,7 @@ uint64_t GetUint64(uint64_t max)
     return dis(rng);
 }
 
-util::Uint256 GetUint256() 
+util::Uint256 RandHash256() 
 {
     Botan::System_RNG rng;
     util::Uint256 hash;
@@ -69,7 +69,7 @@ uint64_t FastRandomContext::RandRange(uint64_t range)
 
 void FastRandomContext::RandomSeed()
 {
-    util::Uint256 seed = GetUint256();
+    util::Uint256 seed = RandHash256();
     rng_.add_entropy(seed.data(), seed.size());
     requires_seed_ = false;
 }

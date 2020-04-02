@@ -15,8 +15,8 @@ protected:
           getblocks3_(version_, std::move(chain::BlockLocator(hashes_)), hash_stop_) {}
     
     network::ProtocolVersion version_ = network::kInvalidCbNoBanVersion;
-    chain::BlockLocator hashes_{ util::GetUint256(), util::GetUint256() };
-    crypto::Hash256 hash_stop_ = util::GetUint256();
+    chain::BlockLocator hashes_{ util::RandHash256(), util::RandHash256() };
+    util::Hash256 hash_stop_ = util::RandHash256();
     network::protocol::GetBlocks getblocks1_;
     network::protocol::GetBlocks getblocks2_;
     network::protocol::GetBlocks getblocks3_;

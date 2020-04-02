@@ -162,9 +162,9 @@ bool Peers::Select(proto_peers::Peer *out, bool new_only)
     // Use a 50% chance for choosing between tried and new peers.
     if (!new_only &&
         proto_peers_.tried_tbl().size() > 0 &&
-        (proto_peers_.new_tbl().size() == 0 || util::GetUint64(1) == 0)) {
+        (proto_peers_.new_tbl().size() == 0 || util::RandUint64(1) == 0)) {
         // use a tried peer
-        uint64_t rand_pos = util::GetUint64(proto_peers_.tried_tbl().size()-1);
+        uint64_t rand_pos = util::RandUint64(proto_peers_.tried_tbl().size()-1);
         auto it = proto_peers_.tried_tbl().begin();
         while (rand_pos-- > 0 && it++ != proto_peers_.tried_tbl().end())
             ;
@@ -172,7 +172,7 @@ bool Peers::Select(proto_peers::Peer *out, bool new_only)
     }
     else {
         // use a new peer
-        uint64_t rand_pos = util::GetUint64(proto_peers_.new_tbl().size()-1);
+        uint64_t rand_pos = util::RandUint64(proto_peers_.new_tbl().size()-1);
         auto it = proto_peers_.new_tbl().begin();
         while (rand_pos-- > 0 && it++ != proto_peers_.new_tbl().end())
             ;

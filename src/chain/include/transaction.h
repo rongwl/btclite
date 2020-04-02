@@ -16,9 +16,9 @@ public:
     OutPoint()
         : index_(std::numeric_limits<uint32_t>::max()) {}
     
-    OutPoint(const crypto::Hash256& hash, uint32_t index)
+    OutPoint(const util::Hash256& hash, uint32_t index)
         : prev_hash_(hash), index_(index) {}
-    OutPoint(crypto::Hash256&& hash, uint32_t index) noexcept
+    OutPoint(util::Hash256&& hash, uint32_t index) noexcept
         : prev_hash_(std::move(hash)), index_(index) {}
     
     OutPoint(const OutPoint& op)
@@ -105,15 +105,15 @@ public:
     }
     
     //-------------------------------------------------------------------------
-    const crypto::Hash256& prev_hash() const
+    const util::Hash256& prev_hash() const
     {
         return prev_hash_;
     }
-    void set_prevHash(const crypto::Hash256& hash)
+    void set_prevHash(const util::Hash256& hash)
     {
         prev_hash_ = hash;
     }
-    void set_prevHash(crypto::Hash256&& hash)
+    void set_prevHash(util::Hash256&& hash)
     {
         prev_hash_ = std::move(hash);
     }
@@ -128,7 +128,7 @@ public:
     }
     
 private:
-    crypto::Hash256 prev_hash_;
+    util::Hash256 prev_hash_;
     uint32_t index_;
 };
 
@@ -439,8 +439,8 @@ public:
     Transaction& operator=(Transaction&& b) noexcept;
     
     //-------------------------------------------------------------------------
-    const crypto::Hash256& Hash() const;
-    const crypto::Hash256& WitnessHash() const;
+    const util::Hash256& Hash() const;
+    const util::Hash256& WitnessHash() const;
     
     //-------------------------------------------------------------------------
     bool IsNull() const
@@ -514,8 +514,8 @@ private:
     std::vector<TxOut> outputs_;
     uint32_t lock_time_;
     
-    mutable crypto::Hash256 hash_cache_;
-    mutable crypto::Hash256 witness_hash_cache_;
+    mutable util::Hash256 hash_cache_;
+    mutable util::Hash256 witness_hash_cache_;
     
     // Default transaction version.
     static constexpr uint32_t default_version = 2;

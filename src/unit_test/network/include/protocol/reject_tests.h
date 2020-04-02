@@ -17,7 +17,7 @@ protected:
     std::string message_ = msg_command::kMsgBlock;
     network::protocol::CCode ccode_ = network::protocol::CCode::kRejectDuplicate;
     std::string reason_ = "foo";
-    crypto::Hash256 data_ = util::GetUint256();
+    util::Hash256 data_ = util::RandHash256();
     
     network::protocol::Reject reject1_;
     network::protocol::Reject reject2_;

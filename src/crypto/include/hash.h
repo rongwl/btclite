@@ -13,8 +13,6 @@
 namespace btclite {
 namespace crypto {
 
-using Hash256 = util::Uint256;
-
 // for std::hash<util::Uint256/Uint128> in std::unordered_map
 template <typename T>
 class Hasher {
@@ -26,17 +24,17 @@ public:
 };
 
 
-void Sha256(const uint8_t in[], size_t length, Hash256 *out);
-Hash256 Sha256(const uint8_t in[], size_t length);
-void Sha256(const std::vector<uint8_t>& in, Hash256 *out);
-Hash256 Sha256(const std::vector<uint8_t>& in);
+void Sha256(const uint8_t in[], size_t length, util::Hash256 *out);
+util::Hash256 Sha256(const uint8_t in[], size_t length);
+void Sha256(const std::vector<uint8_t>& in, util::Hash256 *out);
+util::Hash256 Sha256(const std::vector<uint8_t>& in);
 
-void DoubleSha256(const uint8_t in[], size_t length, Hash256 *out);
-Hash256 DoubleSha256(const uint8_t in[], size_t length);
-void DoubleSha256(const std::vector<uint8_t> &in, Hash256 *out);
-Hash256 DoubleSha256(const std::vector<uint8_t> &in);
-void DoubleSha256(const std::string &in, Hash256 *out);
-Hash256 DoubleSha256(const std::string &in);
+void DoubleSha256(const uint8_t in[], size_t length, util::Hash256 *out);
+util::Hash256 DoubleSha256(const uint8_t in[], size_t length);
+void DoubleSha256(const std::vector<uint8_t> &in, util::Hash256 *out);
+util::Hash256 DoubleSha256(const std::vector<uint8_t> &in);
+void DoubleSha256(const std::string &in, util::Hash256 *out);
+util::Hash256 DoubleSha256(const std::string &in);
 
 
 // A writer stream (for serialization) that computes a 256-bit hash.
@@ -48,10 +46,10 @@ public:
     HashOStream()
         : vec_(), byte_sink_(vec_) {}
     
-    void Sha256(Hash256 *out) const; 
-    Hash256 Sha256() const;
-    void DoubleSha256(Hash256 *out) const;
-    Hash256 DoubleSha256() const;
+    void Sha256(util::Hash256 *out) const; 
+    util::Hash256 Sha256() const;
+    void DoubleSha256(util::Hash256 *out) const;
+    util::Hash256 DoubleSha256() const;
     
     template <typename T>
     HashOStream& operator<<(const T& obj)
@@ -117,14 +115,14 @@ template <typename Base>
 struct Hashable : public Base {
     using Base::Base;
     
-    Hash256 GetHash() const;
+    util::Hash256 GetHash() const;
 };
 
 template <typename Base>
-Hash256 Hashable<Base>::GetHash() const
+util::Hash256 Hashable<Base>::GetHash() const
 {
     std::vector<uint8_t> vec;
-    Hash256 hash;
+    util::Hash256 hash;
     util::ByteSink<std::vector<uint8_t> > byte_sink(vec);
     
     Base::Serialize(byte_sink);
