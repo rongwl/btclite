@@ -18,7 +18,8 @@ using namespace network;
 TEST(ConnectorTest, ConnectNode)
 {
     std::vector<NetAddr> addrs;
-    Connector connector;
+    network::Params params(BaseEnv::testnet, util::Args());
+    Connector connector(params);
     
     // init libevent
     ASSERT_TRUE(connector.InitEvent());
@@ -28,18 +29,18 @@ TEST(ConnectorTest, ConnectNode)
     EXPECT_FALSE(connector.ConnectNodes(addrs));
     
     // local addr
-    LocalNetConfig& config = SingletonLocalNetCfg::GetInstance();
-    if (config.map_local_addrs().empty())
-        ASSERT_TRUE(config.LookupLocalAddrs());
-    addrs[0] = std::move(config.map_local_addrs().begin()->first);
-    EXPECT_FALSE(connector.ConnectNodes(addrs));
+    LocalService& service = SingletonLocalService::GetInstance();
+    if (!service.local_addrs().empty()) {
+        addrs[0] = service.local_addrs().front();
+        EXPECT_FALSE(connector.ConnectNodes(addrs));
+    }
     
     // banned addr
     addrs[0].SetIpv4(inet_addr("1.2.3.4"));
     SingletonBanDb::GetInstance().Add(addrs[0], BanDb::BanReason::NodeMisbehaving, false);
     EXPECT_FALSE(connector.ConnectNodes(addrs));
     
-    LookupHost(std::string("x9.seed.tbtc.petertodd.org").c_str(), &addrs[0], true);
+    LookupHost(std::string("x9.seed.tbtc.petertodd.org").c_str(), &addrs[0], true, 18333);
     EXPECT_TRUE(connector.ConnectNodes(addrs));
     
     // exist addr
@@ -50,7 +51,8 @@ TEST(ConnectorTest, ConnectNode)
 
 TEST(ConnectorTest, GetHostAddr)
 {
-    Connector connector;
+    network::Params params(BaseEnv::testnet, util::Args());
+    Connector connector(params);
     NetAddr addr;
     
     ASSERT_TRUE(connector.GetHostAddr("1.2.3.1", &addr));
@@ -68,7 +70,8 @@ TEST(ConnectorTest, GetHostAddr)
 
 TEST(ConnectorTest, ConnectOutbound)
 {
-    Connector connector;
+    network::Params params(BaseEnv::testnet, util::Args());
+    Connector connector(params);
     NetAddr addr, source;
     
     // init libevent
@@ -78,15 +81,15 @@ TEST(ConnectorTest, ConnectOutbound)
     ASSERT_FALSE(connector.OutboundTimeOutCb());
     
     // connecting peer is local
-    LocalNetConfig& config = SingletonLocalNetCfg::GetInstance();
-    if (config.map_local_addrs().empty())
-        ASSERT_TRUE(config.LookupLocalAddrs());
-    source.SetIpv4(inet_addr("1.2.3.4"));
-    SingletonPeers::GetInstance().Add(config.map_local_addrs().begin()->first, source);
-    ASSERT_FALSE(connector.OutboundTimeOutCb());
-    SingletonPeers::GetInstance().Clear();
+    LocalService& service = SingletonLocalService::GetInstance();
+    if (!service.local_addrs().empty()) {
+        source.SetIpv4(inet_addr("1.2.3.4"));
+        SingletonPeers::GetInstance().Add(service.local_addrs().front(), source);
+        ASSERT_FALSE(connector.OutboundTimeOutCb());
+        SingletonPeers::GetInstance().Clear();
+    }
     
-    LookupHost(std::string("x9.seed.tbtc.petertodd.org").c_str(), &addr, true);
+    LookupHost(std::string("x9.seed.tbtc.petertodd.org").c_str(), &addr, true, 18333);
     addr.set_port(8333);
     addr.set_services(kDesirableServiceFlags);
     SingletonPeers::GetInstance().Add(addr, source);
@@ -97,12 +100,10 @@ TEST(ConnectorTest, ConnectOutbound)
 
 TEST(ConnectorTest, DnsLookup)
 {
-    const std::vector<Seed>& seeds = 
-        SingletonParams::GetInstance(BaseEnv::testnet).seeds();
     ASSERT_TRUE(SingletonPeers::GetInstance().IsEmpty());
-    ASSERT_TRUE(Connector::DnsLookup(seeds));
+    ASSERT_TRUE(Connector::DnsLookup(Params(BaseEnv::testnet, util::Args()).seeds(), 18333));
     EXPECT_FALSE(SingletonPeers::GetInstance().IsEmpty());
-    SingletonPeers::GetInstance().Clear();    
+    SingletonPeers::GetInstance().Clear();
 }
 
 } // namespace unit_test

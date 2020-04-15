@@ -6,14 +6,14 @@
 namespace btclite {
 namespace unit_test {
 
-class LocalNetConfigTest : public ::testing::Test {
+class LocalServiceTest : public ::testing::Test {
 protected:
     void SetUp() override
     {
-        config_.LookupLocalAddrs();
+        service_.DiscoverLocalAddrs();
     }
     
-    network::LocalNetConfig config_;
+    network::LocalService service_;
 };
 
 } // namespace unit_test

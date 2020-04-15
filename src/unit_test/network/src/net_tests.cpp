@@ -10,38 +10,39 @@ namespace unit_test {
 
 using namespace network;
 
-TEST_F(LocalNetConfigTest, Constructor)
+TEST_F(LocalServiceTest, Constructor)
 {
-    EXPECT_EQ(config_.local_services(), kNodeNetwork | kNodeNetworkLimited);
+    EXPECT_EQ(service_.service(), kNodeNetwork | kNodeBloom | kNodeNetworkLimited);
 }
 
-TEST_F(LocalNetConfigTest, GetAndSetLocalServiecs)
+TEST_F(LocalServiceTest, GetAndSetLocalServiecs)
 {
-    config_.set_local_services(kNodeNetwork);
-    EXPECT_EQ(config_.local_services(), kNodeNetwork);
+    service_.set_services(kNodeNetwork);
+    EXPECT_EQ(service_.service(), kNodeNetwork);
 }
 
-TEST_F(LocalNetConfigTest, ValidateLocalAddrs)
+TEST_F(LocalServiceTest, ValidateLocalAddrs)
 {
     NetAddr addr;
     
-    ASSERT_FALSE(config_.map_local_addrs().empty());
-    std::map<NetAddr, int> map = config_.map_local_addrs();
-    for (auto it = map.begin(); it != map.end(); ++it)
-        EXPECT_TRUE(config_.IsLocal(it->first));
+    auto addrs = service_.local_addrs();
+    for (auto it = addrs.begin(); it != addrs.end(); ++it)
+        EXPECT_TRUE(service_.IsLocal(*it));
     
     addr.SetIpv4(inet_addr("1.2.3.4"));
-    EXPECT_FALSE(config_.IsLocal(addr));  
+    EXPECT_FALSE(service_.IsLocal(addr));  
 }
 
-TEST_F(LocalNetConfigTest, GetLocalAddr)
+TEST_F(LocalServiceTest, GetLocalAddr)
 {
     NetAddr peer_addr, addr;
     
-    ASSERT_FALSE(config_.map_local_addrs().empty());
+    if (service_.local_addrs().empty())
+        return;
+
     peer_addr.SetIpv4(inet_addr("1.2.3.4"));
-    ASSERT_TRUE(config_.GetLocalAddr(peer_addr, kNodeNetwork, &addr));
-    EXPECT_TRUE(config_.IsLocal(addr));
+    ASSERT_TRUE(service_.GetLocalAddr(peer_addr, kNodeNetwork, &addr));
+    EXPECT_TRUE(service_.IsLocal(addr));
     EXPECT_EQ(addr.services(), kNodeNetwork);
 }
 

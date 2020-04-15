@@ -14,7 +14,7 @@ namespace protocol{
 
 namespace private_version {
 
-bool Version::RecvHandler(std::shared_ptr<Node> src_node) const
+bool Version::RecvHandler(std::shared_ptr<Node> src_node, const Params& params) const
 {
     Verack verack;
     
@@ -73,10 +73,10 @@ bool Version::RecvHandler(std::shared_ptr<Node> src_node) const
     }
     
     if (src_node->connection().is_inbound()) {
-        SendVersion(src_node);
+        SendVersion(src_node, params.msg_magic());
     }
     
-    SendMsg(verack, src_node);
+    SendMsg(verack, params.msg_magic(), src_node);
     
     src_node->mutable_protocol()->set_services(services_);
     src_node->mutable_connection()->set_local_addr(addr_recv_);
@@ -90,31 +90,16 @@ bool Version::RecvHandler(std::shared_ptr<Node> src_node) const
     
     if (!src_node->connection().is_inbound()) {
         // Advertise our address
-        if (SingletonNetArgs::GetInstance().listening() && 
-                !IsInitialBlockDownload()) {
-            LocalNetConfig& net_config = SingletonLocalNetCfg::GetInstance();
-            NetAddr addr;
-            if (net_config.GetLocalAddr(src_node->connection().addr(), 
-                                        net_config.local_services(), &addr)) {
-                if (addr.IsRoutable())
-                {
-                    BTCLOG(LOG_LEVEL_INFO) << "Advertising address " 
-                                           << addr.ToString();
-                    src_node->mutable_broadcast_addrs()->PushAddrToSend(addr);
-                } else if (IsPeerLocalAddrGood(src_node)) {
-                    BTCLOG(LOG_LEVEL_INFO) << "Advertising address " 
-                                           << addr_recv_.ToString();
-                    src_node->mutable_broadcast_addrs()->PushAddrToSend(addr_recv_);
-                }
-            }
+        if (params.advertise_local_addr() && !IsInitialBlockDownload()) {
+            SingletonLocalService::GetInstance().AdvertiseLocalAddr(src_node, true);
         }
         
         // Get recent addresses
         if (src_node->protocol().version() >= ProtocolVersion::kAddrTimeVersion || 
                 SingletonPeers::GetInstance().Size() < 1000) {
             GetAddr getaddr;
-            SendMsg(getaddr, src_node);
-            src_node->mutable_broadcast_addrs()->set_sent_getaddr(true);
+            SendMsg(getaddr, params.msg_magic(), src_node);
+            src_node->mutable_flooding_addrs()->set_sent_getaddr(true);
         }
         SingletonPeers::GetInstance().MakeTried(src_node->connection().addr());
     }

@@ -25,6 +25,7 @@ public:
     void Stop();   
     
 private:
+    const Params params_;
     PeersDb peers_db_;
     Acceptor acceptor_;
     Connector connector_;

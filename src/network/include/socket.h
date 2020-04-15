@@ -3,6 +3,7 @@
 
 
 #include "network/include/params.h"
+#include "network_address.h"
 #include "util.h"
 
 

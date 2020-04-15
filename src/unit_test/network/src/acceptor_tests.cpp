@@ -12,18 +12,19 @@ using namespace network;
 
 TEST(AcceptorTest, Constructor)
 {
-    Acceptor acceptor;
+    network::Params params(BaseEnv::testnet, util::Args());
+    Acceptor acceptor(params);
     const struct sockaddr_in6& sock_addr = acceptor.sock_addr();
     ASSERT_EQ(sock_addr.sin6_family, AF_INET6);
-    ASSERT_EQ(sock_addr.sin6_port,
-              htons(SingletonParams::GetInstance(BaseEnv::testnet).default_port()));
+    ASSERT_EQ(sock_addr.sin6_port, htons(18333));
     ASSERT_EQ(std::memcmp(sock_addr.sin6_addr.s6_addr, in6addr_any.s6_addr, 16), 0);
     ASSERT_EQ(sock_addr.sin6_scope_id, 0);
 }
 
 TEST(AcceptorTest, MethordAcceptConnCb)
 {
-    Acceptor acceptor;
+    network::Params params(BaseEnv::testnet, util::Args());
+    Acceptor acceptor(params);
     struct event_base *base;
     struct evconnlistener *listener;
     struct bufferevent *bev;
@@ -43,7 +44,7 @@ TEST(AcceptorTest, MethordAcceptConnCb)
     struct sockaddr_in6 client_addr;
     memset(&client_addr, 0, sizeof(client_addr));
     client_addr.sin6_family = AF_INET6;
-    client_addr.sin6_port = htons(8333);
+    client_addr.sin6_port = htons(18333);
     int count = 0;
     for (int i = 1; i < kMaxInboundConnections; i++) {
         std::string str_addr = "::ffff:1.2.3." + std::to_string(i);

@@ -164,7 +164,7 @@ MessageData *MsgDataFactory(const uint8_t *raw, const MessageHeader& header,
     return msg;
 }
 
-bool ParseMsg(std::shared_ptr<Node> src_node)
+bool ParseMsg(std::shared_ptr<Node> src_node, const Params& params)
 {
     struct evbuffer *buf;
     uint8_t *raw = nullptr;
@@ -218,7 +218,7 @@ bool ParseMsg(std::shared_ptr<Node> src_node)
             continue;
         }
         
-        message->RecvHandler(src_node);
+        message->RecvHandler(src_node, params);
         delete message;
         
         raw = evbuffer_pullup(buf, MessageHeader::kSize);
@@ -227,7 +227,7 @@ bool ParseMsg(std::shared_ptr<Node> src_node)
     return true;
 }
 
-bool SendVersion(std::shared_ptr<Node> dst_node)
+bool SendVersion(std::shared_ptr<Node> dst_node, uint32_t magic)
 {
     ServiceFlags services = dst_node->protocol().services();
     uint32_t start_height = chain::SingletonChainState::GetInstance().active_chain().Height();
@@ -237,14 +237,15 @@ bool SendVersion(std::shared_ptr<Node> dst_node)
     addr_from.set_services(services);
     Version ver_msg(kProtocolVersion, services,
                     util::GetTimeSeconds(),
-                    std::move(addr_recv), std::move(addr_from),
+                    addr_recv, addr_from,
                     dst_node->local_host_nonce(), 
                     std::move(protocol::FormatUserAgent()),
                     start_height, true);
 
-    if (!SendMsg(ver_msg, dst_node))
+    if (!SendMsg(ver_msg, magic, dst_node)) {
         return false;
-
+    }
+    
     BTCLOG(LOG_LEVEL_INFO) << "Send version message: version " << kProtocolVersion 
                            << ", start_height=" << start_height 
                            << ", addr_recv=" << addr_recv.ToString() 

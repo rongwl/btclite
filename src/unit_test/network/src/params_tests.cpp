@@ -14,7 +14,7 @@ using namespace network;
 
 TEST(NetworkParamsTest, Constructor)
 {
-    Params network_params(BaseEnv::mainnet);
+    Params network_params(BaseEnv::mainnet, util::Args());
     EXPECT_EQ(kMainMagic, network_params.msg_magic());
     EXPECT_EQ(8333, network_params.default_port());    
     std::vector<Seed> vec = 
@@ -28,7 +28,7 @@ TEST(NetworkParamsTest, Constructor)
     { "dnsseed.emzy.de", 8333 } };
     EXPECT_EQ(vec, network_params.seeds());
     
-    Params network_params2(BaseEnv::testnet);
+    Params network_params2(BaseEnv::testnet, util::Args());
     EXPECT_EQ(kTestnetMagic, network_params2.msg_magic());
     EXPECT_EQ(18333, network_params2.default_port());    
     std::vector<Seed> vec2 = 
@@ -38,12 +38,12 @@ TEST(NetworkParamsTest, Constructor)
     { "testnet-seed.bluematt.me", 18333 } };
     EXPECT_EQ(vec2, network_params2.seeds());
     
-    Params network_params3(BaseEnv::regtest);
+    Params network_params3(BaseEnv::regtest, util::Args());
     EXPECT_EQ(kRegtestMagic, network_params3.msg_magic());
     EXPECT_EQ(18444, network_params3.default_port());
     EXPECT_EQ(0, network_params3.seeds().size());
     
-    Params network_params4(BaseEnv::none);
+    Params network_params4(BaseEnv::none, util::Args());
     EXPECT_EQ(0, network_params4.msg_magic());
     EXPECT_EQ(0, network_params4.default_port());
     EXPECT_EQ(0, network_params4.seeds().size());

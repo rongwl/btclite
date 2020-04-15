@@ -13,7 +13,7 @@ void BlockSync::AddSyncState(NodeId id, const NetAddr& addr, const std::string& 
 {
     LOCK(cs_block_sync_);
     map_sync_state_.emplace_hint(map_sync_state_.end(), std::piecewise_construct,
-                                 std::forward_as_tuple(id), std::forward_as_tuple(addr, std::move(addr_name)));
+                                 std::forward_as_tuple(id), std::forward_as_tuple(addr, addr_name));
     BTCLOG(LOG_LEVEL_VERBOSE) << "Added node state, peer:" << id << " addr:" << addr.ToString();
 }
 

@@ -62,7 +62,7 @@ struct bufferevent *Connector::NewSocketEvent()
         return nullptr;
     }
     
-    bufferevent_setcb(bev, ConnReadCb, NULL, ConnEventCb, NULL);
+    bufferevent_setcb(bev, ConnReadCb, NULL, ConnEventCb, (void*)&params_);
     bufferevent_enable(bev, EV_READ);
     
     return bev;
@@ -70,17 +70,15 @@ struct bufferevent *Connector::NewSocketEvent()
 
 bool Connector::StartOutboundTimer()
 {
-    const std::vector<Seed>& seeds = 
-        SingletonParams::GetInstance().seeds();
     if (!SingletonPeers::GetInstance().IsEmpty()) {
-        auto func = std::bind(Connector::DnsLookup, std::placeholders::_1);
+        auto func = std::bind(Connector::DnsLookup, std::placeholders::_1, params_.default_port());
         util::SingletonTimerMng::GetInstance().StartTimer(11000, 0,
-                std::function<bool(const std::vector<Seed>&)>(func), seeds);            
+                std::function<bool(const std::vector<Seed>&)>(func), params_.seeds());            
     }
     else {
-        auto task = std::bind(Connector::DnsLookup, std::placeholders::_1);
+        auto task = std::bind(Connector::DnsLookup, std::placeholders::_1, params_.default_port());
         util::SingletonThreadPool::GetInstance().AddTask(
-            std::function<bool(const std::vector<Seed>&)>(task), seeds);
+            std::function<bool(const std::vector<Seed>&)>(task), params_.seeds());
     }
     
     auto func = std::bind(&Connector::OutboundTimeOutCb, this);
@@ -101,8 +99,7 @@ bool Connector::OutboundTimeOutCb()
         return false;
     
     now = util::GetAdjustedTime();
-    tries = 0;
-    while (tries <= 100) {
+    for (tries = 0; tries <= 100; ++tries) {
         if (SingletonNetInterrupt::GetInstance())
             return false;
         
@@ -110,32 +107,32 @@ bool Connector::OutboundTimeOutCb()
             return false;
         
         const NetAddr& addr = NetAddr(peer.addr());
-        if (!addr.IsValid() || SingletonLocalNetCfg::GetInstance().IsLocal(addr))
+        if (!addr.IsValid() || SingletonLocalService::GetInstance().IsLocal(addr))
             return false;
         
-        tries++;
-        
-        // only consider very recently tried nodes after 30 failed attempts
-        if (now - peer.last_try() < 600 && tries < 30)
-            continue;
-        
-        if (!IsServiceFlagDesirable(peer.addr().services()))
-            continue;
-        
-        // do not allow non-default ports, unless after 50 invalid addresses selected already
-        if (peer.addr().port() != 
-                SingletonParams::GetInstance().default_port() && 
-                tries < 50)
-            continue;
-        
-        conn_addr = std::move(addr);
-        break;
+        if (tries <= 30) {
+            if (now - peer.last_try() >= 600 &&
+                peer.addr().port() == params_.default_port() &&
+                IsServiceFlagDesirable(peer.addr().services())) {
+                return ConnectNode(addr);
+            }
+        }
+        // consider very recently tried nodes after 30 failed attempts
+        else if (tries <= 50) {
+            if (peer.addr().port() == params_.default_port() &&
+                IsServiceFlagDesirable(peer.addr().services())) {
+                return ConnectNode(addr);
+            }
+        }
+        // allow non-default ports after 50 failed attempts
+        else {
+            if (IsServiceFlagDesirable(peer.addr().services())) {
+                return ConnectNode(addr);
+            }
+        }
     }
-
-    if (!conn_addr.IsValid() || !ConnectNode(conn_addr))
-        return false;
     
-    return true;
+    return false;
 }
 
 bool Connector::ConnectNodes(const std::vector<std::string>& str_addrs, bool manual)
@@ -160,11 +157,11 @@ bool Connector::ConnectNodes(const std::vector<NetAddr>& addrs, bool manual)
         ret &= ConnectNode(addr, manual);
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
-    
+
     return ret;
 }
 
-bool Connector::DnsLookup(const std::vector<Seed>& seeds)
+bool Connector::DnsLookup(const std::vector<Seed>& seeds, uint16_t default_port)
 {
     int found = 0;
     
@@ -174,23 +171,24 @@ bool Connector::DnsLookup(const std::vector<Seed>& seeds)
     }
     
     BTCLOG(LOG_LEVEL_INFO) << "Loading addresses from DNS seeds (could take a while)";
-    
+
     for (const Seed& seed : seeds) {
         if (SingletonNetInterrupt::GetInstance())
             return false;
-        
+
         std::string host = "x" + std::to_string(kDesirableServiceFlags) + "." + seed.host;
+
         NetAddr source;
         if (!source.SetInternal(host))
             continue;
-        
+
         std::vector<NetAddr> addrs;
         // Limits number of addrs learned from a DNS seed
-        if (!LookupHost(host.c_str(), &addrs, 256, true))
+        if (!LookupHost(host.c_str(), &addrs, 256, true, default_port))
             continue;
         
         for (NetAddr& addr : addrs) {
-            addr.set_port(SingletonParams::GetInstance().default_port());
+            addr.set_port(default_port);
             addr.set_services(kDesirableServiceFlags);
             // use a random age between 3 and 7 days old
             int64_t time = util::GetTimeSeconds() - 3*24*60*60 
@@ -225,20 +223,18 @@ bool Connector::ConnectNode(const NetAddr& addr, bool manual)
         return false;
     }
 
-    if (SingletonLocalNetCfg::GetInstance().IsLocal(addr)) {
+    if (SingletonLocalService::GetInstance().IsLocal(addr)) {
         BTCLOG(LOG_LEVEL_WARNING) << "Connecting to local address:" << addr.ToString();
         return false;
     }
 
     // Look for an existing connection
-    if (SingletonNodes::GetInstance().GetNode(addr))
-    {
+    if (SingletonNodes::GetInstance().GetNode(addr)) {
         BTCLOG(LOG_LEVEL_WARNING) << "Failed to open new connection because it was already connected.";
         return false;
     }
 
-    if (SingletonBanDb::GetInstance().IsBanned(addr))
-    {
+    if (SingletonBanDb::GetInstance().IsBanned(addr)) {
         BTCLOG(LOG_LEVEL_WARNING) << "Connecting to banned address:" << addr.ToString();
         return false;
     }
@@ -268,11 +264,10 @@ bool Connector::ConnectNode(const NetAddr& addr, bool manual)
         bufferevent_free(bev);
         return false;
     }
-    
-    BTCLOG(LOG_LEVEL_VERBOSE) << "Connected to " << addr.ToString() 
+
+    BTCLOG(LOG_LEVEL_INFO) << "Connected to " << addr.ToString() 
                               << ':' << addr.port();
-    
-    SendVersion(node);
+    SendVersion(node, params_.msg_magic());
     
     return true;
 }
@@ -281,7 +276,8 @@ bool Connector::GetHostAddr(const std::string& host_name, NetAddr *out)
 {
     std::vector<NetAddr> addrs;
     
-    if (!LookupHost(host_name.c_str(), &addrs, 256, true) || addrs.empty())
+    if (!LookupHost(host_name.c_str(), &addrs, 256, true, params_.default_port()) || 
+            addrs.empty())
         return false;
     
     const NetAddr& addr = 

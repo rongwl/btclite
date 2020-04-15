@@ -107,7 +107,7 @@ void ConnReadCb(struct bufferevent *bev, void *ctx)
             timer_mng.StartTimer(timeout*1000, 0, Node::InactivityTimeoutCb, pnode);
     }
     
-    auto task = std::bind(ParseMsg, pnode);
+    auto task = std::bind(ParseMsg, pnode, *reinterpret_cast<Params*>(ctx));
     util::SingletonThreadPool::GetInstance().AddTask(std::function<bool()>(task));
 }
 

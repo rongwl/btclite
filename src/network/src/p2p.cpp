@@ -6,11 +6,11 @@ namespace btclite {
 namespace network {
 
 P2P::P2P(const util::ExecutorConfig& config)
-    : peers_db_(config.path_data_dir())
+    : params_(config.env(), config.args()), 
+      peers_db_(config.path_data_dir()),
+      acceptor_(params_), connector_(params_)
 {
-    SingletonParams::GetInstance(config.env());
-    SingletonNetArgs::GetInstance(config.args());
-    //SingletonLocalNetCfg::GetInstance();
+    //SingletonLocalService::GetInstance();
     //SingletonNodes::GetInstance();
     SingletonBanDb::GetInstance(config.path_data_dir());
     //SingletonNetInterrupt::GetInstance();
@@ -21,6 +21,10 @@ bool P2P::Init()
     BanDb& ban_db = SingletonBanDb::GetInstance();
     
     BTCLOG(LOG_LEVEL_INFO) << "Initializing p2p network...";
+    
+    if (params_.discover_local_addr()) {
+        SingletonLocalService::GetInstance().DiscoverLocalAddrs();
+    }
     
     if (!acceptor_.InitEvent())
         return false;
@@ -54,9 +58,7 @@ bool P2P::Init()
 }
 
 bool P2P::Start()
-{   
-    NetArgs& net_args = SingletonNetArgs::GetInstance();
-    
+{    
     BTCLOG(LOG_LEVEL_INFO) << "Starting p2p network...";
     
     SingletonNetInterrupt::GetInstance().Reset();
@@ -68,9 +70,11 @@ bool P2P::Start()
     // start connector
     thread_connector_loop_ = std::thread(&util::TraceThread<std::function<void()> >, "connector",
                                          std::function<void()>(std::bind(&Connector::StartEventLoop, &connector_)));
-    if (!net_args.specified_outgoing().empty()) {
-        if (!connector_.ConnectNodes(net_args.specified_outgoing()), true)
+    if (!params_.specified_outgoing().empty()) {
+        if (!connector_.ConnectNodes(params_.specified_outgoing(), true)) {
+            BTCLOG(LOG_LEVEL_ERROR) << "Connecting specified outgoing failed.";
             return false;
+        }
     }
     else  {
         if (!connector_.StartOutboundTimer()) {

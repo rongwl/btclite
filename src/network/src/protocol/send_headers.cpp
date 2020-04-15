@@ -7,7 +7,7 @@ namespace protocol {
 
 namespace private_sendheaders {
 
-bool SendHeaders::RecvHandler(std::shared_ptr<Node> src_node) const
+bool SendHeaders::RecvHandler(std::shared_ptr<Node> src_node, const Params& params) const
 {
     return true;
 }

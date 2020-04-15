@@ -109,19 +109,19 @@ Block CreateGenesisBlock(const std::string& coinbase, const Script& output_scrip
     script.Push(std::vector<uint8_t>(coinbase.begin(), coinbase.end()));
 
     std::vector<TxIn> inputs;
-    TxIn input(std::move(OutPoint()), std::move(script));
-    inputs.push_back(std::move(input));
+    TxIn input(std::move(OutPoint()), script);
+    inputs.push_back(input);
 
     std::vector<TxOut> outputs;
     outputs.push_back(TxOut(reward, output_script));
 
     std::vector<Transaction> transactions;
-    Transaction tx_new(1, std::move(inputs), std::move(outputs), 0);
-    transactions.push_back(std::move(tx_new));
+    Transaction tx_new(1, inputs, outputs, 0);
+    transactions.push_back(tx_new);
 
-    Block genesis(std::move(transactions));
+    Block genesis(transactions);
     BlockHeader header(version, util::Hash256(), genesis.ComputeMerkleRoot(), time, bits, nonce);    
-    genesis.set_header(std::move(header));
+    genesis.set_header(header);
     
     return genesis;
 }

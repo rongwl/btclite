@@ -4,6 +4,7 @@
 
 #include "hash.h"
 #include "node.h"
+#include "network/include/params.h"
 
 
 namespace btclite {
@@ -18,8 +19,6 @@ public:
     static constexpr size_t kChecksumSize = 4;
     static constexpr size_t kSize = kMessageStartSize + kCommandSize
                                     + kPayloadSize + kChecksumSize;
-    
-    using MsgMagic = uint32_t;
     
     MessageHeader() = default;
     
@@ -42,7 +41,7 @@ public:
     explicit MessageHeader(const uint8_t *raw);
     
     //-------------------------------------------------------------------------
-    bool IsValid() const;
+    bool IsValid(uint32_t magic = 0) const;
     void Clear();
     
     //-------------------------------------------------------------------------
@@ -142,7 +141,7 @@ void MessageHeader::Deserialize(Stream& in)
 
 class MessageData {
 public:
-    virtual bool RecvHandler(std::shared_ptr<Node> src_node) const = 0;
+    virtual bool RecvHandler(std::shared_ptr<Node> src_node, const Params& params) const = 0;
     virtual std::string Command() const = 0;
     virtual size_t SerializedSize() const = 0;
     virtual bool IsValid() const = 0;

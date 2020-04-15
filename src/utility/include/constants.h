@@ -75,9 +75,9 @@ constexpr uint32_t kConnTimeoutInterval = 20 * 60;
 constexpr uint32_t kPingInterval =  2 * 60;
 
 // Average delay between local address broadcasts in seconds.
-constexpr uint32_t kAvgLocalAddrBcInterval = 24 * 60 * 60;
+constexpr uint32_t kAdvertiseLocalInterval = 24 * 60 * 60;
 // Average delay between peer address broadcasts in seconds.
-static const unsigned int kAvgAddrBcInterval = 30;
+static const unsigned int kRelayAddrsInterval = 30;
 
 constexpr uint32_t kMaxTimedataSamples = 200;
 

@@ -7,7 +7,7 @@ namespace protocol {
 
 namespace private_address {
 
-bool Address::RecvHandler(std::shared_ptr<Node> src_node) const
+bool Address::RecvHandler(std::shared_ptr<Node> src_node, const Params& params) const
 {
     return true;
 }

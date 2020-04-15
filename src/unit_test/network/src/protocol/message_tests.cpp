@@ -81,23 +81,14 @@ TEST_F(MessageHeaderTest, Clear)
 
 TEST_F(MessageHeaderTest, ValidateHeader)
 {
-    std::vector<uint32_t> magic_vec = { kMainMagic, kTestnetMagic, kRegtestMagic };
-    std::vector<std::string> command_vec = { msg_command::kMsgVersion };
-    
-    for (auto command : command_vec) {
-        header1_.set_magic(kMainMagic);
-        header1_.set_command(command);
-        header1_.set_payload_length(kMaxMessageSize);
-        ASSERT_TRUE(header1_.IsValid());
-    }       
-    
-    header1_.set_magic(0);    
-    ASSERT_FALSE(header1_.IsValid());
-    
-    for (int i = 1; i < magic_vec.size(); i++) {
-        header1_.set_magic(magic_vec[i]);
-        ASSERT_FALSE(header1_.IsValid());
-    }
+    EXPECT_FALSE(header1_.IsValid());
+    EXPECT_FALSE(header1_.IsValid(kMainMagic));
+    EXPECT_FALSE(header1_.IsValid(kTestnetMagic));
+    EXPECT_FALSE(header1_.IsValid(kRegtestMagic));
+    EXPECT_TRUE(header2_.IsValid());
+    EXPECT_FALSE(header2_.IsValid(kTestnetMagic));
+    EXPECT_FALSE(header2_.IsValid(kRegtestMagic));
+    EXPECT_TRUE(header3_.IsValid());
     
     header1_.set_magic(kMainMagic);
     header1_.set_command("foo");

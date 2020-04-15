@@ -7,7 +7,7 @@ namespace protocol {
 
 namespace private_getblocks {
 
-bool GetBlocks::RecvHandler(std::shared_ptr<Node> src_node) const
+bool GetBlocks::RecvHandler(std::shared_ptr<Node> src_node, const Params& params) const
 {
     return true;
 }

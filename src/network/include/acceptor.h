@@ -11,7 +11,7 @@ namespace network {
 
 class Acceptor : util::Uncopyable {
 public:
-    Acceptor();
+    Acceptor(const Params params);
     
     ~Acceptor()
     {
@@ -40,6 +40,8 @@ public:
     }
     
 private:
+    const Params params_;
+    
     struct event_base *base_;
     struct evconnlistener *listener_;
     struct sockaddr_in6 sock_addr_;    

@@ -22,9 +22,6 @@ void FullNodeConfig::ParseParameters(int argc, const char* const argv[])
         { GLOBAL_OPTION_TESTNET,    no_argument,        NULL,  0  },
         { GLOBAL_OPTION_REGTEST,    no_argument,        NULL,  0  },
         { FULLNODE_OPTION_CONNECT,  required_argument,  NULL,  0  },
-        { FULLNODE_OPTION_LISTEN,   required_argument,  NULL,  0  },
-        { FULLNODE_OPTION_DISCOVER, required_argument,  NULL,  0, },
-        { FULLNODE_OPTION_DNSSEED,  required_argument,  NULL,  0, },
         { 0,                        0,                  0,     0  }
     };
     int c, option_index = 0;
@@ -77,30 +74,6 @@ void FullNodeConfig::CheckArguments() const
         if (result != arg_values.end())
             throw Exception(ErrorCode::invalid_argument, "invalid ip '" + *result + "'");
     }
-    
-    // --listen
-    if (args_.IsArgSet(FULLNODE_OPTION_LISTEN))
-    {
-        std::string val = args_.GetArg(FULLNODE_OPTION_LISTEN, DEFAULT_LISTEN);
-        if (val != "1" && val != "0")
-            throw Exception(ErrorCode::invalid_argument, "invalid argument '" + val + "'");
-    }
-
-    // --discover
-    if (args_.IsArgSet(FULLNODE_OPTION_DISCOVER))
-    {
-        std::string val = args_.GetArg(FULLNODE_OPTION_DISCOVER, DEFAULT_DISCOVER);
-        if (val != "1" && val != "0")
-            throw Exception(ErrorCode::invalid_argument, "invalid argument '" + val + "'");
-    }
-    
-    // --dnsseed
-    if (args_.IsArgSet(FULLNODE_OPTION_DNSSEED))
-    {
-        std::string val = args_.GetArg(FULLNODE_OPTION_DNSSEED, DEFAULT_DNSSEED);
-        if (val != "1" && val != "0")
-            throw Exception(ErrorCode::invalid_argument, "invalid argument '" + val + "'");
-    }
 }
 
 void FullNodeHelpInfo::PrintUsage()
@@ -112,9 +85,6 @@ void FullNodeHelpInfo::PrintUsage()
     fprintf(stdout, "\nConnection Options:\n");
     fprintf(stdout, "  --connect=<ip>        connect only to the specified node(s); -connect=0 \n");
     fprintf(stdout, "                        disables automatic connections\n");
-    fprintf(stdout, "  --listen=<1/0>        accept connections from outside (default: %s)\n", DEFAULT_LISTEN);
-    fprintf(stdout, "  --discover=<1/0>      discover own ip address (default: %s)\n", DEFAULT_DISCOVER);
-    fprintf(stdout, "  --dnsseed=<1/0>       query for peer addresses via DNS lookup (default: %s)\n", DEFAULT_DNSSEED);
     //              "                                                                                "
 
 }
@@ -159,20 +129,6 @@ bool FullNodeConfig::InitParameters()
 {
     if (!ExecutorConfig::InitParameters())
         return false;
-    
-    // --connect
-    if (args_.IsArgSet(FULLNODE_OPTION_CONNECT)) {
-        args_.SetArg(FULLNODE_OPTION_LISTEN, "0");
-        BTCLOG(LOG_LEVEL_DEBUG) << "set --connect=1 -> set --listen=0";
-        args_.SetArg(FULLNODE_OPTION_DNSSEED, "0");
-        BTCLOG(LOG_LEVEL_DEBUG) << "set --connect=1 -> set --dnsseed=0";
-    }
-    
-    // --listen
-    if (args_.GetArg(FULLNODE_OPTION_LISTEN, DEFAULT_LISTEN) == "0") {
-        args_.SetArg(FULLNODE_OPTION_DISCOVER, "0");
-        BTCLOG(LOG_LEVEL_DEBUG) << "set --listen=0 -> set --discover=0";
-    }
     
     return true;
 }

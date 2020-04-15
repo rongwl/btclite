@@ -437,15 +437,16 @@ bool NetAddr::SetInternal(const std::string& name)
     if (name.empty()) {
         return false;
     }
-    
+
     uint8_t hash[32] = {};
     std::unique_ptr<Botan::HashFunction> hash_func(Botan::HashFunction::create("SHA-256"));
     hash_func->update(reinterpret_cast<const uint8_t*>(name.data()), name.size());
     hash_func->final(hash);
+
     uint8_t *data = reinterpret_cast<uint8_t*>(proto_addr_.mutable_ip()->mutable_data());
     std::memcpy(data, kBtcIpPrefix, sizeof(kBtcIpPrefix));
     std::memcpy(data + sizeof(kBtcIpPrefix), hash, kIpByteSize - sizeof(kBtcIpPrefix));
-    
+
     return true;
 }
 

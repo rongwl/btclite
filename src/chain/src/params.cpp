@@ -24,19 +24,19 @@ void Params::CreateGenesisBlock(const std::string& coinbase, const chain::Script
     script.Push(std::vector<uint8_t>(coinbase.begin(), coinbase.end()));
 
     std::vector<chain::TxIn> inputs;
-    chain::TxIn input(std::move(chain::OutPoint()), std::move(script));
-    inputs.push_back(std::move(input));
+    chain::TxIn input(chain::OutPoint(), script);
+    inputs.push_back(input);
 
     std::vector<chain::TxOut> outputs;
     outputs.push_back(chain::TxOut(reward, output_script));
 
     std::vector<chain::Transaction> transactions;
-    chain::Transaction tx_new(1, std::move(inputs), std::move(outputs), 0);
-    transactions.push_back(std::move(tx_new));
+    chain::Transaction tx_new(1, inputs, outputs, 0);
+    transactions.push_back(tx_new);
 
-    genesis_.set_transactions(std::move(transactions));
+    genesis_.set_transactions(transactions);
     chain::BlockHeader header(version, util::Hash256(), genesis_.ComputeMerkleRoot(), time, bits, nonce);    
-    genesis_.set_header(std::move(header));
+    genesis_.set_header(header);
 }
 
 /**

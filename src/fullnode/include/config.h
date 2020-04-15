@@ -9,9 +9,6 @@
 #define FULLNODE_BIN_NAME        "btc-fullnode"
 
 #define FULLNODE_OPTION_CONNECT  "connect"
-#define FULLNODE_OPTION_LISTEN   "listen"
-#define FULLNODE_OPTION_DISCOVER "discover"
-#define FULLNODE_OPTION_DNSSEED  "dnsseed"
 
 #define DEFAULT_DATA_DIR        ".btc-fullnode"
 #define DEFAULT_CONFIG_FILE     "btc-fullnode.conf"

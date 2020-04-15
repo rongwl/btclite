@@ -177,6 +177,11 @@ public:
             bufferevent_free(bev_);
     }
     
+    bool IsLocalAddrGood(bool discover_local) const
+    {
+        return (discover_local && addr_.IsRoutable() && local_addr_.IsRoutable());
+    }
+    
     const struct bufferevent* const bev() const
     {
         return bev_;
@@ -265,9 +270,9 @@ private:
     std::atomic<bool> disconnected_ = false;
 };
 
-class BroadcastAddrs {
+class FloodingAddrs {
 public:
-    BroadcastAddrs()
+    FloodingAddrs()
         : known_addrs_(3000) {}
     
     //-------------------------------------------------------------------------
@@ -384,8 +389,8 @@ struct NodeTimers {
     util::TimerMng::TimerPtr no_connection_timer;
     
     util::TimerMng::TimerPtr ping_timer;
-    util::TimerMng::TimerPtr broadcast_local_addr_timer;
-    util::TimerMng::TimerPtr broadcast_addr_timer;
+    util::TimerMng::TimerPtr advertise_local_addr_timer;
+    util::TimerMng::TimerPtr broadcast_addrs_timer;
 };
 
 class Misbehavior {
@@ -698,14 +703,14 @@ public:
         return keyed_net_group_;
     }*/
     
-    const BroadcastAddrs& broadcast_addrs() const
+    const FloodingAddrs& flooding_addrs() const
     {
-        return broadcast_addrs_;
+        return flooding_addrs_;
     }
     
-    BroadcastAddrs *mutable_broadcast_addrs()
+    FloodingAddrs *mutable_flooding_addrs()
     {
-        return &broadcast_addrs_;
+        return &flooding_addrs_;
     }
     
     const NodeFilter& filter() const
@@ -794,7 +799,7 @@ private:
     NodeProtocol protocol_;
     NodeConnection connection_;
     //const uint64_t keyed_net_group_;      
-    BroadcastAddrs broadcast_addrs_; // flood addrs relay    
+    FloodingAddrs flooding_addrs_; // flooding addrs that need to relay    
     NodeFilter filter_;    
     NodeTime time_;    
     NodeTimers timers_;

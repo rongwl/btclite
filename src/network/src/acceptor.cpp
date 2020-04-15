@@ -9,12 +9,12 @@
 namespace btclite {
 namespace network {
 
-Acceptor::Acceptor()
-    : base_(nullptr), listener_(nullptr), sock_addr_()
+Acceptor::Acceptor(const Params params)
+    : params_(params), base_(nullptr), listener_(nullptr), sock_addr_()
 {
     memset(&sock_addr_, 0, sizeof(sock_addr_));
     sock_addr_.sin6_family = AF_INET6;
-    sock_addr_.sin6_port = htons(SingletonParams::GetInstance().default_port());
+    sock_addr_.sin6_port = htons(params_.default_port());
     sock_addr_.sin6_addr = in6addr_any;
     sock_addr_.sin6_scope_id = 0;
 }
@@ -28,10 +28,11 @@ bool Acceptor::InitEvent()
         return false;
     }
     
-    if (nullptr == (listener_ = evconnlistener_new_bind(base_, AcceptConnCb, NULL,
-                                LEV_OPT_CLOSE_ON_FREE | LEV_OPT_REUSEABLE,
-                                SOMAXCONN, (const struct sockaddr*)&sock_addr_,
-                                sizeof(sock_addr_))))
+    if (nullptr == (listener_ = evconnlistener_new_bind(base_, 
+                                AcceptConnCb, (void*)&params_,
+                                LEV_OPT_CLOSE_ON_FREE | LEV_OPT_REUSEABLE, 
+                                SOMAXCONN, 
+                                (const struct sockaddr*)&sock_addr_, sizeof(sock_addr_))))
     {
         BTCLOG(LOG_LEVEL_ERROR) << "Acceptor create event listener failed.";
         return false;
@@ -107,7 +108,7 @@ void Acceptor::AcceptConnCb(struct evconnlistener *listener, evutil_socket_t fd,
         return;
     }
     
-    bufferevent_setcb(bev, ConnReadCb, NULL, ConnEventCb, NULL);
+    bufferevent_setcb(bev, ConnReadCb, NULL, ConnEventCb, arg);
     bufferevent_enable(bev, EV_READ);
 
     BTCLOG(LOG_LEVEL_VERBOSE) << "Accept connection from " << addr.ToString() << " successfully.";

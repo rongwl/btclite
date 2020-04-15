@@ -10,19 +10,19 @@ using namespace network;
 
 TEST_F(BroadcastAddrsTest, PushAddrToSend)
 {
-    ASSERT_GT(broadcast_addrs_.addrs_to_send().size(), 0);
-    EXPECT_EQ(broadcast_addrs_.addrs_to_send()[0], sent_addr_);
+    ASSERT_GT(flooding_addrs_.addrs_to_send().size(), 0);
+    EXPECT_EQ(flooding_addrs_.addrs_to_send()[0], sent_addr_);
 }
 
 TEST_F(BroadcastAddrsTest, ClearSentAddr)
 {
-    broadcast_addrs_.ClearSentAddr();
-    EXPECT_EQ(broadcast_addrs_.addrs_to_send().size(), 0);
+    flooding_addrs_.ClearSentAddr();
+    EXPECT_EQ(flooding_addrs_.addrs_to_send().size(), 0);
 }
 
 TEST_F(BroadcastAddrsTest, AddKnownAddr)
 {
-    EXPECT_TRUE(broadcast_addrs_.IsKnownAddr(known_addr_));
+    EXPECT_TRUE(flooding_addrs_.IsKnownAddr(known_addr_));
 }
 
 TEST_F(NodesTest, InitializeNode)
@@ -192,12 +192,12 @@ TEST_F(NodeTest, PushAddrToSend)
 {
     Nodes& nodes = SingletonNodes::GetInstance();
     std::shared_ptr<Node> node = nodes.GetNode(id_);
-    node->mutable_broadcast_addrs()->AddKnownAddr(addr_);
-    EXPECT_FALSE(node->mutable_broadcast_addrs()->PushAddrToSend(addr_));
+    node->mutable_flooding_addrs()->AddKnownAddr(addr_);
+    EXPECT_FALSE(node->mutable_flooding_addrs()->PushAddrToSend(addr_));
     
     addr_.set_port(8333);
-    ASSERT_TRUE(node->mutable_broadcast_addrs()->PushAddrToSend(addr_));
-    EXPECT_EQ(node->broadcast_addrs().addrs_to_send().front(), addr_);
+    ASSERT_TRUE(node->mutable_flooding_addrs()->PushAddrToSend(addr_));
+    EXPECT_EQ(node->flooding_addrs().addrs_to_send().front(), addr_);
 }
 
 

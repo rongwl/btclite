@@ -15,11 +15,11 @@ protected:
     {
         sent_addr_.SetIpv4(inet_addr("1.1.1.1"));
         known_addr_.SetIpv4(inet_addr("1.1.1.2"));
-        broadcast_addrs_.PushAddrToSend(sent_addr_);
-        broadcast_addrs_.AddKnownAddr(known_addr_);
+        flooding_addrs_.PushAddrToSend(sent_addr_);
+        flooding_addrs_.AddKnownAddr(known_addr_);
     }
     
-    network::BroadcastAddrs broadcast_addrs_;
+    network::FloodingAddrs flooding_addrs_;
     network::NetAddr sent_addr_;
     network::NetAddr known_addr_;
 };

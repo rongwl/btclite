@@ -48,7 +48,7 @@ public:
           data_(data) {}
     
     //-------------------------------------------------------------------------
-    bool RecvHandler(std::shared_ptr<Node> src_node) const;
+    bool RecvHandler(std::shared_ptr<Node> src_node, const Params& params) const;
     
     std::string Command() const
     {

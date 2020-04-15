@@ -14,7 +14,7 @@ bool IsInitialBlockDownload()
     return false;
 }
 
-bool BroadcastAddrs::PushAddrToSend(const NetAddr& addr)
+bool FloodingAddrs::PushAddrToSend(const NetAddr& addr)
 {
     LOCK(cs_);
     
@@ -32,7 +32,7 @@ bool BroadcastAddrs::PushAddrToSend(const NetAddr& addr)
     return true;
 }
 
-void BroadcastAddrs::ClearSentAddr()
+void FloodingAddrs::ClearSentAddr()
 {
     LOCK(cs_);
     addrs_to_send_.clear();
@@ -42,7 +42,7 @@ void BroadcastAddrs::ClearSentAddr()
         addrs_to_send_.shrink_to_fit();
 }
 
-bool BroadcastAddrs::AddKnownAddr(const NetAddr& addr)
+bool FloodingAddrs::AddKnownAddr(const NetAddr& addr)
 {
     LOCK(cs_);
     

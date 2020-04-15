@@ -13,7 +13,7 @@ namespace private_sendheaders {
 
 class SendHeaders : public MessageData {
 public:
-    bool RecvHandler(std::shared_ptr<Node> src_node) const;
+    bool RecvHandler(std::shared_ptr<Node> src_node, const Params& params) const;
     
     std::string Command() const
     {

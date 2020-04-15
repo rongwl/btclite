@@ -48,7 +48,7 @@ public:
           start_height_(start_height), relay_(relay) {}
     
     //-------------------------------------------------------------------------
-    bool RecvHandler(std::shared_ptr<Node> src_node) const;
+    bool RecvHandler(std::shared_ptr<Node> src_node, const Params& params) const;
     
     std::string Command() const
     {

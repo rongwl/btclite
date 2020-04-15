@@ -11,12 +11,12 @@ namespace btclite {
 namespace network {
 
 protocol::MessageData *MsgDataFactory(const uint8_t *raw, 
-                                                        const protocol::MessageHeader& header,
-                                                        uint32_t protocol_version);
-bool ParseMsg(std::shared_ptr<Node> src_node);
+                                      const protocol::MessageHeader& header,
+                                      uint32_t protocol_version);
+bool ParseMsg(std::shared_ptr<Node> src_node, const Params& params);
 
 template <typename Message>
-bool SendMsg(const Message& msg, std::shared_ptr<Node> dst_node)
+bool SendMsg(const Message& msg, uint32_t magic, std::shared_ptr<Node> dst_node)
 {
     using namespace protocol;
     
@@ -25,8 +25,7 @@ bool SendMsg(const Message& msg, std::shared_ptr<Node> dst_node)
     if (!dst_node->connection().bev())
         return false;
 
-    MessageHeader header(SingletonParams::GetInstance().msg_magic(),
-                         msg.Command(), msg.SerializedSize(), msg.GetHash().GetLow32());
+    MessageHeader header(magic, msg.Command(), msg.SerializedSize(), msg.GetHash().GetLow32());
     ms << header << msg;
     
     if (ms.Size() != MessageHeader::kSize + msg.SerializedSize()) {
@@ -49,7 +48,7 @@ bool SendMsg(const Message& msg, std::shared_ptr<Node> dst_node)
     return true;
 }
 
-bool SendVersion(std::shared_ptr<Node> dst_node);
+bool SendVersion(std::shared_ptr<Node> dst_node, uint32_t magic);
 bool SendAddr(std::shared_ptr<Node> dst_node);
 
 

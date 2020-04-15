@@ -12,7 +12,7 @@ namespace protocol {
 
 namespace private_ping {
 
-bool Ping::RecvHandler(std::shared_ptr<Node> src_node) const
+bool Ping::RecvHandler(std::shared_ptr<Node> src_node, const Params& params) const
 {
     if (src_node->protocol().version() >= kBip31Version)
     {
@@ -28,13 +28,13 @@ bool Ping::RecvHandler(std::shared_ptr<Node> src_node) const
         // seconds to respond to each, the 5th ping the remote sends would appear to
         // return very quickly.
         Pong pong(nonce_);
-        SendMsg(pong, src_node);
+        SendMsg(pong, params.msg_magic(), src_node);
     }
     
     return true;
 }
 
-void Ping::PingTimeoutCb(std::shared_ptr<Node> node)
+void Ping::PingTimeoutCb(std::shared_ptr<Node> node, uint32_t magic)
 {
     if (SingletonNetInterrupt::GetInstance())
         return;
@@ -55,7 +55,7 @@ void Ping::PingTimeoutCb(std::shared_ptr<Node> node)
     protocol::Ping ping(util::RandUint64());
     if (node->protocol().version() < kBip31Version)
         ping.set_protocol_version(0);
-    SendMsg(ping, node);
+    SendMsg(ping, magic, node);
 }
 
 } // namespace private_ping

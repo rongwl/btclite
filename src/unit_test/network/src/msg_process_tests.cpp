@@ -195,8 +195,8 @@ TEST(MsgFactoryTest, VersionFactory)
     Version msg_out(kProtocolVersion, kNodeNetwork, 0x1234, 
                     std::move(addr_recv), std::move(addr_from), 0x5678, 
                     std::move(std::string("/btclite:0.1.0/")), 1000, true);
-    MessageHeader header(SingletonParams::GetInstance().msg_magic(),
-                         msg_command::kMsgVersion, msg_out.SerializedSize(), msg_out.GetHash().GetLow32());
+    MessageHeader header(kMainMagic, msg_command::kMsgVersion, 
+                         msg_out.SerializedSize(), msg_out.GetHash().GetLow32());
     
     ms << msg_out;    
     MessageData *msg_in= MsgDataFactory(ms.Data(), header, 0);
@@ -208,8 +208,8 @@ TEST(MsgFactoryTest, VersionFactory)
 TEST(MsgFactoryTest, VerackFactory)
 {
     Verack verack;
-    MessageHeader header(SingletonParams::GetInstance().msg_magic(),
-                         msg_command::kMsgVerack, 0, verack.GetHash().GetLow32());
+    MessageHeader header(kMainMagic, msg_command::kMsgVerack, 0, 
+                         verack.GetHash().GetLow32());
     
     MessageData *msg_in= MsgDataFactory(nullptr, header, 0);
     ASSERT_NE(msg_in, nullptr);
@@ -227,8 +227,8 @@ TEST(MsgFactoryTest, AddrFactory)
     addr2.SetIpv4(inet_addr("1.2.3.2"));
     msg_addr.mutable_addr_list()->push_back(addr1);
     msg_addr.mutable_addr_list()->push_back(addr2);
-    MessageHeader header(SingletonParams::GetInstance().msg_magic(),
-                         msg_command::kMsgAddr, msg_addr.SerializedSize(), msg_addr.GetHash().GetLow32());
+    MessageHeader header(kMainMagic, msg_command::kMsgAddr, msg_addr.SerializedSize(), 
+                         msg_addr.GetHash().GetLow32());
     ms << msg_addr;
     
     MessageData *msg_in= MsgDataFactory(ms.Data(), header, 0);
@@ -240,8 +240,8 @@ TEST(MsgFactoryTest, AddrFactory)
 TEST(MsgFactoryTest, GetAddrFactory)
 {
     GetAddr getaddr;
-    MessageHeader header(SingletonParams::GetInstance().msg_magic(),
-                         msg_command::kMsgGetAddr, 0, getaddr.GetHash().GetLow32());
+    MessageHeader header(kMainMagic, msg_command::kMsgGetAddr, 0, 
+                         getaddr.GetHash().GetLow32());
     
     MessageData *msg_in= MsgDataFactory(nullptr, header, 0);
     ASSERT_NE(msg_in, nullptr);
@@ -257,8 +257,8 @@ TEST(MsgFactoryTest, InvFactory)
                                               util::RandHash256());
     msg_out.mutable_inv_vects()->emplace_back(DataMsgType::kMsgBlock, 
                                               util::RandHash256());
-    MessageHeader header(SingletonParams::GetInstance().msg_magic(),
-                         msg_command::kMsgInv, msg_out.SerializedSize(), msg_out.GetHash().GetLow32());
+    MessageHeader header(kMainMagic, msg_command::kMsgInv, msg_out.SerializedSize(), 
+                         msg_out.GetHash().GetLow32());
     
     ms << msg_out;  
     MessageData *msg_in= MsgDataFactory(ms.Data(), header, 0);
@@ -271,8 +271,8 @@ TEST(MsgFactoryTest, PingFactory)
 {
     util::MemoryStream ms;    
     Ping msg_out(0x1122334455667788);
-    MessageHeader header(SingletonParams::GetInstance().msg_magic(),
-                         msg_command::kMsgPing, msg_out.SerializedSize(), msg_out.GetHash().GetLow32());
+    MessageHeader header(kMainMagic, msg_command::kMsgPing, msg_out.SerializedSize(),
+                         msg_out.GetHash().GetLow32());
     
     ms << msg_out;
     MessageData *msg_in = MsgDataFactory( ms.Data(), header, msg_out.protocol_version());
@@ -295,8 +295,8 @@ TEST(MsgFactoryTest, PongFactory)
 {
     util::MemoryStream ms;    
     Pong msg_out(0x1122334455667788);
-    MessageHeader header(SingletonParams::GetInstance().msg_magic(),
-                         msg_command::kMsgPong, msg_out.SerializedSize(), msg_out.GetHash().GetLow32());
+    MessageHeader header(kMainMagic, msg_command::kMsgPong, msg_out.SerializedSize(),
+                         msg_out.GetHash().GetLow32());
     
     ms << msg_out;
     MessageData *msg_in = MsgDataFactory(ms.Data(), header, 0);
@@ -308,10 +308,10 @@ TEST(MsgFactoryTest, PongFactory)
 TEST(MsgFactoryTest, RejectFactory)
 {
     util::MemoryStream ms;
-    Reject msg_out(msg_command::kMsgVersion, CCode::kRejectDuplicate, "Duplicate version message",
-                   std::move(util::RandHash256()));
-    MessageHeader header(SingletonParams::GetInstance().msg_magic(),
-                         msg_command::kMsgReject, msg_out.SerializedSize(), msg_out.GetHash().GetLow32());
+    Reject msg_out(msg_command::kMsgVersion, CCode::kRejectDuplicate, 
+                   "Duplicate version message", std::move(util::RandHash256()));
+    MessageHeader header(kMainMagic, msg_command::kMsgReject, msg_out.SerializedSize(), 
+                         msg_out.GetHash().GetLow32());
     
     ms << msg_out;    
     MessageData *msg_in = MsgDataFactory(ms.Data(), header, 0);
@@ -324,8 +324,7 @@ TEST(MsgFactoryTest, SendHeadersFactory)
 {
     util::MemoryStream ms;
     SendHeaders send_headers;
-    MessageHeader header(SingletonParams::GetInstance().msg_magic(),
-                         msg_command::kMsgSendHeaders, send_headers.SerializedSize(), 
+    MessageHeader header(kMainMagic, msg_command::kMsgSendHeaders, send_headers.SerializedSize(), 
                          send_headers.GetHash().GetLow32());
     
     ms << send_headers;    
@@ -339,8 +338,7 @@ TEST(MsgFactoryTest, SendCmpctFactory)
 {
     util::MemoryStream ms;
     SendCmpct send_compact(true, 1);
-    MessageHeader header(SingletonParams::GetInstance().msg_magic(),
-                         msg_command::kMsgSendCmpct, send_compact.SerializedSize(), 
+    MessageHeader header(kMainMagic, msg_command::kMsgSendCmpct, send_compact.SerializedSize(), 
                          send_compact.GetHash().GetLow32());
     
     ms << send_compact;    
@@ -351,8 +349,7 @@ TEST(MsgFactoryTest, SendCmpctFactory)
 
 TEST(MsgFactoryTest, NullFactory)
 {
-    MessageHeader header(SingletonParams::GetInstance().msg_magic(),
-                         msg_command::kMsgVersion, 0, 0);
+    MessageHeader header(kMainMagic, msg_command::kMsgVersion, 0, 0);
     MessageData *msg_in = MsgDataFactory(nullptr, header, 0);
     EXPECT_EQ(msg_in, nullptr);
     
@@ -373,7 +370,7 @@ TEST_F(MsgProcessTest, SendVersion)
     auto node = std::make_shared<Node>(pair_[0], addr_, false);
     node->mutable_protocol()->set_services(kNodeNetwork);
     version_nonce = node->local_host_nonce();
-    ASSERT_TRUE(SendVersion(node));
+    ASSERT_TRUE(SendVersion(node, kMainMagic));
     
     event_base_dispatch(base_);
     
@@ -388,7 +385,7 @@ TEST_F(MsgProcessTest, SendVerack)
     bufferevent_enable(pair_[1], EV_READ);
     auto node = std::make_shared<Node>(pair_[0], addr_, false);
     Verack verack;
-    ASSERT_TRUE(SendMsg(verack, node));
+    ASSERT_TRUE(SendMsg(verack, kMainMagic, node));
     
     event_base_dispatch(base_);
 }
@@ -405,7 +402,7 @@ TEST_F(MsgProcessTest, SendAddr)
     addr_msg.mutable_addr_list()->push_back(addr);
     addr.SetIpv4(inet_addr("1.2.3.2"));
     addr_msg.mutable_addr_list()->push_back(addr);
-    ASSERT_TRUE(SendMsg(addr_msg, node));
+    ASSERT_TRUE(SendMsg(addr_msg, kMainMagic, node));
     
     event_base_dispatch(base_);
 }
@@ -419,7 +416,7 @@ TEST_F(MsgProcessTest, SendInv)
     Inv inv;
     inv.mutable_inv_vects()->emplace_back(DataMsgType::kMsgTx, inv_hash);
     inv.mutable_inv_vects()->emplace_back(DataMsgType::kMsgBlock, inv_hash);
-    ASSERT_TRUE(SendMsg(inv, node));
+    ASSERT_TRUE(SendMsg(inv, kMainMagic, node));
     
     event_base_dispatch(base_);
 }
@@ -430,7 +427,7 @@ TEST_F(MsgProcessTest, SendGetAddr)
     bufferevent_enable(pair_[1], EV_READ);
     auto node = std::make_shared<Node>(pair_[0], addr_, false);
     GetAddr getaddr;
-    ASSERT_TRUE(SendMsg(getaddr, node));
+    ASSERT_TRUE(SendMsg(getaddr, kMainMagic, node));
     
     event_base_dispatch(base_);
 }
@@ -442,7 +439,7 @@ TEST_F(MsgProcessTest, SendPing)
     auto node = std::make_shared<Node>(pair_[0], addr_, false);
     ping_nonce = util::RandUint64();
     Ping ping(ping_nonce);
-    ASSERT_TRUE(SendMsg(ping, node));
+    ASSERT_TRUE(SendMsg(ping, kMainMagic, node));
     
     event_base_dispatch(base_);
 }
@@ -454,7 +451,7 @@ TEST_F(MsgProcessTest, SendPong)
     auto node = std::make_shared<Node>(pair_[0], addr_, false);
     pong_nonce = util::RandUint64();
     Pong pong(pong_nonce);
-    ASSERT_TRUE(SendMsg(pong, node));
+    ASSERT_TRUE(SendMsg(pong, kMainMagic, node));
     
     event_base_dispatch(base_);
 }
@@ -465,7 +462,7 @@ TEST_F(MsgProcessTest, SendSendHeaders)
     bufferevent_enable(pair_[1], EV_READ);
     auto node = std::make_shared<Node>(pair_[0], addr_, false);
     SendHeaders send_headers;
-    ASSERT_TRUE(SendMsg(send_headers, node));
+    ASSERT_TRUE(SendMsg(send_headers, kMainMagic, node));
     
     event_base_dispatch(base_);
 }
@@ -476,7 +473,7 @@ TEST_F(MsgProcessTest, SendSendCmpct)
     bufferevent_enable(pair_[1], EV_READ);
     auto node = std::make_shared<Node>(pair_[0], addr_, false);
     SendCmpct send_compact(true, 1);
-    ASSERT_TRUE(SendMsg(send_compact, node));
+    ASSERT_TRUE(SendMsg(send_compact, kMainMagic, node));
     
     event_base_dispatch(base_);
 }

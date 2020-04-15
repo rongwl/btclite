@@ -12,90 +12,52 @@
 namespace btclite {
 namespace network {
 
-bool IsPeerLocalAddrGood(std::shared_ptr<Node> node);
-void AdvertiseLocalAddr(std::shared_ptr<Node> node);
 
-void BroadcastAddrsTimeoutCb(std::shared_ptr<Node> node);
+void AdvertiseLocalTimeoutCb(std::shared_ptr<Node> node);
+void RelayFloodingAddrsTimeoutCb(std::shared_ptr<Node> node, uint32_t magic);
 
 // Return a time interavl for send in the future (in microseconds) for exponentially distributed events.
 int64_t IntervalNextSend(int average_interval_seconds);
 
 
-class LocalNetConfig {
+class LocalService {
 public:
-    LocalNetConfig()
-        : local_services_(ServiceFlags(kNodeNetwork | kNodeNetworkLimited)), 
-          map_local_addrs_() {}
+    LocalService()
+        : service_(ServiceFlags(kNodeNetwork | kNodeBloom | kNodeNetworkLimited)), 
+          local_addrs_() {}
     
     //-------------------------------------------------------------------------
-    bool LookupLocalAddrs();
+    bool DiscoverLocalAddrs();
     bool GetLocalAddr(const NetAddr& peer_addr, ServiceFlags services, NetAddr *out);
-    int GetAddrScore(const NetAddr& peer_addr);    
-    
-    bool IsLocal(const NetAddr& addr)
-    {
-        LOCK(cs_local_net_config_);
-        return (map_local_addrs_.count(addr) > 0);
-    }
-    
-    static void BroadcastTimeoutCb(std::shared_ptr<Node> node);
+    void AdvertiseLocalAddr(std::shared_ptr<Node> node, bool discovered_addr_first);
+    bool IsLocal(const NetAddr& addr);
     
     //-------------------------------------------------------------------------
-    ServiceFlags local_services() const
+    ServiceFlags service() const
     {
-        LOCK(cs_local_net_config_);
-        return local_services_;
+        LOCK(cs_local_service_);
+        return service_;
     }
-    void set_local_services(ServiceFlags flags)
+    void set_services(ServiceFlags flags)
     {
-        LOCK(cs_local_net_config_);
-        local_services_ = flags;
+        LOCK(cs_local_service_);
+        service_ = flags;
     }
     
-    std::map<NetAddr, int> map_local_addrs() const // thread safe copy
+    std::vector<NetAddr> local_addrs() const // thread safe copy
     {
-        LOCK(cs_local_net_config_);
-        return map_local_addrs_;
+        LOCK(cs_local_service_);
+        return local_addrs_;
     }
     
 private:
-    mutable util::CriticalSection cs_local_net_config_;
-    ServiceFlags local_services_;
-    std::map<NetAddr, int> map_local_addrs_;
+    mutable util::CriticalSection cs_local_service_;
+    ServiceFlags service_;
+    std::vector<NetAddr> local_addrs_;
     
-    bool AddLocalHost(const NetAddr& addr, int score);
+    bool AddLocalAddr(const NetAddr& addr);
 };
 
-class NetArgs {
-public:
-    explicit NetArgs(const util::Args& args);
-    
-    bool listening() const
-    {
-        return listening_;
-    }
-    
-    bool should_discover() const
-    {
-        return should_discover_;
-    }
-    
-    bool is_dnsseed() const
-    {
-        return is_dnsseed_;
-    }
-    
-    const std::vector<std::string>& specified_outgoing() const
-    {
-        return specified_outgoing_;
-    }
-    
-private:
-    bool listening_ = true;
-    bool should_discover_ = true;
-    bool is_dnsseed_ = true;
-    std::vector<std::string> specified_outgoing_;
-};
 
 class CollectionTimer : util::Uncopyable {
 public:
@@ -111,16 +73,16 @@ private:
 };
 
 
-class SingletonLocalNetCfg : util::Uncopyable {
+class SingletonLocalService : util::Uncopyable {
 public:
-    static LocalNetConfig& GetInstance()
+    static LocalService& GetInstance()
     {
-        static LocalNetConfig config;
+        static LocalService config;
         return config;
     }
     
 private:
-    SingletonLocalNetCfg() {}
+    SingletonLocalService() {}
 };
 
 class SingletonNetInterrupt : util::Uncopyable {
@@ -135,17 +97,6 @@ private:
     SingletonNetInterrupt() {}
 };
 
-class SingletonNetArgs : util::Uncopyable {
-public:
-    static NetArgs& GetInstance(const util::Args& args = util::Args())
-    {
-        static NetArgs net_args(args);
-        return net_args;
-    }
-    
-private:
-    SingletonNetArgs() {}
-};
 
 } // namespace network
 } // namespace btclite

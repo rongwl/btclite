@@ -15,7 +15,7 @@ namespace protocol {
 
 namespace private_verack {
 
-bool Verack::RecvHandler(std::shared_ptr<Node> src_node) const
+bool Verack::RecvHandler(std::shared_ptr<Node> src_node, const Params& params) const
 {
     if (src_node->protocol().version() >= kSendheadersVersion) {
         // Tell our peer we prefer to receive headers rather than inv's
@@ -23,7 +23,7 @@ bool Verack::RecvHandler(std::shared_ptr<Node> src_node) const
         // non-NODE NETWORK peers can announce blocks (such as pruning
         // nodes)
         SendHeaders send_headers;
-        SendMsg(send_headers, src_node);
+        SendMsg(send_headers, params.msg_magic(), src_node);
     }
     if (src_node->protocol().version() >= kShortIdsBlocksVersion) {
         // Tell our peer we are willing to provide version 1 or 2 cmpctblocks
@@ -32,10 +32,10 @@ bool Verack::RecvHandler(std::shared_ptr<Node> src_node) const
         // We send this to non-NODE NETWORK peers as well, because
         // they may wish to request compact blocks from us
         SendCmpct send_compact(false, 2);
-        if (SingletonLocalNetCfg::GetInstance().local_services() & ServiceFlags::kNodeWitness)
-            SendMsg(send_compact, src_node);
+        if (SingletonLocalService::GetInstance().service() & ServiceFlags::kNodeWitness)
+            SendMsg(send_compact, params.msg_magic(), src_node);
         send_compact.set_version(1);
-        SendMsg(send_compact, src_node);
+        SendMsg(send_compact, params.msg_magic(), src_node);
     }
     src_node->mutable_connection()->set_established(true);
     
@@ -43,23 +43,27 @@ bool Verack::RecvHandler(std::shared_ptr<Node> src_node) const
     Ping ping(util::RandUint64());
     if (src_node->protocol().version() < kBip31Version)
         ping.set_protocol_version(0);
-    SendMsg(ping, src_node);
+    SendMsg(ping, params.msg_magic(), src_node);
     // start ping timer
     src_node->mutable_timers()->ping_timer = 
         util::SingletonTimerMng::GetInstance().StartTimer(kNoPingTimeout*1000, kNoPingTimeout*1000,
-                                                    Ping::PingTimeoutCb, src_node);
+                                                    Ping::PingTimeoutCb, src_node, params.msg_magic());
     
-    // broadcast local address
-    AdvertiseLocalAddr(src_node);
-    src_node->mutable_timers()->broadcast_local_addr_timer =
-        util::SingletonTimerMng::GetInstance().StartTimer(IntervalNextSend(kAvgLocalAddrBcInterval)*1000, 0, 
-                                                    LocalNetConfig::BroadcastTimeoutCb,
-                                                    src_node);
+    // advertise local address
+    if (params.advertise_local_addr()) {
+        if (!IsInitialBlockDownload()) {
+            SingletonLocalService::GetInstance().AdvertiseLocalAddr(src_node, false);
+        }
+        src_node->mutable_timers()->advertise_local_addr_timer =
+            util::SingletonTimerMng::GetInstance().StartTimer(
+                IntervalNextSend(kAdvertiseLocalInterval)*1000, 0, 
+                                 AdvertiseLocalTimeoutCb, src_node);
+    }
     
-    // broadcast address
-    src_node->mutable_timers()->broadcast_addr_timer = 
-        util::SingletonTimerMng::GetInstance().StartTimer(kAvgAddrBcInterval*1000, 0, 
-                                                    BroadcastAddrsTimeoutCb, src_node);
+    // relay flooding addresses
+    src_node->mutable_timers()->broadcast_addrs_timer = 
+        util::SingletonTimerMng::GetInstance().StartTimer(kRelayAddrsInterval*1000, 0, 
+                                                    RelayFloodingAddrsTimeoutCb, src_node, params.msg_magic());
     
     return true;
 }

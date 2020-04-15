@@ -2,8 +2,7 @@
 #define BTCLITE_NETWORK_PARAMS_H
 
 
-#include "environment.h"
-#include "protocol/message.h"
+#include "util.h"
 
 
 namespace btclite {
@@ -26,10 +25,10 @@ struct Seed {
 
 class Params {
 public:
-    explicit Params(BaseEnv env);
+    Params(BaseEnv env, const util::Args& args);
     
     //-------------------------------------------------------------------------
-    protocol::MessageHeader::MsgMagic msg_magic() const
+    uint32_t msg_magic() const
     {
         return msg_magic_;
     }
@@ -44,22 +43,35 @@ public:
         return seeds_;
     }
     
-private:
-    protocol::MessageHeader::MsgMagic msg_magic_; // little endian
-    uint16_t default_port_;
-    std::vector<Seed> seeds_;
-};
-
-class SingletonParams : util::Uncopyable {
-public:
-    static Params& GetInstance(BaseEnv env = BaseEnv::mainnet)
+    bool advertise_local_addr() const
     {
-        static Params params(env);
-        return params;
+        return advertise_local_addr_;
     }
-
+    
+    bool discover_local_addr() const
+    {
+        return discover_local_addr_;
+    }
+    
+    bool use_dnsseed() const
+    {
+        return use_dnsseed_;
+    }
+    
+    const std::vector<std::string>& specified_outgoing() const
+    {
+        return specified_outgoing_;
+    }
+    
 private:
-    SingletonParams() {}        
+    uint32_t msg_magic_ = 0; // little endian
+    uint16_t default_port_ = 0;
+    std::vector<Seed> seeds_;
+    
+    bool advertise_local_addr_ = true;
+    bool discover_local_addr_ = true;
+    bool use_dnsseed_ = true;
+    std::vector<std::string> specified_outgoing_;
 };
 
 } // namespace btclite

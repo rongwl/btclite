@@ -18,11 +18,21 @@ MessageHeader::MessageHeader(const uint8_t *raw_data)
     Deserialize(byte_source);
 }
 
-bool MessageHeader::IsValid() const
+bool MessageHeader::IsValid(uint32_t magic) const
 {
-    if (magic_ != SingletonParams::GetInstance().msg_magic()) {
-        BTCLOG(LOG_LEVEL_WARNING) << "MessageHeader::magic_(" << magic_ << ") is invalid";
-        return false;
+    if (magic == kMainMagic || magic == kTestnetMagic || magic == kRegtestMagic) {
+        if (magic_ != magic) {
+            BTCLOG(LOG_LEVEL_WARNING) << "MessageHeader::magic_(" << magic_ 
+                                      << ") is invalid, " << magic << " is correct";
+            return false;
+        }
+    }
+    else {
+        if (magic_ != kMainMagic && magic_ != kTestnetMagic && magic_ != kRegtestMagic) {
+            BTCLOG(LOG_LEVEL_WARNING) << "MessageHeader::magic_(" << magic_ 
+                                      << ") is invalid";
+            return false;
+        }
     }
     
     std::string cmd = command();

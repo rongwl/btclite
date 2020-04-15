@@ -83,7 +83,7 @@ bool Peers::Add(const NetAddr &addr,
     new_peer.set_allocated_source(new proto_netaddr::NetAddr(source.proto_addr()));
     new_peer.set_attempts(0);
     proto_peers_.mutable_map_peers()->insert(
-        google::protobuf::MapPair<uint64_t, proto_peers::Peer>(map_key, std::move(new_peer)));
+        google::protobuf::MapPair<uint64_t, proto_peers::Peer>(map_key, new_peer));
     rand_order_keys_.push_back(map_key);
     if (add_new)
         proto_peers_.mutable_new_tbl()->insert(

@@ -7,7 +7,7 @@ namespace protocol {
 
 namespace private_sendcmpct {
 
-bool SendCmpct::RecvHandler(std::shared_ptr<Node> src_node) const
+bool SendCmpct::RecvHandler(std::shared_ptr<Node> src_node, const Params& params) const
 {
     return true;
 }

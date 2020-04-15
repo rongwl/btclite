@@ -1,12 +1,20 @@
 #include "network/include/params.h"
 #include "constants.h"
+#include "fullnode/include/config.h"
 
 
 namespace btclite {
 namespace network {
 
-Params::Params(BaseEnv env)
+Params::Params(BaseEnv env, const util::Args& args)
 {
+    if (args.IsArgSet(FULLNODE_OPTION_CONNECT)) {
+        advertise_local_addr_ = false;
+        discover_local_addr_ = false;
+        use_dnsseed_ = false;
+        specified_outgoing_ = args.GetArgs(FULLNODE_OPTION_CONNECT);
+    }
+    
     switch (env) {
         case BaseEnv::mainnet :
         {
@@ -21,6 +29,8 @@ Params::Params(BaseEnv env)
             seeds_.push_back({ "seed.btc.petertodd.org", 8333 }); // Peter Todd, only supports x1, x5, x9, and xd
             seeds_.push_back({ "seed.bitcoin.sprovoost.nl", 8333 }); // Sjors Provoost
             seeds_.push_back({ "dnsseed.emzy.de", 8333 }); // Stephan Oeste
+            BTCLOG(LOG_LEVEL_VERBOSE) << "mainnet params: msg_magic=" << std::hex << msg_magic_
+                                      << " default_port=" << std::dec << default_port_;
 
             break;
         }
@@ -33,6 +43,8 @@ Params::Params(BaseEnv env)
             seeds_.push_back({ "seed.tbtc.petertodd.org", 18333 });
             seeds_.push_back({ "seed.testnet.bitcoin.sprovoost.nl", 18333 });
             seeds_.push_back({ "testnet-seed.bluematt.me", 18333});
+            BTCLOG(LOG_LEVEL_VERBOSE) << "testnet params: msg_magic=" << std::hex << msg_magic_
+                                      << " default_port=" << std::dec << default_port_;
             
             break;
         }
@@ -41,6 +53,8 @@ Params::Params(BaseEnv env)
             msg_magic_ = kRegtestMagic;
             default_port_ = 18444;
             seeds_.clear(); // Regtest mode doesn't have any DNS seeds.
+            BTCLOG(LOG_LEVEL_VERBOSE) << "regtest params: msg_magic=" << std::hex << msg_magic_
+                                      << " default_port=" << std::dec << default_port_;
             
             break;
         }
