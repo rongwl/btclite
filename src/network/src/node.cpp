@@ -98,7 +98,7 @@ void Node::InactivityTimeoutCb(std::shared_ptr<Node> node)
         return;
 
     BTCLOG(LOG_LEVEL_WARNING) << "Peer " << node->id() << " inactive timeout.";
-    node->mutable_connection()->set_disconnected(true);
+    node->mutable_connection()->set_connection_state(NodeConnection::kDisconnected);
 }
 
 bool Node::CheckBanned()
@@ -112,14 +112,14 @@ bool Node::CheckBanned()
                                   << connection_.addr().ToString();
     }
     else {
-        connection_.set_disconnected(true);
+        connection_.set_connection_state(NodeConnection::kDisconnected);
         if (connection_.addr().IsLocal()) {
             BTCLOG(LOG_LEVEL_WARNING) << "Can not banning local peer "
                                       << connection_.addr().ToString();
         }
         else {
             SingletonBanDb::GetInstance().Add(connection_.addr(),
-                                              BanDb::BanReason::NodeMisbehaving);
+                                              BanDb::BanReason::kNodeMisbehaving);
         }
     }
     
@@ -212,14 +212,15 @@ void Nodes::ClearDisconnected(std::vector<std::shared_ptr<Node> > *out)
     LOCK(cs_nodes_);
     
     for (auto it = list_.begin(); it != list_.end(); ++it) {
-        if ((*it)->connection().disconnected()) {
+        if ((*it)->connection().connection_state() == 
+                NodeConnection::kDisconnected) {
             out->push_back(*it);
             vec.push_back(it);
         }
     }
     
-    for (auto it : vec) {
-        list_.erase(it);
+    for (auto entry : vec) {
+        list_.erase(entry);
     }
 }
 
@@ -229,7 +230,8 @@ void Nodes::DisconnectNode(const SubNet& subnet)
     
     for (auto it = list_.begin(); it != list_.end(); ++it) {
         if (subnet.Match((*it)->connection().addr())) {
-            (*it)->mutable_connection()->set_disconnected(true);
+            (*it)->mutable_connection()->set_connection_state(
+                NodeConnection::kDisconnected);
         }
     }
 }
@@ -351,7 +353,8 @@ int Nodes::CountInbound()
     
     LOCK(cs_nodes_);    
     for (auto it = list_.begin(); it != list_.end(); ++it) {
-        if (!(*it)->connection().disconnected() && 
+        if ((*it)->connection().connection_state() != 
+                NodeConnection::kDisconnected && 
                 (*it)->connection().is_inbound())
             num++;
     }
@@ -365,7 +368,8 @@ int Nodes::CountOutbound()
     
     LOCK(cs_nodes_);
     for (auto it = list_.begin(); it != list_.end(); ++it) {
-        if (!(*it)->connection().disconnected() && 
+        if ((*it)->connection().connection_state() != 
+                NodeConnection::kDisconnected && 
                 !(*it)->connection().is_inbound())
             num++;
     }
@@ -379,7 +383,8 @@ int Nodes::CountSyncStarted()
     
     LOCK(cs_nodes_);
     for (auto it = list_.begin(); it != list_.end(); ++it) {
-        if (!(*it)->connection().disconnected() &&
+        if ((*it)->connection().connection_state() != 
+                NodeConnection::kDisconnected &&
                 (*it)->block_sync_state().sync_started())
             num++;
     }
@@ -393,7 +398,8 @@ int Nodes::CountPreferredDownload()
     
     LOCK(cs_nodes_);
     for (auto it = list_.begin(); it != list_.end(); ++it) {
-        if (!(*it)->connection().disconnected() &&
+        if ((*it)->connection().connection_state() != 
+                NodeConnection::kDisconnected &&
                 (*it)->IsPreferedDownload())
             num++;
     }
@@ -407,7 +413,8 @@ int Nodes::CountValidatedDownload()
     
     LOCK(cs_nodes_);
     for (auto it = list_.begin(); it != list_.end(); ++it) {
-        if (!(*it)->connection().disconnected() &&
+        if ((*it)->connection().connection_state() !=
+                NodeConnection::kDisconnected &&
                 (*it)->blocks_in_flight().valid_headers_count() > 0)
             num++;
     }
@@ -421,7 +428,8 @@ int Nodes::CountProtectedOutbound()
     
     LOCK(cs_nodes_);
     for (auto it = list_.begin(); it != list_.end(); ++it) {
-        if (!(*it)->connection().disconnected() &&
+        if ((*it)->connection().connection_state() !=
+                NodeConnection::kDisconnected &&
                 (*it)->block_sync_timeout().protect())
             num++;
     }
@@ -435,7 +443,7 @@ bool Nodes::ShouldDnsLookup()
     
     LOCK(cs_nodes_);
     for (auto it = list_.begin(); it != list_.end(); ++it) {
-        if ((*it)->connection().established() && 
+        if ((*it)->connection().connection_state() == NodeConnection::kEstablished && 
                 !(*it)->connection().manual() && 
                 !(*it)->connection().is_inbound())
             count++;
@@ -448,7 +456,7 @@ bool Nodes::CheckIncomingNonce(uint64_t nonce)
 {
     LOCK(cs_nodes_);
     for (auto it = list_.begin(); it != list_.end(); ++it) {
-        if (!(*it)->connection().established() && 
+        if (!(*it)->connection().connection_state() == NodeConnection::kEstablished && 
                 !(*it)->connection().is_inbound() &&
                 (*it)->local_host_nonce() == nonce)
             return false;

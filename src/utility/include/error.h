@@ -8,12 +8,12 @@ namespace btclite {
 namespace util {
 
 enum class ErrorCode {
-    success = 0,
+    kSuccess = 0,
     
     // args
-    show_help,
-    invalid_option,
-    invalid_argument
+    kShowHelp,
+    kInvalidOption,
+    kInvalidArg
     
 };
 

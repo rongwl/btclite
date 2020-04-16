@@ -166,6 +166,12 @@ private:
 
 class NodeConnection {
 public:
+    enum ConnectionState {
+        kInitialState,
+        kEstablished,
+        kDisconnected
+    };
+    
     NodeConnection(NodeId id, const struct bufferevent *bev, const NetAddr& addr,
                    bool is_inbound, bool manual, std::string host_name)
         : node_id_(id), bev_(const_cast<struct bufferevent*>(bev)), addr_(addr),
@@ -232,24 +238,16 @@ public:
         return manual_;
     }
     
-    bool established() const
+    ConnectionState connection_state() const
     {
-        return established_;
+        LOCK(cs_state_);
+        return connection_state_;
     }
     
-    void set_established(bool established)
+    void set_connection_state(ConnectionState state)
     {
-        established_ = established;
-    }
-    
-    bool disconnected() const
-    {
-        return disconnected_;
-    }
-    
-    void set_disconnected(bool disconnected)
-    {
-        disconnected_ = disconnected;
+        LOCK(cs_state_);
+        connection_state_ = state;
     }
     
 private:
@@ -266,8 +264,9 @@ private:
     
     const bool is_inbound_;
     const bool manual_;
-    std::atomic<bool> established_ = false;
-    std::atomic<bool> disconnected_ = false;
+    
+    mutable util::CriticalSection cs_state_;
+    ConnectionState connection_state_ = ConnectionState::kInitialState;
 };
 
 class FloodingAddrs {
@@ -657,7 +656,8 @@ public:
     
     bool ShouldUpdateTime()
     {
-        if (misbehavior_.score() == 0 && connection_.established())
+        if (misbehavior_.score() == 0 && 
+                connection_.connection_state() == NodeConnection::kEstablished)
             return true;
         return false;
     }

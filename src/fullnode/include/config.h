@@ -2,7 +2,7 @@
 #define BTCLITE_FULLNODE_CONFIG_H
 
 
-#include "environment.h"
+#include "btcnet.h"
 #include "util.h"
 
 
@@ -25,7 +25,7 @@ public:
     bool InitParameters();
     
 private:
-    void CheckArguments() const;
+    void CheckArgs() const;
 };
 
 class FullNodeHelpInfo {

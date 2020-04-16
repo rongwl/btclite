@@ -15,7 +15,7 @@ int main(int argc, char **argv)
     }
     catch (const btclite::util::Exception& e) {
         if (e.code().value() != 
-                static_cast<std::underlying_type_t<btclite::util::ErrorCode> >(btclite::util::ErrorCode::show_help))
+                static_cast<std::underlying_type_t<btclite::util::ErrorCode> >(btclite::util::ErrorCode::kShowHelp))
             fprintf(stderr, "%s: %s\n", argv[0], e.what());
         FullNodeHelpInfo::PrintUsage();
         exit(e.code().value());

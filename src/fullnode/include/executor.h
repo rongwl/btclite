@@ -12,7 +12,7 @@ public:
     explicit FullNodeMain(const FullNodeConfig& config)
         : network_(config)
     {
-        btclite::chain::SingletonParams::GetInstance(config.env());
+        btclite::chain::SingletonParams::GetInstance(config.btcnet());
         //SingletonChainState::GetInstance();
     }
 

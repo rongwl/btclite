@@ -79,7 +79,8 @@ void Acceptor::AcceptConnCb(struct evconnlistener *listener, evutil_socket_t fd,
     
     if (SingletonBanDb::GetInstance().IsBanned(addr))
     {
-        BTCLOG(LOG_LEVEL_WARNING) << "Accept a dropped(banned) addr:" << addr.ToString();
+        BTCLOG(LOG_LEVEL_WARNING) << "Accept a dropped(banned) addr:"
+                                  << addr.ToString();
         evutil_closesocket(fd);
         return;
     }
@@ -96,7 +97,8 @@ void Acceptor::AcceptConnCb(struct evconnlistener *listener, evutil_socket_t fd,
         return;
     }
     
-    if (nullptr == (bev = bufferevent_socket_new(base, fd, BEV_OPT_THREADSAFE | BEV_OPT_CLOSE_ON_FREE))) {
+    if (nullptr == (bev = bufferevent_socket_new(base, fd, 
+                          BEV_OPT_THREADSAFE | BEV_OPT_CLOSE_ON_FREE))) {
         BTCLOG(LOG_LEVEL_WARNING) << "Acceptor create buffer event for socker fd failed.";
         evutil_closesocket(fd);
         return;
@@ -111,7 +113,8 @@ void Acceptor::AcceptConnCb(struct evconnlistener *listener, evutil_socket_t fd,
     bufferevent_setcb(bev, ConnReadCb, NULL, ConnEventCb, arg);
     bufferevent_enable(bev, EV_READ);
 
-    BTCLOG(LOG_LEVEL_VERBOSE) << "Accept connection from " << addr.ToString() << " successfully.";
+    BTCLOG(LOG_LEVEL_VERBOSE) << "Accept connection from " << addr.ToString() 
+                              << " successfully.";
 }
 
 void Acceptor::AcceptErrCb(struct evconnlistener *listener, void *arg)
@@ -128,36 +131,34 @@ void Acceptor::CheckingTimeoutCb(evutil_socket_t fd, short event, void *arg)
     std::shared_ptr<Node> pnode(*(reinterpret_cast<std::shared_ptr<Node>*>(arg)));
     
     int64_t now = util::GetTimeSeconds();
-    if (pnode->time().time_last_recv == 0 || pnode->time().time_last_send == 0)
-    {
+    if (pnode->time().time_last_recv == 0 || pnode->time().time_last_send == 0) {
         BTCLOG(LOG_LEVEL_INFO) << "socket no message in first 60 seconds, "
-                               << pnode->time().time_last_recv << " " << pnode->time().time_last_send
-                               << " from " << pnode->id();
-        pnode->mutable_connection()->set_disconnected(true);
+                               << pnode->time().time_last_recv << " " 
+                               << pnode->time().time_last_send << " from " 
+                               << pnode->id();
+        pnode->mutable_connection()->set_connection_state(NodeConnection::kDisconnected);
     }
-    else if (now - pnode->time().time_last_send > kConnTimeoutInterval)
-    {
-        BTCLOG(LOG_LEVEL_INFO) << "socket sending timeout: " << (now - pnode->time().time_last_send);
-        pnode->mutable_connection()->set_disconnected(true);
+    else if (now - pnode->time().time_last_send > kConnTimeoutInterval) {
+        BTCLOG(LOG_LEVEL_INFO) << "socket sending timeout: " 
+                               << (now - pnode->time().time_last_send);
+        pnode->mutable_connection()->set_connection_state(NodeConnection::kDisconnected);
     }
     else if (now - pnode->time().time_last_recv > (pnode->protocol().version() > 
-             kBip31Version ? kConnTimeoutInterval : 90*60))
-    {
-        BTCLOG(LOG_LEVEL_INFO) << "socket receive timeout: " << (now - pnode->time().time_last_recv);
-        pnode->mutable_connection()->set_disconnected(true);
+             kBip31Version ? kConnTimeoutInterval : 90*60)) {
+        BTCLOG(LOG_LEVEL_INFO) << "socket receive timeout: " 
+                               << (now - pnode->time().time_last_recv);
+        pnode->mutable_connection()->set_connection_state(NodeConnection::kDisconnected);
     }
     else if (pnode->time().ping_time.ping_nonce_sent &&
              pnode->time().ping_time.ping_usec_start + kConnTimeoutInterval * 1000000 < 
-             util::GetTimeMicros())
-    {
+             util::GetTimeMicros()) {
         BTCLOG(LOG_LEVEL_INFO) << "ping timeout: " 
                                << (now - pnode->time().ping_time.ping_usec_start / 1000000);
-        pnode->mutable_connection()->set_disconnected(true);
+        pnode->mutable_connection()->set_connection_state(NodeConnection::kDisconnected);
     }
-    else if (!pnode->connection().established())
-    {
+    else if (pnode->connection().connection_state() != NodeConnection::kEstablished) {
         BTCLOG(LOG_LEVEL_INFO) << "version handshake timeout from " << pnode->id();
-        pnode->mutable_connection()->set_disconnected(true);
+        pnode->mutable_connection()->set_connection_state(NodeConnection::kDisconnected);
     }
 }
 

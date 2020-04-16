@@ -12,7 +12,7 @@ using namespace network;
 
 TEST(AcceptorTest, Constructor)
 {
-    network::Params params(BaseEnv::testnet, util::Args());
+    network::Params params(BtcNet::kTestNet, util::Args());
     Acceptor acceptor(params);
     const struct sockaddr_in6& sock_addr = acceptor.sock_addr();
     ASSERT_EQ(sock_addr.sin6_family, AF_INET6);
@@ -23,7 +23,7 @@ TEST(AcceptorTest, Constructor)
 
 TEST(AcceptorTest, MethordAcceptConnCb)
 {
-    network::Params params(BaseEnv::testnet, util::Args());
+    network::Params params(BtcNet::kTestNet, util::Args());
     Acceptor acceptor(params);
     struct event_base *base;
     struct evconnlistener *listener;
@@ -61,7 +61,7 @@ TEST(AcceptorTest, MethordAcceptConnCb)
     
     inet_pton(AF_INET6, "::ffff:1.2.3.250", client_addr.sin6_addr.s6_addr);
     NetAddr addr(client_addr);
-    SingletonBanDb::GetInstance().Add(addr, BanDb::BanReason::NodeMisbehaving);
+    SingletonBanDb::GetInstance().Add(addr, BanDb::BanReason::kNodeMisbehaving);
     acceptor.AcceptConnCb(listener, fd, (struct sockaddr*)&client_addr, sizeof(client_addr), nullptr);
     EXPECT_EQ(SingletonNodes::GetInstance().CountInbound(), count);  
     

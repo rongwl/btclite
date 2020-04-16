@@ -18,7 +18,7 @@ using namespace network;
 TEST(ConnectorTest, ConnectNode)
 {
     std::vector<NetAddr> addrs;
-    network::Params params(BaseEnv::testnet, util::Args());
+    network::Params params(BtcNet::kTestNet, util::Args());
     Connector connector(params);
     
     // init libevent
@@ -37,7 +37,7 @@ TEST(ConnectorTest, ConnectNode)
     
     // banned addr
     addrs[0].SetIpv4(inet_addr("1.2.3.4"));
-    SingletonBanDb::GetInstance().Add(addrs[0], BanDb::BanReason::NodeMisbehaving, false);
+    SingletonBanDb::GetInstance().Add(addrs[0], BanDb::BanReason::kNodeMisbehaving, false);
     EXPECT_FALSE(connector.ConnectNodes(addrs));
     
     LookupHost(std::string("x9.seed.tbtc.petertodd.org").c_str(), &addrs[0], true, 18333);
@@ -51,7 +51,7 @@ TEST(ConnectorTest, ConnectNode)
 
 TEST(ConnectorTest, GetHostAddr)
 {
-    network::Params params(BaseEnv::testnet, util::Args());
+    network::Params params(BtcNet::kTestNet, util::Args());
     Connector connector(params);
     NetAddr addr;
     
@@ -70,7 +70,7 @@ TEST(ConnectorTest, GetHostAddr)
 
 TEST(ConnectorTest, ConnectOutbound)
 {
-    network::Params params(BaseEnv::testnet, util::Args());
+    network::Params params(BtcNet::kTestNet, util::Args());
     Connector connector(params);
     NetAddr addr, source;
     
@@ -101,7 +101,7 @@ TEST(ConnectorTest, ConnectOutbound)
 TEST(ConnectorTest, DnsLookup)
 {
     ASSERT_TRUE(SingletonPeers::GetInstance().IsEmpty());
-    ASSERT_TRUE(Connector::DnsLookup(Params(BaseEnv::testnet, util::Args()).seeds(), 18333));
+    ASSERT_TRUE(Connector::DnsLookup(Params(BtcNet::kTestNet, util::Args()).seeds(), 18333));
     EXPECT_FALSE(SingletonPeers::GetInstance().IsEmpty());
     SingletonPeers::GetInstance().Clear();
 }

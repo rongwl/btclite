@@ -6,7 +6,7 @@
 namespace btclite {
 namespace network {
 
-Params::Params(BaseEnv env, const util::Args& args)
+Params::Params(BtcNet btcnet, const util::Args& args)
 {
     if (args.IsArgSet(FULLNODE_OPTION_CONNECT)) {
         advertise_local_addr_ = false;
@@ -15,8 +15,8 @@ Params::Params(BaseEnv env, const util::Args& args)
         specified_outgoing_ = args.GetArgs(FULLNODE_OPTION_CONNECT);
     }
     
-    switch (env) {
-        case BaseEnv::mainnet :
+    switch (btcnet) {
+        case BtcNet::kMainNet :
         {
             msg_magic_ = kMainMagic;
             default_port_ = 8333;
@@ -34,7 +34,7 @@ Params::Params(BaseEnv env, const util::Args& args)
 
             break;
         }
-        case BaseEnv::testnet :
+        case BtcNet::kTestNet :
         {
             msg_magic_ = kTestnetMagic;
             default_port_ = 18333;
@@ -48,7 +48,7 @@ Params::Params(BaseEnv env, const util::Args& args)
             
             break;
         }
-        case BaseEnv::regtest : 
+        case BtcNet::kRegTest : 
         {
             msg_magic_ = kRegtestMagic;
             default_port_ = 18444;

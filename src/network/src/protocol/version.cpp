@@ -38,7 +38,7 @@ bool Version::RecvHandler(std::shared_ptr<Node> src_node, const Params& params) 
         std::stringstream ss;
         ss << "Expected to offer services " << std::showbase << std::hex 
            << kDesirableServiceFlags;
-        src_node->mutable_connection()->set_disconnected(true);
+        src_node->mutable_connection()->set_connection_state(NodeConnection::kDisconnected);
         return false;
     }
     
@@ -48,7 +48,7 @@ bool Version::RecvHandler(std::shared_ptr<Node> src_node, const Params& params) 
             // These bits have been used as a flag to indicate that a node is running incompatible
             // consensus rules instead of changing the network magic, so we're stuck disconnecting
             // based on these service bits, at least for a while.
-            src_node->mutable_connection()->set_disconnected(true);
+            src_node->mutable_connection()->set_connection_state(NodeConnection::kDisconnected);
             return false;
         }
     }
@@ -59,7 +59,7 @@ bool Version::RecvHandler(std::shared_ptr<Node> src_node, const Params& params) 
                                << protocol_version_  << '.';
         std::stringstream ss;
         ss << "Version must be " << kMinPeerProtoVersion << " or greater";
-        src_node->mutable_connection()->set_disconnected(true);
+        src_node->mutable_connection()->set_connection_state(NodeConnection::kDisconnected);
         return false;
     }
     
@@ -68,7 +68,7 @@ bool Version::RecvHandler(std::shared_ptr<Node> src_node, const Params& params) 
         BTCLOG(LOG_LEVEL_INFO) << "Disconnecting peer " << src_node->id()
                                << " for connecting to self at " 
                                << src_node->connection().addr().ToString();
-        src_node->mutable_connection()->set_disconnected(true);
+        src_node->mutable_connection()->set_connection_state(NodeConnection::kDisconnected);
         return true;
     }
     

@@ -176,7 +176,7 @@ bool ParseMsg(std::shared_ptr<Node> src_node, const Params& params)
                               src_node->mutable_connection()->mutable_bev())))
         return false;
 
-    if (src_node->connection().disconnected())
+    if (src_node->connection().connection_state() == NodeConnection::kDisconnected)
         return false;
     
     if (nullptr == (raw = evbuffer_pullup(buf, MessageHeader::kSize)))
@@ -189,7 +189,7 @@ bool ParseMsg(std::shared_ptr<Node> src_node, const Params& params)
         if (header.payload_length() > kMaxMessageSize) {
             BTCLOG(LOG_LEVEL_ERROR) << "Oversized message from peer "                                    
                                     << src_node->id() << ", disconnecting";
-            src_node->mutable_connection()->set_disconnected(true);
+            src_node->mutable_connection()->set_connection_state(NodeConnection::kDisconnected);
             return false;
         }
         

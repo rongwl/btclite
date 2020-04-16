@@ -11,27 +11,27 @@ void SetThreadName(const char* name)
 
 ThreadInterrupt::operator bool() const
 {
-    return flag.load(std::memory_order_acquire);
+    return flag_.load(std::memory_order_acquire);
 }
 
 void ThreadInterrupt::Reset()
 {
-    flag.store(false, std::memory_order_release);
+    flag_.store(false, std::memory_order_release);
 }
 
 void ThreadInterrupt::Interrupt()
 {
     {
-        std::unique_lock<std::mutex> lock(mut);
-        flag.store(true, std::memory_order_release);
+        std::unique_lock<std::mutex> lock(mutex_);
+        flag_.store(true, std::memory_order_release);
     }
-    cond.notify_all();
+    cond_.notify_all();
 }
 
 bool ThreadInterrupt::Sleep_for(std::chrono::milliseconds rel_time)
 {
-    std::unique_lock<std::mutex> lock(mut);
-    return !cond.wait_for(lock, rel_time, [this]() { return flag.load(std::memory_order_acquire); });
+    std::unique_lock<std::mutex> lock(mutex_);
+    return !cond_.wait_for(lock, rel_time, [this]() { return flag_.load(std::memory_order_acquire); });
 }
 
 bool ThreadInterrupt::Sleep_for(std::chrono::seconds rel_time)

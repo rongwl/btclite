@@ -4,7 +4,7 @@
 #include <cstdint>
 
 #include "block.h"
-#include "environment.h"
+#include "btcnet.h"
 #include "util.h"
 
 
@@ -73,7 +73,7 @@ int64_t DifficultyAdjustmentInterval() const
 */
 class Params {
 public:
-    Params(BaseEnv env);
+    Params(BtcNet btcnet);
     
     const chain::Block& GenesisBlock() const
     {
@@ -103,9 +103,9 @@ private:
 
 class SingletonParams : util::Uncopyable {
 public:
-    static Params& GetInstance(BaseEnv env = BaseEnv::mainnet)
+    static Params& GetInstance(BtcNet btcnet = BtcNet::kMainNet)
     {
-        static Params params(env);
+        static Params params(btcnet);
         return params;
     }
     
@@ -150,7 +150,7 @@ public:
         MAX_BASE58_TYPES
     };
     
-    Params(BaseEnv env);
+    Params(BtcNet btcnet);
 
     //-------------------------------------------------------------------------
     const consensus::Params& consensus_params() const
@@ -194,15 +194,15 @@ private:
 
 class SingletonParams : util::Uncopyable {
 public:
-    static Params& GetInstance(BaseEnv env)
+    static Params& GetInstance(BtcNet btcnet)
     {
-        static Params params(env);
+        static Params params(btcnet);
         return params;
     }
     
     static Params& GetInstance()
     {
-        return GetInstance(BaseEnv::mainnet);
+        return GetInstance(BtcNet::kMainNet);
     }
     
 private:

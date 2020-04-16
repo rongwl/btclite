@@ -53,7 +53,7 @@ TEST(CollectionTimerTest, CheckDisconnectedNodes)
     
     addr.SetIpv4(inet_addr("1.1.1.1"));
     std::shared_ptr<Node> node = std::make_shared<Node>(nullptr, addr);
-    node->mutable_connection()->set_disconnected(true);
+    node->mutable_connection()->set_connection_state(NodeConnection::kDisconnected);
     nodes.AddNode(node);
     
     EXPECT_NE(nodes.GetNode(node->id()), nullptr);

@@ -45,7 +45,7 @@ BTCLITE_HEADER_FILES = \
                        chain/include/script.h \
                        chain/include/script_witness.h \
                        chain/include/transaction.h \
-                       config/environment.h \
+                       config/btcnet.h \
                        fullnode/include/clientversion.h \
                        fullnode/include/config.h \
                        network/include/acceptor.h \

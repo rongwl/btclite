@@ -75,7 +75,7 @@ TEST_F(NodesTest, CheckIncomingNonce)
     EXPECT_FALSE(nodes_.CheckIncomingNonce(node1->local_host_nonce()));
     EXPECT_TRUE(nodes_.CheckIncomingNonce(1234));
     EXPECT_TRUE(nodes_.CheckIncomingNonce(node2->local_host_nonce()));
-    node1->mutable_connection()->set_established(true);
+    node1->mutable_connection()->set_connection_state(NodeConnection::kEstablished);
     EXPECT_TRUE(nodes_.CheckIncomingNonce(node1->local_host_nonce()));
 }
 
@@ -85,8 +85,8 @@ TEST_F(NodesTest, ClearDisconnected)
     auto node1 = nodes_.GetNode(id1_);
     auto node2 = nodes_.GetNode(id2_);
     
-    node1->mutable_connection()->set_disconnected(true);
-    node2->mutable_connection()->set_disconnected(true);
+    node1->mutable_connection()->set_connection_state(NodeConnection::kDisconnected);
+    node2->mutable_connection()->set_connection_state(NodeConnection::kDisconnected);
     nodes_.ClearDisconnected(&vec);
     EXPECT_EQ(nodes_.GetNode(id1_), nullptr);
     EXPECT_EQ(nodes_.GetNode(id2_), nullptr);
@@ -106,9 +106,9 @@ TEST_F(NodesTest, DisconnectNode)
     SubNet subnet(addr1_, netmask);
     nodes_.DisconnectNode(subnet);
     
-    EXPECT_TRUE(node1->connection().disconnected());
-    EXPECT_TRUE(node2->connection().disconnected());
-    EXPECT_TRUE(node3->connection().disconnected());
+    EXPECT_EQ(node1->connection().connection_state(), NodeConnection::kDisconnected);
+    EXPECT_EQ(node2->connection().connection_state(), NodeConnection::kDisconnected);
+    EXPECT_EQ(node3->connection().connection_state(), NodeConnection::kDisconnected);
 }
 
 TEST_F(NodesTest, InboundCount)
@@ -171,7 +171,7 @@ TEST_F(NodeTest, HandleInactiveTimeout)
     std::shared_ptr<Node> node = nodes.GetNode(id_);
     ASSERT_NE(node, nullptr);
     node->InactivityTimeoutCb(node);
-    EXPECT_TRUE(node->connection().disconnected());
+    EXPECT_EQ(node->connection().connection_state(), NodeConnection::kDisconnected);
 }
 
 TEST_F(NodeTest, CheckBanned)
@@ -182,7 +182,7 @@ TEST_F(NodeTest, CheckBanned)
     
     node->mutable_misbehavior()->set_should_ban(true);
     ASSERT_TRUE(node->CheckBanned());
-    EXPECT_TRUE(node->connection().disconnected());
+    EXPECT_EQ(node->connection().connection_state(), NodeConnection::kDisconnected);
     EXPECT_TRUE(SingletonBanDb::GetInstance().IsBanned(addr_));
 
     SingletonBanDb::GetInstance().Clear();

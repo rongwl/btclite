@@ -9,7 +9,7 @@ void Bip9Params::UpdateVersionBitsParameters(Bip9Deployment::Deployment d, int64
 
 }
 
-Params::Params(BaseEnv env)
+Params::Params(BtcNet btcnet)
 {
 
 }
@@ -66,8 +66,8 @@ void Params::CreateGenesisBlock(uint32_t time, uint32_t nonce, uint32_t bits, in
 
 namespace chain {
 
-Params::Params(BaseEnv env)
-    : consensus_params_(consensus::SingletonParams::GetInstance(env))
+Params::Params(BtcNet btcnet)
+    : consensus_params_(consensus::SingletonParams::GetInstance(btcnet))
 {
 
 }

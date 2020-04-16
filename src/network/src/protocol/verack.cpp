@@ -37,7 +37,7 @@ bool Verack::RecvHandler(std::shared_ptr<Node> src_node, const Params& params) c
         send_compact.set_version(1);
         SendMsg(send_compact, params.msg_magic(), src_node);
     }
-    src_node->mutable_connection()->set_established(true);
+    src_node->mutable_connection()->set_connection_state(NodeConnection::kEstablished);
     
     // send ping
     Ping ping(util::RandUint64());

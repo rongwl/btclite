@@ -37,7 +37,7 @@ void FullNodeConfig::ParseParameters(int argc, const char* const argv[])
                 if (fullnode_options[option_index].has_arg) {
                     str_val = std::string(optarg);
                     if (str_val.empty()) {
-                        throw Exception(ErrorCode::invalid_option, "option '--" + str + "' requires an argument");
+                        throw Exception(ErrorCode::kInvalidOption, "option '--" + str + "' requires an argument");
                     }
                 }
 
@@ -46,7 +46,7 @@ void FullNodeConfig::ParseParameters(int argc, const char* const argv[])
             }
             case 'h' :
             case '?' :
-                throw Exception(ErrorCode::show_help, "");
+                throw Exception(ErrorCode::kShowHelp, "");
                 break;
             default :
                 break;
@@ -54,12 +54,12 @@ void FullNodeConfig::ParseParameters(int argc, const char* const argv[])
         option_index = 0;
     }
     
-    CheckArguments();
+    CheckArgs();
 }
 
-void FullNodeConfig::CheckArguments() const
+void FullNodeConfig::CheckArgs() const
 {
-    ExecutorConfig::CheckArguments();
+    ExecutorConfig::CheckArgs();
     
     // --connect
     if (args_.IsArgSet(FULLNODE_OPTION_CONNECT)) {
@@ -72,7 +72,7 @@ void FullNodeConfig::CheckArguments() const
                               };
         auto result = std::find_if(arg_values.begin(), arg_values.end(), is_invalid_ip);
         if (result != arg_values.end())
-            throw Exception(ErrorCode::invalid_argument, "invalid ip '" + *result + "'");
+            throw Exception(ErrorCode::kInvalidArg, "invalid ip '" + *result + "'");
     }
 }
 
@@ -92,23 +92,23 @@ void FullNodeHelpInfo::PrintUsage()
 bool FullNodeConfig::InitDataDir()
 {
     const fs::path path_default_data_dir_ = PathHome() / DEFAULT_DATA_DIR;
-    std::string str_category_dir = "mainnet";
+    std::string dir_name = "mainnet";
 
-    if (env_ == BaseEnv::testnet)
-        str_category_dir = "testnet";
-    else if (env_ == BaseEnv::regtest)
-        str_category_dir = "regtest";    
-    path_data_dir_ = path_default_data_dir_ / str_category_dir;
+    if (btcnet_ == BtcNet::kTestNet)
+        dir_name = "testnet";
+    else if (btcnet_ == BtcNet::kRegTest)
+        dir_name = "regtest";    
+    path_data_dir_ = path_default_data_dir_ / dir_name;
     
     if (args_.IsArgSet(GLOBAL_OPTION_DATADIR)) {
         const std::string path = args_.GetArg(GLOBAL_OPTION_DATADIR, DEFAULT_DATA_DIR);
         if (fs::is_directory(path))
-            path_data_dir_ = fs::path(path) / str_category_dir;
+            path_data_dir_ = fs::path(path) / dir_name;
         else
             BTCLOG(LOG_LEVEL_WARNING) << "Specified data path \"" << path << "\" does not exist. Use default data path.";
     }
 
-    if (path_data_dir_ == path_default_data_dir_ / str_category_dir)
+    if (path_data_dir_ == path_default_data_dir_ / dir_name)
         fs::create_directories(path_data_dir_); // create default data dir if it does not exist
     
     config_file_ = DEFAULT_CONFIG_FILE;

@@ -39,7 +39,7 @@ void Ping::PingTimeoutCb(std::shared_ptr<Node> node, uint32_t magic)
     if (SingletonNetInterrupt::GetInstance())
         return;
     
-    if (node->connection().disconnected() || !node->connection().established()) {
+    if (node->connection().connection_state() == NodeConnection::kDisconnected) {
         util::SingletonTimerMng::GetInstance().StopTimer(node->timers().ping_timer);
         return;
     }
@@ -47,7 +47,7 @@ void Ping::PingTimeoutCb(std::shared_ptr<Node> node, uint32_t magic)
     if (node->time().ping_time.ping_nonce_sent) {
         BTCLOG(LOG_LEVEL_WARNING) << "Peer " << node->id() << " ping timeout.";
         util::SingletonTimerMng::GetInstance().StopTimer(node->timers().ping_timer);
-        node->mutable_connection()->set_disconnected(true);
+        node->mutable_connection()->set_connection_state(NodeConnection::kDisconnected);
         return;
     }
     

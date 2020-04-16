@@ -24,7 +24,7 @@ bool BanDb::Add(const SubNet& sub_net, const BanReason& ban_reason, bool dump_li
     
     SingletonNodes::GetInstance().DisconnectNode(sub_net);
     
-    if (ban_reason == BanReason::ManuallyAdded && dump_list)
+    if (ban_reason == BanReason::kManuallyAdded && dump_list)
         DumpBanList();
 
     return true;

@@ -55,11 +55,11 @@ void HelpInfo::PrintUsage()
 
 }
 
-void ExecutorConfig::CheckArguments() const
+void ExecutorConfig::CheckArgs() const
 {
     // --testnet and --regtest
     if (args_.IsArgSet(GLOBAL_OPTION_TESTNET) && args_.IsArgSet(GLOBAL_OPTION_REGTEST)) 
-        throw Exception(ErrorCode::invalid_option, "invalid combination of --testnet and --regtest");
+        throw Exception(ErrorCode::kInvalidOption, "invalid combination of --testnet and --regtest");
     
     // --debug
     if (args_.IsArgSet(GLOBAL_OPTION_DEBUG)) {
@@ -69,7 +69,7 @@ void ExecutorConfig::CheckArguments() const
             auto result = std::find_if(arg_values.begin(), arg_values.end(), 
             [](const std::string& module) { return Logging::MapIntoModule(module) == Logging::NONE; });
             if (result != arg_values.end())
-                throw Exception(ErrorCode::invalid_argument, "invalid module '" + *result + "'");
+                throw Exception(ErrorCode::kInvalidArg, "invalid module '" + *result + "'");
         }
     }
     
@@ -81,10 +81,10 @@ void ExecutorConfig::CheckArguments() const
             level = std::stoi(arg_val);
         }
         catch (const std::exception& e) {
-            throw Exception(ErrorCode::invalid_argument, "invalid loglevel '" + arg_val + "'");
+            throw Exception(ErrorCode::kInvalidArg, "invalid loglevel '" + arg_val + "'");
         }
         if (level < 0 || level >= LOG_LEVEL_MAX) {
-            throw Exception(ErrorCode::invalid_argument, "invalid loglevel '" + arg_val + "'");
+            throw Exception(ErrorCode::kInvalidArg, "invalid loglevel '" + arg_val + "'");
         }
     }
 }
@@ -120,15 +120,15 @@ bool ExecutorConfig::InitParameters()
     else
         BTCLOG(LOG_LEVEL_INFO) << "default log level: " << DEFAULT_LOG_LEVEL;
     
-    // chain category
-    env_ = BaseEnv::mainnet;
+    // bitcoin network
+    btcnet_ = BtcNet::kMainNet;
     if (args_.IsArgSet(GLOBAL_OPTION_TESTNET)) {
-        env_ = BaseEnv::testnet;
-        BTCLOG(LOG_LEVEL_INFO) << "set chain category: testnet";
+        btcnet_ = BtcNet::kTestNet;
+        BTCLOG(LOG_LEVEL_INFO) << "set bitcoin network: testnet";
     }
     else if (args_.IsArgSet(GLOBAL_OPTION_REGTEST)) {
-        env_ = BaseEnv::regtest;
-        BTCLOG(LOG_LEVEL_INFO) << "set chain category: regtest";
+        btcnet_ = BtcNet::kRegTest;
+        BTCLOG(LOG_LEVEL_INFO) << "set bitcoin network: regtest";
     }
     
     return true;
@@ -138,13 +138,13 @@ bool ExecutorConfig::InitParameters()
 void ExecutorConfig::CheckOptions(int argc, const char* const argv[])
 {
     if (argc == 0 || argv == nullptr)
-        throw Exception(ErrorCode::invalid_argument, "argument is null");
+        throw Exception(ErrorCode::kInvalidArg, "argument is null");
     
     for (int i = 1; i < argc; i++) {
         std::string str(argv[i]);
         if ((str.length() > 2 && str.compare(0, 2, "--")) ||
             !str.compare("--")) {
-            throw Exception(ErrorCode::invalid_option, "invalid option '" + str + "'");
+            throw Exception(ErrorCode::kInvalidOption, "invalid option '" + str + "'");
         }
     }
 }

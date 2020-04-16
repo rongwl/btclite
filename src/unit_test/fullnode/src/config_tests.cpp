@@ -19,13 +19,13 @@ TEST(FullNodeArgsTest, OptionHelp)
         argv[1] = const_cast<char*>(argv1.c_str());
         args.Clear();
         args.Init(2, argv);
-        FAIL() << "expected ErrorCode::show_help";
+        FAIL() << "expected ErrorCode::kShowHelp";
     }
     catch (const Exception& e) {
-        EXPECT_EQ(e.code().value(), ErrorCode::show_help);
+        EXPECT_EQ(e.code().value(), ErrorCode::kShowHelp);
     }
     catch (...) {
-        FAIL() << "Expected ErrorCode::show_help";
+        FAIL() << "Expected ErrorCode::kShowHelp";
     }
 
     optind = 1;
@@ -37,13 +37,13 @@ TEST(FullNodeArgsTest, OptionHelp)
         argv[1] = const_cast<char*>(argv1.c_str());
         args.Clear();
         args.Init(2, argv);
-        FAIL() << "expected ErrorCode::show_help";
+        FAIL() << "expected ErrorCode::kShowHelp";
     }
     catch (const Exception& e) {
-        EXPECT_EQ(e.code().value(), ErrorCode::show_help);
+        EXPECT_EQ(e.code().value(), ErrorCode::kShowHelp);
     }
     catch (...) {
-        FAIL() << "Expected ErrorCode::show_help";
+        FAIL() << "Expected ErrorCode::kShowHelp";
     }
     
     optind = 1;
@@ -55,13 +55,13 @@ TEST(FullNodeArgsTest, OptionHelp)
         argv[1] = const_cast<char*>(argv1.c_str());
         args.Clear();
         args.Init(2, argv);
-        FAIL() << "expected ErrorCode::show_help";
+        FAIL() << "expected ErrorCode::kShowHelp";
     }
     catch (const Exception& e) {
-        EXPECT_EQ(e.code().value(), ErrorCode::show_help);
+        EXPECT_EQ(e.code().value(), ErrorCode::kShowHelp);
     }
     catch (...) {
-        FAIL() << "Expected ErrorCode::show_help";
+        FAIL() << "Expected ErrorCode::kShowHelp";
     }
 }
 
@@ -103,13 +103,13 @@ TEST(FullNodeArgsTest, OptionLog)
         argv[1] = const_cast<char*>(argv1.c_str());
         args.Clear();
         args.Init(2, argv);
-        FAIL() << "expected ErrorCode::invalid_argument";
+        FAIL() << "expected ErrorCode::kInvalidArg";
     }
     catch (const Exception& e) {
-        EXPECT_EQ(e.code().value(), ErrorCode::invalid_argument);
+        EXPECT_EQ(e.code().value(), ErrorCode::kInvalidArg);
     }
     catch (...) {
-        FAIL() << "Expected ErrorCode::invalid_argument";
+        FAIL() << "Expected ErrorCode::kInvalidArg";
     }
     
     optind = 1;
@@ -121,13 +121,13 @@ TEST(FullNodeArgsTest, OptionLog)
         argv[1] = const_cast<char*>(argv1.c_str());
         args.Clear();
         args.Init(2, argv);
-        FAIL() << "expected ErrorCode::invalid_argument";
+        FAIL() << "expected ErrorCode::kInvalidArg";
     }
     catch (const Exception& e) {
-        EXPECT_EQ(e.code().value(), ErrorCode::invalid_argument);
+        EXPECT_EQ(e.code().value(), ErrorCode::kInvalidArg);
     }
     catch (...) {
-        FAIL() << "Expected ErrorCode::invalid_argument";
+        FAIL() << "Expected ErrorCode::kInvalidArg";
     }
     
     optind = 1;
@@ -139,13 +139,13 @@ TEST(FullNodeArgsTest, OptionLog)
         argv[1] = const_cast<char*>(argv1.c_str());
         args.Clear();
         args.Init(2, argv);
-        FAIL() << "expected ErrorCode::invalid_argument";
+        FAIL() << "expected ErrorCode::kInvalidArg";
     }
     catch (const Exception& e) {
-        EXPECT_EQ(e.code().value(), ErrorCode::invalid_argument);
+        EXPECT_EQ(e.code().value(), ErrorCode::kInvalidArg);
     }
     catch (...) {
-        FAIL() << "Expected ErrorCode::invalid_argument";
+        FAIL() << "Expected ErrorCode::kInvalidArg";
     }
     
     optind = 1;
@@ -157,13 +157,13 @@ TEST(FullNodeArgsTest, OptionLog)
         argv[1] = const_cast<char*>(argv1.c_str());
         args.Clear();
         args.Init(2, argv);
-        FAIL() << "expected ErrorCode::invalid_argument";
+        FAIL() << "expected ErrorCode::kInvalidArg";
     }
     catch (const Exception& e) {
-        EXPECT_EQ(e.code().value(), ErrorCode::invalid_argument);
+        EXPECT_EQ(e.code().value(), ErrorCode::kInvalidArg);
     }
     catch (...) {
-        FAIL() << "Expected ErrorCode::invalid_argument";
+        FAIL() << "Expected ErrorCode::kInvalidArg";
     }
 }
 
@@ -220,13 +220,13 @@ TEST(FullNodeArgsTest, OptionChain)
         argv[2] = const_cast<char*>(argv2.c_str());
         args.Clear();
         args.Init(3, argv);
-        FAIL() << "expected ErrorCode::invalid_option";
+        FAIL() << "expected ErrorCode::kInvalidOption";
     }
     catch (const Exception& e) {
-        EXPECT_EQ(e.code().value(), ErrorCode::invalid_option);
+        EXPECT_EQ(e.code().value(), ErrorCode::kInvalidOption);
     }
     catch (...) {
-        FAIL() << "Expected ErrorCode::invalid_option";
+        FAIL() << "Expected ErrorCode::kInvalidOption";
     }
 }
 
@@ -296,13 +296,13 @@ TEST(FullNodeArgsTest, OptionConnection)
         argv[1] = const_cast<char*>(argv1.c_str());
         args.Clear();
         args.Init(2, argv);
-        FAIL() << "expected ErrorCode::invalid_argument";
+        FAIL() << "expected ErrorCode::kInvalidArg";
     }
     catch (const Exception& e) {
-        EXPECT_EQ(e.code().value(), ErrorCode::invalid_argument);
+        EXPECT_EQ(e.code().value(), ErrorCode::kInvalidArg);
     }
     catch (...) {
-        FAIL() << "expected ErrorCode::invalid_argument";
+        FAIL() << "expected ErrorCode::kInvalidArg";
     }
     
     optind = 1;
@@ -314,13 +314,13 @@ TEST(FullNodeArgsTest, OptionConnection)
         argv[1] = const_cast<char*>(argv1.c_str());
         args.Clear();
         args.Init(2, argv);
-        FAIL() << "expected ErrorCode::invalid_argument";
+        FAIL() << "expected ErrorCode::kInvalidArg";
     }
     catch (const Exception& e) {
-        EXPECT_EQ(e.code().value(), ErrorCode::invalid_argument);
+        EXPECT_EQ(e.code().value(), ErrorCode::kInvalidArg);
     }
     catch (...) {
-        FAIL() << "expected ErrorCode::invalid_argument";
+        FAIL() << "expected ErrorCode::kInvalidArg";
     }
     
     optind = 1;
@@ -367,13 +367,13 @@ TEST(FullNodeArgsTest, InvalidOption)
         argv[1] = const_cast<char*>(argv1.c_str());        
         args.Clear();
         args.Init(2, argv);
-        FAIL() << "expected ErrorCode::invalid_option";
+        FAIL() << "expected ErrorCode::kInvalidOption";
     }
     catch (const Exception& e) {
-        EXPECT_EQ(e.code().value(), ErrorCode::invalid_option);
+        EXPECT_EQ(e.code().value(), ErrorCode::kInvalidOption);
     }
     catch (...) {
-        FAIL() << "Expected ErrorCode::invalid_option";
+        FAIL() << "Expected ErrorCode::kInvalidOption";
     }
     
     optind = 1;
@@ -385,13 +385,13 @@ TEST(FullNodeArgsTest, InvalidOption)
         argv[1] = const_cast<char*>(argv1.c_str());        
         args.Clear();
         args.Init(2, argv);
-        FAIL() << "expected ErrorCode::invalid_option";
+        FAIL() << "expected ErrorCode::kInvalidOption";
     }
     catch (const Exception& e) {
-        EXPECT_EQ(e.code().value(), ErrorCode::invalid_option);
+        EXPECT_EQ(e.code().value(), ErrorCode::kInvalidOption);
     }
     catch (...) {
-        FAIL() << "Expected ErrorCode::invalid_option";
+        FAIL() << "Expected ErrorCode::kInvalidOption";
     }
 }
 

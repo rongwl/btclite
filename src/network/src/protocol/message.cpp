@@ -90,7 +90,7 @@ bool CheckMisbehaving(const std::string command, std::shared_ptr<Node> src_node)
     
     // Must have a verack message before anything else
     if (command != msg_command::kMsgVersion && command != msg_command::kMsgVerack &&
-            !src_node->connection().established())
+            src_node->connection().connection_state() != NodeConnection::kEstablished)
         return false;
     
     return true;

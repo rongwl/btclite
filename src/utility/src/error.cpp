@@ -16,15 +16,15 @@ std::string BtcliteErrCategory::message(int code) const noexcept
 {
     static const std::unordered_map<int, std::string> messages =
         {
-            { static_cast<std::underlying_type_t<ErrorCode> >(ErrorCode::success), 
+            { static_cast<std::underlying_type_t<ErrorCode> >(ErrorCode::kSuccess), 
             "success" },
             
             // args
-            { static_cast<std::underlying_type_t<ErrorCode> >(ErrorCode::show_help), 
+            { static_cast<std::underlying_type_t<ErrorCode> >(ErrorCode::kShowHelp), 
             ""}, 
-            { static_cast<std::underlying_type_t<ErrorCode> >(ErrorCode::invalid_option), 
+            { static_cast<std::underlying_type_t<ErrorCode> >(ErrorCode::kInvalidOption), 
             "unrecognized option" },
-            { static_cast<std::underlying_type_t<ErrorCode> >(ErrorCode::invalid_argument),
+            { static_cast<std::underlying_type_t<ErrorCode> >(ErrorCode::kInvalidArg),
             "unsupported argument" },
         };
         

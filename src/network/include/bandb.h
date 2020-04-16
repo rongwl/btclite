@@ -14,9 +14,9 @@ namespace network {
 class BanDb {
 public:
     enum class BanReason {
-        Unknown          = 0,
-        NodeMisbehaving  = 1,
-        ManuallyAdded    = 2
+        kUnknown          = 0,
+        kNodeMisbehaving  = 1,
+        kManuallyAdded    = 2
     };
     
     explicit BanDb(const fs::path& path)

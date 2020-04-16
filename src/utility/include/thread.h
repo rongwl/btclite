@@ -36,9 +36,9 @@ public:
     bool Sleep_for(std::chrono::minutes rel_time);
 
 private:
-    std::condition_variable cond;
-    std::mutex mut;
-    std::atomic<bool> flag;
+    std::condition_variable cond_;
+    std::mutex mutex_;
+    std::atomic<bool> flag_;
 };
 
 

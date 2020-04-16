@@ -122,20 +122,20 @@ void ConnEventCb(struct bufferevent *bev, short events, void *ctx)
         
     }
     else if (events & BEV_EVENT_EOF) {
-        if (!pnode->connection().disconnected())
-            BTCLOG(LOG_LEVEL_WARNING) << "peer " << pnode->id() << " socket closed";
-        pnode->mutable_connection()->set_established(false);
-        pnode->mutable_connection()->set_disconnected(true);
+        if (pnode->connection().connection_state() != NodeConnection::kDisconnected)
+            BTCLOG(LOG_LEVEL_WARNING) << "peer " << pnode->id() 
+                                      << " socket closed";
+        pnode->mutable_connection()->set_connection_state(NodeConnection::kDisconnected);
     }
     else if (events & BEV_EVENT_ERROR) {
-        if (errno != EWOULDBLOCK && errno != EMSGSIZE && errno != EINTR && errno != EINPROGRESS)
+        if (errno != EWOULDBLOCK && errno != EMSGSIZE && 
+                errno != EINTR && errno != EINPROGRESS)
         {
-            if (!pnode->connection().disconnected()) {
+            if (pnode->connection().connection_state() != NodeConnection::kDisconnected) {
                 BTCLOG(LOG_LEVEL_ERROR) << "peer " << pnode->id() << " socket recv error:"
                                         << std::string(strerror(errno));
             }
-            pnode->mutable_connection()->set_established(false);
-            pnode->mutable_connection()->set_disconnected(true);
+            pnode->mutable_connection()->set_connection_state(NodeConnection::kDisconnected);
         }
     }
 }

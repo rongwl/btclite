@@ -6,14 +6,13 @@ namespace btclite {
 namespace network {
 
 P2P::P2P(const util::ExecutorConfig& config)
-    : params_(config.env(), config.args()), 
+    : params_(config.btcnet(), config.args()), 
       peers_db_(config.path_data_dir()),
       acceptor_(params_), connector_(params_)
 {
     //SingletonLocalService::GetInstance();
     //SingletonNodes::GetInstance();
     SingletonBanDb::GetInstance(config.path_data_dir());
-    //SingletonNetInterrupt::GetInstance();
 }
 
 bool P2P::Init()

@@ -25,7 +25,7 @@ struct Seed {
 
 class Params {
 public:
-    Params(BaseEnv env, const util::Args& args);
+    Params(BtcNet btcnet, const util::Args& args);
     
     //-------------------------------------------------------------------------
     uint32_t msg_magic() const

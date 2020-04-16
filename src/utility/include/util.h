@@ -2,7 +2,7 @@
 #define BTCLITE_UTIL_H
 
 
-#include "environment.h"
+#include "btcnet.h"
 #include "fs.h"
 #include "sync.h"
 #include "utility/include/logging.h"
@@ -97,9 +97,9 @@ public:
     bool LockDataDir();
     static fs::path PathHome();
     
-    BaseEnv env() const
+    BtcNet btcnet() const
     {
-        return env_;
+        return btcnet_;
     }
     
     const Args& args() const
@@ -113,12 +113,12 @@ public:
     }
 
 protected:
-    BaseEnv env_;
+    BtcNet btcnet_;
     Args args_;
     fs::path path_data_dir_;
     std::string config_file_;
     
-    virtual void CheckArguments() const;
+    virtual void CheckArgs() const;
     void CheckOptions(int argc, const char* const argv[]);
     bool ParseFromFile(const fs::path& path) const;
 };
