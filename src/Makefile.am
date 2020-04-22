@@ -36,6 +36,7 @@ EXTRA_LIBRARIES += \
 
 bin_PROGRAMS = btc-fullnode
 
+
 BTCLITE_HEADER_FILES = \
                        chain/include/block.h \
                        chain/include/block_chain.h \
@@ -103,6 +104,9 @@ dist_noinst_DATA = network/proto/banmap.proto \
                    network/proto/network_address.proto \
                    network/proto/peers.proto
 
+BUILT_SOURCES = network/proto/network_address.pb.h \
+				network/proto/banmap.pb.h \
+				network/proto/peers.pb.h
 
 
 crypto_src_libbtclite_crypto_a_CPPFLAGS = $(AM_CXXFLAGS) \
