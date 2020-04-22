@@ -13,51 +13,42 @@ namespace unit_test {
 
 using namespace network;
 
-TEST(BanDbTest, Constructor)
-{
-    BanDb ban_db(fs::path("/foo"));
-    ASSERT_EQ(ban_db.path_ban_list(), fs::path("/foo") / "banlist.dat");
-    EXPECT_FALSE(ban_db.dirty());
-}
 
-TEST(BanDbTest, AddBanAddr)
+TEST(BanListTest, AddBanAddr)
 {
     NetAddr addr;
     addr.SetIpv4(inet_addr("1.2.3.4"));
-    BanDb ban_db(fs::path("/tmp"));
+    BanList ban_list;
     
-    ASSERT_TRUE(ban_db.Add(addr, BanDb::BanReason::kNodeMisbehaving));
-    auto it = ban_db.ban_map().map().find(SubNet(addr).ToString());
-    ASSERT_NE(it, ban_db.ban_map().map().end());
+    ASSERT_TRUE(ban_list.Add(addr, BanList::BanReason::kNodeMisbehaving));
+    auto it = ban_list.ban_map().map().find(SubNet(addr).ToString());
+    ASSERT_NE(it, ban_list.ban_map().map().end());
     EXPECT_EQ(it->second.ban_reason(), 
-              static_cast<std::underlying_type_t<BanDb::BanReason> >(
-                  BanDb::BanReason::kNodeMisbehaving));
-    EXPECT_TRUE(ban_db.dirty());
+              static_cast<std::underlying_type_t<BanList::BanReason> >(
+                  BanList::BanReason::kNodeMisbehaving));
     
-    ban_db.set_dirty(false);
-    ASSERT_TRUE(ban_db.Erase(addr, false));
-    it = ban_db.ban_map().map().find(SubNet(addr).ToString());
-    EXPECT_EQ(it, ban_db.ban_map().map().end());
-    EXPECT_TRUE(ban_db.dirty());
-    EXPECT_FALSE(ban_db.Erase(addr, false));
+    ASSERT_TRUE(ban_list.Erase(addr));
+    it = ban_list.ban_map().map().find(SubNet(addr).ToString());
+    EXPECT_EQ(it, ban_list.ban_map().map().end());
+    EXPECT_FALSE(ban_list.Erase(addr));
 }
 
-TEST(BanDbTest, ClearBanDb)
+TEST(BanListTest, ClearBanList)
 {
-    BanDb ban_db(fs::path("/tmp"));
+    BanList ban_list;
     NetAddr addr;
     
     for (int i = 1; i < 10; i++) {
         std::string ip = "1.2.3." + std::to_string(i);
         addr.SetIpv4(inet_addr(ip.c_str()));
-        ASSERT_TRUE(ban_db.Add(addr, BanDb::BanReason::kNodeMisbehaving));
+        ASSERT_TRUE(ban_list.Add(addr, BanList::BanReason::kNodeMisbehaving));
     }
-    EXPECT_EQ(ban_db.Size(), 9);
-    ban_db.Clear();
-    EXPECT_EQ(ban_db.Size(), 0);
+    EXPECT_EQ(ban_list.Size(), 9);
+    ban_list.Clear();
+    EXPECT_EQ(ban_list.Size(), 0);
 }
 
-TEST(BanDbTest, SweepBannedAddrs)
+TEST(BanListTest, SweepBannedAddrs)
 {
     NetAddr addr;
     addr.SetIpv4(inet_addr("1.2.3.4"));
@@ -67,30 +58,71 @@ TEST(BanDbTest, SweepBannedAddrs)
     ban_entry.set_create_time(util::GetTimeSeconds()-2);
     ban_entry.set_ban_until(util::GetTimeSeconds()-1);
     ban_entry.set_ban_reason(
-        static_cast<std::underlying_type_t<BanDb::BanReason> >(
-            BanDb::BanReason::kNodeMisbehaving));
+        static_cast<std::underlying_type_t<BanList::BanReason> >(
+            BanList::BanReason::kNodeMisbehaving));
     proto_banmap::BanMap ban_map;
     (*ban_map.mutable_map())[subnet.ToString()] = ban_entry;
     
-    BanDb ban_db(fs::path("/tmp"), ban_map);
-    ASSERT_EQ(ban_db.path_ban_list(), fs::path("/tmp") / "banlist.dat");
-    auto it = ban_db.ban_map().map().find(subnet.ToString());
-    ASSERT_NE(it, ban_db.ban_map().map().end());
+    BanList ban_list(ban_map);
+    auto it = ban_list.ban_map().map().find(subnet.ToString());
+    ASSERT_NE(it, ban_list.ban_map().map().end());
     ASSERT_EQ(it->second.version(), ban_entry.version());
     ASSERT_EQ(it->second.create_time(), ban_entry.create_time());
     ASSERT_EQ(it->second.ban_until(), ban_entry.ban_until());
     ASSERT_EQ(it->second.ban_reason(), ban_entry.ban_reason());
-    EXPECT_TRUE(ban_db.dirty());
-    ban_db.SweepBanned();
-    EXPECT_EQ(ban_db.ban_map().map().find(subnet.ToString()), ban_db.ban_map().map().end());
+    ban_list.SweepBanned();
+    EXPECT_EQ(ban_list.ban_map().map().find(subnet.ToString()), ban_list.ban_map().map().end());
     
-    ASSERT_TRUE(ban_db.Add(subnet, BanDb::BanReason::kNodeMisbehaving));
-    ban_db.SweepBanned();
-    it = ban_db.ban_map().map().find(subnet.ToString());
-    EXPECT_NE(it, ban_db.ban_map().map().end());
+    ASSERT_TRUE(ban_list.Add(subnet, BanList::BanReason::kNodeMisbehaving));
+    ban_list.SweepBanned();
+    it = ban_list.ban_map().map().find(subnet.ToString());
+    EXPECT_NE(it, ban_list.ban_map().map().end());
     EXPECT_EQ(it->second.ban_reason(), 
-              static_cast<std::underlying_type_t<BanDb::BanReason> >(
-                  BanDb::BanReason::kNodeMisbehaving));
+              static_cast<std::underlying_type_t<BanList::BanReason> >(
+                  BanList::BanReason::kNodeMisbehaving));
+}
+
+TEST(BanListTest, AddrIsBanned)
+{
+    NetAddr addr;
+    proto_banmap::BanEntry ban_entry;
+    proto_banmap::BanMap ban_map;
+    char buf[10];
+    
+    std::memset(buf, 0, sizeof(buf));
+    for (int i = 0; i < 10; i++) {        
+        std::sprintf(buf, "1.2.3.%d", i);
+        addr.SetIpv4(inet_addr(buf));
+        ban_entry.set_version(i);
+        ban_entry.set_create_time(util::GetTimeSeconds());
+        ban_entry.set_ban_until(util::GetTimeSeconds()+kDefaultMisbehavingBantime);
+        ban_entry.set_ban_reason(
+            static_cast<std::underlying_type_t<BanList::BanReason> >(
+                BanList::BanReason::kNodeMisbehaving));
+        (*ban_map.mutable_map())[SubNet(addr).ToString()] = ban_entry;
+    }
+    
+    BanList ban_list1(ban_map);
+    for (int i = 0; i < 10; i++) {
+        std::sprintf(buf, "1.2.3.%d", i);
+        addr.SetIpv4(inet_addr(buf));
+        EXPECT_TRUE(ban_list1.IsBanned(addr));
+    }
+    
+    ban_entry.set_ban_until(ban_entry.ban_until() - kDefaultMisbehavingBantime);
+    addr.SetIpv4(inet_addr("1.2.3.4"));
+    (*ban_map.mutable_map())[SubNet(addr).ToString()] = ban_entry;
+    BanList ban_list2(ban_map);
+    EXPECT_FALSE(ban_list2.IsBanned(addr));
+    
+    addr.SetIpv4(inet_addr("1.2.3.10"));
+    EXPECT_FALSE(ban_list2.IsBanned(addr));
+}
+
+TEST(BanDbTest, Constructor)
+{
+    BanDb ban_db(fs::path("/foo"));
+    ASSERT_EQ(ban_db.path_ban_list(), fs::path("/foo") / "banlist.dat");
 }
 
 TEST(BanDbTest, DumpAndLoadBanList)
@@ -109,68 +141,32 @@ TEST(BanDbTest, DumpAndLoadBanList)
         ban_entry.set_create_time(util::GetTimeSeconds());
         ban_entry.set_ban_until(util::GetTimeSeconds()+kDefaultMisbehavingBantime);
         ban_entry.set_ban_reason(
-            static_cast<std::underlying_type_t<BanDb::BanReason> >(
-                BanDb::BanReason::kManuallyAdded));
+            static_cast<std::underlying_type_t<BanList::BanReason> >(
+                BanList::BanReason::kManuallyAdded));
         (*ban_map.mutable_map())[subnet.ToString()] = ban_entry;
     }
     
-    BanDb ban_db(fs::path("/tmp"), ban_map);
-    ASSERT_EQ(ban_db.Size(), 10);
-    ASSERT_TRUE(ban_db.dirty());
-    ASSERT_TRUE(ban_db.DumpBanList());
-    ASSERT_FALSE(ban_db.LoadBanList());
-    ban_db.Clear();
-    ASSERT_TRUE(ban_db.LoadBanList());
-    ASSERT_EQ(ban_db.Size(), 10);
-    ban_map = ban_db.ban_map();
+    BanList ban_list(ban_map);
+    BanDb ban_db(fs::path("/tmp"));
+    ASSERT_EQ(ban_list.Size(), 10);
+    ASSERT_TRUE(ban_db.DumpBanList(ban_list));
+    ASSERT_FALSE(ban_db.LoadBanList(&ban_list));
+    ban_list.Clear();
+    ASSERT_TRUE(ban_db.LoadBanList(&ban_list));
+    ASSERT_EQ(ban_list.Size(), 10);
+    ban_map = ban_list.ban_map();
     for (int i = 0; i < 10; i++) {
         auto it = ban_map.map().find("1.2.3." + std::to_string(i) + "/32");
         ASSERT_NE(it, ban_map.map().end());
         EXPECT_EQ(it->second.version(), i);
         EXPECT_EQ(it->second.ban_reason(), 
-                  static_cast<std::underlying_type_t<BanDb::BanReason> >(
-                      BanDb::BanReason::kManuallyAdded));
+                  static_cast<std::underlying_type_t<BanList::BanReason> >(
+                      BanList::BanReason::kManuallyAdded));
     }
 
     fs::remove(ban_db.path_ban_list());
 }
 
-TEST(BanDbTest, AddrIsBanned)
-{
-    NetAddr addr;
-    proto_banmap::BanEntry ban_entry;
-    proto_banmap::BanMap ban_map;
-    char buf[10];
-    
-    std::memset(buf, 0, sizeof(buf));
-    for (int i = 0; i < 10; i++) {        
-        std::sprintf(buf, "1.2.3.%d", i);
-        addr.SetIpv4(inet_addr(buf));
-        ban_entry.set_version(i);
-        ban_entry.set_create_time(util::GetTimeSeconds());
-        ban_entry.set_ban_until(util::GetTimeSeconds()+kDefaultMisbehavingBantime);
-        ban_entry.set_ban_reason(
-            static_cast<std::underlying_type_t<BanDb::BanReason> >(
-                BanDb::BanReason::kNodeMisbehaving));
-        (*ban_map.mutable_map())[SubNet(addr).ToString()] = ban_entry;
-    }
-        
-    BanDb ban_db1(fs::path("/tmp"), ban_map);
-    for (int i = 0; i < 10; i++) {
-        std::sprintf(buf, "1.2.3.%d", i);
-        addr.SetIpv4(inet_addr(buf));
-        EXPECT_TRUE(ban_db1.IsBanned(addr));
-    }
-    
-    ban_entry.set_ban_until(ban_entry.ban_until() - kDefaultMisbehavingBantime);
-    addr.SetIpv4(inet_addr("1.2.3.4"));
-    (*ban_map.mutable_map())[SubNet(addr).ToString()] = ban_entry;
-    BanDb ban_db2(fs::path("/tmp"), ban_map);
-    EXPECT_FALSE(ban_db2.IsBanned(addr));
-    
-    addr.SetIpv4(inet_addr("1.2.3.10"));
-    EXPECT_FALSE(ban_db2.IsBanned(addr));
-}
 
 } // namespace unit_test
 } // namespace btclite

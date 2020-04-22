@@ -37,7 +37,7 @@ TEST(ConnectorTest, ConnectNode)
     
     // banned addr
     addrs[0].SetIpv4(inet_addr("1.2.3.4"));
-    SingletonBanDb::GetInstance().Add(addrs[0], BanDb::BanReason::kNodeMisbehaving, false);
+    SingletonBanList::GetInstance().Add(addrs[0], BanList::BanReason::kNodeMisbehaving);
     EXPECT_FALSE(connector.ConnectNodes(addrs));
     
     LookupHost(std::string("x9.seed.tbtc.petertodd.org").c_str(), &addrs[0], true, 18333);
@@ -46,6 +46,7 @@ TEST(ConnectorTest, ConnectNode)
     // exist addr
     EXPECT_FALSE(connector.ConnectNodes(addrs));
     
+    SingletonBanList::GetInstance().Clear();
     SingletonNodes::GetInstance().Clear();
 }
 

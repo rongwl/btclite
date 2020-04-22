@@ -92,19 +92,19 @@ void ConnReadCb(struct bufferevent *bev, void *ctx)
     if (!pnode)
         return;
     
+    if (pnode->connection().socket_no_msg()) {
+        pnode->mutable_connection()->set_socket_no_msg(false);
+    }
+    
     if (pnode->timers().no_receiving_timer) {
         pnode->mutable_timers()->no_receiving_timer->Reset();
     }
-    
-    if (pnode->timers().no_msg_timer) {
+    else {
         util::TimerMng& timer_mng = util::SingletonTimerMng::GetInstance();
-        timer_mng.StopTimer(pnode->timers().no_msg_timer);
-        pnode->mutable_timers()->no_msg_timer.reset();
-        
         uint32_t timeout = (pnode->protocol().version() > kBip31Version) ? 
-                            kNoReceivingTimeoutBip31 : kNoReceivingTimeout;
+                           kNoReceivingTimeoutBip31 : kNoReceivingTimeout;
         pnode->mutable_timers()->no_receiving_timer = 
-            timer_mng.StartTimer(timeout*1000, 0, Node::InactivityTimeoutCb, pnode);
+            timer_mng.StartTimer(timeout*1000, 0, NodeTimeoutCb::InactivityTimeoutCb, pnode);
     }
     
     auto task = std::bind(ParseMsg, pnode, *reinterpret_cast<Params*>(ctx));

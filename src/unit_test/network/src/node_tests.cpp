@@ -170,7 +170,7 @@ TEST_F(NodeTest, HandleInactiveTimeout)
     Nodes& nodes = SingletonNodes::GetInstance();
     std::shared_ptr<Node> node = nodes.GetNode(id_);
     ASSERT_NE(node, nullptr);
-    node->InactivityTimeoutCb(node);
+    NodeTimeoutCb::InactivityTimeoutCb(node);
     EXPECT_EQ(node->connection().connection_state(), NodeConnection::kDisconnected);
 }
 
@@ -183,9 +183,9 @@ TEST_F(NodeTest, CheckBanned)
     node->mutable_misbehavior()->set_should_ban(true);
     ASSERT_TRUE(node->CheckBanned());
     EXPECT_EQ(node->connection().connection_state(), NodeConnection::kDisconnected);
-    EXPECT_TRUE(SingletonBanDb::GetInstance().IsBanned(addr_));
+    EXPECT_TRUE(SingletonBanList::GetInstance().IsBanned(addr_));
 
-    SingletonBanDb::GetInstance().Clear();
+    SingletonBanList::GetInstance().Clear();
 }
 
 TEST_F(NodeTest, PushAddrToSend)

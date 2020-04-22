@@ -24,6 +24,10 @@ bool SendMsg(const Message& msg, uint32_t magic, std::shared_ptr<Node> dst_node)
         
     if (!dst_node->connection().bev())
         return false;
+    
+    if (dst_node->connection().socket_no_msg()) {
+        dst_node->mutable_connection()->set_socket_no_msg(false);
+    }
 
     MessageHeader header(magic, msg.Command(), msg.SerializedSize(), msg.GetHash().GetLow32());
     ms << header << msg;
@@ -44,6 +48,15 @@ bool SendMsg(const Message& msg, uint32_t magic, std::shared_ptr<Node> dst_node)
     }
 
     //bufferevent_unlock(dst_node->mutable_bev());
+    
+    if (dst_node->timers().no_sending_timer) {
+        dst_node->mutable_timers()->no_sending_timer->Reset();
+    }
+    else {
+        util::TimerMng& timer_mng = util::SingletonTimerMng::GetInstance();
+        dst_node->mutable_timers()->no_sending_timer = timer_mng.StartTimer(
+                    kNoSendingTimeout*1000, 0, NodeTimeoutCb::InactivityTimeoutCb, dst_node);
+    }
 
     return true;
 }

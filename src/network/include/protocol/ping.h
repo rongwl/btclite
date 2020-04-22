@@ -24,7 +24,6 @@ public:
     
     //-------------------------------------------------------------------------
     bool RecvHandler(std::shared_ptr<Node> src_node, const Params& params) const;
-    static void PingTimeoutCb(std::shared_ptr<Node> node, uint32_t magic);
     
     std::string Command() const
     {

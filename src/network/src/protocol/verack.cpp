@@ -46,8 +46,9 @@ bool Verack::RecvHandler(std::shared_ptr<Node> src_node, const Params& params) c
     SendMsg(ping, params.msg_magic(), src_node);
     // start ping timer
     src_node->mutable_timers()->ping_timer = 
-        util::SingletonTimerMng::GetInstance().StartTimer(kNoPingTimeout*1000, kNoPingTimeout*1000,
-                                                    Ping::PingTimeoutCb, src_node, params.msg_magic());
+        util::SingletonTimerMng::GetInstance().StartTimer(
+            kPingInterval*1000, kPingInterval*1000, NodeTimeoutCb::PingTimeoutCb, 
+            src_node, params.msg_magic());
     
     // advertise local address
     if (params.advertise_local_addr()) {

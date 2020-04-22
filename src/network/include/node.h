@@ -250,6 +250,16 @@ public:
         connection_state_ = state;
     }
     
+    bool socket_no_msg() const
+    {
+        return socket_no_msg_;
+    }
+    
+    void set_socket_no_msg(bool socket_no_msg)
+    {
+        socket_no_msg_ = socket_no_msg;
+    }
+    
 private:
     const NodeId node_id_;
     struct bufferevent *bev_ = nullptr;    
@@ -267,6 +277,8 @@ private:
     
     mutable util::CriticalSection cs_state_;
     ConnectionState connection_state_ = ConnectionState::kInitialState;
+    
+    std::atomic<bool> socket_no_msg_ = true;
 };
 
 class FloodingAddrs {
@@ -382,10 +394,10 @@ struct NodeTime {
 };
 
 struct NodeTimers {
-    util::TimerMng::TimerPtr no_msg_timer;
+    util::TimerMng::TimerPtr no_msg_timer;    
     util::TimerMng::TimerPtr no_sending_timer;
     util::TimerMng::TimerPtr no_receiving_timer;
-    util::TimerMng::TimerPtr no_connection_timer;
+    util::TimerMng::TimerPtr shakehands_timer;
     
     util::TimerMng::TimerPtr ping_timer;
     util::TimerMng::TimerPtr advertise_local_addr_timer;
@@ -650,8 +662,13 @@ public:
          bool is_inbound = true, bool manual = false, 
          std::string host_name = "");
     
+    ~Node()
+    {
+        StopAllTimers();
+    }
+    
     //-------------------------------------------------------------------------
-    static void InactivityTimeoutCb(std::shared_ptr<Node> node);
+    void StopAllTimers();
     bool CheckBanned();
     
     bool ShouldUpdateTime()
@@ -919,6 +936,15 @@ public:
 private:
     SingletonBlocksInFlight() {}
 };
+
+namespace NodeTimeoutCb {
+
+void InactivityTimeoutCb(std::shared_ptr<Node> node);
+void SocketNoMsgTimeoutCb(std::shared_ptr<Node> node);
+void PingTimeoutCb(std::shared_ptr<Node> node, uint32_t magic);
+void ShakeHandsTimeoutCb(std::shared_ptr<Node> node);
+
+} // namespace NodeTimeoutCb
 
 
 } // namespace network

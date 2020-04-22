@@ -408,24 +408,21 @@ void Peers::EraseRand(uint64_t key)
 
 bool PeersDb::DumpPeers()
 {
-    Peers& peers = SingletonPeers::GetInstance();
     std::fstream fs(path_peers_, std::ios::out | std::ios::trunc | std::ios::binary);
     
-    if (!peers.SerializeToOstream(&fs)) {
+    if (!peers_.SerializeToOstream(&fs)) {
         BTCLOG(LOG_LEVEL_ERROR) << "Flushing banned node to banlist.data failed.";
         return false;
     }
     
-    BTCLOG(LOG_LEVEL_INFO) << "Flushed " << peers.Size() << " to peers.dat";
+    BTCLOG(LOG_LEVEL_INFO) << "Flushed " << peers_.Size() << " to peers.dat";
     
     return true;
 }
 
 bool PeersDb::LoadPeers()
 {
-    Peers& peers = SingletonPeers::GetInstance();
-    
-    if (!peers.IsEmpty())
+    if (!peers_.IsEmpty())
         return false;
     
     std::fstream fs(path_peers_, std::ios::in | std::ios::binary);
@@ -434,7 +431,7 @@ bool PeersDb::LoadPeers()
         return false;
     }
     
-    return peers.ParseFromIstream(&fs);
+    return peers_.ParseFromIstream(&fs);
 }
 
 } // namespace network

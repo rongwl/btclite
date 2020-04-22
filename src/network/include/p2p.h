@@ -27,6 +27,7 @@ public:
 private:
     const Params params_;
     PeersDb peers_db_;
+    BanDb ban_db_;
     Acceptor acceptor_;
     Connector connector_;
     CollectionTimer collection_timer_;

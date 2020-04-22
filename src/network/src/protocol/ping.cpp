@@ -3,7 +3,6 @@
 #include "msg_process.h"
 #include "net.h"
 #include "protocol/pong.h"
-#include "random.h"
 
 
 namespace btclite {
@@ -32,30 +31,6 @@ bool Ping::RecvHandler(std::shared_ptr<Node> src_node, const Params& params) con
     }
     
     return true;
-}
-
-void Ping::PingTimeoutCb(std::shared_ptr<Node> node, uint32_t magic)
-{
-    if (SingletonNetInterrupt::GetInstance())
-        return;
-    
-    if (node->connection().connection_state() == NodeConnection::kDisconnected) {
-        util::SingletonTimerMng::GetInstance().StopTimer(node->timers().ping_timer);
-        return;
-    }
-    
-    if (node->time().ping_time.ping_nonce_sent) {
-        BTCLOG(LOG_LEVEL_WARNING) << "Peer " << node->id() << " ping timeout.";
-        util::SingletonTimerMng::GetInstance().StopTimer(node->timers().ping_timer);
-        node->mutable_connection()->set_connection_state(NodeConnection::kDisconnected);
-        return;
-    }
-    
-    // send ping
-    protocol::Ping ping(util::RandUint64());
-    if (node->protocol().version() < kBip31Version)
-        ping.set_protocol_version(0);
-    SendMsg(ping, magic, node);
 }
 
 } // namespace private_ping

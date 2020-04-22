@@ -1,8 +1,10 @@
 #include "node.h"
 
 #include "bandb.h"
+#include "msg_process.h"
 #include "net.h"
 #include "peers.h"
+#include "protocol/ping.h"
 #include "thread.h"
 
 
@@ -92,13 +94,44 @@ Node::Node(const struct bufferevent *bev, const NetAddr& addr,
     time_.ping_time.min_ping_usec_time = std::numeric_limits<int64_t>::max();
 }
 
-void Node::InactivityTimeoutCb(std::shared_ptr<Node> node)
+void Node::StopAllTimers()
 {
-    if (SingletonNetInterrupt::GetInstance())
-        return;
-
-    BTCLOG(LOG_LEVEL_WARNING) << "Peer " << node->id() << " inactive timeout.";
-    node->mutable_connection()->set_connection_state(NodeConnection::kDisconnected);
+    util::TimerMng& timer_mng = util::SingletonTimerMng::GetInstance();    
+    
+    if (timers_.no_msg_timer) {
+        timer_mng.StopTimer(timers_.no_msg_timer);
+        timers_.no_msg_timer.reset();
+    }
+    
+    if (timers_.no_sending_timer) {
+        timer_mng.StopTimer(timers_.no_sending_timer);
+        timers_.no_sending_timer.reset();
+    }
+    
+    if (timers_.no_receiving_timer) {
+        timer_mng.StopTimer(timers_.no_receiving_timer);
+        timers_.no_receiving_timer.reset();
+    }
+    
+    if (timers_.shakehands_timer) {
+        timer_mng.StopTimer(timers_.shakehands_timer);
+        timers_.shakehands_timer.reset();
+    }
+    
+    if (timers_.ping_timer) {
+        timer_mng.StopTimer(timers_.ping_timer);
+        timers_.ping_timer.reset();
+    }
+    
+    if (timers_.advertise_local_addr_timer) {
+        timer_mng.StopTimer(timers_.advertise_local_addr_timer);
+        timers_.advertise_local_addr_timer.reset();
+    }
+    
+    if (timers_.broadcast_addrs_timer) {
+        timer_mng.StopTimer(timers_.broadcast_addrs_timer);
+        timers_.broadcast_addrs_timer.reset();
+    }
 }
 
 bool Node::CheckBanned()
@@ -118,13 +151,77 @@ bool Node::CheckBanned()
                                       << connection_.addr().ToString();
         }
         else {
-            SingletonBanDb::GetInstance().Add(connection_.addr(),
-                                              BanDb::BanReason::kNodeMisbehaving);
+            SingletonBanList::GetInstance().Add(connection_.addr(),
+                                              BanList::BanReason::kNodeMisbehaving);
         }
     }
     
     return true;
 }
+
+
+namespace NodeTimeoutCb {
+
+void InactivityTimeoutCb(std::shared_ptr<Node> node)
+{
+    if (SingletonNetInterrupt::GetInstance())
+        return;
+
+    BTCLOG(LOG_LEVEL_WARNING) << "Peer " << node->id() << " inactive timeout.";
+    node->mutable_connection()->set_connection_state(NodeConnection::kDisconnected);
+}
+
+void SocketNoMsgTimeoutCb(std::shared_ptr<Node> node)
+{
+    if (SingletonNetInterrupt::GetInstance())
+        return;
+    
+    if (!node->connection().socket_no_msg())
+        return;
+    
+    BTCLOG(LOG_LEVEL_WARNING) << "Socket no message in first " << kNoMsgTimeout 
+                              << " seconds from peer " << node->id();
+    node->mutable_connection()->set_connection_state(NodeConnection::kDisconnected);
+}
+
+void PingTimeoutCb(std::shared_ptr<Node> node, uint32_t magic)
+{
+    if (SingletonNetInterrupt::GetInstance())
+        return;
+    
+    if (node->connection().connection_state() == NodeConnection::kDisconnected) {
+        util::SingletonTimerMng::GetInstance().StopTimer(node->timers().ping_timer);
+        return;
+    }
+    
+    if (node->time().ping_time.ping_nonce_sent) {
+        BTCLOG(LOG_LEVEL_WARNING) << "Peer " << node->id() << " ping timeout.";
+        util::SingletonTimerMng::GetInstance().StopTimer(node->timers().ping_timer);
+        node->mutable_connection()->set_connection_state(NodeConnection::kDisconnected);
+        return;
+    }
+    
+    // send ping
+    protocol::Ping ping(util::RandUint64());
+    if (node->protocol().version() < kBip31Version)
+        ping.set_protocol_version(0);
+    SendMsg(ping, magic, node);
+}
+
+void ShakeHandsTimeoutCb(std::shared_ptr<Node> node)
+{
+    if (SingletonNetInterrupt::GetInstance())
+        return;
+    
+    if (node->connection().connection_state() == NodeConnection::kEstablished)
+        return;
+    
+    BTCLOG(LOG_LEVEL_WARNING) << "Peer "<< node->id() << " shakehands timeout.";
+    node->mutable_connection()->set_connection_state(NodeConnection::kDisconnected);
+}
+
+} // namespace NodeTimeoutCb
+
 
 void Nodes::AddNode(std::shared_ptr<Node> node)
 {
@@ -139,11 +236,14 @@ std::shared_ptr<Node> Nodes::InitializeNode(const struct bufferevent *bev,
                                             bool is_inbound, bool manual)
 {
     auto node = std::make_shared<Node>(bev, addr, is_inbound, manual);
-    node->mutable_timers()->no_msg_timer = 
-        util::SingletonTimerMng::GetInstance().StartTimer(
-            kNoMsgTimeout*1000, 0, Node::InactivityTimeoutCb, node);
     
-    AddNode(node);    
+    util::TimerMng& timer_mng = util::SingletonTimerMng::GetInstance();
+    node->mutable_timers()->no_msg_timer = timer_mng.StartTimer(
+            kNoMsgTimeout*1000, 0, NodeTimeoutCb::SocketNoMsgTimeoutCb, node);
+    node->mutable_timers()->shakehands_timer = timer_mng.StartTimer(
+            kShakeHandsTimeout*1000, 0, NodeTimeoutCb::ShakeHandsTimeoutCb, node);
+    
+    AddNode(node);
     if (!GetNode(node->id())) {
         BTCLOG(LOG_LEVEL_WARNING) << "Save new node to nodes failed.";
         return nullptr;

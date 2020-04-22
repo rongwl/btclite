@@ -77,7 +77,7 @@ void Acceptor::AcceptConnCb(struct evconnlistener *listener, evutil_socket_t fd,
     // on all platforms.  Set it again here just to be sure.
     Socket(evconnlistener_get_fd(listener)).SetSockNoDelay();
     
-    if (SingletonBanDb::GetInstance().IsBanned(addr))
+    if (SingletonBanList::GetInstance().IsBanned(addr))
     {
         BTCLOG(LOG_LEVEL_WARNING) << "Accept a dropped(banned) addr:"
                                   << addr.ToString();

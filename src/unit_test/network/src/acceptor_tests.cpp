@@ -61,11 +61,11 @@ TEST(AcceptorTest, MethordAcceptConnCb)
     
     inet_pton(AF_INET6, "::ffff:1.2.3.250", client_addr.sin6_addr.s6_addr);
     NetAddr addr(client_addr);
-    SingletonBanDb::GetInstance().Add(addr, BanDb::BanReason::kNodeMisbehaving);
+    SingletonBanList::GetInstance().Add(addr, BanList::BanReason::kNodeMisbehaving);
     acceptor.AcceptConnCb(listener, fd, (struct sockaddr*)&client_addr, sizeof(client_addr), nullptr);
     EXPECT_EQ(SingletonNodes::GetInstance().CountInbound(), count);  
     
-    SingletonBanDb::GetInstance().Erase(addr, false);
+    SingletonBanList::GetInstance().Erase(addr);
     acceptor.AcceptConnCb(listener, fd, (struct sockaddr*)&client_addr, sizeof(client_addr), nullptr);
     EXPECT_EQ(SingletonNodes::GetInstance().CountInbound(), ++count);
     std::shared_ptr<Node> pnode = SingletonNodes::GetInstance().GetNode(addr);

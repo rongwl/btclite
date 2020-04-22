@@ -65,8 +65,7 @@ constexpr uint32_t kNoMsgTimeout = 60;
 constexpr uint32_t kNoSendingTimeout = 2*60;
 constexpr uint32_t kNoReceivingTimeoutBip31 = 2*60;
 constexpr uint32_t kNoReceivingTimeout = 90*60;
-constexpr uint32_t kNoPingTimeout = 2*60;
-constexpr uint32_t kNoConnectionTimeout = 60;
+constexpr uint32_t kShakeHandsTimeout = 60;
 
 // Time after which to disconnect, after waiting for a ping response (or inactivity).
 constexpr uint32_t kConnTimeoutInterval = 20 * 60;

@@ -234,7 +234,7 @@ bool Connector::ConnectNode(const NetAddr& addr, bool manual)
         return false;
     }
 
-    if (SingletonBanDb::GetInstance().IsBanned(addr)) {
+    if (SingletonBanList::GetInstance().IsBanned(addr)) {
         BTCLOG(LOG_LEVEL_WARNING) << "Connecting to banned address:" << addr.ToString();
         return false;
     }

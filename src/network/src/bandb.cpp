@@ -6,12 +6,12 @@
 namespace btclite {
 namespace network {
 
-bool BanDb::Add(const NetAddr& addr, const BanReason& ban_reason, bool dump_list)
+bool BanList::Add(const NetAddr& addr, const BanReason& ban_reason)
 {
-    return Add(SubNet(addr), ban_reason, dump_list);
+    return Add(SubNet(addr), ban_reason);
 }
 
-bool BanDb::Add(const SubNet& sub_net, const BanReason& ban_reason, bool dump_list)
+bool BanList::Add(const SubNet& sub_net, const BanReason& ban_reason)
 {
     proto_banmap::BanEntry ban_entry;
     
@@ -23,53 +23,37 @@ bool BanDb::Add(const SubNet& sub_net, const BanReason& ban_reason, bool dump_li
         return false;
     
     SingletonNodes::GetInstance().DisconnectNode(sub_net);
-    
-    if (ban_reason == BanReason::kManuallyAdded && dump_list)
-        DumpBanList();
 
     return true;
 }
 
-bool BanDb::Erase(const NetAddr& addr, bool dump_list)
+bool BanList::Erase(const NetAddr& addr)
 {
-    return Erase(SubNet(addr), dump_list);
+    return Erase(SubNet(addr));
 }
 
-bool BanDb::Erase(const SubNet& sub_net, bool dump_list)
+bool BanList::Erase(const SubNet& sub_net)
 {
     LOCK(cs_ban_map_);
     if (!ban_map_.mutable_map()->erase(sub_net.ToString()))
         return false;
-    dirty_ = true;
-    
-    if (dump_list)
-        DumpBanList();
     
     return true;
 }
 
-void BanDb::Clear()
-{
-    LOCK(cs_ban_map_);
-    dirty_ = true;
-    DumpBanList(); 
-    ban_map_.clear_map();
-}
-
-bool BanDb::Add_(const SubNet& sub_net, const proto_banmap::BanEntry& ban_entry)
+bool BanList::Add_(const SubNet& sub_net, const proto_banmap::BanEntry& ban_entry)
 {
     LOCK(cs_ban_map_);
     google::protobuf::Map< ::std::string, ::proto_banmap::BanEntry > *pmap = ban_map_.mutable_map();
     if ((*pmap)[sub_net.ToString()].ban_until() < ban_entry.ban_until()) {        
         (*pmap)[sub_net.ToString()] = ban_entry;
-        dirty_ = true;
         return true;
     }
     
     return false;
 }
 
-void BanDb::SweepBanned()
+void BanList::SweepBanned()
 {
     int64_t now = util::GetTimeSeconds();
     
@@ -77,48 +61,13 @@ void BanDb::SweepBanned()
     for (auto it = ban_map_.map().begin(); it != ban_map_.map().end(); ++it) {
         if (now > it->second.ban_until()) {
             ban_map_.mutable_map()->erase(it->first);
-            dirty_ = true;
-            BTCLOG(LOG_LEVEL_VERBOSE) << "Removed banned node ip/subnet from banlist.dat: " << it->first;
+            BTCLOG(LOG_LEVEL_VERBOSE) << "Removed banned node ip/subnet from banlist.dat: " 
+                                      << it->first;
         }
     }
 }
 
-bool BanDb::DumpBanList()
-{
-    SweepBanned(); // clean unused entries (if bantime has expired)
-    
-    if (!dirty())
-        return false;
-    
-    proto_banmap::BanMap banmap = ban_map();
-    std::fstream fs(path_ban_list_, std::ios::out | std::ios::trunc | std::ios::binary);
-    if (!banmap.SerializeToOstream(&fs)) {
-        BTCLOG(LOG_LEVEL_ERROR) << "Flushing banned node to banlist.data failed.";
-        return false;
-    }
-    set_dirty(false);
-    
-    BTCLOG(LOG_LEVEL_INFO) << "Flushed " << banmap.map().size() << " banned node ips/subnets to banlist.dat.";
-    
-    return true;
-}
-
-bool BanDb::LoadBanList()
-{
-    LOCK(cs_ban_map_);
-    
-    if (!ban_map_.map().empty())
-        return false;
-    
-    std::fstream fs(path_ban_list_, std::ios::in | std::ios::binary);
-    if (!fs) {
-        BTCLOG(LOG_LEVEL_INFO) << "Load "<< path_ban_list_  << ", but file not found.";
-        return false;
-    }
-    return ban_map_.ParseFromIstream(&fs);
-}
-
-bool BanDb::IsBanned(NetAddr addr)
+bool BanList::IsBanned(NetAddr addr)
 {
     LOCK(cs_ban_map_);
     
@@ -130,6 +79,36 @@ bool BanDb::IsBanned(NetAddr addr)
     
     return false;
 }
+
+bool BanDb::DumpBanList(BanList& ban_list)
+{
+    ban_list.SweepBanned(); // clean unused entries (if bantime has expired)   
+    
+    std::fstream fs(path_ban_list_, std::ios::out | std::ios::trunc | std::ios::binary);
+    if (!ban_list.SerializeToOstream(&fs)) {
+        BTCLOG(LOG_LEVEL_ERROR) << "Flushing banned node to banlist.data failed.";
+        return false;
+    }
+    
+    BTCLOG(LOG_LEVEL_INFO) << "Flushed " << ban_list.Size() 
+                           << " banned node ips/subnets to banlist.dat.";
+    
+    return true;
+}
+
+bool BanDb::LoadBanList(BanList *ban_list)
+{
+    if (!ban_list || !ban_list->IsEmpty())
+        return false;
+    
+    std::fstream fs(path_ban_list_, std::ios::in | std::ios::binary);
+    if (!fs) {
+        BTCLOG(LOG_LEVEL_INFO) << "Load "<< path_ban_list_  << ", but file not found.";
+        return false;
+    }
+    return ban_list->ParseFromIstream(&fs);
+}
+
 
 } // namespace network
 } // namespace btclite

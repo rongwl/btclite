@@ -141,19 +141,18 @@ private:
 class PeersDb : util::Uncopyable {
 public:
     explicit PeersDb(const fs::path& path)
-        : path_peers_(path / default_peers_file)
-    {
-        SingletonPeers::GetInstance();
-    }
+        : path_peers_(path / default_peers_file) {}
     
+    //-------------------------------------------------------------------------
     bool DumpPeers();
     bool LoadPeers();
     
     size_t Size() const
     {
-        return SingletonPeers::GetInstance().Size();
+        return peers_.Size();
     }
     
+    //-------------------------------------------------------------------------
     const fs::path& path_peers() const
     {
         return path_peers_;
@@ -163,6 +162,7 @@ private:
     const std::string default_peers_file = "peers.dat";
     
     fs::path path_peers_;
+    Peers& peers_ = SingletonPeers::GetInstance();
 };
 
 } // namespace network

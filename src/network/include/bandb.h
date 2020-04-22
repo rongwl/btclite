@@ -11,7 +11,7 @@
 namespace btclite {
 namespace network {
 
-class BanDb {
+class BanList {
 public:
     enum class BanReason {
         kUnknown          = 0,
@@ -19,20 +19,22 @@ public:
         kManuallyAdded    = 2
     };
     
-    explicit BanDb(const fs::path& path)
-        : path_ban_list_(path / default_ban_list), 
-          ban_map_(), dirty_(false) {}
+    BanList() = default;
     
-    BanDb(const fs::path& path, const proto_banmap::BanMap& ban_map)
-        : path_ban_list_(path / default_ban_list),
-          ban_map_(ban_map), dirty_(true) {}
+    BanList(const proto_banmap::BanMap& ban_map)
+        : ban_map_(ban_map) {}
     
     //-------------------------------------------------------------------------
-    bool Add(const NetAddr& addr, const BanReason& ban_reason, bool dump_list = true);
-    bool Add(const SubNet& sub_net, const BanReason& ban_reason, bool dump_list = true);
-    bool Erase(const NetAddr& addr, bool dump_list = true);
-    bool Erase(const SubNet& sub_net, bool dump_list = true);
-    void Clear();
+    bool Add(const NetAddr& addr, const BanReason& ban_reason);
+    bool Add(const SubNet& sub_net, const BanReason& ban_reason);
+    bool Erase(const NetAddr& addr);
+    bool Erase(const SubNet& sub_net);
+    
+    void Clear()
+    {
+        LOCK(cs_ban_map_);
+        ban_map_.clear_map();
+    }
     
     size_t Size() const
     {
@@ -40,11 +42,63 @@ public:
         return ban_map_.map().size();
     }
     
+    bool IsEmpty() const
+    {
+        LOCK(cs_ban_map_);
+        return ban_map_.map().empty();
+    }
+    
     //-------------------------------------------------------------------------
     void SweepBanned();
-    bool DumpBanList();
-    bool LoadBanList();
     bool IsBanned(NetAddr addr);
+    
+    //-------------------------------------------------------------------------
+    bool SerializeToOstream(std::ostream *output) const
+    {
+        LOCK(cs_ban_map_);
+        return ban_map_.SerializeToOstream(output);
+    }
+    
+    bool ParseFromIstream(std::istream *input)
+    {
+        LOCK(cs_ban_map_);
+        return ban_map_.ParseFromIstream(input);
+    }
+    
+    //-------------------------------------------------------------------------    
+    proto_banmap::BanMap ban_map() const // thread safe copy
+    {
+        LOCK(cs_ban_map_);
+        return ban_map_;
+    }
+    
+private:
+    mutable util::CriticalSection cs_ban_map_;
+    proto_banmap::BanMap ban_map_;
+    
+    bool Add_(const SubNet& sub_net, const proto_banmap::BanEntry& ban_entry);
+};
+
+class SingletonBanList : util::Uncopyable {
+public:
+    static BanList& GetInstance()
+    {
+        static BanList ban_list;
+        return ban_list;
+    }
+    
+private:
+    SingletonBanList() {}
+};
+
+class BanDb {
+public:
+    explicit BanDb(const fs::path& path)
+        : path_ban_list_(path / default_ban_list) {}
+    
+    //-------------------------------------------------------------------------
+    bool DumpBanList(BanList& ban_list);
+    bool LoadBanList(BanList *ban_list);
     
     //-------------------------------------------------------------------------
     const fs::path& path_ban_list() const
@@ -52,45 +106,10 @@ public:
         return path_ban_list_;
     }
     
-    proto_banmap::BanMap ban_map() const // thread safe copy
-    {
-        LOCK(cs_ban_map_);
-        return ban_map_;
-    }
-    
-    bool dirty() const
-    {
-        LOCK(cs_ban_map_);
-        return dirty_;
-    }
-    
-    void set_dirty(bool dirty)
-    {
-        LOCK(cs_ban_map_);
-        dirty_ = dirty;
-    }
-    
 private:
     const std::string default_ban_list = "banlist.dat";
     
     fs::path path_ban_list_;
-    mutable util::CriticalSection cs_ban_map_;
-    proto_banmap::BanMap ban_map_;
-    bool dirty_;
-    
-    bool Add_(const SubNet& sub_net, const proto_banmap::BanEntry& ban_entry);
-};
-
-class SingletonBanDb : util::Uncopyable {
-public:
-    static BanDb& GetInstance(fs::path path = fs::path())
-    {
-        static BanDb ban_db(path);
-        return ban_db;
-    }
-    
-private:
-    SingletonBanDb() {}
 };
 
 } //namespace network
