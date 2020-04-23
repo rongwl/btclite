@@ -18,7 +18,7 @@ Params::Params(BtcNet btcnet, const util::Args& args)
     switch (btcnet) {
         case BtcNet::kMainNet :
         {
-            msg_magic_ = kMainMagic;
+            msg_magic_ = kMainnetMagic;
             default_port_ = 8333;
             seeds_.reserve(8);
             seeds_.push_back({ "seed.bitcoin.sipa.be", 8333 }); // Pieter Wuille, only supports x1, x5, x9, and xd

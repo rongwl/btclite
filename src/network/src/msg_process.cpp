@@ -27,16 +27,11 @@ MessageData *MsgDataFactory(const uint8_t *raw, const MessageHeader& header,
     util::ByteSource<std::vector<uint8_t> > byte_source(vec);
     MessageData *msg = nullptr;
     
-    if (!header.IsValid())
-        return nullptr;
-    
-    if (!raw && 
-            header.command() != msg_command::kMsgVerack &&
-            header.command() != msg_command::kMsgGetAddr &&
-            header.command() != msg_command::kMsgSendHeaders &&
-            (header.command() == msg_command::kMsgPing && 
-             protocol_version >= kBip31Version))
-        return nullptr;        
+    if (!header.IsValid()) {
+        BTCLOG(LOG_LEVEL_ERROR) << "Received invalid " << header.command()
+                                << " message header";
+        return nullptr;    
+    }
     
     vec.reserve(header.payload_length());
     vec.assign(raw, raw + header.payload_length());
@@ -45,7 +40,7 @@ MessageData *MsgDataFactory(const uint8_t *raw, const MessageHeader& header,
         Version *version = new Version();
         version->Deserialize(byte_source);
         if (header.checksum() != version->GetHash().GetLow32()) {
-            BTCLOG(LOG_LEVEL_INFO) << "Version message checksum error: expect "
+            BTCLOG(LOG_LEVEL_WARNING) << "Version message checksum error: expect "
                                    << header.checksum() << ", received "
                                    << version->GetHash().GetLow32();
             return nullptr;
@@ -56,7 +51,7 @@ MessageData *MsgDataFactory(const uint8_t *raw, const MessageHeader& header,
         Verack *verack = new Verack();
         verack->Deserialize(byte_source);
         if (header.checksum() != verack->GetHash().GetLow32()) {
-            BTCLOG(LOG_LEVEL_INFO) << "Verack message checksum error: expect "
+            BTCLOG(LOG_LEVEL_WARNING) << "Verack message checksum error: expect "
                                    << header.checksum() << ", received "
                                    << verack->GetHash().GetLow32();
             return nullptr;
@@ -67,7 +62,7 @@ MessageData *MsgDataFactory(const uint8_t *raw, const MessageHeader& header,
         Addr *addr = new Addr();
         addr->Deserialize(byte_source);
         if (header.checksum() != addr->GetHash().GetLow32()) {
-            BTCLOG(LOG_LEVEL_INFO) << "Addr message checksum error: expect "
+            BTCLOG(LOG_LEVEL_WARNING) << "Addr message checksum error: expect "
                                    << header.checksum() << ", received "
                                    << addr->GetHash().GetLow32();
             return nullptr;
@@ -78,7 +73,7 @@ MessageData *MsgDataFactory(const uint8_t *raw, const MessageHeader& header,
         Inv *inv = new Inv();
         inv->Deserialize(byte_source);
         if (header.checksum() != inv->GetHash().GetLow32()) {
-            BTCLOG(LOG_LEVEL_INFO) << "Inv message checksum error: expect "
+            BTCLOG(LOG_LEVEL_WARNING) << "Inv message checksum error: expect "
                                    << header.checksum() << ", received "
                                    << inv->GetHash().GetLow32();
             return nullptr;
@@ -89,7 +84,7 @@ MessageData *MsgDataFactory(const uint8_t *raw, const MessageHeader& header,
         GetAddr *getaddr = new GetAddr();
         getaddr->Deserialize(byte_source);
         if (header.checksum() != getaddr->GetHash().GetLow32()) {
-            BTCLOG(LOG_LEVEL_INFO) << "Getaddr message checksum error: expect "
+            BTCLOG(LOG_LEVEL_WARNING) << "Getaddr message checksum error: expect "
                                    << header.checksum() << ", received "
                                    << getaddr->GetHash().GetLow32();
             return nullptr;
@@ -101,7 +96,7 @@ MessageData *MsgDataFactory(const uint8_t *raw, const MessageHeader& header,
         ping->set_protocol_version(protocol_version);
         ping->Deserialize(byte_source);
         if (header.checksum() != ping->GetHash().GetLow32()) {
-            BTCLOG(LOG_LEVEL_INFO) << "Ping message checksum error: expect "
+            BTCLOG(LOG_LEVEL_WARNING) << "Ping message checksum error: expect "
                                    << header.checksum() << ", received "
                                    << ping->GetHash().GetLow32();
             return nullptr;
@@ -112,7 +107,7 @@ MessageData *MsgDataFactory(const uint8_t *raw, const MessageHeader& header,
         Pong *pong = new Pong();
         pong->Deserialize(byte_source);
         if (header.checksum() != pong->GetHash().GetLow32()) {
-            BTCLOG(LOG_LEVEL_INFO) << "Pong message checksum error: expect "
+            BTCLOG(LOG_LEVEL_WARNING) << "Pong message checksum error: expect "
                                    << header.checksum() << ", received "
                                    << pong->GetHash().GetLow32();
             return nullptr;
@@ -123,7 +118,7 @@ MessageData *MsgDataFactory(const uint8_t *raw, const MessageHeader& header,
         Reject *reject = new Reject();
         reject->Deserialize(byte_source);
         if (header.checksum() != reject->GetHash().GetLow32()) {
-            BTCLOG(LOG_LEVEL_INFO) << "Reject message checksum error: expect "
+            BTCLOG(LOG_LEVEL_WARNING) << "Reject message checksum error: expect "
                                    << header.checksum() << ", received "
                                    << reject->GetHash().GetLow32();
             return nullptr;
@@ -134,7 +129,7 @@ MessageData *MsgDataFactory(const uint8_t *raw, const MessageHeader& header,
         SendHeaders *send_headers = new SendHeaders();
         send_headers->Deserialize(byte_source);
         if (header.checksum() != send_headers->GetHash().GetLow32()) {
-            BTCLOG(LOG_LEVEL_INFO) << "Sendheaders message checksum error: expect "
+            BTCLOG(LOG_LEVEL_WARNING) << "Sendheaders message checksum error: expect "
                                    << header.checksum() << ", received "
                                    << send_headers->GetHash().GetLow32();
             return nullptr;
@@ -145,18 +140,22 @@ MessageData *MsgDataFactory(const uint8_t *raw, const MessageHeader& header,
         SendCmpct *send_compact = new SendCmpct();
         send_compact->Deserialize(byte_source);
         if (header.checksum() != send_compact->GetHash().GetLow32()) {
-            BTCLOG(LOG_LEVEL_INFO) << "Sendheaders message checksum error: expect "
+            BTCLOG(LOG_LEVEL_WARNING) << "Sendheaders message checksum error: expect "
                                    << header.checksum() << ", received "
                                    << send_compact->GetHash().GetLow32();
             return nullptr;
         }
         msg = send_compact;
     }
-    else
+    else {
+        BTCLOG(LOG_LEVEL_WARNING) << "Rececived unknown message: "
+                                  << header.command();
         return nullptr;
+    }
     
     if (!msg->IsValid()) {
-        BTCLOG(LOG_LEVEL_ERROR) << "Received invalid " << header.command() << " message data.";
+        BTCLOG(LOG_LEVEL_ERROR) << "Received invalid " << header.command() 
+                                << " message data";
         delete msg;
         return nullptr;
     }
@@ -168,6 +167,7 @@ bool ParseMsg(std::shared_ptr<Node> src_node, const Params& params)
 {
     struct evbuffer *buf;
     uint8_t *raw = nullptr;
+    bool ret = true;
     
     if (!src_node->connection().bev())
         return false;
@@ -183,48 +183,52 @@ bool ParseMsg(std::shared_ptr<Node> src_node, const Params& params)
         return false;
     
     while (raw) {
-        // construct header and data from raw first
+        // construct msg header from raw
         MessageHeader header(raw);
         evbuffer_drain(buf, MessageHeader::kSize);
         if (header.payload_length() > kMaxMessageSize) {
-            BTCLOG(LOG_LEVEL_ERROR) << "Oversized message from peer "                                    
-                                    << src_node->id() << ", disconnecting";
+            BTCLOG(LOG_LEVEL_ERROR) << "Oversized message from peer " << src_node->id()
+                                    << ", disconnecting";
+            src_node->mutable_connection()->set_connection_state(NodeConnection::kDisconnected);
+            return false;
+        }
+        if (header.magic() != params.msg_magic()) {
+            BTCLOG(LOG_LEVEL_ERROR) << "Invalid message magic " << header.magic()
+                                    << " from peer " << src_node->id() << ", disconnecting";
             src_node->mutable_connection()->set_connection_state(NodeConnection::kDisconnected);
             return false;
         }
         
-        if (nullptr == (raw = evbuffer_pullup(buf, header.payload_length())))
-            return false;       
+        if (header.payload_length() > 0) {
+            if (nullptr == (raw = evbuffer_pullup(buf, header.payload_length())))
+                return false;
+        }
+        
+        // construct msg data from raw
         MessageData *message = MsgDataFactory(raw, header, src_node->protocol().version());
         evbuffer_drain(buf, header.payload_length());
-        
-        // validate header and data second
-        if (!header.IsValid()) {
-            BTCLOG(LOG_LEVEL_ERROR) << "Received invalid message header from peer "
+        if (message) {
+            if (CheckMisbehaving(header.command(), src_node)) {
+                ret &= message->RecvHandler(src_node, params);
+                delete message;
+            }
+            else {
+                BTCLOG(LOG_LEVEL_ERROR) << "Received misbehavior message from peer "
+                                        << src_node->id();
+                src_node->mutable_misbehavior()->Misbehaving(src_node->id(), 1);
+                ret = false;
+            }
+        }
+        else {
+            BTCLOG(LOG_LEVEL_ERROR) << "Received invalid message from peer "
                                     << src_node->id();
-            raw = evbuffer_pullup(buf, MessageHeader::kSize);
-            continue;
-        }
-        if (!message) {
-            BTCLOG(LOG_LEVEL_ERROR) << "Prasing message data from peer "
-                                    << src_node->id() << " failed.";
-            raw = evbuffer_pullup(buf, MessageHeader::kSize);
-            continue;
+            ret = false;
         }        
-        
-        if (!CheckMisbehaving(header.command(), src_node)) {
-            src_node->mutable_misbehavior()->Misbehaving(src_node->id(), 1);
-            raw = evbuffer_pullup(buf, MessageHeader::kSize);
-            continue;
-        }
-        
-        message->RecvHandler(src_node, params);
-        delete message;
-        
+      
         raw = evbuffer_pullup(buf, MessageHeader::kSize);
     }
 
-    return true;
+    return ret;
 }
 
 bool SendVersion(std::shared_ptr<Node> dst_node, uint32_t magic)

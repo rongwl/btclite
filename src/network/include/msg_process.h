@@ -31,7 +31,7 @@ bool SendMsg(const Message& msg, uint32_t magic, std::shared_ptr<Node> dst_node)
 
     MessageHeader header(magic, msg.Command(), msg.SerializedSize(), msg.GetHash().GetLow32());
     ms << header << msg;
-    
+
     if (ms.Size() != MessageHeader::kSize + msg.SerializedSize()) {
         BTCLOG(LOG_LEVEL_ERROR) << "Wrong serialized message size:" << ms.Size()
                                 << ", correct size:" << MessageHeader::kSize + msg.SerializedSize() 

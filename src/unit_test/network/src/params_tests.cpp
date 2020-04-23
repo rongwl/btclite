@@ -15,7 +15,7 @@ using namespace network;
 TEST(NetworkParamsTest, Constructor)
 {
     Params network_params(BtcNet::kMainNet, util::Args());
-    EXPECT_EQ(kMainMagic, network_params.msg_magic());
+    EXPECT_EQ(kMainnetMagic, network_params.msg_magic());
     EXPECT_EQ(8333, network_params.default_port());    
     std::vector<Seed> vec = 
     { { "seed.bitcoin.sipa.be", 8333 },

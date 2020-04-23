@@ -82,7 +82,7 @@ TEST_F(MessageHeaderTest, Clear)
 TEST_F(MessageHeaderTest, ValidateHeader)
 {
     EXPECT_FALSE(header1_.IsValid());
-    EXPECT_FALSE(header1_.IsValid(kMainMagic));
+    EXPECT_FALSE(header1_.IsValid(kMainnetMagic));
     EXPECT_FALSE(header1_.IsValid(kTestnetMagic));
     EXPECT_FALSE(header1_.IsValid(kRegtestMagic));
     EXPECT_TRUE(header2_.IsValid());
@@ -90,11 +90,11 @@ TEST_F(MessageHeaderTest, ValidateHeader)
     EXPECT_FALSE(header2_.IsValid(kRegtestMagic));
     EXPECT_TRUE(header3_.IsValid());
     
-    header1_.set_magic(kMainMagic);
+    header1_.set_magic(kMainnetMagic);
     header1_.set_command("foo");
     EXPECT_FALSE(header1_.IsValid());
     
-    header1_.set_magic(kMainMagic);
+    header1_.set_magic(kMainnetMagic);
     header1_.set_command(msg_command::kMsgVersion);
     header1_.set_payload_length(kMaxMessageSize+1);
     EXPECT_FALSE(header1_.IsValid());

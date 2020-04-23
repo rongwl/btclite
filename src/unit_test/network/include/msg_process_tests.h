@@ -6,8 +6,10 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include "btcnet.h"
 #include "constants.h"
 #include "network_address.h"
+#include "network/include/params.h"
 
 
 namespace btclite {
@@ -31,6 +33,7 @@ protected:
     struct bufferevent *pair_[2] = {};
     network::NetAddr addr_;
 };
+
 
 } // namespace unit_test
 } // namespace btclit

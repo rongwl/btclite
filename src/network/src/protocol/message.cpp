@@ -20,7 +20,7 @@ MessageHeader::MessageHeader(const uint8_t *raw_data)
 
 bool MessageHeader::IsValid(uint32_t magic) const
 {
-    if (magic == kMainMagic || magic == kTestnetMagic || magic == kRegtestMagic) {
+    if (magic == kMainnetMagic || magic == kTestnetMagic || magic == kRegtestMagic) {
         if (magic_ != magic) {
             BTCLOG(LOG_LEVEL_WARNING) << "MessageHeader::magic_(" << magic_ 
                                       << ") is invalid, " << magic << " is correct";
@@ -28,7 +28,7 @@ bool MessageHeader::IsValid(uint32_t magic) const
         }
     }
     else {
-        if (magic_ != kMainMagic && magic_ != kTestnetMagic && magic_ != kRegtestMagic) {
+        if (magic_ != kMainnetMagic && magic_ != kTestnetMagic && magic_ != kRegtestMagic) {
             BTCLOG(LOG_LEVEL_WARNING) << "MessageHeader::magic_(" << magic_ 
                                       << ") is invalid";
             return false;
@@ -67,7 +67,7 @@ bool MessageHeader::IsValid(uint32_t magic) const
     }
     
     if (payload_length_ > kMaxMessageSize) {
-        BTCLOG(LOG_LEVEL_WARNING) << "MessageHeader::payload_length_(" << payload_length_ << ") is invalid";
+        BTCLOG(LOG_LEVEL_WARNING) << "MessageHeader::payload_length_(" << payload_length_ << ") is oversize";
         return false;
     }
     

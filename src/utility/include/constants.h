@@ -34,7 +34,7 @@ constexpr uint8_t kVarint64bits = 0xff;
 constexpr uint64_t kSatoshiPerBitcoin = 100000000;
 constexpr uint64_t kMaxSatoshiAmount = 21000000 * kSatoshiPerBitcoin;
 
-constexpr uint32_t kMainMagic = 0xD9B4BEF9;
+constexpr uint32_t kMainnetMagic = 0xD9B4BEF9;
 constexpr uint32_t kTestnetMagic = 0x0709110B;
 constexpr uint32_t kRegtestMagic = 0xDAB5BFFA;
 
