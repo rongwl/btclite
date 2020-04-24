@@ -12,7 +12,7 @@ using namespace network;
 
 TEST(AcceptorTest, Constructor)
 {
-    network::Params params(BtcNet::kTestNet, util::Args());
+    network::Params params(BtcNet::kTestNet, util::Args(), fs::path("/tmp/foo"));
     Acceptor acceptor(params);
     const struct sockaddr_in6& sock_addr = acceptor.sock_addr();
     ASSERT_EQ(sock_addr.sin6_family, AF_INET6);
@@ -23,7 +23,7 @@ TEST(AcceptorTest, Constructor)
 
 TEST(AcceptorTest, MethordAcceptConnCb)
 {
-    network::Params params(BtcNet::kTestNet, util::Args());
+    network::Params params(BtcNet::kTestNet, util::Args(), fs::path("/tmp/foo"));
     Acceptor acceptor(params);
     struct event_base *base;
     struct evconnlistener *listener;

@@ -21,15 +21,17 @@ TEST(BanListTest, AddBanAddr)
     BanList ban_list;
     
     ASSERT_TRUE(ban_list.Add(addr, BanList::BanReason::kNodeMisbehaving));
-    auto it = ban_list.ban_map().map().find(SubNet(addr).ToString());
+    auto ban_map = ban_list.ban_map().map();
+    auto it = ban_map.find(SubNet(addr).ToString());
     ASSERT_NE(it, ban_list.ban_map().map().end());
     EXPECT_EQ(it->second.ban_reason(), 
               static_cast<std::underlying_type_t<BanList::BanReason> >(
                   BanList::BanReason::kNodeMisbehaving));
     
     ASSERT_TRUE(ban_list.Erase(addr));
-    it = ban_list.ban_map().map().find(SubNet(addr).ToString());
-    EXPECT_EQ(it, ban_list.ban_map().map().end());
+    auto ban_map2 = ban_list.ban_map().map();
+    auto it2 = ban_map2.find(SubNet(addr).ToString());
+    EXPECT_EQ(it2, ban_list.ban_map().map().end());
     EXPECT_FALSE(ban_list.Erase(addr));
 }
 
@@ -150,7 +152,6 @@ TEST(BanDbTest, DumpAndLoadBanList)
     BanDb ban_db(fs::path("/tmp"));
     ASSERT_EQ(ban_list.Size(), 10);
     ASSERT_TRUE(ban_db.DumpBanList(ban_list));
-    ASSERT_FALSE(ban_db.LoadBanList(&ban_list));
     ban_list.Clear();
     ASSERT_TRUE(ban_db.LoadBanList(&ban_list));
     ASSERT_EQ(ban_list.Size(), 10);

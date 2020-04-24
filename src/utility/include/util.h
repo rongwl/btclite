@@ -88,11 +88,11 @@ private:
     std::map<std::string, std::vector<std::string> > map_multi_args_;
 };
 
-class ExecutorConfig : Uncopyable {
+class Configuration : Uncopyable {
 public:
     virtual void ParseParameters(int argc, const char* const argv[]) = 0;
     virtual bool InitDataDir() = 0;
-    virtual bool InitParameters();
+    virtual bool InitArgs();
     
     bool LockDataDir();
     static fs::path PathHome();

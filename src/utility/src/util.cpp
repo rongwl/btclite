@@ -55,7 +55,7 @@ void HelpInfo::PrintUsage()
 
 }
 
-void ExecutorConfig::CheckArgs() const
+void Configuration::CheckArgs() const
 {
     // --testnet and --regtest
     if (args_.IsArgSet(GLOBAL_OPTION_TESTNET) && args_.IsArgSet(GLOBAL_OPTION_REGTEST)) 
@@ -89,7 +89,7 @@ void ExecutorConfig::CheckArgs() const
     }
 }
 
-bool ExecutorConfig::InitParameters()
+bool Configuration::InitArgs()
 {    
     // --debug
     if (args_.IsArgSet(GLOBAL_OPTION_DEBUG)) {
@@ -135,7 +135,7 @@ bool ExecutorConfig::InitParameters()
 }
 
 /* Check options that getopt_long() can not print totally */
-void ExecutorConfig::CheckOptions(int argc, const char* const argv[])
+void Configuration::CheckOptions(int argc, const char* const argv[])
 {
     if (argc == 0 || argv == nullptr)
         throw Exception(ErrorCode::kInvalidArg, "argument is null");
@@ -149,7 +149,7 @@ void ExecutorConfig::CheckOptions(int argc, const char* const argv[])
     }
 }
 
-bool ExecutorConfig::ParseFromFile(const fs::path& path) const
+bool Configuration::ParseFromFile(const fs::path& path) const
 {
     std::ifstream ifs(path);
     if (!ifs.good()) {
@@ -176,12 +176,12 @@ bool ExecutorConfig::ParseFromFile(const fs::path& path) const
     return true;
 }
 
-bool ExecutorConfig::LockDataDir()
+bool Configuration::LockDataDir()
 {
     return true;
 }
 
-fs::path ExecutorConfig::PathHome()
+fs::path Configuration::PathHome()
 {
     char *home_path = getenv("HOME");            
     if (home_path == NULL)

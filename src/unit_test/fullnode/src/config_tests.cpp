@@ -81,7 +81,7 @@ TEST(FullNodeArgsTest, OptionLog)
         argv[3] = const_cast<char*>(argv3.c_str());
         
         args.Init(4, argv);
-        args.InitParameters();
+        args.InitArgs();
         EXPECT_TRUE(args.IsArgSet(GLOBAL_OPTION_DEBUG));
         EXPECT_EQ(Logging::log_module(), Logging::NET | Logging::MEMPOOL);
         EXPECT_TRUE(args.IsArgSet(GLOBAL_OPTION_LOGLEVEL));
@@ -273,7 +273,7 @@ TEST(FullNodeArgsTest, OptionConnection)
         argv[1] = const_cast<char*>(argv1.c_str());
         args.Clear();
         args.Init(2, argv);
-        args.InitParameters();
+        args.InitArgs();
         
         EXPECT_TRUE(args.IsArgSet(FULLNODE_OPTION_LISTEN));
         EXPECT_EQ(args.GetArg(FULLNODE_OPTION_LISTEN, "1"), "0");
@@ -334,7 +334,7 @@ TEST(FullNodeArgsTest, OptionConnection)
         argv[2] = const_cast<char*>(argv2.c_str());
         args.Clear();
         args.Init(3, argv);
-        args.InitParameters();
+        args.InitArgs();
         
         EXPECT_TRUE(args.IsArgSet(FULLNODE_OPTION_CONNECT));
         EXPECT_EQ(args.GetArgs(FULLNODE_OPTION_CONNECT), ip);

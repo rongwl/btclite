@@ -44,7 +44,7 @@ bool BanList::Erase(const SubNet& sub_net)
 bool BanList::Add_(const SubNet& sub_net, const proto_banmap::BanEntry& ban_entry)
 {
     LOCK(cs_ban_map_);
-    google::protobuf::Map< ::std::string, ::proto_banmap::BanEntry > *pmap = ban_map_.mutable_map();
+    auto pmap = ban_map_.mutable_map();
     if ((*pmap)[sub_net.ToString()].ban_until() < ban_entry.ban_until()) {        
         (*pmap)[sub_net.ToString()] = ban_entry;
         return true;
@@ -71,8 +71,9 @@ bool BanList::IsBanned(NetAddr addr)
 {
     LOCK(cs_ban_map_);
     
-    for (auto it = ban_map_.map().begin(); it != ban_map_.map().end(); ++it) {
-        if (SubNet(addr).ToString() == it->first && util::GetTimeSeconds() < it->second.ban_until()) {
+    auto it = ban_map_.map().find(SubNet(addr).ToString());
+    if (it != ban_map_.map().end()) {
+        if (util::GetTimeSeconds() < it->second.ban_until()) {
             return true;
         }
     }
@@ -98,9 +99,10 @@ bool BanDb::DumpBanList(BanList& ban_list)
 
 bool BanDb::LoadBanList(BanList *ban_list)
 {
-    if (!ban_list || !ban_list->IsEmpty())
+    if (!ban_list)
         return false;
     
+    ban_list->Clear();
     std::fstream fs(path_ban_list_, std::ios::in | std::ios::binary);
     if (!fs) {
         BTCLOG(LOG_LEVEL_INFO) << "Load "<< path_ban_list_  << ", but file not found.";

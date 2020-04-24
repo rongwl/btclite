@@ -21,7 +21,7 @@ int main(int argc, char **argv)
         exit(e.code().value());
     }
     
-    if (!config.InitParameters())
+    if (!config.InitArgs())
         return EXIT_FAILURE;
     
     if (!config.InitDataDir())

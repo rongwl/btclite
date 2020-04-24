@@ -349,7 +349,7 @@ TEST(PeersDbTest, Constructor)
 
 TEST(PeersDbTest, DumpAndLoadPeers)
 {
-    Peers& peers = SingletonPeers::GetInstance();
+    Peers peers;
     NetAddr addr, source;
     int64_t now = util::GetAdjustedTime();
     
@@ -369,16 +369,14 @@ TEST(PeersDbTest, DumpAndLoadPeers)
     ASSERT_TRUE(peers.Add(addr, source));
     
     PeersDb peers_db(fs::path("/tmp"));
-    ASSERT_TRUE(peers_db.DumpPeers());
-    ASSERT_FALSE(peers_db.LoadPeers());
+    ASSERT_TRUE(peers_db.DumpPeers(peers));
     peers.Clear();
-    ASSERT_TRUE(peers_db.LoadPeers());
+    ASSERT_TRUE(peers_db.LoadPeers(&peers));
     EXPECT_EQ(peers.Size(), 5);
     EXPECT_EQ(peers.proto_peers().new_tbl().size(), 3);
     EXPECT_EQ(peers.proto_peers().tried_tbl().size(), 2);
     
     fs::remove(peers_db.path_peers());
-    peers.Clear();
 }
 
 } // namespace unit_test

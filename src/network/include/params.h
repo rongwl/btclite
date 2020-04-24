@@ -25,7 +25,11 @@ struct Seed {
 
 class Params {
 public:
-    Params(BtcNet btcnet, const util::Args& args);
+    explicit Params(const util::Configuration& config)
+        : Params(config.btcnet(), config.args(), config.path_data_dir()) {}
+    
+    Params(BtcNet btcnet, const util::Args& args, 
+           const fs::path& path_data_dir);
     
     //-------------------------------------------------------------------------
     uint32_t msg_magic() const
@@ -63,6 +67,11 @@ public:
         return specified_outgoing_;
     }
     
+    const fs::path& path_data_dir() const
+    {
+        return path_data_dir_;
+    }
+    
 private:
     uint32_t msg_magic_ = 0; // little endian
     uint16_t default_port_ = 0;
@@ -72,6 +81,8 @@ private:
     bool discover_local_addr_ = true;
     bool use_dnsseed_ = true;
     std::vector<std::string> specified_outgoing_;
+    
+    fs::path path_data_dir_;
 };
 
 } // namespace btclite

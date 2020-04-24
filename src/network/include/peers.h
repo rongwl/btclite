@@ -144,13 +144,8 @@ public:
         : path_peers_(path / default_peers_file) {}
     
     //-------------------------------------------------------------------------
-    bool DumpPeers();
-    bool LoadPeers();
-    
-    size_t Size() const
-    {
-        return peers_.Size();
-    }
+    bool DumpPeers(const Peers& peers);
+    bool LoadPeers(Peers *peers);
     
     //-------------------------------------------------------------------------
     const fs::path& path_peers() const
@@ -162,7 +157,6 @@ private:
     const std::string default_peers_file = "peers.dat";
     
     fs::path path_peers_;
-    Peers& peers_ = SingletonPeers::GetInstance();
 };
 
 } // namespace network

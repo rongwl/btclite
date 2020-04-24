@@ -5,8 +5,8 @@
 namespace btclite {
 namespace network {
 
-P2P::P2P(const util::ExecutorConfig& config)
-    : params_(config.btcnet(), config.args()), 
+P2P::P2P(const util::Configuration& config)
+    : params_(config), 
       peers_db_(config.path_data_dir()),
       ban_db_(config.path_data_dir()),
       acceptor_(params_), connector_(params_)
@@ -29,14 +29,15 @@ bool P2P::Init()
     if (!connector_.InitEvent())
         return false;
     
-    if (peers_db_.LoadPeers()) {
-        BTCLOG(LOG_LEVEL_INFO) << "Loaded " << peers_db_.Size() 
+    Peers& peers = SingletonPeers::GetInstance();
+    if (peers_db_.LoadPeers(&peers)) {
+        BTCLOG(LOG_LEVEL_INFO) << "Loaded " << peers.Size() 
                                << " addresses from peers.dat";
     }
     else {
         BTCLOG(LOG_LEVEL_INFO) << "Invalid or missing peers.dat; recreating";
         SingletonPeers::GetInstance().Clear();
-        peers_db_.DumpPeers();
+        peers_db_.DumpPeers(SingletonPeers::GetInstance());
     }
     
     BanList& ban_list = SingletonBanList::GetInstance();
@@ -108,7 +109,7 @@ void P2P::Stop()
     if (thread_connector_loop_.joinable())
         thread_connector_loop_.join();
     
-    peers_db_.DumpPeers();
+    peers_db_.DumpPeers(SingletonPeers::GetInstance());
     ban_db_.DumpBanList(SingletonBanList::GetInstance());
     
     BTCLOG(LOG_LEVEL_INFO) << "Stopped p2p network.";

@@ -368,7 +368,7 @@ void ParseMsgCb(struct bufferevent *bev, void *ctx)
 
 TEST_F(MsgProcessTest, ParseMsg)
 {
-    Params params(BtcNet::kTestNet, util::Args());
+    Params params(BtcNet::kTestNet, util::Args(), fs::path("/tmp/foo"));
     bufferevent_setcb(pair_[1], ParseMsgCb, NULL, NULL, reinterpret_cast<void*>(&params));
     bufferevent_enable(pair_[1], EV_READ);
     auto node = std::make_shared<Node>(pair_[0], addr_, false);

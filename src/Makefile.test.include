@@ -102,12 +102,14 @@ unit_test_test_crypto_SOURCES = unit_test/crypto/src/test_crypto.cpp \
 
 unit_test_test_crypto_CPPFLAGS = $(AM_CPPFLAGS) \
                                  $(GTEST_CFLAGS) \
+                                 $(GLOG_CFLAGS) \
                                  $(BOTAN_CFLAGS) \
                                  $(BTCLITE_INCLUDES)
 unit_test_test_crypto_LDADD = $(LIBBTCLITE_CRYPTO) \
                               $(LIBBTCLITE_CHAIN) \
                               $(LIBBTCLITE_UTIL)
 unit_test_test_crypto_LDADD += $(GTEST_LIBS) \
+                               $(GLOG_LIBS) \
                                $(PTHREAD_LIBS) \
                                $(BOTAN_LIBS)
 
@@ -120,6 +122,7 @@ unit_test_test_chain_SOURCES = unit_test/chain/src/test_chain.cpp \
 
 unit_test_test_chain_CPPFLAGS = $(AM_CPPFLAGS) \
                                  $(GTEST_CFLAGS) \
+                                 $(GLOG_CFLAGS) \
                                  $(BOTAN_CFLAGS) \
                                  $(BTCLITE_INCLUDES)
 unit_test_test_chain_LDADD = $(LIBBTCLITE_CHAIN) \
@@ -141,6 +144,7 @@ unit_test_test_util_SOURCES = unit_test/utility/src/test_util.cpp \
 
 unit_test_test_util_CPPFLAGS = $(AM_CPPFLAGS) \
                                $(GTEST_CFLAGS) \
+                               $(GLOG_CFLAGS) \
                                $(BOTAN_CFLAGS) \
                                $(UNIT_TEST_UTIL_INCLUDES) \
                                $(BTCLITE_INCLUDES)

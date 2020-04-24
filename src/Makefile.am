@@ -165,7 +165,7 @@ network_src_libbtclite_network_a_CPPFLAGS = $(AM_CXXFLAGS) \
                                             $(BTCLITE_UTIL_INCLUDES) \
                                             $(BTCLITE_FULLNODE_INCLUDES)
 network_src_libbtclite_network_a_SOURCES = network/proto/network_address.pb.cc \
-                                           network/proto/banmap.pb.cc \ 
+                                           network/proto/banmap.pb.cc \
                                            network/proto/peers.pb.cc \
                                            network/src/acceptor.cpp \
                                            network/src/bandb.cpp \

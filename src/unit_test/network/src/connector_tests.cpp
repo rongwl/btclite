@@ -18,7 +18,7 @@ using namespace network;
 TEST(ConnectorTest, ConnectNode)
 {
     std::vector<NetAddr> addrs;
-    network::Params params(BtcNet::kTestNet, util::Args());
+    network::Params params(BtcNet::kTestNet, util::Args(), fs::path("/tmp/foo"));
     Connector connector(params);
     
     // init libevent
@@ -52,7 +52,7 @@ TEST(ConnectorTest, ConnectNode)
 
 TEST(ConnectorTest, GetHostAddr)
 {
-    network::Params params(BtcNet::kTestNet, util::Args());
+    network::Params params(BtcNet::kTestNet, util::Args(), fs::path("/tmp/foo"));
     Connector connector(params);
     NetAddr addr;
     
@@ -71,7 +71,7 @@ TEST(ConnectorTest, GetHostAddr)
 
 TEST(ConnectorTest, ConnectOutbound)
 {
-    network::Params params(BtcNet::kTestNet, util::Args());
+    network::Params params(BtcNet::kTestNet, util::Args(), fs::path("/tmp/foo"));
     Connector connector(params);
     NetAddr addr, source;
     
@@ -101,8 +101,9 @@ TEST(ConnectorTest, ConnectOutbound)
 
 TEST(ConnectorTest, DnsLookup)
 {
+    network::Params params(BtcNet::kTestNet, util::Args(), fs::path("/tmp/foo"));
     ASSERT_TRUE(SingletonPeers::GetInstance().IsEmpty());
-    ASSERT_TRUE(Connector::DnsLookup(Params(BtcNet::kTestNet, util::Args()).seeds(), 18333));
+    ASSERT_TRUE(Connector::DnsLookup(params.seeds(), 18333));
     EXPECT_FALSE(SingletonPeers::GetInstance().IsEmpty());
     SingletonPeers::GetInstance().Clear();
 }

@@ -59,7 +59,7 @@ void FullNodeConfig::ParseParameters(int argc, const char* const argv[])
 
 void FullNodeConfig::CheckArgs() const
 {
-    ExecutorConfig::CheckArgs();
+    Configuration::CheckArgs();
     
     // --connect
     if (args_.IsArgSet(FULLNODE_OPTION_CONNECT)) {
@@ -94,40 +94,49 @@ bool FullNodeConfig::InitDataDir()
     const fs::path path_default_data_dir_ = PathHome() / DEFAULT_DATA_DIR;
     std::string dir_name = "mainnet";
 
-    if (btcnet_ == BtcNet::kTestNet)
+    if (btcnet_ == BtcNet::kTestNet) {
         dir_name = "testnet";
-    else if (btcnet_ == BtcNet::kRegTest)
-        dir_name = "regtest";    
+    } else if (btcnet_ == BtcNet::kRegTest) {
+        dir_name = "regtest";
+    }
     path_data_dir_ = path_default_data_dir_ / dir_name;
     
     if (args_.IsArgSet(GLOBAL_OPTION_DATADIR)) {
         const std::string path = args_.GetArg(GLOBAL_OPTION_DATADIR, DEFAULT_DATA_DIR);
-        if (fs::is_directory(path))
+        if (fs::is_directory(path)) {
             path_data_dir_ = fs::path(path) / dir_name;
-        else
-            BTCLOG(LOG_LEVEL_WARNING) << "Specified data path \"" << path << "\" does not exist. Use default data path.";
+        } else {
+            BTCLOG(LOG_LEVEL_WARNING) << "Specified data path \"" << path 
+                                      << "\" does not exist. Use default data path.";
+        }
     }
 
-    if (path_data_dir_ == path_default_data_dir_ / dir_name)
-        fs::create_directories(path_data_dir_); // create default data dir if it does not exist
+    if (path_data_dir_ == path_default_data_dir_ / dir_name) {
+        // create default data dir if it does not exist
+        fs::create_directories(path_data_dir_); 
+    }
     
     config_file_ = DEFAULT_CONFIG_FILE;
     if (args_.IsArgSet(GLOBAL_OPTION_CONF)) {
         config_file_ = args_.GetArg(GLOBAL_OPTION_CONF, DEFAULT_CONFIG_FILE);
-        if (!std::ifstream(path_data_dir() / config_file_).good())
-            BTCLOG(LOG_LEVEL_WARNING) << "Specified config file \"" << path_data_dir().c_str() << "/" << config_file_
+        if (!std::ifstream(path_data_dir() / config_file_).good()) {
+            BTCLOG(LOG_LEVEL_WARNING) << "Specified config file \"" << path_data_dir().c_str() 
+                                      << "/" << config_file_
                                       << "\" does not exist. Use default config file.";
+        }
     }
     
-    if (config_file_ == DEFAULT_CONFIG_FILE)
-        std::ofstream file(path_data_dir_ / config_file_); // create default config file if it does not exist    
+    if (config_file_ == DEFAULT_CONFIG_FILE) {
+        // create default config file if it does not exist    
+        std::ofstream file(path_data_dir_ / config_file_);
+    }
     
     return ParseFromFile(path_data_dir_ / config_file_);
 }
 
-bool FullNodeConfig::InitParameters()
+bool FullNodeConfig::InitArgs()
 {
-    if (!ExecutorConfig::InitParameters())
+    if (!Configuration::InitArgs())
         return false;
     
     return true;

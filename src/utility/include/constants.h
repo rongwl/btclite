@@ -128,6 +128,9 @@ constexpr char kMsgBlockTxn[] = "blocktxn";
 
 constexpr uint32_t kDefaultBanscoreThreshold = 100;
 
+constexpr char kBanListFileName[] = "banlist.dat";
+constexpr char kPeersFileName[] = "peers.dat";
+
 } // namespace btclite
 
 

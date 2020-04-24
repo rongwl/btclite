@@ -6,7 +6,10 @@
 namespace btclite {
 namespace network {
 
-Params::Params(BtcNet btcnet, const util::Args& args)
+
+Params::Params(BtcNet btcnet, const util::Args& args, 
+               const fs::path& path_data_dir)
+    : path_data_dir_(path_data_dir)
 {
     if (args.IsArgSet(FULLNODE_OPTION_CONNECT)) {
         advertise_local_addr_ = false;

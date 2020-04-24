@@ -17,7 +17,7 @@ namespace network {
 
 class P2P : util::Uncopyable {
 public:
-    explicit P2P(const util::ExecutorConfig& config);
+    explicit P2P(const util::Configuration& config);
     
     bool Init();
     bool Start();
