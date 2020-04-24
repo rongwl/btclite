@@ -3,7 +3,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include "bandb.h"
+#include "banlist.h"
 #include "p2p.h"
 #include "util_time.h"
 

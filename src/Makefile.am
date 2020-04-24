@@ -50,7 +50,7 @@ BTCLITE_HEADER_FILES = \
                        fullnode/include/clientversion.h \
                        fullnode/include/config.h \
                        network/include/acceptor.h \
-                       network/include/bandb.h \
+                       network/include/banlist.h \
                        network/include/block_sync.h \
                        network/include/bloom.h \
                        network/include/connector.h \
@@ -168,7 +168,7 @@ network_src_libbtclite_network_a_SOURCES = network/proto/network_address.pb.cc \
                                            network/proto/banmap.pb.cc \
                                            network/proto/peers.pb.cc \
                                            network/src/acceptor.cpp \
-                                           network/src/bandb.cpp \
+                                           network/src/banlist.cpp \
                                            network/src/block_sync.cpp \
                                            network/src/connector.cpp \
                                            network/src/libevent.cpp \

@@ -4,7 +4,7 @@
 #include <arpa/inet.h>
 
 #include "connector.h"
-#include "bandb.h"
+#include "banlist.h"
 #include "net.h"
 #include "net_base.h"
 #include "peers.h"

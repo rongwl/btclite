@@ -40,7 +40,7 @@ unit_test_test_network_SOURCES = unit_test/network/src/test_network.cpp \
                                  unit_test/network/src/params_tests.cpp \
                                  unit_test/network/src/netbase_tests.cpp \
                                  unit_test/network/src/net_tests.cpp \
-                                 unit_test/network/src/bandb_tests.cpp \
+                                 unit_test/network/src/banlist_tests.cpp \
                                  unit_test/network/src/peers_tests.cpp \
                                  unit_test/network/src/protocol/message_tests.cpp \
                                  unit_test/network/src/protocol/address_tests.cpp \

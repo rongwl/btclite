@@ -1,6 +1,6 @@
 #include "node_tests.h"
 
-#include "bandb.h"
+#include "banlist.h"
 
 
 namespace btclite {

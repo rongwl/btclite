@@ -4,7 +4,7 @@
 #include <thread>
 
 #include "acceptor.h"
-#include "bandb.h"
+#include "banlist.h"
 #include "connector.h"
 #include "net.h"
 #include "network/include/params.h"
