@@ -12,7 +12,7 @@ namespace protocol {
 
 namespace private_ping {
 
-class Ping : public MessageData {
+class Ping {
 public:
     Ping() = default;
     
@@ -23,7 +23,7 @@ public:
         : nonce_(nonce), protocol_version_(protocol_version) {}
     
     //-------------------------------------------------------------------------
-    bool RecvHandler(std::shared_ptr<Node> src_node, const Params& params) const;
+    bool RecvHandler(std::shared_ptr<Node> src_node, uint32_t magic) const;
     
     std::string Command() const
     {

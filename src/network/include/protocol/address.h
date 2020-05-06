@@ -12,12 +12,12 @@ namespace protocol {
 
 namespace private_address {
 
-class Address : public MessageData {
+class Address {
 public:
     using List = std::vector<NetAddr>;
     
     //-------------------------------------------------------------------------
-    bool RecvHandler(std::shared_ptr<Node> src_node, const Params& params) const;
+    bool RecvHandler(std::shared_ptr<Node> src_node) const;
     
     std::string Command() const
     {

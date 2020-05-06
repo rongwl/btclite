@@ -11,9 +11,9 @@ namespace protocol {
 
 namespace private_sendheaders {
 
-class SendHeaders : public MessageData {
+class SendHeaders {
 public:
-    bool RecvHandler(std::shared_ptr<Node> src_node, const Params& params) const;
+    bool RecvHandler(std::shared_ptr<Node> src_node) const;
     
     std::string Command() const
     {

@@ -299,7 +299,7 @@ public:
     }
     
     //-------------------------------------------------------------------------
-    std::vector<NetAddr> addrs_to_send() const
+    std::vector<NetAddr> addrs_to_send() const // thread safe copy
     {
         LOCK(cs_);
         return addrs_to_send_;

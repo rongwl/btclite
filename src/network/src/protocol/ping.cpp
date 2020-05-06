@@ -11,7 +11,7 @@ namespace protocol {
 
 namespace private_ping {
 
-bool Ping::RecvHandler(std::shared_ptr<Node> src_node, const Params& params) const
+bool Ping::RecvHandler(std::shared_ptr<Node> src_node, uint32_t magic) const
 {
     if (src_node->protocol().version() >= kBip31Version)
     {
@@ -27,7 +27,7 @@ bool Ping::RecvHandler(std::shared_ptr<Node> src_node, const Params& params) con
         // seconds to respond to each, the 5th ping the remote sends would appear to
         // return very quickly.
         Pong pong(nonce_);
-        SendMsg(pong, params.msg_magic(), src_node);
+        SendMsg(pong, magic, src_node);
     }
     
     return true;

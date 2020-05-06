@@ -25,7 +25,7 @@ constexpr ProtocolVersion kMinPeerProtoVersion = kGetheadersVersion;
 
 namespace private_version {
 
-class Version : public MessageData {
+class Version {
 public:    
     Version() = default;
     
@@ -48,7 +48,8 @@ public:
           start_height_(start_height), relay_(relay) {}
     
     //-------------------------------------------------------------------------
-    bool RecvHandler(std::shared_ptr<Node> src_node, const Params& params) const;
+    bool RecvHandler(std::shared_ptr<Node> src_node, 
+                     uint32_t magic, bool advertise_local) const;
     
     std::string Command() const
     {

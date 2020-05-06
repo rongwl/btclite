@@ -168,7 +168,7 @@ void RelayFloodingAddrsTimeoutCb(std::shared_ptr<Node> node, uint32_t magic)
     if (node->connection().connection_state() == NodeConnection::kDisconnected)
         return;
     
-    std::vector<NetAddr> addrs_to_send = std::move(node->flooding_addrs().addrs_to_send());
+    std::vector<NetAddr>&& addrs_to_send = node->flooding_addrs().addrs_to_send();
     protocol::Addr addr_msg;
     addr_msg.mutable_addr_list()->reserve(addrs_to_send.size());
     for (const NetAddr& addr : addrs_to_send) {

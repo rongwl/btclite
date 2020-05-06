@@ -10,10 +10,34 @@
 namespace btclite {
 namespace network {
 
-protocol::MessageData *MsgDataFactory(const uint8_t *raw, 
-                                      const protocol::MessageHeader& header,
-                                      uint32_t protocol_version);
 bool ParseMsg(std::shared_ptr<Node> src_node, const Params& params);
+
+template <typename Message, typename... Args>
+bool HandleMsgData(std::shared_ptr<Node> src_node, const protocol::MessageHeader& header, 
+                   const Message& msg, Args&&... args)
+{
+    if (header.checksum() != msg.GetHash().GetLow32()) {
+        BTCLOG(LOG_LEVEL_WARNING) << msg.Command() << " message checksum error: expect "
+                                  << header.checksum() << ", received "
+                                  << msg.GetHash().GetLow32();
+        return false;
+    }
+    
+    if (!msg.IsValid()) {
+        BTCLOG(LOG_LEVEL_ERROR) << "Received invalid " << msg.Command() 
+                                << " message data";
+        return false;
+    }
+    
+    if (!protocol::CheckMisbehaving(msg.Command(), src_node)) {
+        BTCLOG(LOG_LEVEL_ERROR) << "Received misbehavior message from peer "
+                                << src_node->id();
+        src_node->mutable_misbehavior()->Misbehaving(src_node->id(), 1);
+        return false;
+    }
+    
+    return msg.RecvHandler(src_node, std::forward<Args>(args)...);
+}
 
 template <typename Message>
 bool SendMsg(const Message& msg, uint32_t magic, std::shared_ptr<Node> dst_node)

@@ -27,7 +27,7 @@ enum class CCode : uint8_t {
 
 namespace private_reject {
 
-class Reject : public MessageData {
+class Reject {
 public:
     Reject() = default;
     
@@ -48,7 +48,7 @@ public:
           data_(data) {}
     
     //-------------------------------------------------------------------------
-    bool RecvHandler(std::shared_ptr<Node> src_node, const Params& params) const;
+    bool RecvHandler(std::shared_ptr<Node> src_node) const;
     
     std::string Command() const
     {

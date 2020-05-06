@@ -7,7 +7,7 @@ namespace protocol {
 
 namespace private_inventory {
 
-bool Inventory::RecvHandler(std::shared_ptr<Node> src_node, const Params& params) const
+bool Inventory::RecvHandler(std::shared_ptr<Node> src_node) const
 {
     return true;
 }

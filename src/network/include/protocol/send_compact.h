@@ -11,7 +11,7 @@ namespace protocol {
 
 namespace private_sendcmpct {
 
-class SendCmpct : public MessageData {
+class SendCmpct {
 public:
     SendCmpct() = default;
     
@@ -19,7 +19,7 @@ public:
         : high_bandwidth_mode_(high_bandwidth_mode), version_(version) {}
     
     //-------------------------------------------------------------------------
-    bool RecvHandler(std::shared_ptr<Node> src_node, const Params& params) const;
+    bool RecvHandler(std::shared_ptr<Node> src_node) const;
     
     std::string Command() const
     {

@@ -22,10 +22,10 @@ class FullNodeConfig : public btclite::util::Configuration {
 public:    
     void ParseParameters(int argc, const char* const argv[]);
     bool InitDataDir();
-    bool InitArgs();
+    bool InitArgs() override;
     
 private:
-    void CheckArgs() const;
+    void CheckArgs() const override;
 };
 
 class FullNodeHelpInfo {

@@ -14,7 +14,8 @@ namespace protocol{
 
 namespace private_version {
 
-bool Version::RecvHandler(std::shared_ptr<Node> src_node, const Params& params) const
+bool Version::RecvHandler(std::shared_ptr<Node> src_node, 
+                          uint32_t magic, bool advertise_local) const
 {
     Verack verack;
     
@@ -73,10 +74,10 @@ bool Version::RecvHandler(std::shared_ptr<Node> src_node, const Params& params) 
     }
     
     if (src_node->connection().is_inbound()) {
-        SendVersion(src_node, params.msg_magic());
+        SendVersion(src_node, magic);
     }
     
-    SendMsg(verack, params.msg_magic(), src_node);
+    SendMsg(verack, magic, src_node);
     
     src_node->mutable_protocol()->set_services(services_);
     src_node->mutable_connection()->set_local_addr(addr_recv_);
@@ -90,7 +91,7 @@ bool Version::RecvHandler(std::shared_ptr<Node> src_node, const Params& params) 
     
     if (!src_node->connection().is_inbound()) {
         // Advertise our address
-        if (params.advertise_local_addr() && !IsInitialBlockDownload()) {
+        if (advertise_local && !IsInitialBlockDownload()) {
             SingletonLocalService::GetInstance().AdvertiseLocalAddr(src_node, true);
         }
         
@@ -98,7 +99,7 @@ bool Version::RecvHandler(std::shared_ptr<Node> src_node, const Params& params) 
         if (src_node->protocol().version() >= ProtocolVersion::kAddrTimeVersion || 
                 SingletonPeers::GetInstance().Size() < 1000) {
             GetAddr getaddr;
-            SendMsg(getaddr, params.msg_magic(), src_node);
+            SendMsg(getaddr, magic, src_node);
             src_node->mutable_flooding_addrs()->set_sent_getaddr(true);
         }
         SingletonPeers::GetInstance().MakeTried(src_node->connection().addr());

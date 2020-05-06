@@ -24,7 +24,7 @@ using namespace std::placeholders;
 using namespace network;
 using namespace network::protocol;
 
-
+#if 0
 TEST(MsgFactoryTest, VersionFactory)
 {
     util::MemoryStream ms;
@@ -354,7 +354,7 @@ TEST_F(MsgProcessTest, SendReject)
     
     event_base_dispatch(base_);
 }
-
+#endif
 
 void ParseMsgCb(struct bufferevent *bev, void *ctx)
 {

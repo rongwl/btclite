@@ -11,9 +11,10 @@ namespace protocol {
 
 namespace private_verack {
 
-class Verack : public MessageData {
+class Verack {
 public:
-    bool RecvHandler(std::shared_ptr<Node> src_node, const Params& params) const;
+    bool RecvHandler(std::shared_ptr<Node> src_node, 
+                     uint32_t magic, bool advertise_local) const;
     
     std::string Command() const
     {
