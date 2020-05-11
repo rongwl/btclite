@@ -22,7 +22,7 @@ bool BanList::Add(const SubNet& sub_net, const BanReason& ban_reason)
     if (!Add_(sub_net, ban_entry))
         return false;
     
-    SingletonNodes::GetInstance().DisconnectNode(sub_net);
+    DisconnectNode(sub_net);
 
     return true;
 }

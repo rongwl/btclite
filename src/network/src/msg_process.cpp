@@ -18,6 +18,7 @@
 namespace btclite {
 namespace network {
 
+using namespace std::placeholders;
 using namespace protocol;
 
 bool ParseMsgData(const uint8_t *raw, std::shared_ptr<Node> src_node, 
@@ -27,8 +28,6 @@ bool ParseMsgData(const uint8_t *raw, std::shared_ptr<Node> src_node,
     util::ByteSource<std::vector<uint8_t> > byte_source(vec);
     
     if (!header.IsValid()) {
-        BTCLOG(LOG_LEVEL_ERROR) << "Received invalid " << header.command()
-                                << " message header";
         return false;    
     }
     
@@ -38,54 +37,67 @@ bool ParseMsgData(const uint8_t *raw, std::shared_ptr<Node> src_node,
     if (header.command() == msg_command::kMsgVersion) {
         Version version;
         version.Deserialize(byte_source);
-        return HandleMsgData(src_node, header, version, 
-                             params.msg_magic(), params.advertise_local_addr());
+        auto recv_handler = std::bind(&Version::RecvHandler, &version,
+                                      _1, params.msg_magic(), 
+                                      params.advertise_local_addr());
+        return HandleMsgData(src_node, header, version, recv_handler);
     }
     else if (header.command() == msg_command::kMsgVerack) {
         Verack verack;
         verack.Deserialize(byte_source);
-        return HandleMsgData(src_node, header, verack,
-                             params.msg_magic(), params.advertise_local_addr());
+        auto recv_handler = std::bind(&Verack::RecvHandler, &verack,
+                                      _1, params.msg_magic(),
+                                      params.advertise_local_addr());
+        return HandleMsgData(src_node, header, verack, recv_handler);
     }
     else if (header.command() == msg_command::kMsgAddr) {
         Addr addr;
         addr.Deserialize(byte_source);
-        return HandleMsgData(src_node, header, addr);
+        return HandleMsgData(src_node, header, addr,
+                             std::bind(&Addr::RecvHandler, &addr, _1));
     }
     else if (header.command() == msg_command::kMsgInv) {
         Inv inv;
         inv.Deserialize(byte_source);
-        return HandleMsgData(src_node, header, inv);
+        return HandleMsgData(src_node, header, inv,
+                             std::bind(&Inv::RecvHandler, &inv, _1));
     }
     else if (header.command() == msg_command::kMsgGetAddr) {
         GetAddr getaddr;
         getaddr.Deserialize(byte_source);
-        return HandleMsgData(src_node, header, getaddr);
+        return HandleMsgData(src_node, header, getaddr,
+                             std::bind(&GetAddr::RecvHandler, &getaddr, _1));
     }
     else if (header.command() == msg_command::kMsgPing) {
         Ping ping(0, src_node->protocol().version());
         ping.Deserialize(byte_source);
-        return HandleMsgData(src_node, header, ping, params.msg_magic());
+        auto recv_handler = std::bind(&Ping::RecvHandler, &ping, _1,
+                                      params.msg_magic());
+        return HandleMsgData(src_node, header, ping, recv_handler);
     }
     else if (header.command() == msg_command::kMsgPong) {
         Pong pong;
         pong.Deserialize(byte_source);
-        return HandleMsgData(src_node, header, pong);
+        return HandleMsgData(src_node, header, pong,
+                             std::bind(&Pong::RecvHandler, &pong, _1));
     }
     else if (header.command() == msg_command::kMsgReject) {
         Reject reject;
         reject.Deserialize(byte_source);
-        return HandleMsgData(src_node, header, reject);
+        return HandleMsgData(src_node, header, reject,
+                             std::bind(&Reject::RecvHandler, &reject, _1));
     }
     else if (header.command() == msg_command::kMsgSendHeaders) {
         SendHeaders send_headers;
         send_headers.Deserialize(byte_source);
-        return HandleMsgData(src_node, header, send_headers);
+        return HandleMsgData(src_node, header, send_headers,
+                             std::bind(&SendHeaders::RecvHandler, &send_headers, _1));
     }
     else if (header.command() == msg_command::kMsgSendCmpct) {
         SendCmpct send_compact;
         send_compact.Deserialize(byte_source);
-        return HandleMsgData(src_node, header, send_compact);
+        return HandleMsgData(src_node, header, send_compact,
+                             std::bind(&SendCmpct::RecvHandler, &send_compact, _1));
     }
     else {
         BTCLOG(LOG_LEVEL_WARNING) << "Rececived unknown message: "
@@ -109,7 +121,7 @@ bool ParseMsg(std::shared_ptr<Node> src_node, const Params& params)
                               src_node->mutable_connection()->mutable_bev())))
         return false;
 
-    if (src_node->connection().connection_state() == NodeConnection::kDisconnected)
+    if (src_node->connection().IsDisconnected())
         return false;
     
     if (nullptr == (raw = evbuffer_pullup(buf, MessageHeader::kSize)))
@@ -122,13 +134,13 @@ bool ParseMsg(std::shared_ptr<Node> src_node, const Params& params)
         if (header.payload_length() > kMaxMessageSize) {
             BTCLOG(LOG_LEVEL_ERROR) << "Oversized message from peer " << src_node->id()
                                     << ", disconnecting";
-            src_node->mutable_connection()->set_connection_state(NodeConnection::kDisconnected);
+            DisconnectNode(src_node);
             return false;
         }
         if (header.magic() != params.msg_magic()) {
             BTCLOG(LOG_LEVEL_ERROR) << "Invalid message magic " << header.magic()
                                     << " from peer " << src_node->id() << ", disconnecting";
-            src_node->mutable_connection()->set_connection_state(NodeConnection::kDisconnected);
+            DisconnectNode(src_node);
             return false;
         }
         
@@ -139,7 +151,7 @@ bool ParseMsg(std::shared_ptr<Node> src_node, const Params& params)
         
         // construct msg data from raw
         ret &= ParseMsgData(raw, src_node, header, params);
-        evbuffer_drain(buf, header.payload_length());     
+        evbuffer_drain(buf, header.payload_length()); 
       
         raw = evbuffer_pullup(buf, MessageHeader::kSize);
     }

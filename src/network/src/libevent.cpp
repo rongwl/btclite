@@ -87,8 +87,7 @@ void LibEvent::EvconnlistenerFree(struct evconnlistener *lev)
 
 void ConnReadCb(struct bufferevent *bev, void *ctx)
 {
-    // increase reference count
-    std::shared_ptr<Node> pnode(SingletonNodes::GetInstance().GetNode(bev));
+    auto pnode = SingletonNodes::GetInstance().GetNode(bev);
     if (!pnode)
         return;
     
@@ -113,8 +112,7 @@ void ConnReadCb(struct bufferevent *bev, void *ctx)
 
 void ConnEventCb(struct bufferevent *bev, short events, void *ctx)
 {
-    // increase reference count
-    std::shared_ptr<Node> pnode(SingletonNodes::GetInstance().GetNode(bev));
+    auto pnode = SingletonNodes::GetInstance().GetNode(bev);
     if (!pnode)
         return;
     
@@ -122,20 +120,22 @@ void ConnEventCb(struct bufferevent *bev, short events, void *ctx)
         
     }
     else if (events & BEV_EVENT_EOF) {
-        if (pnode->connection().connection_state() != NodeConnection::kDisconnected)
+        if (!pnode->connection().IsDisconnected()) {
             BTCLOG(LOG_LEVEL_WARNING) << "peer " << pnode->id() 
                                       << " socket closed";
-        pnode->mutable_connection()->set_connection_state(NodeConnection::kDisconnected);
+            DisconnectNode(pnode);
+        }
     }
     else if (events & BEV_EVENT_ERROR) {
         if (errno != EWOULDBLOCK && errno != EMSGSIZE && 
                 errno != EINTR && errno != EINPROGRESS)
         {
-            if (pnode->connection().connection_state() != NodeConnection::kDisconnected) {
+            if (!pnode->connection().IsDisconnected()) {
                 BTCLOG(LOG_LEVEL_ERROR) << "peer " << pnode->id() << " socket recv error:"
                                         << std::string(strerror(errno));
+                DisconnectNode(pnode);
             }
-            pnode->mutable_connection()->set_connection_state(NodeConnection::kDisconnected);
+            
         }
     }
 }

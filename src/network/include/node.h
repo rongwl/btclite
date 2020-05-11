@@ -183,11 +183,23 @@ public:
             bufferevent_free(bev_);
     }
     
+    //-------------------------------------------------------------------------
     bool IsLocalAddrGood(bool discover_local) const
     {
         return (discover_local && addr_.IsRoutable() && local_addr_.IsRoutable());
     }
     
+    bool IsHandshakeCompleted() const
+    {
+        return (connection_state_ == kEstablished);
+    }
+    
+    bool IsDisconnected() const
+    {
+        return (connection_state_ == kDisconnected);
+    }    
+    
+    //-------------------------------------------------------------------------
     const struct bufferevent* const bev() const
     {
         return bev_;
@@ -656,16 +668,11 @@ struct RelayState {
 };
 
 /* Information about a connected peer */
-class Node : util::Uncopyable {
+class Node : util::Uncopyable, public std::enable_shared_from_this<Node> {
 public:
     Node(const struct bufferevent *bev, const NetAddr& addr,
          bool is_inbound = true, bool manual = false, 
          std::string host_name = "");
-    
-    ~Node()
-    {
-        StopAllTimers();
-    }
     
     //-------------------------------------------------------------------------
     void StopAllTimers();
@@ -864,7 +871,8 @@ public:
                                          bool is_inbound = true, bool manual = false);
     std::shared_ptr<Node> GetNode(NodeId id);    
     std::shared_ptr<Node> GetNode(struct bufferevent *bev);    
-    std::shared_ptr<Node> GetNode(const NetAddr& addr);    
+    std::shared_ptr<Node> GetNode(const NetAddr& addr); 
+    void GetNode(const SubNet& subnet, std::vector<std::shared_ptr<Node> > *out);
     void EraseNode(std::shared_ptr<Node> node);    
     void EraseNode(NodeId id);
     
@@ -874,9 +882,6 @@ public:
         LOCK(cs_nodes_);
         list_.clear();
     }
-    
-    void ClearDisconnected(std::vector<std::shared_ptr<Node> > *out); 
-    void DisconnectNode(const SubNet& subnet);
     
     //-------------------------------------------------------------------------
     //bool AttemptToEvictConnection();
@@ -936,6 +941,10 @@ public:
 private:
     SingletonBlocksInFlight() {}
 };
+
+
+void DisconnectNode(std::shared_ptr<Node> node);
+void DisconnectNode(const SubNet& subnet);
 
 namespace NodeTimeoutCb {
 

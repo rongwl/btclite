@@ -46,6 +46,23 @@ TEST_F(NodesTest, GetNodeById)
     EXPECT_EQ(node2->connection().addr(), addr2_);
 }
 
+TEST_F(NodesTest, GetNodeBySubnet)
+{
+    NetAddr netmask;
+    std::vector<std::shared_ptr<Node> > nodes_vec;
+    auto node1 = nodes_.GetNode(id1_);
+    auto node2 = nodes_.GetNode(id2_);
+    auto node3 = nodes_.GetNode(id3_);
+    
+    netmask.SetIpv4(inet_addr("255.255.255.0"));
+    SubNet subnet(addr1_, netmask);
+    nodes_.GetNode(subnet, &nodes_vec);
+    
+    EXPECT_EQ(node1->connection().addr(), nodes_vec[0]->connection().addr());
+    EXPECT_EQ(node2->connection().addr(), nodes_vec[1]->connection().addr());
+    EXPECT_EQ(node3->connection().addr(), nodes_vec[2]->connection().addr());
+}
+
 TEST_F(NodesTest, EraseNodeByPtr)
 {
     auto node1 = nodes_.GetNode(id1_);
@@ -77,38 +94,6 @@ TEST_F(NodesTest, CheckIncomingNonce)
     EXPECT_TRUE(nodes_.CheckIncomingNonce(node2->local_host_nonce()));
     node1->mutable_connection()->set_connection_state(NodeConnection::kEstablished);
     EXPECT_TRUE(nodes_.CheckIncomingNonce(node1->local_host_nonce()));
-}
-
-TEST_F(NodesTest, ClearDisconnected)
-{
-    std::vector<std::shared_ptr<Node> > vec;
-    auto node1 = nodes_.GetNode(id1_);
-    auto node2 = nodes_.GetNode(id2_);
-    
-    node1->mutable_connection()->set_connection_state(NodeConnection::kDisconnected);
-    node2->mutable_connection()->set_connection_state(NodeConnection::kDisconnected);
-    nodes_.ClearDisconnected(&vec);
-    EXPECT_EQ(nodes_.GetNode(id1_), nullptr);
-    EXPECT_EQ(nodes_.GetNode(id2_), nullptr);
-    ASSERT_EQ(vec.size(), 2);
-    EXPECT_EQ(vec[0]->connection().addr(), addr1_);
-    EXPECT_EQ(vec[1]->connection().addr(), addr2_);
-}
-
-TEST_F(NodesTest, DisconnectNode)
-{
-    NetAddr netmask;
-    auto node1 = nodes_.GetNode(id1_);
-    auto node2 = nodes_.GetNode(id2_);
-    auto node3 = nodes_.GetNode(id3_);
-    
-    netmask.SetIpv4(inet_addr("255.255.255.0"));
-    SubNet subnet(addr1_, netmask);
-    nodes_.DisconnectNode(subnet);
-    
-    EXPECT_EQ(node1->connection().connection_state(), NodeConnection::kDisconnected);
-    EXPECT_EQ(node2->connection().connection_state(), NodeConnection::kDisconnected);
-    EXPECT_EQ(node3->connection().connection_state(), NodeConnection::kDisconnected);
 }
 
 TEST_F(NodesTest, InboundCount)
@@ -171,7 +156,7 @@ TEST_F(NodeTest, HandleInactiveTimeout)
     std::shared_ptr<Node> node = nodes.GetNode(id_);
     ASSERT_NE(node, nullptr);
     NodeTimeoutCb::InactivityTimeoutCb(node);
-    EXPECT_EQ(node->connection().connection_state(), NodeConnection::kDisconnected);
+    EXPECT_TRUE(node->connection().IsDisconnected());
 }
 
 TEST_F(NodeTest, CheckBanned)
@@ -181,8 +166,9 @@ TEST_F(NodeTest, CheckBanned)
     ASSERT_NE(node, nullptr);
     
     node->mutable_misbehavior()->set_should_ban(true);
+    std::cout << node.use_count() << '\n';
     ASSERT_TRUE(node->CheckBanned());
-    EXPECT_EQ(node->connection().connection_state(), NodeConnection::kDisconnected);
+    EXPECT_TRUE(node->connection().IsDisconnected());
     EXPECT_TRUE(SingletonBanList::GetInstance().IsBanned(addr_));
 
     SingletonBanList::GetInstance().Clear();
@@ -200,6 +186,51 @@ TEST_F(NodeTest, PushAddrToSend)
     EXPECT_EQ(node->flooding_addrs().addrs_to_send().front(), addr_);
 }
 
+TEST(DisconnectedNode, DisconnectedNodeByPtr)
+{
+    Nodes& nodes = SingletonNodes::GetInstance();
+    NetAddr addr;
+    
+    addr.SetIpv4(inet_addr("1.1.1.1"));
+    auto node = std::make_shared<Node>(nullptr, addr);
+    nodes.AddNode(node);
+    
+    ASSERT_NE(nodes.GetNode(node->id()), nullptr);
+    DisconnectNode(node);
+    EXPECT_EQ(nodes.GetNode(node->id()), nullptr);
+    
+    nodes.Clear();
+}
+
+TEST(DisconnectedNode, DisconnectedNodeBySubnet)
+{
+    Nodes& nodes = SingletonNodes::GetInstance();
+    
+    NetAddr addr;    
+    addr.SetIpv4(inet_addr("1.1.1.1"));
+    auto node1 = std::make_shared<Node>(nullptr, addr);
+    nodes.AddNode(node1);
+    addr.SetIpv4(inet_addr("1.1.1.2"));
+    auto node2 = std::make_shared<Node>(nullptr, addr);
+    nodes.AddNode(node2);
+    addr.SetIpv4(inet_addr("1.1.1.3"));
+    auto node3 = std::make_shared<Node>(nullptr, addr);
+    nodes.AddNode(node3);
+    
+    NetAddr netmask;
+    netmask.SetIpv4(inet_addr("255.255.255.0"));
+    SubNet subnet(addr, netmask);
+    
+    ASSERT_NE(nodes.GetNode(node1->id()), nullptr);
+    ASSERT_NE(nodes.GetNode(node2->id()), nullptr);
+    ASSERT_NE(nodes.GetNode(node3->id()), nullptr);
+    DisconnectNode(subnet);
+    EXPECT_EQ(nodes.GetNode(node1->id()), nullptr);
+    EXPECT_EQ(nodes.GetNode(node2->id()), nullptr);
+    EXPECT_EQ(nodes.GetNode(node3->id()), nullptr);
+
+    nodes.Clear();
+}
 
 } // namespace unit_test
 } // namespace btclit

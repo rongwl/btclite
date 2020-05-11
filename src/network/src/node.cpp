@@ -145,7 +145,7 @@ bool Node::CheckBanned()
                                   << connection_.addr().ToString();
     }
     else {
-        connection_.set_connection_state(NodeConnection::kDisconnected);
+        DisconnectNode(this->shared_from_this());
         if (connection_.addr().IsLocal()) {
             BTCLOG(LOG_LEVEL_WARNING) << "Can not banning local peer "
                                       << connection_.addr().ToString();
@@ -168,7 +168,7 @@ void InactivityTimeoutCb(std::shared_ptr<Node> node)
         return;
 
     BTCLOG(LOG_LEVEL_WARNING) << "Peer " << node->id() << " inactive timeout.";
-    node->mutable_connection()->set_connection_state(NodeConnection::kDisconnected);
+    DisconnectNode(node);
 }
 
 void SocketNoMsgTimeoutCb(std::shared_ptr<Node> node)
@@ -181,7 +181,7 @@ void SocketNoMsgTimeoutCb(std::shared_ptr<Node> node)
     
     BTCLOG(LOG_LEVEL_WARNING) << "Socket no message in first " << kNoMsgTimeout 
                               << " seconds from peer " << node->id();
-    node->mutable_connection()->set_connection_state(NodeConnection::kDisconnected);
+    DisconnectNode(node);
 }
 
 void PingTimeoutCb(std::shared_ptr<Node> node, uint32_t magic)
@@ -189,7 +189,7 @@ void PingTimeoutCb(std::shared_ptr<Node> node, uint32_t magic)
     if (SingletonNetInterrupt::GetInstance())
         return;
     
-    if (node->connection().connection_state() == NodeConnection::kDisconnected) {
+    if (node->connection().IsDisconnected()) {
         util::SingletonTimerMng::GetInstance().StopTimer(node->timers().ping_timer);
         return;
     }
@@ -197,7 +197,7 @@ void PingTimeoutCb(std::shared_ptr<Node> node, uint32_t magic)
     if (node->time().ping_time.ping_nonce_sent) {
         BTCLOG(LOG_LEVEL_WARNING) << "Peer " << node->id() << " ping timeout.";
         util::SingletonTimerMng::GetInstance().StopTimer(node->timers().ping_timer);
-        node->mutable_connection()->set_connection_state(NodeConnection::kDisconnected);
+        DisconnectNode(node);
         return;
     }
     
@@ -213,11 +213,11 @@ void ShakeHandsTimeoutCb(std::shared_ptr<Node> node)
     if (SingletonNetInterrupt::GetInstance())
         return;
     
-    if (node->connection().connection_state() == NodeConnection::kEstablished)
+    if (node->connection().IsHandshakeCompleted())
         return;
     
     BTCLOG(LOG_LEVEL_WARNING) << "Peer "<< node->id() << " shakehands timeout.";
-    node->mutable_connection()->set_connection_state(NodeConnection::kDisconnected);
+    DisconnectNode(node);
 }
 
 } // namespace NodeTimeoutCb
@@ -282,6 +282,20 @@ std::shared_ptr<Node> Nodes::GetNode(const NetAddr& addr)
     return nullptr;
 }
 
+void Nodes::GetNode(const SubNet& subnet, std::vector<std::shared_ptr<Node> > *out)
+{
+    if (!out)
+        return;
+    
+    out->clear();    
+    LOCK(cs_nodes_);
+    for (auto it = list_.begin(); it != list_.end(); ++it) {
+        if (subnet.Match((*it)->connection().addr())) {
+            out->push_back(*it);
+        }
+    }
+}
+
 void Nodes::EraseNode(std::shared_ptr<Node> node)
 {
     LOCK(cs_nodes_);
@@ -300,38 +314,6 @@ void Nodes::EraseNode(NodeId id)
             list_.erase(it);
             BTCLOG(LOG_LEVEL_VERBOSE) << "Cleared node " << id;
             break;
-        }
-    }
-}
-
-void Nodes::ClearDisconnected(std::vector<std::shared_ptr<Node> > *out)
-{
-    std::vector<std::list<std::shared_ptr<Node> >::iterator> vec;
-    out->clear();
-    
-    LOCK(cs_nodes_);
-    
-    for (auto it = list_.begin(); it != list_.end(); ++it) {
-        if ((*it)->connection().connection_state() == 
-                NodeConnection::kDisconnected) {
-            out->push_back(*it);
-            vec.push_back(it);
-        }
-    }
-    
-    for (auto entry : vec) {
-        list_.erase(entry);
-    }
-}
-
-void Nodes::DisconnectNode(const SubNet& subnet)
-{
-    LOCK(cs_nodes_);
-    
-    for (auto it = list_.begin(); it != list_.end(); ++it) {
-        if (subnet.Match((*it)->connection().addr())) {
-            (*it)->mutable_connection()->set_connection_state(
-                NodeConnection::kDisconnected);
         }
     }
 }
@@ -453,8 +435,7 @@ int Nodes::CountInbound()
     
     LOCK(cs_nodes_);    
     for (auto it = list_.begin(); it != list_.end(); ++it) {
-        if ((*it)->connection().connection_state() != 
-                NodeConnection::kDisconnected && 
+        if (!(*it)->connection().IsDisconnected() && 
                 (*it)->connection().is_inbound())
             num++;
     }
@@ -468,8 +449,7 @@ int Nodes::CountOutbound()
     
     LOCK(cs_nodes_);
     for (auto it = list_.begin(); it != list_.end(); ++it) {
-        if ((*it)->connection().connection_state() != 
-                NodeConnection::kDisconnected && 
+        if (!(*it)->connection().IsDisconnected() && 
                 !(*it)->connection().is_inbound())
             num++;
     }
@@ -483,8 +463,7 @@ int Nodes::CountSyncStarted()
     
     LOCK(cs_nodes_);
     for (auto it = list_.begin(); it != list_.end(); ++it) {
-        if ((*it)->connection().connection_state() != 
-                NodeConnection::kDisconnected &&
+        if (!(*it)->connection().IsDisconnected() &&
                 (*it)->block_sync_state().sync_started())
             num++;
     }
@@ -498,8 +477,7 @@ int Nodes::CountPreferredDownload()
     
     LOCK(cs_nodes_);
     for (auto it = list_.begin(); it != list_.end(); ++it) {
-        if ((*it)->connection().connection_state() != 
-                NodeConnection::kDisconnected &&
+        if (!(*it)->connection().IsDisconnected() &&
                 (*it)->IsPreferedDownload())
             num++;
     }
@@ -513,8 +491,7 @@ int Nodes::CountValidatedDownload()
     
     LOCK(cs_nodes_);
     for (auto it = list_.begin(); it != list_.end(); ++it) {
-        if ((*it)->connection().connection_state() !=
-                NodeConnection::kDisconnected &&
+        if (!(*it)->connection().IsDisconnected() &&
                 (*it)->blocks_in_flight().valid_headers_count() > 0)
             num++;
     }
@@ -528,8 +505,7 @@ int Nodes::CountProtectedOutbound()
     
     LOCK(cs_nodes_);
     for (auto it = list_.begin(); it != list_.end(); ++it) {
-        if ((*it)->connection().connection_state() !=
-                NodeConnection::kDisconnected &&
+        if (!(*it)->connection().IsDisconnected() &&
                 (*it)->block_sync_timeout().protect())
             num++;
     }
@@ -543,7 +519,7 @@ bool Nodes::ShouldDnsLookup()
     
     LOCK(cs_nodes_);
     for (auto it = list_.begin(); it != list_.end(); ++it) {
-        if ((*it)->connection().connection_state() == NodeConnection::kEstablished && 
+        if ((*it)->connection().IsHandshakeCompleted() && 
                 !(*it)->connection().manual() && 
                 !(*it)->connection().is_inbound())
             count++;
@@ -556,7 +532,7 @@ bool Nodes::CheckIncomingNonce(uint64_t nonce)
 {
     LOCK(cs_nodes_);
     for (auto it = list_.begin(); it != list_.end(); ++it) {
-        if (!(*it)->connection().connection_state() == NodeConnection::kEstablished && 
+        if (!(*it)->connection().IsHandshakeCompleted() && 
                 !(*it)->connection().is_inbound() &&
                 (*it)->local_host_nonce() == nonce)
             return false;
@@ -584,6 +560,33 @@ void Nodes::MakeEvictionCandidate(std::vector<NodeEvictionCandidate> *out)
     }
 }
 */
+
+void DisconnectNode(std::shared_ptr<Node> node)
+{
+    node->mutable_connection()->set_connection_state(NodeConnection::kDisconnected);
+    node->StopAllTimers();
+    
+    if (node->ShouldUpdateTime())
+        SingletonPeers::GetInstance().UpdateTime(node->connection().addr());
+    
+    for (auto& entry : node->blocks_in_flight().list()) {
+        SingletonBlocksInFlight::GetInstance().Erase(entry.hash);
+    }
+    
+    SingletonOrphans::GetInstance().EraseOrphansFor(node->id());
+    
+    SingletonNodes::GetInstance().EraseNode(node);
+}
+
+void DisconnectNode(const SubNet& subnet)
+{
+    std::vector<std::shared_ptr<Node> > nodes_vec;
+    
+    SingletonNodes::GetInstance().GetNode(subnet, &nodes_vec);
+    for (auto it = nodes_vec.begin(); it != nodes_vec.end(); ++it) {
+        DisconnectNode(*it);
+    }
+}
 
 
 } // namespace network

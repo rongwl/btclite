@@ -136,29 +136,29 @@ void Acceptor::CheckingTimeoutCb(evutil_socket_t fd, short event, void *arg)
                                << pnode->time().time_last_recv << " " 
                                << pnode->time().time_last_send << " from " 
                                << pnode->id();
-        pnode->mutable_connection()->set_connection_state(NodeConnection::kDisconnected);
+        DisconnectNode(pnode);
     }
     else if (now - pnode->time().time_last_send > kConnTimeoutInterval) {
         BTCLOG(LOG_LEVEL_INFO) << "socket sending timeout: " 
                                << (now - pnode->time().time_last_send);
-        pnode->mutable_connection()->set_connection_state(NodeConnection::kDisconnected);
+        DisconnectNode(pnode);
     }
     else if (now - pnode->time().time_last_recv > (pnode->protocol().version() > 
              kBip31Version ? kConnTimeoutInterval : 90*60)) {
         BTCLOG(LOG_LEVEL_INFO) << "socket receive timeout: " 
                                << (now - pnode->time().time_last_recv);
-        pnode->mutable_connection()->set_connection_state(NodeConnection::kDisconnected);
+        DisconnectNode(pnode);
     }
     else if (pnode->time().ping_time.ping_nonce_sent &&
              pnode->time().ping_time.ping_usec_start + kConnTimeoutInterval * 1000000 < 
              util::GetTimeMicros()) {
         BTCLOG(LOG_LEVEL_INFO) << "ping timeout: " 
                                << (now - pnode->time().ping_time.ping_usec_start / 1000000);
-        pnode->mutable_connection()->set_connection_state(NodeConnection::kDisconnected);
+        DisconnectNode(pnode);
     }
-    else if (pnode->connection().connection_state() != NodeConnection::kEstablished) {
+    else if (!pnode->connection().IsHandshakeCompleted()) {
         BTCLOG(LOG_LEVEL_INFO) << "version handshake timeout from " << pnode->id();
-        pnode->mutable_connection()->set_connection_state(NodeConnection::kDisconnected);
+        DisconnectNode(pnode);
     }
 }
 

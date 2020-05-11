@@ -94,7 +94,7 @@ void LocalService::AdvertiseLocalAddr(std::shared_ptr<Node> node,
 {    
     NetAddr addr_local;
     
-    if (node->connection().connection_state() == NodeConnection::kDisconnected)
+    if (node->connection().IsDisconnected())
         return;
     
     if (!GetLocalAddr(node->connection().addr(), node->protocol().services(), &addr_local))
@@ -145,7 +145,7 @@ void AdvertiseLocalTimeoutCb(std::shared_ptr<Node> node)
     if (SingletonNetInterrupt::GetInstance())
         return;
     
-    if (node->connection().connection_state() == NodeConnection::kDisconnected) 
+    if (node->connection().IsDisconnected()) 
         return;
     
     if (IsInitialBlockDownload()) {
@@ -165,7 +165,7 @@ void RelayFloodingAddrsTimeoutCb(std::shared_ptr<Node> node, uint32_t magic)
     if (SingletonNetInterrupt::GetInstance())
         return;
     
-    if (node->connection().connection_state() == NodeConnection::kDisconnected)
+    if (node->connection().IsDisconnected())
         return;
     
     std::vector<NetAddr>&& addrs_to_send = node->flooding_addrs().addrs_to_send();
@@ -200,22 +200,7 @@ int64_t IntervalNextSend(int average_interval_seconds)
 
 void CollectionTimer::CheckDisconnectedNodes()
 {
-    std::vector<std::shared_ptr<Node> > disconnected_nodes;
-    
-    if (SingletonNetInterrupt::GetInstance())
-        return;
-    
-    SingletonNodes::GetInstance().ClearDisconnected(&disconnected_nodes);
-    for (auto& node : disconnected_nodes) {
-        if (node->ShouldUpdateTime())                
-            SingletonPeers::GetInstance().UpdateTime(node->connection().addr());
-        
-        for (auto& entry : node->blocks_in_flight().list()) {
-            SingletonBlocksInFlight::GetInstance().Erase(entry.hash);
-        }
-        
-        SingletonOrphans::GetInstance().EraseOrphansFor(node->id());
-    }
+
 }
 
 } // namespace network

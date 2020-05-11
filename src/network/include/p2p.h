@@ -30,7 +30,7 @@ private:
     BanDb ban_db_;
     Acceptor acceptor_;
     Connector connector_;
-    CollectionTimer collection_timer_;
+    //CollectionTimer collection_timer_;
     
     std::thread thread_acceptor_loop_;
     std::thread thread_connector_loop_;

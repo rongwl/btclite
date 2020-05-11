@@ -12,9 +12,10 @@ namespace network {
 
 bool ParseMsg(std::shared_ptr<Node> src_node, const Params& params);
 
-template <typename Message, typename... Args>
-bool HandleMsgData(std::shared_ptr<Node> src_node, const protocol::MessageHeader& header, 
-                   const Message& msg, Args&&... args)
+template <typename Message>
+bool HandleMsgData(std::shared_ptr<Node> src_node, 
+                   const protocol::MessageHeader& header, const Message& msg, 
+                   std::function<bool(std::shared_ptr<Node>)> recv_handler)
 {
     if (header.checksum() != msg.GetHash().GetLow32()) {
         BTCLOG(LOG_LEVEL_WARNING) << msg.Command() << " message checksum error: expect "
@@ -36,7 +37,7 @@ bool HandleMsgData(std::shared_ptr<Node> src_node, const protocol::MessageHeader
         return false;
     }
     
-    return msg.RecvHandler(src_node, std::forward<Args>(args)...);
+    return recv_handler(src_node);
 }
 
 template <typename Message>
