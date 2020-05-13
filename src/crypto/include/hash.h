@@ -110,22 +110,16 @@ private:
     bool is_set_key_;
 };
 
-// mixin GetHash() for any class with Serialize methord
-template <typename Base>
-struct Hashable : public Base {
-    using Base::Base;
-    
-    util::Hash256 GetHash() const;
-};
 
-template <typename Base>
-util::Hash256 Hashable<Base>::GetHash() const
+// support hashable for any class with Serialize methord
+template <typename T>
+util::Hash256 GetHash(const T& obj)
 {
     std::vector<uint8_t> vec;
     util::Hash256 hash;
     util::ByteSink<std::vector<uint8_t> > byte_sink(vec);
     
-    Base::Serialize(byte_sink);
+    obj.Serialize(byte_sink);
     crypto::Sha256(vec, &hash);
     
     return hash;

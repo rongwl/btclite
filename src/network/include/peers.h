@@ -13,6 +13,13 @@
 namespace btclite {
 namespace network {
 
+namespace peer {
+
+bool IsTerriblePeer(const proto_peers::Peer& peer, 
+                    int64_t now = util::GetAdjustedTime());
+
+} // namespace peer
+
 class Peers {
 public:
     Peers()
@@ -60,9 +67,6 @@ public:
     bool GetAddrs(std::vector<NetAddr> *out);
     
     uint64_t MakeMapKey(const NetAddr& addr, bool by_group = false);
-    
-    static bool IsTerrible(const proto_peers::Peer& peer, 
-                    int64_t now = util::GetAdjustedTime());
     
     //-------------------------------------------------------------------------
     bool SerializeToOstream(std::ostream * output) const

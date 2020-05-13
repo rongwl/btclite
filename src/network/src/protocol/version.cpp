@@ -12,8 +12,6 @@ namespace btclite {
 namespace network {
 namespace protocol{
 
-namespace private_version {
-
 bool Version::RecvHandler(std::shared_ptr<Node> src_node, 
                           uint32_t magic, bool advertise_local) const
 {
@@ -202,7 +200,6 @@ bool Version::operator!=(const Version& b) const
     return !(*this == b);
 }
 
-} // namespace private_version
 
 } // namespace protocol
 } // namespace network

@@ -25,8 +25,6 @@ enum class CCode : uint8_t {
     kRejectCheckpoint = 0x43
 };
 
-namespace private_reject {
-
 class Reject {
 public:
     Reject() = default;
@@ -58,6 +56,11 @@ public:
     bool IsValid() const;
     void Clear();
     size_t SerializedSize() const;
+    
+    util::Hash256 GetHash() const
+    {
+        return crypto::GetHash(*this);
+    }
     
     //-------------------------------------------------------------------------
     template <typename Stream>
@@ -160,10 +163,6 @@ void Reject::Deserialize(Stream& in)
     if (message_ == msg_command::kMsgBlock || message_ == msg_command::kMsgTx)
         deserializer.SerialRead(&data_);
 }
-
-} // namespace private_reject
-
-using Reject = crypto::Hashable<private_reject::Reject>;
 
 } // namespace protocol
 } // namespace network

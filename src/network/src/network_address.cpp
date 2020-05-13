@@ -652,33 +652,32 @@ std::string SubNet::ToString() const
     return std::move(net_addr_.ToString() + "/" + os.str());
 }
 
-/*
- 0x0  -> 0
- 0x80 -> 1
- 0xc0 -> 2
- 0xe0 -> 3
- 0xf0 -> 4
- 0xf8 -> 5
- 0xfc -> 6
- 0xfe -> 7
- 0xff -> 8
-*/
-int SubNet::NetmaskBits(uint8_t x)
+int SubNet::NetmaskBits(uint8_t x) const
 {
-    int bits = 0, flag = 0;
-    
-    for (int i = 7; i >= 0 ; i--) {
-        if (x & (1 << i)) {
-            if (flag == 1)
-                return -1;
-            else
-                bits++;
-        }
-        else
-            flag = 1;
+    switch(x) {
+        case 0x00: 
+            return 0;
+        case 0x80: 
+            return 1;
+        case 0xc0:
+            return 2;
+        case 0xe0: 
+            return 3;
+        case 0xf0: 
+            return 4;
+        case 0xf8: 
+            return 5;
+        case 0xfc: 
+            return 6;
+        case 0xfe:
+            return 7;
+        case 0xff:
+            return 8;
+        default: 
+            break;
     }
     
-    return bits;
+    return -1;
 }
 
 } // namespace network

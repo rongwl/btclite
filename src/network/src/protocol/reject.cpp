@@ -5,8 +5,6 @@ namespace btclite {
 namespace network {
 namespace protocol {
 
-namespace private_reject {
-
 bool Reject::RecvHandler(std::shared_ptr<Node> src_node) const
 {
     return true;
@@ -63,8 +61,6 @@ bool Reject::operator!=(const Reject& b) const
 {
     return !(*this == b);
 }
-
-} // namespace private_reject
 
 } // namespace protocol
 } // namespace network

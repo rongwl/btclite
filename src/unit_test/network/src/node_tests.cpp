@@ -155,7 +155,7 @@ TEST_F(NodeTest, HandleInactiveTimeout)
     Nodes& nodes = SingletonNodes::GetInstance();
     std::shared_ptr<Node> node = nodes.GetNode(id_);
     ASSERT_NE(node, nullptr);
-    NodeTimeoutCb::InactivityTimeoutCb(node);
+    node->InactivityTimeoutCb();
     EXPECT_TRUE(node->connection().IsDisconnected());
 }
 
@@ -192,7 +192,7 @@ TEST(DisconnectedNode, DisconnectedNodeByPtr)
     NetAddr addr;
     
     addr.SetIpv4(inet_addr("1.1.1.1"));
-    auto node = std::make_shared<Node>(nullptr, addr);
+    auto node = std::make_shared<Node>(nodes.GetNewNodeId(), nullptr, addr);
     nodes.AddNode(node);
     
     ASSERT_NE(nodes.GetNode(node->id()), nullptr);
@@ -208,13 +208,13 @@ TEST(DisconnectedNode, DisconnectedNodeBySubnet)
     
     NetAddr addr;    
     addr.SetIpv4(inet_addr("1.1.1.1"));
-    auto node1 = std::make_shared<Node>(nullptr, addr);
+    auto node1 = std::make_shared<Node>(nodes.GetNewNodeId(), nullptr, addr);
     nodes.AddNode(node1);
     addr.SetIpv4(inet_addr("1.1.1.2"));
-    auto node2 = std::make_shared<Node>(nullptr, addr);
+    auto node2 = std::make_shared<Node>(nodes.GetNewNodeId(), nullptr, addr);
     nodes.AddNode(node2);
     addr.SetIpv4(inet_addr("1.1.1.3"));
-    auto node3 = std::make_shared<Node>(nullptr, addr);
+    auto node3 = std::make_shared<Node>(nodes.GetNewNodeId(), nullptr, addr);
     nodes.AddNode(node3);
     
     NetAddr netmask;

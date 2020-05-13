@@ -5,14 +5,12 @@ namespace btclite {
 namespace network {
 namespace protocol {
 
-namespace private_address {
-
-bool Address::RecvHandler(std::shared_ptr<Node> src_node) const
+bool Addr::RecvHandler(std::shared_ptr<Node> src_node) const
 {
     return true;
 }
 
-size_t Address::SerializedSize() const
+size_t Addr::SerializedSize() const
 {
     size_t size = util::VarIntSize(addr_list_.size());
     
@@ -21,8 +19,6 @@ size_t Address::SerializedSize() const
     
     return size;
 }
-
-} // namespace private_address
 
 } // namespace protocol
 } // namespace network

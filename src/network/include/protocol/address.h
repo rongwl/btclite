@@ -10,9 +10,7 @@ namespace btclite {
 namespace network {
 namespace protocol {
 
-namespace private_address {
-
-class Address {
+class Addr {
 public:
     using List = std::vector<NetAddr>;
     
@@ -36,13 +34,18 @@ public:
     
     size_t SerializedSize() const;
     
+    util::Hash256 GetHash() const
+    {
+        return crypto::GetHash(*this);
+    }
+    
     //-------------------------------------------------------------------------
-    bool operator==(const Address& b) const
+    bool operator==(const Addr& b) const
     {
         return (addr_list_ == b.addr_list_);
     }
     
-    bool operator!=(const Address& b) const
+    bool operator!=(const Addr& b) const
     {
         return !(*this == b);
     }
@@ -77,9 +80,6 @@ private:
     List addr_list_;
 };
 
-} // namespace private_address
-
-using Addr = crypto::Hashable<private_address::Address>;
 
 } // namespace protocol
 } // namespace network

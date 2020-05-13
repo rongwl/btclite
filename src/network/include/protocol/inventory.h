@@ -10,9 +10,7 @@ namespace btclite {
 namespace network {
 namespace protocol {
 
-namespace private_inventory {
-
-class Inventory {
+class Inv {
 public:
     bool RecvHandler(std::shared_ptr<Node> src_node) const;
     
@@ -22,6 +20,11 @@ public:
     }
     
     size_t SerializedSize() const;
+    
+    util::Hash256 GetHash() const
+    {
+        return crypto::GetHash(*this);
+    }
     
     bool IsValid() const
     {
@@ -34,12 +37,12 @@ public:
     }
     
     //-------------------------------------------------------------------------
-    bool operator==(const Inventory& b) const
+    bool operator==(const Inv& b) const
     {
         return (inv_vects_ == b.inv_vects_);
     }
     
-    bool operator!=(const Inventory& b) const
+    bool operator!=(const Inv& b) const
     {
         return !(*this == b);
     }
@@ -73,10 +76,6 @@ public:
 private:
     std::vector<InvVect> inv_vects_;
 };
-
-} // namespace private_inventory
-
-using Inv = crypto::Hashable<private_inventory::Inventory>;
 
 } // namespace protocol
 } // namespace network

@@ -103,7 +103,8 @@ void ConnReadCb(struct bufferevent *bev, void *ctx)
         uint32_t timeout = (pnode->protocol().version() > kBip31Version) ? 
                            kNoReceivingTimeoutBip31 : kNoReceivingTimeout;
         pnode->mutable_timers()->no_receiving_timer = 
-            timer_mng.StartTimer(timeout*1000, 0, NodeTimeoutCb::InactivityTimeoutCb, pnode);
+            timer_mng.StartTimer(timeout*1000, 0, 
+                                 std::bind(&Node::InactivityTimeoutCb, pnode));
     }
     
     auto task = std::bind(ParseMsg, pnode, *reinterpret_cast<Params*>(ctx));

@@ -223,8 +223,7 @@ void NetAddr::Deserialize(Stream& in)
 
 class SubNet {
 public:
-    static constexpr size_t netmask_byte_size = 16;    
-    static int NetmaskBits(uint8_t x);
+    static constexpr size_t netmask_byte_size = 16;
     
     SubNet()
         : net_addr_(), valid_(false)
@@ -289,6 +288,8 @@ private:
     NetAddr net_addr_;
     uint8_t netmask_[netmask_byte_size];
     bool valid_;
+    
+    int NetmaskBits(uint8_t x) const;
 };
 
 } // namespace network

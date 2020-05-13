@@ -70,13 +70,15 @@ struct bufferevent *Connector::NewSocketEvent()
 
 bool Connector::StartOutboundTimer()
 {
+    using namespace std::placeholders;
+    
     if (!SingletonPeers::GetInstance().IsEmpty()) {
-        auto func = std::bind(Connector::DnsLookup, std::placeholders::_1, params_.default_port());
+        auto func = std::bind(&Connector::DnsLookup, this, _1, params_.default_port());
         util::SingletonTimerMng::GetInstance().StartTimer(11000, 0,
                 std::function<bool(const std::vector<Seed>&)>(func), params_.seeds());            
     }
     else {
-        auto task = std::bind(Connector::DnsLookup, std::placeholders::_1, params_.default_port());
+        auto task = std::bind(&Connector::DnsLookup, this, _1, params_.default_port());
         util::SingletonThreadPool::GetInstance().AddTask(
             std::function<bool(const std::vector<Seed>&)>(task), params_.seeds());
     }

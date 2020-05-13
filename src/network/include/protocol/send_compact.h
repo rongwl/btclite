@@ -9,8 +9,6 @@ namespace btclite {
 namespace network {
 namespace protocol {
 
-namespace private_sendcmpct {
-
 class SendCmpct {
 public:
     SendCmpct() = default;
@@ -40,6 +38,11 @@ public:
     size_t SerializedSize() const
     {
         return sizeof(high_bandwidth_mode_) + sizeof(version_);
+    }
+    
+    util::Hash256 GetHash() const
+    {
+        return crypto::GetHash(*this);
     }
     
     //-------------------------------------------------------------------------
@@ -96,10 +99,6 @@ private:
     bool high_bandwidth_mode_ = false;
     uint64_t version_ = 0;
 };
-
-} // namespace private_sendcmpct
-
-using SendCmpct = crypto::Hashable<private_sendcmpct::SendCmpct>;
 
 } // namespace protocol
 } // namespace network

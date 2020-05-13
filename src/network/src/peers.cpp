@@ -7,6 +7,37 @@
 namespace btclite {
 namespace network {
 
+namespace peer {
+
+bool IsTerriblePeer(const proto_peers::Peer& peer, int64_t now)
+{
+    // never remove things tried in the last minute
+    if (peer.last_try() && peer.last_try() >= now - 60) 
+        return false;
+
+    // came in a flying DeLorean
+    if (peer.addr().timestamp() > now + 10 * 60) 
+        return true;
+
+    // not seen in recent history
+    if (peer.addr().timestamp() == 0 || 
+            now - peer.addr().timestamp() > kPeerHorizonDays * 24 * 60 * 60) 
+        return true;
+
+    // tried N times and never a success
+    if (peer.last_success() == 0 && peer.attempts() >= kPeerRetries) 
+        return true;
+
+    // N successive failures in the last week
+    if (now - peer.last_success() > kMinPeerFailDays * 24 * 60 * 60 && 
+            peer.attempts() >= kMaxPeerFailures) 
+        return true;
+
+    return false;
+}
+
+} // namespace peer
+
 bool Peers::Add(const NetAddr &addr, 
                          const NetAddr& source, int64_t time_penalty)
 {
@@ -27,7 +58,7 @@ bool Peers::Add(const NetAddr &addr,
     // addr exists in map_peers
     if (Find(map_key, group_key, &exist_peer, &is_new, &is_tried)) {
         // addr exists in new_tbl or tried_tbl and the peer is terrible
-        if (IsTerrible(exist_peer)) {
+        if (peer::IsTerriblePeer(exist_peer)) {
             if (is_new)
                 proto_peers_.mutable_new_tbl()->erase(group_key);
             else if (is_tried)
@@ -65,7 +96,7 @@ bool Peers::Add(const NetAddr &addr,
     uint64_t key;
     bool add_new = true;
     if (FindSameGroup(group_key, &exist_peer, &is_tried, &key)) {
-        if (IsTerrible(exist_peer)) {
+        if (peer::IsTerriblePeer(exist_peer)) {
             if (is_tried)
                 proto_peers_.mutable_tried_tbl()->erase(group_key);
             else
@@ -326,7 +357,7 @@ bool Peers::GetAddrs(std::vector<NetAddr> *out)
     std::random_shuffle(rand_order_keys_.begin(), rand_order_keys_.end());
     for (int i = 0; i < count; i++) {
         const proto_peers::Peer& peer = proto_peers_.map_peers().find(rand_order_keys_[i])->second;
-        if (!IsTerrible(peer))
+        if (!peer::IsTerriblePeer(peer))
             out->emplace_back(peer.addr());
     }
     
@@ -353,33 +384,6 @@ uint64_t Peers::MakeMapKey(const NetAddr& addr, bool by_group)
     }
     
     return hs.Sha256().GetLow64();
-}
-
-bool Peers::IsTerrible(const proto_peers::Peer& peer, int64_t now)
-{
-    // never remove things tried in the last minute
-    if (peer.last_try() && peer.last_try() >= now - 60) 
-        return false;
-
-    // came in a flying DeLorean
-    if (peer.addr().timestamp() > now + 10 * 60) 
-        return true;
-
-    // not seen in recent history
-    if (peer.addr().timestamp() == 0 || 
-            now - peer.addr().timestamp() > kPeerHorizonDays * 24 * 60 * 60) 
-        return true;
-
-    // tried N times and never a success
-    if (peer.last_success() == 0 && peer.attempts() >= kPeerRetries) 
-        return true;
-
-    // N successive failures in the last week
-    if (now - peer.last_success() > kMinPeerFailDays * 24 * 60 * 60 && 
-            peer.attempts() >= kMaxPeerFailures) 
-        return true;
-
-    return false;
 }
 
 void Peers::Clear()

@@ -9,8 +9,6 @@ namespace btclite {
 namespace network {
 namespace protocol {
 
-namespace private_getblocks {
-
 class GetBlocks : public MessageData {
 public:
     GetBlocks() = default;
@@ -49,6 +47,11 @@ public:
     {
         return sizeof(version_) + util::VarIntSize(hashes_.size()) +
                hashes_.size()*kHashSize + hash_stop_.Size();
+    }
+    
+    util::Hash256 GetHash() const
+    {
+        return crypto::GetHash(*this);
     }
     
     //-------------------------------------------------------------------------
@@ -131,9 +134,6 @@ void GetBlocks::Deserialize(Stream& in)
     deserializer.SerialRead(&hash_stop_);
 }
 
-} // namespace private_getblocks
-
-using GetBlocks = crypto::Hashable<private_getblocks::GetBlocks>;
 
 } // namespace protocol
 } // namespace network

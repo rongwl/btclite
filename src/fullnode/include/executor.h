@@ -7,7 +7,7 @@
 #include "p2p.h"
 
 
-class FullNodeMain : public btclite::util::Executor {
+class FullNodeMain final : public btclite::util::Executor {
 public:
     explicit FullNodeMain(const FullNodeConfig& config)
         : network_(config)
@@ -24,6 +24,11 @@ public:
     
 private:
     btclite::network::P2P network_;
+    
+    bool BasicSetupCustomized()
+    {
+        return true;
+    }
 };
 
 

@@ -26,8 +26,6 @@ enum DataMsgType : uint32_t {
     kMsgFilteredWitnessBlock = kMsgFilteredBlock | kMsgWitnessFlag,
 };
 
-namespace private_invvect {
-
 class InvVect {
 public:
     InvVect() = default;
@@ -90,10 +88,6 @@ private:
     DataMsgType type_ = kUndefined;
     util::Hash256 hash_;
 };
-
-} // private_invvect
-
-using InvVect = crypto::Hashable<private_invvect::InvVect>;
 
 } // namespace protocol
 } // namespace network

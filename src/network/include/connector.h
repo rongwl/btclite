@@ -34,7 +34,7 @@ public:
     bool ConnectNodes(const std::vector<std::string>& str_addrs, bool manual = false);
     bool ConnectNodes(const std::vector<NetAddr>& addrs, bool manual = false);
     bool GetHostAddr(const std::string& host_name, NetAddr *out);
-    static bool DnsLookup(const std::vector<Seed>& seeds, uint16_t default_port);
+    bool DnsLookup(const std::vector<Seed>& seeds, uint16_t default_port);
     
 private:
     const Params params_;

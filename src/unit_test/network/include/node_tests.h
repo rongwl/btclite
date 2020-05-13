@@ -29,12 +29,12 @@ protected:
     void SetUp() override 
     {
         addr1_.SetIpv4(inet_addr("1.1.1.1"));
-        auto node1 = std::make_shared<network::Node>(nullptr, addr1_, false);
+        auto node1 = std::make_shared<network::Node>(nodes_.GetNewNodeId(), nullptr, addr1_, false);
         id1_ = node1->id();
         nodes_.AddNode(node1);
         
         addr2_.SetIpv4(inet_addr("1.1.1.2"));
-        auto node2 = std::make_shared<network::Node>(nullptr, addr2_);
+        auto node2 = std::make_shared<network::Node>(nodes_.GetNewNodeId(), nullptr, addr2_);
         id2_ = node2->id();
         nodes_.AddNode(node2);
         
@@ -60,10 +60,11 @@ protected:
 class NodeTest : public ::testing::Test {
 protected:
     void SetUp() override {
+        auto& nodes = network::SingletonNodes::GetInstance();
         addr_.SetIpv4(inet_addr("1.1.1.1"));
-        auto node = std::make_shared<network::Node>(nullptr, addr_);
+        auto node = std::make_shared<network::Node>(nodes.GetNewNodeId(), nullptr, addr_);
         id_ = node->id();
-        network::SingletonNodes::GetInstance().AddNode(node);
+        nodes.AddNode(node);
     }
     
     void TearDown() override

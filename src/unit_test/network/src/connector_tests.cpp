@@ -60,13 +60,14 @@ TEST(ConnectorTest, GetHostAddr)
     EXPECT_EQ(addr.GetIpv4(), inet_addr("1.2.3.1"));
     
     // node is exist
-    SingletonNodes::GetInstance().AddNode(std::make_shared<Node>(nullptr, addr));
+    auto& nodes = SingletonNodes::GetInstance();
+    nodes.AddNode(std::make_shared<Node>(nodes.GetNewNodeId(), nullptr, addr));
     ASSERT_FALSE(connector.GetHostAddr("1.2.3.1", &addr));
     EXPECT_TRUE(connector.GetHostAddr("1.2.3.2", &addr));
     
     ASSERT_TRUE(connector.GetHostAddr("bitcoin.org", &addr));
     
-    SingletonNodes::GetInstance().Clear();
+    nodes.Clear();
 }
 
 TEST(ConnectorTest, ConnectOutbound)
@@ -102,8 +103,10 @@ TEST(ConnectorTest, ConnectOutbound)
 TEST(ConnectorTest, DnsLookup)
 {
     network::Params params(BtcNet::kTestNet, util::Args(), fs::path("/tmp/foo"));
+    Connector connector(params);
+    
     ASSERT_TRUE(SingletonPeers::GetInstance().IsEmpty());
-    ASSERT_TRUE(Connector::DnsLookup(params.seeds(), 18333));
+    ASSERT_TRUE(connector.DnsLookup(params.seeds(), 18333));
     EXPECT_FALSE(SingletonPeers::GetInstance().IsEmpty());
     SingletonPeers::GetInstance().Clear();
 }

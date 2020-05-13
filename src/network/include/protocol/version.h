@@ -23,7 +23,6 @@ inline std::string FormatUserAgent()
 constexpr ProtocolVersion kProtocolVersion = kInvalidCbNoBanVersion;
 constexpr ProtocolVersion kMinPeerProtoVersion = kGetheadersVersion;
 
-namespace private_version {
 
 class Version {
 public:    
@@ -59,6 +58,11 @@ public:
     bool IsValid() const;
     void Clear();
     size_t SerializedSize() const;
+    
+    util::Hash256 GetHash() const
+    {
+        return crypto::GetHash(*this);
+    }
     
     //-------------------------------------------------------------------------
     Version& operator=(const Version& b);
@@ -221,9 +225,6 @@ void Version::Deserialize(Stream& in)
         deserializer.SerialRead(&relay_);
 }
 
-} // namespace private_version
-
-using Version = crypto::Hashable<private_version::Version>;
 
 } // namespace protocol
 } // namespace network

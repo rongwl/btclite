@@ -114,7 +114,7 @@ bool Socket::GetBindAddr(NetAddr *out)
         if (!getsockname(sock_fd_, (struct sockaddr*)&sockaddr_bind, &len))
             return out->FromSockAddr(reinterpret_cast<const struct sockaddr*>(&sockaddr_bind));
         else 
-            BTCLOG_MOD(LOG_LEVEL_WARNING, util::Logging::NET) << "Warning: get bind addr failed";
+            BTCLOG_MOD(LOG_LEVEL_WARNING, util::logging::NET) << "Warning: get bind addr failed";
     }
     
     return false;

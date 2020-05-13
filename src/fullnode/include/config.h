@@ -18,19 +18,15 @@
 #define DEFAULT_DNSSEED   "1"
 
 
-class FullNodeConfig : public btclite::util::Configuration {
+class FullNodeConfig final : public btclite::util::Configuration {
 public:    
     void ParseParameters(int argc, const char* const argv[]);
     bool InitDataDir();
-    bool InitArgs() override;
     
 private:
-    void CheckArgs() const override;
-};
-
-class FullNodeHelpInfo {
-public:
-    static void PrintUsage();
+    bool InitArgsCustomized();
+    void CheckArgsCustomized() const;
+    void PrintUsageCustomized() const;
 };
 
 

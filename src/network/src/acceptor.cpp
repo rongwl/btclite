@@ -68,7 +68,6 @@ void Acceptor::AcceptConnCb(struct evconnlistener *listener, evutil_socket_t fd,
     NetAddr addr;
     struct event_base *base;
     struct bufferevent *bev;
-    struct event *ev_timeout;
     
     if (!addr.FromSockAddr(sock_addr))
         BTCLOG(LOG_LEVEL_WARNING) << "Accept an unknown socket family address.";

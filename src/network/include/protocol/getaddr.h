@@ -9,9 +9,7 @@ namespace btclite {
 namespace network {
 namespace protocol {
 
-namespace private_getaddress {
-
-class GetAddress {
+class GetAddr {
 public:
     bool RecvHandler(std::shared_ptr<Node> src_node) const;
     
@@ -32,16 +30,17 @@ public:
         return 0;
     }
     
+    util::Hash256 GetHash() const
+    {
+        return crypto::GetHash(*this);
+    }
+    
     //-------------------------------------------------------------------------
     template <typename Stream>
     void Serialize(Stream& out) const {}
     template <typename Stream>
     void Deserialize(Stream& in) {}
 };
-
-} // namespace private_getaddress
-
-using GetAddr = crypto::Hashable<private_getaddress::GetAddress>;
 
 } // namespace protocol
 } // namespace network

@@ -9,8 +9,6 @@ namespace btclite {
 namespace network {
 namespace protocol {
 
-namespace private_sendheaders {
-
 class SendHeaders {
 public:
     bool RecvHandler(std::shared_ptr<Node> src_node) const;
@@ -32,16 +30,17 @@ public:
         return 0;
     }
     
+    util::Hash256 GetHash() const
+    {
+        return crypto::GetHash(*this);
+    }
+    
     //-------------------------------------------------------------------------
     template <typename Stream>
     void Serialize(Stream& out) const {}
     template <typename Stream>
     void Deserialize(Stream& in) {}
 };
-
-} // namespace private_sendheaders
-
-using SendHeaders = crypto::Hashable<private_sendheaders::SendHeaders>;
 
 } // namespace protocol
 } // namespace network

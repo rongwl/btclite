@@ -57,31 +57,27 @@ void FullNodeConfig::ParseParameters(int argc, const char* const argv[])
     CheckArgs();
 }
 
-void FullNodeConfig::CheckArgs() const
+void FullNodeConfig::PrintUsageCustomized() const
 {
-    Configuration::CheckArgs();
-    
-    // --connect
-    if (args_.IsArgSet(FULLNODE_OPTION_CONNECT)) {
-        const std::vector<std::string> arg_values = args_.GetArgs(FULLNODE_OPTION_CONNECT);
-        auto is_invalid_ip =  [](const std::string& val)
-                              {
-                                  struct sockaddr_in sa;
-                                  int result = inet_pton(AF_INET, val.c_str(), &(sa.sin_addr));
-                                  return result == 0;
-                              };
-        auto result = std::find_if(arg_values.begin(), arg_values.end(), is_invalid_ip);
-        if (result != arg_values.end())
-            throw Exception(ErrorCode::kInvalidArg, "invalid ip '" + *result + "'");
-    }
-}
-
-void FullNodeHelpInfo::PrintUsage()
-{
-    fprintf(stdout, "Usage: %s [OPTIONS...]\n\n", FULLNODE_BIN_NAME);
-    HelpInfo::PrintUsage();
+    fprintf(stdout, "  --debug=<module>      output debugging information(default: 0)\n");
+    fprintf(stdout, "                        <module> can be 1(output all debugging information),\n");
+    fprintf(stdout, "                        mempool, net\n");
+    fprintf(stdout, "  --loglevel=<level>    specify the type of message being printed(default: %s)\n", DEFAULT_LOG_LEVEL);
+    fprintf(stdout, "                        <level> can be:\n");
+    fprintf(stdout, "                            0(A fatal condition),\n");
+    fprintf(stdout, "                            1(An error has occurred),\n");
+    fprintf(stdout, "                            2(A warning),\n");
+    fprintf(stdout, "                            3(Normal message),\n");
+    fprintf(stdout, "                            4(Debug information),\n");
+    fprintf(stdout, "                            5(Verbose information\n");
     fprintf(stdout, "  --datadir=<dir>       specify data directory.\n");
     fprintf(stdout, "  --conf=<file>         specify configuration file (default: %s)\n", DEFAULT_CONFIG_FILE);
+    fprintf(stdout, "\n");
+    fprintf(stdout, "Chain Selection Options:\n");
+    fprintf(stdout, "  --testnet             Use the test chain\n");
+    fprintf(stdout, "  --regtest             Enter regression test mode, which uses a special chain\n");
+    fprintf(stdout, "                        in which blocks can be solved instantly. This is intended\n");
+    fprintf(stdout, "                        for regression testing tools and app development.\n");
     fprintf(stdout, "\nConnection Options:\n");
     fprintf(stdout, "  --connect=<ip>        connect only to the specified node(s); -connect=0 \n");
     fprintf(stdout, "                        disables automatic connections\n");
@@ -134,10 +130,24 @@ bool FullNodeConfig::InitDataDir()
     return ParseFromFile(path_data_dir_ / config_file_);
 }
 
-bool FullNodeConfig::InitArgs()
-{
-    if (!Configuration::InitArgs())
-        return false;
-    
+bool FullNodeConfig::InitArgsCustomized()
+{    
     return true;
+}
+
+void FullNodeConfig::CheckArgsCustomized() const
+{
+    // --connect
+    if (args_.IsArgSet(FULLNODE_OPTION_CONNECT)) {
+        const std::vector<std::string> arg_values = args_.GetArgs(FULLNODE_OPTION_CONNECT);
+        auto is_invalid_ip =  [](const std::string& val)
+        {
+            struct sockaddr_in sa;
+            int result = inet_pton(AF_INET, val.c_str(), &(sa.sin_addr));
+            return result == 0;
+        };
+        auto result = std::find_if(arg_values.begin(), arg_values.end(), is_invalid_ip);
+        if (result != arg_values.end())
+            throw Exception(ErrorCode::kInvalidArg, "invalid ip '" + *result + "'");
+    }
 }

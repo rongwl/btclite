@@ -13,8 +13,6 @@ namespace btclite {
 namespace network {
 namespace protocol {
 
-namespace private_verack {
-
 bool Verack::RecvHandler(std::shared_ptr<Node> src_node, 
                          uint32_t magic, bool advertise_local) const
 {
@@ -48,8 +46,9 @@ bool Verack::RecvHandler(std::shared_ptr<Node> src_node,
     // start ping timer
     src_node->mutable_timers()->ping_timer = 
         util::SingletonTimerMng::GetInstance().StartTimer(
-            kPingInterval*1000, kPingInterval*1000, NodeTimeoutCb::PingTimeoutCb, 
-            src_node, magic);
+            kPingInterval*1000, kPingInterval*1000, 
+            std::bind(&Node::PingTimeoutCb, src_node, std::placeholders::_1),
+            magic);
     
     // advertise local address
     if (advertise_local) {
@@ -70,7 +69,6 @@ bool Verack::RecvHandler(std::shared_ptr<Node> src_node,
     return true;
 }
 
-} // namespace private_verack
 
 } // namespace protocol
 } // namespace network

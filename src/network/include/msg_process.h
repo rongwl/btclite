@@ -80,7 +80,7 @@ bool SendMsg(const Message& msg, uint32_t magic, std::shared_ptr<Node> dst_node)
     else {
         util::TimerMng& timer_mng = util::SingletonTimerMng::GetInstance();
         dst_node->mutable_timers()->no_sending_timer = timer_mng.StartTimer(
-                    kNoSendingTimeout*1000, 0, NodeTimeoutCb::InactivityTimeoutCb, dst_node);
+                    kNoSendingTimeout*1000, 0, std::bind(&Node::InactivityTimeoutCb, dst_node));
     }
 
     return true;

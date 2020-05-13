@@ -15,10 +15,9 @@
 namespace btclite {
 namespace util {
 
-volatile std::sig_atomic_t SigMonitor::received_signal_ = 0;
+std::promise<int> Terminator::stopping_;
 
-
-static void HandleAllocFail()
+void HandleAllocFail()
 {
     // Rather than throwing std::bad-alloc if allocation fails, terminate
     // immediately to (try to) avoid chain corruption.
@@ -29,28 +28,12 @@ static void HandleAllocFail()
     std::terminate();
 }
 
-void HelpInfo::PrintUsage()
+void Configuration::PrintUsage(const char* const bin_name) const
 {
+    fprintf(stdout, "Usage: %s [OPTIONS...]\n\n", bin_name);
     fprintf(stdout, "Common Options:\n");
     fprintf(stdout, "  -h or -?,  --help     print this help message and exit\n");
-    fprintf(stdout, "  --debug=<module>      output debugging information(default: 0)\n");
-    fprintf(stdout, "                        <module> can be 1(output all debugging information),\n");
-    fprintf(stdout, "                        mempool, net\n");
-    fprintf(stdout, "  --loglevel=<level>    specify the type of message being printed(default: %s)\n", DEFAULT_LOG_LEVEL);
-    fprintf(stdout, "                        <level> can be:\n");
-    fprintf(stdout, "                            0(A fatal condition),\n");
-    fprintf(stdout, "                            1(An error has occurred),\n");
-    fprintf(stdout, "                            2(A warning),\n");
-    fprintf(stdout, "                            3(Normal message),\n");
-    fprintf(stdout, "                            4(Debug information),\n");
-    fprintf(stdout, "                            5(Verbose information\n");
-    fprintf(stdout, "\n");
-    fprintf(stdout, "Chain selection options:\n");
-    fprintf(stdout, "  --testnet             Use the test chain\n");
-    fprintf(stdout, "  --regtest             Enter regression test mode, which uses a special chain\n");
-    fprintf(stdout, "                        in which blocks can be solved instantly. This is intended\n");
-    fprintf(stdout, "                        for regression testing tools and app development.\n");
-    
+    PrintUsageCustomized();
     //              "                                                                                "
 
 }
@@ -67,7 +50,7 @@ void Configuration::CheckArgs() const
         if (std::none_of(arg_values.begin(), arg_values.end(),
         [](const std::string& val) { return val == "0"; })) {
             auto result = std::find_if(arg_values.begin(), arg_values.end(), 
-            [](const std::string& module) { return Logging::MapIntoModule(module) == Logging::NONE; });
+            [](const std::string& module) { return logging::MapIntoModule(module) == logging::NONE; });
             if (result != arg_values.end())
                 throw Exception(ErrorCode::kInvalidArg, "invalid module '" + *result + "'");
         }
@@ -87,6 +70,8 @@ void Configuration::CheckArgs() const
             throw Exception(ErrorCode::kInvalidArg, "invalid loglevel '" + arg_val + "'");
         }
     }
+    
+    CheckArgsCustomized();
 }
 
 bool Configuration::InitArgs()
@@ -97,7 +82,7 @@ bool Configuration::InitArgs()
         if (std::none_of(arg_values.begin(), arg_values.end(),
         [](const std::string& val) { return val == "0"; })) {
             for (auto module : arg_values) {
-                Logging::set_logModule(Logging::MapIntoModule(module));
+                logging::set_logModule(logging::MapIntoModule(module));
             }
         }
     }
@@ -109,12 +94,12 @@ bool Configuration::InitArgs()
 
         if (level <= LOG_LEVEL_WARNING) {
             BTCLOG(LOG_LEVEL_INFO) << "set log level: " << level;
-            FLAGS_minloglevel = Logging::MapIntoGloglevel(level);
+            FLAGS_minloglevel = logging::MapIntoGloglevel(level);
         }
         else {
             BTCLOG(LOG_LEVEL_INFO) << "set log level: " << level;
             FLAGS_minloglevel = 0;
-            FLAGS_v = Logging::MapIntoGloglevel(level);
+            FLAGS_v = logging::MapIntoGloglevel(level);
         }
     }
     else
@@ -131,7 +116,7 @@ bool Configuration::InitArgs()
         BTCLOG(LOG_LEVEL_INFO) << "set bitcoin network: regtest";
     }
     
-    return true;
+    return InitArgsCustomized();
 }
 
 /* Check options that getopt_long() can not print totally */
@@ -179,15 +164,6 @@ bool Configuration::ParseFromFile(const fs::path& path) const
 bool Configuration::LockDataDir()
 {
     return true;
-}
-
-fs::path Configuration::PathHome()
-{
-    char *home_path = getenv("HOME");            
-    if (home_path == NULL)
-        return fs::path("/");
-    else
-        return fs::path(home_path);
 }
 
 std::string Args::GetArg(const std::string& arg, const std::string& arg_default) const
@@ -249,15 +225,7 @@ bool Executor::BasicSetup()
     
     std::set_new_handler(HandleAllocFail);
     
-    return true;
-}
-
-void Executor::WaitForSignal()
-{
-    while (!sig_int_.IsReceived() && !sig_term_.IsReceived()) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(200));
-    }
-    BTCLOG(LOG_LEVEL_INFO) << "Caught an interrupt signal.";
+    return BasicSetupCustomized();
 }
 
 void SetupEnvironment()

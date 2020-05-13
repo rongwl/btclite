@@ -6,8 +6,7 @@
 
 int main(int argc, char **argv)
 {
-    btclite::util::Logging fullnode_logging;
-    fullnode_logging.Init(argv[0]);
+    btclite::util::logging::InitLogging(argv[0]);
     
     FullNodeConfig config;
     try {
@@ -17,7 +16,7 @@ int main(int argc, char **argv)
         if (e.code().value() != 
                 static_cast<std::underlying_type_t<btclite::util::ErrorCode> >(btclite::util::ErrorCode::kShowHelp))
             fprintf(stderr, "%s: %s\n", argv[0], e.what());
-        FullNodeHelpInfo::PrintUsage();
+        config.PrintUsage(FULLNODE_BIN_NAME);
         exit(e.code().value());
     }
     
@@ -45,7 +44,7 @@ int main(int argc, char **argv)
     }
 
     if (ret) {
-        fullnode.WaitForSignal();
+        fullnode.WaitToStop();
     }
     
     fullnode.Interrupt();

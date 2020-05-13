@@ -10,8 +10,6 @@ namespace btclite {
 namespace network {
 namespace protocol {
 
-namespace private_pong {
-
 class Pong {
 public:
     Pong() = default;
@@ -40,6 +38,11 @@ public:
     size_t SerializedSize() const
     {
         return sizeof(nonce_);
+    }
+    
+    util::Hash256 GetHash() const
+    {
+        return crypto::GetHash(*this);
     }
     
     //-------------------------------------------------------------------------
@@ -82,10 +85,6 @@ public:
 private:
     uint64_t nonce_ = 0;
 };
-
-} // namespace private_pong
-
-using Pong = crypto::Hashable<private_pong::Pong>;
 
 } // namespace protocol
 } // namespace network

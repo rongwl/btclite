@@ -5,8 +5,6 @@ namespace btclite {
 namespace network {
 namespace protocol {
 
-namespace private_pong {
-
 bool Pong::RecvHandler(std::shared_ptr<Node> src_node) const
 {
     if (src_node->time().ping_time.ping_nonce_sent == 0) {
@@ -28,8 +26,6 @@ bool Pong::RecvHandler(std::shared_ptr<Node> src_node) const
         
     return true;
 }
-
-} // namespace pong
 
 } // namespace protocol
 } // namespace network

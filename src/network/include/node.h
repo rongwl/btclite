@@ -670,12 +670,18 @@ struct RelayState {
 /* Information about a connected peer */
 class Node : util::Uncopyable, public std::enable_shared_from_this<Node> {
 public:
-    Node(const struct bufferevent *bev, const NetAddr& addr,
+    Node(NodeId id, const struct bufferevent *bev, const NetAddr& addr,
          bool is_inbound = true, bool manual = false, 
          std::string host_name = "");
     
     //-------------------------------------------------------------------------
+    void InactivityTimeoutCb();
+    void SocketNoMsgTimeoutCb();
+    void PingTimeoutCb(uint32_t magic);
+    void ShakeHandsTimeoutCb();
     void StopAllTimers();
+    
+    //-------------------------------------------------------------------------
     bool CheckBanned();
     
     bool ShouldUpdateTime()
@@ -945,15 +951,6 @@ private:
 
 void DisconnectNode(std::shared_ptr<Node> node);
 void DisconnectNode(const SubNet& subnet);
-
-namespace NodeTimeoutCb {
-
-void InactivityTimeoutCb(std::shared_ptr<Node> node);
-void SocketNoMsgTimeoutCb(std::shared_ptr<Node> node);
-void PingTimeoutCb(std::shared_ptr<Node> node, uint32_t magic);
-void ShakeHandsTimeoutCb(std::shared_ptr<Node> node);
-
-} // namespace NodeTimeoutCb
 
 
 } // namespace network

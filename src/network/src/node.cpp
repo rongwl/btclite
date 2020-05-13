@@ -84,10 +84,9 @@ void Misbehavior::Misbehaving(NodeId id, int howmuch)
         BTCLOG(LOG_LEVEL_INFO) << "peer " << id << " misbehavior, score:" << score_;
 }
 
-Node::Node(const struct bufferevent *bev, const NetAddr& addr,
+Node::Node(NodeId id, const struct bufferevent *bev, const NetAddr& addr,
            bool is_inbound, bool manual, std::string host_name)
-    : id_(SingletonNodes::GetInstance().GetNewNodeId()),
-      local_host_nonce_(util::RandUint64()),
+    : id_(id), local_host_nonce_(util::RandUint64()),
       connection_(id_, bev, addr, is_inbound, manual, host_name),
       time_(util::GetTimeSeconds())
 {
@@ -159,68 +158,63 @@ bool Node::CheckBanned()
     return true;
 }
 
-
-namespace NodeTimeoutCb {
-
-void InactivityTimeoutCb(std::shared_ptr<Node> node)
+void Node::InactivityTimeoutCb()
 {
     if (SingletonNetInterrupt::GetInstance())
         return;
 
-    BTCLOG(LOG_LEVEL_WARNING) << "Peer " << node->id() << " inactive timeout.";
-    DisconnectNode(node);
+    BTCLOG(LOG_LEVEL_WARNING) << "Peer " << id_ << " inactive timeout.";
+    DisconnectNode(this->shared_from_this());
 }
 
-void SocketNoMsgTimeoutCb(std::shared_ptr<Node> node)
+void Node::SocketNoMsgTimeoutCb()
 {
     if (SingletonNetInterrupt::GetInstance())
         return;
     
-    if (!node->connection().socket_no_msg())
+    if (!connection_.socket_no_msg())
         return;
     
     BTCLOG(LOG_LEVEL_WARNING) << "Socket no message in first " << kNoMsgTimeout 
-                              << " seconds from peer " << node->id();
-    DisconnectNode(node);
+                              << " seconds from peer " << id_;
+    DisconnectNode(this->shared_from_this());
 }
 
-void PingTimeoutCb(std::shared_ptr<Node> node, uint32_t magic)
+void Node::PingTimeoutCb(uint32_t magic)
 {
     if (SingletonNetInterrupt::GetInstance())
         return;
     
-    if (node->connection().IsDisconnected()) {
-        util::SingletonTimerMng::GetInstance().StopTimer(node->timers().ping_timer);
+    if (connection_.IsDisconnected()) {
+        util::SingletonTimerMng::GetInstance().StopTimer(timers_.ping_timer);
         return;
     }
     
-    if (node->time().ping_time.ping_nonce_sent) {
-        BTCLOG(LOG_LEVEL_WARNING) << "Peer " << node->id() << " ping timeout.";
-        util::SingletonTimerMng::GetInstance().StopTimer(node->timers().ping_timer);
-        DisconnectNode(node);
+    if (time_.ping_time.ping_nonce_sent) {
+        BTCLOG(LOG_LEVEL_WARNING) << "Peer " << id_ << " ping timeout.";
+        util::SingletonTimerMng::GetInstance().StopTimer(timers_.ping_timer);
+        DisconnectNode(this->shared_from_this());
         return;
     }
     
     // send ping
     protocol::Ping ping(util::RandUint64());
-    if (node->protocol().version() < kBip31Version)
+    if (protocol_.version() < kBip31Version)
         ping.set_protocol_version(0);
-    SendMsg(ping, magic, node);
+    SendMsg(ping, magic, this->shared_from_this());
 }
 
-void ShakeHandsTimeoutCb(std::shared_ptr<Node> node)
+void Node::ShakeHandsTimeoutCb()
 {
     if (SingletonNetInterrupt::GetInstance())
         return;
     
-    if (node->connection().IsHandshakeCompleted())
+    if (connection_.IsHandshakeCompleted())
         return;
     
-    BTCLOG(LOG_LEVEL_WARNING) << "Peer "<< node->id() << " shakehands timeout.";
-    DisconnectNode(node);
+    BTCLOG(LOG_LEVEL_WARNING) << "Peer "<< id_ << " shakehands timeout.";
+    DisconnectNode(this->shared_from_this());
 }
-
-} // namespace NodeTimeoutCb
 
 
 void Nodes::AddNode(std::shared_ptr<Node> node)
@@ -235,13 +229,13 @@ std::shared_ptr<Node> Nodes::InitializeNode(const struct bufferevent *bev,
                                             const NetAddr& addr,
                                             bool is_inbound, bool manual)
 {
-    auto node = std::make_shared<Node>(bev, addr, is_inbound, manual);
+    auto node = std::make_shared<Node>(GetNewNodeId(), bev, addr, is_inbound, manual);
     
     util::TimerMng& timer_mng = util::SingletonTimerMng::GetInstance();
     node->mutable_timers()->no_msg_timer = timer_mng.StartTimer(
-            kNoMsgTimeout*1000, 0, NodeTimeoutCb::SocketNoMsgTimeoutCb, node);
+            kNoMsgTimeout*1000, 0, std::bind(&Node::SocketNoMsgTimeoutCb, node));
     node->mutable_timers()->shakehands_timer = timer_mng.StartTimer(
-            kShakeHandsTimeout*1000, 0, NodeTimeoutCb::ShakeHandsTimeoutCb, node);
+            kShakeHandsTimeout*1000, 0, std::bind(&Node::ShakeHandsTimeoutCb, node));
     
     AddNode(node);
     if (!GetNode(node->id())) {

@@ -12,6 +12,7 @@
 #include <cstdlib>
 #include <exception>
 #include <fstream>
+#include <future>
 #include <getopt.h>
 #include <map>
 #include <set>
@@ -33,29 +34,6 @@ namespace util {
 
 void SetupEnvironment();
 
-class SigMonitor {
-public:
-    SigMonitor(volatile std::sig_atomic_t sig)
-        : signal_(sig)
-    {
-        std::signal(sig, Handler);
-    }
-    
-    bool IsReceived() const
-    {
-        return (received_signal_ != 0 && received_signal_ == signal_);
-    }
-
-    static volatile std::sig_atomic_t received_signal_;
-
-private:
-    volatile std::sig_atomic_t signal_;
-    
-    static void Handler(int sig)
-    {
-        received_signal_ = sig;
-    }
-};
 
 class Uncopyable {
 public:
@@ -64,6 +42,30 @@ public:
     
 protected:
     Uncopyable() {}
+};
+
+class Terminator : Uncopyable {
+public:
+    Terminator()
+    {
+        std::signal(SIGINT, HandleStop);
+        std::signal(SIGTERM, HandleStop);
+        std::signal(SIGQUIT, HandleStop);
+    }    
+    
+    void Wait()
+    {
+        stopping_.get_future().wait();
+    }
+    
+private:
+    static std::promise<int> stopping_;
+    
+    static void HandleStop(int sig)
+    {
+        static std::once_flag stop_mutex;
+        std::call_once(stop_mutex, [&](){ stopping_.set_value(sig); });
+    }
 };
 
 class Args : Uncopyable {
@@ -92,10 +94,18 @@ class Configuration : Uncopyable {
 public:
     virtual void ParseParameters(int argc, const char* const argv[]) = 0;
     virtual bool InitDataDir() = 0;
-    virtual bool InitArgs();
+    
+    bool InitArgs();
+    void CheckArgs() const;
+    void PrintUsage(const char* const bin_name) const;
     
     bool LockDataDir();
-    static fs::path PathHome();
+    
+    inline fs::path PathHome() const
+    {
+        char *home_path = getenv("HOME");
+        return (home_path) ? fs::path(home_path) : fs::path("/");
+    }
     
     BtcNet btcnet() const
     {
@@ -118,32 +128,35 @@ protected:
     fs::path path_data_dir_;
     std::string config_file_;
     
-    virtual void CheckArgs() const;
     void CheckOptions(int argc, const char* const argv[]);
     bool ParseFromFile(const fs::path& path) const;
+    
+private:
+    virtual bool InitArgsCustomized() = 0;
+    virtual void CheckArgsCustomized() const = 0;
+    virtual void PrintUsageCustomized() const = 0;
 };
 
-class HelpInfo {
-public:
-    static void PrintUsage();
-};
 
 class Executor : Uncopyable {
 public:    
-    Executor()
-        : sig_int_(SIGINT), sig_term_(SIGTERM) {}
-    
     virtual bool Init() = 0;
     virtual bool Start() = 0;
     virtual void Interrupt() = 0;
     virtual void Stop() = 0;
     
-    virtual bool BasicSetup();
-    virtual void WaitForSignal();
+    bool BasicSetup();
+    
+    void WaitToStop()
+    {
+        terminator_.Wait();
+        BTCLOG(LOG_LEVEL_INFO) << "Caught an interrupt signal.";
+    }
 
 private:
-    SigMonitor sig_int_;
-    SigMonitor sig_term_;
+    Terminator terminator_;
+    
+    virtual bool BasicSetupCustomized() = 0;
 };
 
 /* Merge from bitcoin core 0.16.3. 

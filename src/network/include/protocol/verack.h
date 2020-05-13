@@ -9,7 +9,6 @@ namespace btclite {
 namespace network {
 namespace protocol {
 
-namespace private_verack {
 
 class Verack {
 public:
@@ -33,6 +32,11 @@ public:
         return 0;
     }
     
+    util::Hash256 GetHash() const
+    {
+        return crypto::GetHash(*this);
+    }
+    
     //-------------------------------------------------------------------------
     template <typename Stream>
     void Serialize(Stream& out) const {}
@@ -40,9 +44,6 @@ public:
     void Deserialize(Stream& in) {}
 };
 
-} // namespace private_verack
-
-using Verack = crypto::Hashable<private_verack::Verack>;
 
 } // namespace protocol
 } // namespace network

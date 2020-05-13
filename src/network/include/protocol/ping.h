@@ -10,8 +10,6 @@ namespace btclite {
 namespace network {
 namespace protocol {
 
-namespace private_ping {
-
 class Ping {
 public:
     Ping() = default;
@@ -47,6 +45,11 @@ public:
         if (protocol_version_ < kBip31Version)
             return 0;
         return sizeof(nonce_);
+    }
+    
+    util::Hash256 GetHash() const
+    {
+        return crypto::GetHash(*this);
     }
     
     //-------------------------------------------------------------------------
@@ -111,10 +114,6 @@ void Ping::Deserialize(Stream& in)
         deserializer.SerialRead(&nonce_);
     }
 }
-
-} // namespace private_ping
-
-using Ping = crypto::Hashable<private_ping::Ping>;
 
 } // namespace protocol
 } // namespace network

@@ -83,7 +83,7 @@ TEST(FullNodeArgsTest, OptionLog)
         args.Init(4, argv);
         args.InitArgs();
         EXPECT_TRUE(args.IsArgSet(GLOBAL_OPTION_DEBUG));
-        EXPECT_EQ(Logging::log_module(), Logging::NET | Logging::MEMPOOL);
+        EXPECT_EQ(logging::log_module(), logging::NET | logging::MEMPOOL);
         EXPECT_TRUE(args.IsArgSet(GLOBAL_OPTION_LOGLEVEL));
         EXPECT_EQ(args.GetArg(GLOBAL_OPTION_LOGLEVEL, "4"), "5");
     }

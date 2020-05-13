@@ -470,22 +470,6 @@ TEST(NetAddrTest, Serialize)
     EXPECT_EQ(addr1.port(), addr2.port());
 }
 
-TEST(SubNetTest, NetmaskBits)
-{
-    EXPECT_EQ(SubNet::NetmaskBits(0), 0);
-    EXPECT_EQ(SubNet::NetmaskBits(0x80), 1);
-    EXPECT_EQ(SubNet::NetmaskBits(0xc0), 2);
-    EXPECT_EQ(SubNet::NetmaskBits(0xe0), 3);
-    EXPECT_EQ(SubNet::NetmaskBits(0xf0), 4);
-    EXPECT_EQ(SubNet::NetmaskBits(0xf8), 5);
-    EXPECT_EQ(SubNet::NetmaskBits(0xfc), 6);
-    EXPECT_EQ(SubNet::NetmaskBits(0xfe), 7);
-    EXPECT_EQ(SubNet::NetmaskBits(0xff), 8);
-    
-    EXPECT_EQ(SubNet::NetmaskBits(0x81), -1);
-    EXPECT_EQ(SubNet::NetmaskBits(0xc3), -1);
-}
-
 TEST(SubNetTest, Constructor)
 {
     NetAddr addr, netmask;

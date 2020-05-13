@@ -9,8 +9,6 @@ namespace btclite {
 namespace network {
 namespace protocol {
 
-namespace private_ping {
-
 bool Ping::RecvHandler(std::shared_ptr<Node> src_node, uint32_t magic) const
 {
     if (src_node->protocol().version() >= kBip31Version)
@@ -32,8 +30,6 @@ bool Ping::RecvHandler(std::shared_ptr<Node> src_node, uint32_t magic) const
     
     return true;
 }
-
-} // namespace private_ping
 
 } // namespace protocol
 } // namespace network

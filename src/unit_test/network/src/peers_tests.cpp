@@ -313,32 +313,32 @@ TEST(PeersTest, PeerIsTerrible)
     int64_t now = 10000000;
     
     peer.set_last_try(now-60);
-    EXPECT_FALSE(Peers::IsTerrible(peer, now));
+    EXPECT_FALSE(peer::IsTerriblePeer(peer, now));
     
     peer.set_last_try(now-100);
     peer.mutable_addr()->set_timestamp(now+10*60+1);
-    EXPECT_TRUE(Peers::IsTerrible(peer, now));
+    EXPECT_TRUE(peer::IsTerriblePeer(peer, now));
     peer.mutable_addr()->set_timestamp(now+10*60);
-    EXPECT_FALSE(Peers::IsTerrible(peer, now));
+    EXPECT_FALSE(peer::IsTerriblePeer(peer, now));
     
     peer.mutable_addr()->set_timestamp(now-kPeerHorizonDays*24*60*60-1);
-    EXPECT_TRUE(Peers::IsTerrible(peer, now));
+    EXPECT_TRUE(peer::IsTerriblePeer(peer, now));
     peer.mutable_addr()->set_timestamp(now-kPeerHorizonDays*24*60*60);
-    EXPECT_FALSE(Peers::IsTerrible(peer, now));
+    EXPECT_FALSE(peer::IsTerriblePeer(peer, now));
     
     peer.set_attempts(kPeerRetries);
-    EXPECT_TRUE(Peers::IsTerrible(peer, now));
+    EXPECT_TRUE(peer::IsTerriblePeer(peer, now));
     peer.set_attempts(kPeerRetries-1);
-    EXPECT_FALSE(Peers::IsTerrible(peer, now));
+    EXPECT_FALSE(peer::IsTerriblePeer(peer, now));
     
     peer.set_last_success(now-kMinPeerFailDays*24*60*60-1);
     peer.set_attempts(kMaxPeerFailures);
-    EXPECT_TRUE(Peers::IsTerrible(peer, now));
+    EXPECT_TRUE(peer::IsTerriblePeer(peer, now));
     peer.set_last_success(now-kMinPeerFailDays*24*60*60);
-    EXPECT_FALSE(Peers::IsTerrible(peer, now));
+    EXPECT_FALSE(peer::IsTerriblePeer(peer, now));
     peer.set_last_success(now-kMinPeerFailDays*24*60*60-1);
     peer.set_attempts(kMaxPeerFailures-1);
-    EXPECT_FALSE(Peers::IsTerrible(peer, now));
+    EXPECT_FALSE(peer::IsTerriblePeer(peer, now));
 }
 
 TEST(PeersDbTest, Constructor)
