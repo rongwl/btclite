@@ -17,6 +17,8 @@
 namespace btclite {
 namespace network {
 
+using CountNodesFunc = std::function<size_t()>;
+
 bool IsInitialBlockDownload();
 
 enum ProtocolVersion : uint32_t {
@@ -121,47 +123,9 @@ struct QueuedBlock {
     //std::unique_ptr<PartiallyDownloadedBlock> partialBlock;
 };
 
-class NodeProtocol {
-public:
-    bool IsClient() const
-    {
-        return !(services_ & kNodeNetwork);
-    }
-    
-    ProtocolVersion version() const
-    {
-        return version_;
-    }
-    
-    void set_version(ProtocolVersion version)
-    {
-        version_ = version;
-    }
-    
-    ServiceFlags services() const
-    {
-        return services_;
-    }
-    
-    void set_services(ServiceFlags services)
-    {
-        services_ = services;
-    }
-    
-    int start_height() const
-    {
-        return start_height_;
-    }
-    
-    void set_start_height(int start_height)
-    {
-        start_height_ = start_height;
-    }
-    
-private:
-    std::atomic<ProtocolVersion> version_ = kUnknownProtoVersion;
-    std::atomic<ServiceFlags> services_ = kNodeNone;
-    std::atomic<int> start_height_ = 0;
+struct NodeProtocol {
+    std::atomic<ProtocolVersion> version = kUnknownProtoVersion;
+    std::atomic<int> start_height = 0;
 };
 
 class NodeConnection {
@@ -172,10 +136,10 @@ public:
         kDisconnected
     };
     
-    NodeConnection(NodeId id, const struct bufferevent *bev, const NetAddr& addr,
-                   bool is_inbound, bool manual, std::string host_name)
-        : node_id_(id), bev_(const_cast<struct bufferevent*>(bev)), addr_(addr),
-          host_name_(host_name), is_inbound_(is_inbound), manual_(manual) {}
+    NodeConnection(const struct bufferevent *bev, const NetAddr& addr,
+                   bool manual, std::string host_name)
+        : bev_(const_cast<struct bufferevent*>(bev)), addr_(addr),
+          host_name_(host_name), manual_(manual) {}
     
     ~NodeConnection()
     {
@@ -197,7 +161,7 @@ public:
     bool IsDisconnected() const
     {
         return (connection_state_ == kDisconnected);
-    }    
+    }
     
     //-------------------------------------------------------------------------
     const struct bufferevent* const bev() const
@@ -240,11 +204,6 @@ public:
             local_addr_ = addr;
     }
     
-    bool is_inbound() const
-    {
-        return is_inbound_;
-    }
-    
     bool manual() const
     {
         return manual_;
@@ -260,6 +219,7 @@ public:
     {
         LOCK(cs_state_);
         connection_state_ = state;
+        SetStateCb_(state);
     }
     
     bool socket_no_msg() const
@@ -273,7 +233,6 @@ public:
     }
     
 private:
-    const NodeId node_id_;
     struct bufferevent *bev_ = nullptr;    
     const NetAddr addr_;
     //const uint64_t keyed_net_group_;  
@@ -284,11 +243,11 @@ private:
     mutable util::CriticalSection cs_local_addr_;
     NetAddr local_addr_;    
     
-    const bool is_inbound_;
     const bool manual_;
     
     mutable util::CriticalSection cs_state_;
     ConnectionState connection_state_ = ConnectionState::kInitialState;
+    std::function<void(ConnectionState)> SetStateCb_ = [](ConnectionState s){};
     
     std::atomic<bool> socket_no_msg_ = true;
 };
@@ -472,6 +431,13 @@ private:
 
 class BlockSyncTimeout {
 public:
+    static int& NProtected()
+    {
+        static int n_protected = 0;
+        return n_protected;
+    }
+    
+    //-------------------------------------------------------------------------
     int64_t timeout() const
     {
         LOCK(cs_);
@@ -516,8 +482,11 @@ public:
     
     void set_protect(bool protect)
     {
+        int& n_protected = NProtected();
         LOCK(cs_);
+        n_protected -= protect_;
         protect_ = protect;
+        n_protected += protect_;
     }
     
 private:
@@ -538,6 +507,13 @@ private:
 
 class BlockSyncState1 {
 public:
+    static int& NSyncStarted()
+    {
+        static int n_sync_started = 0;
+        return n_sync_started;
+    }
+    
+    //-------------------------------------------------------------------------
     bool sync_started() const
     {
         return sync_started_;
@@ -545,7 +521,10 @@ public:
     
     void set_sync_started(bool sync_started)
     {
+        int& n_sync_started = NSyncStarted();
+        n_sync_started -= sync_started_;
         sync_started_ = sync_started;
+        n_sync_started += sync_started_;
     }
     
     const chain::BlockIndex *best_known_block_index() const
@@ -612,22 +591,32 @@ class NodeBlocksInFlight {
 public:
     using iterator = std::list<QueuedBlock>::iterator;
     
+    static int& NValidatedDownload()
+    {
+        static int n_validated_download = 0;
+        return n_validated_download;
+    }
+    
+    //-------------------------------------------------------------------------
     std::list<QueuedBlock> list() const // thread safe copy
     {
         LOCK(cs_);
         return list_;
     }
     
-    int valid_headers_count() const
+    int n_valid_headers() const
     {
         LOCK(cs_);
-        return valid_headers_count_;
+        return n_valid_headers_;
     }
     
-    void set_valid_headers_count(int valid_headers_count)
+    void set_n_valid_headers(int n_valid_headers)
     {
+        int& n_validated_download = NValidatedDownload();
         LOCK(cs_);
-        valid_headers_count_ = valid_headers_count;
+        n_validated_download -= (n_valid_headers_ > 0);
+        n_valid_headers_ = n_valid_headers;
+        n_validated_download += (n_valid_headers_ > 0);
     }
     
 private:
@@ -637,7 +626,7 @@ private:
     //! When the first entry in BlocksInFlight started downloading. Don't care when BlocksInFlight is empty.
     int64_t downloading_since_ = 0;
     
-    int valid_headers_count_ = 0;
+    int n_valid_headers_ = 0;
 };
 
 struct RelayState {    
@@ -670,7 +659,7 @@ struct RelayState {
 /* Information about a connected peer */
 class Node : util::Uncopyable, public std::enable_shared_from_this<Node> {
 public:
-    Node(NodeId id, const struct bufferevent *bev, const NetAddr& addr,
+    Node(const struct bufferevent *bev, const NetAddr& addr,
          bool is_inbound = true, bool manual = false, 
          std::string host_name = "");
     
@@ -692,15 +681,44 @@ public:
         return false;
     }
     
-    bool IsPreferedDownload() const
+    bool IsClient() const
     {
-        return (!connection_.is_inbound() && !protocol_.IsClient());
+        return !(services_ & kNodeNetwork);
     }
     
-    //-------------------------------------------------------------------------   
+    bool IsPreferedDownload() const
+    {
+        return (!is_inbound_ && !IsClient());
+    }
+    
+    static int& NPreferedDownload()
+    {
+        static int n_prefered_download = 0;
+        return n_prefered_download;
+    }
+    
+    //-------------------------------------------------------------------------
     NodeId id() const
     {
         return id_;
+    }
+    
+    bool is_inbound() const
+    {
+        return is_inbound_;
+    }
+    
+    ServiceFlags services() const
+    {
+        return services_;
+    }
+    
+    void set_services(ServiceFlags services)
+    {
+        int& n_prefered_download = NPreferedDownload();
+        n_prefered_download -= IsPreferedDownload();
+        services_ = services;
+        n_prefered_download += IsPreferedDownload();
     }
     
     uint64_t local_host_nonce() const
@@ -825,6 +843,8 @@ public:
      
 private:
     const NodeId id_;
+    const bool is_inbound_;
+    std::atomic<ServiceFlags> services_ = kNodeNone;
     const uint64_t local_host_nonce_;  
     NodeProtocol protocol_;
     NodeConnection connection_;
@@ -838,6 +858,13 @@ private:
     BlockSyncState1 block_sync_state_;
     NodeBlocksInFlight blocks_in_flight_;
     RelayState relay_state_;
+    
+    //-------------------------------------------------------------------------
+    static NodeId GetNewNodeId()
+    {
+        static std::atomic<NodeId> last_node_id = 0;
+        return last_node_id.fetch_add(1, std::memory_order_relaxed);
+    }
 };
 
 struct NodeEvictionCandidate
@@ -859,12 +886,6 @@ public:
     Nodes()
         : list_() {}
     
-    NodeId GetNewNodeId()
-    {
-        static std::atomic<NodeId> last_node_id = 0;
-        return last_node_id.fetch_add(1, std::memory_order_relaxed);
-    }
-    
     size_t Size() const
     {
         LOCK(cs_nodes_);
@@ -875,10 +896,10 @@ public:
     void AddNode(std::shared_ptr<Node> node);    
     std::shared_ptr<Node> InitializeNode(const struct bufferevent *bev, const NetAddr& addr,
                                          bool is_inbound = true, bool manual = false);
-    std::shared_ptr<Node> GetNode(NodeId id);    
-    std::shared_ptr<Node> GetNode(struct bufferevent *bev);    
-    std::shared_ptr<Node> GetNode(const NetAddr& addr); 
-    void GetNode(const SubNet& subnet, std::vector<std::shared_ptr<Node> > *out);
+    std::shared_ptr<Node> GetNode(NodeId id) const;    
+    std::shared_ptr<Node> GetNode(struct bufferevent *bev) const;    
+    std::shared_ptr<Node> GetNode(const NetAddr& addr) const; 
+    void GetNode(const SubNet& subnet, std::vector<std::shared_ptr<Node> > *out) const;
     void EraseNode(std::shared_ptr<Node> node);    
     void EraseNode(NodeId id);
     
@@ -891,14 +912,9 @@ public:
     
     //-------------------------------------------------------------------------
     //bool AttemptToEvictConnection();
-    int CountInbound();
-    int CountOutbound();
-    int CountSyncStarted();
-    int CountPreferredDownload();
-    int CountValidatedDownload();
-    int CountProtectedOutbound();
-    bool ShouldDnsLookup();
-    bool CheckIncomingNonce(uint64_t nonce);
+    int CountPreferredDownload() const;
+    bool ShouldDnsLookup() const;
+    bool CheckIncomingNonce(uint64_t nonce) const;
     
 private:
     mutable util::CriticalSection cs_nodes_;

@@ -87,7 +87,8 @@ void LibEvent::EvconnlistenerFree(struct evconnlistener *lev)
 
 void ConnReadCb(struct bufferevent *bev, void *ctx)
 {
-    auto pnode = SingletonNodes::GetInstance().GetNode(bev);
+    auto *context = reinterpret_cast<struct Context*>(ctx);
+    auto pnode = context->pnodes->GetNode(bev);
     if (!pnode)
         return;
     
@@ -100,20 +101,21 @@ void ConnReadCb(struct bufferevent *bev, void *ctx)
     }
     else {
         util::TimerMng& timer_mng = util::SingletonTimerMng::GetInstance();
-        uint32_t timeout = (pnode->protocol().version() > kBip31Version) ? 
+        uint32_t timeout = (pnode->protocol().version > kBip31Version) ? 
                            kNoReceivingTimeoutBip31 : kNoReceivingTimeout;
         pnode->mutable_timers()->no_receiving_timer = 
             timer_mng.StartTimer(timeout*1000, 0, 
                                  std::bind(&Node::InactivityTimeoutCb, pnode));
     }
     
-    auto task = std::bind(ParseMsg, pnode, *reinterpret_cast<Params*>(ctx));
+    auto task = std::bind(ParseMsg, pnode, *(context->pparams));
     util::SingletonThreadPool::GetInstance().AddTask(std::function<bool()>(task));
 }
 
 void ConnEventCb(struct bufferevent *bev, short events, void *ctx)
 {
-    auto pnode = SingletonNodes::GetInstance().GetNode(bev);
+    auto *context = reinterpret_cast<struct Context*>(ctx);
+    auto pnode = context->pnodes->GetNode(bev);
     if (!pnode)
         return;
     

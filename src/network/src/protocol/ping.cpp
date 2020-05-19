@@ -11,7 +11,7 @@ namespace protocol {
 
 bool Ping::RecvHandler(std::shared_ptr<Node> src_node, uint32_t magic) const
 {
-    if (src_node->protocol().version() >= kBip31Version)
+    if (src_node->protocol().version >= kBip31Version)
     {
         // Echo the message back with the nonce. This allows for two useful features:
         //

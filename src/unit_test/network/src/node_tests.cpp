@@ -96,27 +96,17 @@ TEST_F(NodesTest, CheckIncomingNonce)
     EXPECT_TRUE(nodes_.CheckIncomingNonce(node1->local_host_nonce()));
 }
 
-TEST_F(NodesTest, InboundCount)
-{
-    NetAddr addr;
-    
-    addr.SetIpv4(inet_addr("1.1.1.4"));
-    nodes_.InitializeNode(nullptr, addr, false);
-    addr.SetIpv4(inet_addr("1.1.1.5"));
-    nodes_.InitializeNode(nullptr, addr, false);
-    EXPECT_EQ(nodes_.CountInbound(), 2);
-    EXPECT_EQ(nodes_.CountOutbound(), 3);
-}
-
 TEST_F(NodesTest, CountSyncStarted)
 {
     auto node1 = nodes_.GetNode(id1_);
     auto node2 = nodes_.GetNode(id2_);
     
-    EXPECT_EQ(nodes_.CountSyncStarted(), 0);
+    EXPECT_EQ(node1->block_sync_state().NSyncStarted(), 0);
+    EXPECT_EQ(node2->block_sync_state().NSyncStarted(), 0);
     node1->mutable_block_sync_state()->set_sync_started(true);
     node2->mutable_block_sync_state()->set_sync_started(true);
-    EXPECT_EQ(nodes_.CountSyncStarted(), 2);
+    EXPECT_EQ(node1->block_sync_state().NSyncStarted(), 2);
+    EXPECT_EQ(node2->block_sync_state().NSyncStarted(), 2);
 }
 
 TEST_F(NodesTest, CountPreferredDownload)
@@ -124,9 +114,11 @@ TEST_F(NodesTest, CountPreferredDownload)
     auto node1 = nodes_.GetNode(id1_);
     auto node2 = nodes_.GetNode(id2_);
     
-    EXPECT_EQ(nodes_.CountPreferredDownload(), 0);
-    node1->mutable_protocol()->set_services(kNodeNetwork);
-    EXPECT_EQ(nodes_.CountPreferredDownload(), 1);
+    EXPECT_EQ(node1->NPreferedDownload(), 0);
+    EXPECT_EQ(node2->NPreferedDownload(), 0);
+    node1->set_services(kNodeNetwork);
+    EXPECT_EQ(node1->NPreferedDownload(), 1);
+    EXPECT_EQ(node2->NPreferedDownload(), 1);
 }
 
 TEST_F(NodesTest, CountValidatedDownload)
@@ -134,15 +126,17 @@ TEST_F(NodesTest, CountValidatedDownload)
     auto node1 = nodes_.GetNode(id1_);
     auto node2 = nodes_.GetNode(id2_);
     
-    EXPECT_EQ(nodes_.CountValidatedDownload(), 0);
-    node1->mutable_blocks_in_flight()->set_valid_headers_count(1);
-    node2->mutable_blocks_in_flight()->set_valid_headers_count(1);
-    EXPECT_EQ(nodes_.CountValidatedDownload(), 2);
+    EXPECT_EQ(node1->blocks_in_flight().NValidatedDownload(), 0);
+    EXPECT_EQ(node2->blocks_in_flight().NValidatedDownload(), 0);
+    node1->mutable_blocks_in_flight()->set_n_valid_headers(1);
+    node2->mutable_blocks_in_flight()->set_n_valid_headers(1);
+    EXPECT_EQ(node1->blocks_in_flight().NValidatedDownload(), 2);
+    EXPECT_EQ(node2->blocks_in_flight().NValidatedDownload(), 2);
 }
 
 TEST_F(NodeTest, Misbehaving)
 {
-    auto node = SingletonNodes::GetInstance().GetNode(id_);
+    auto node = nodes_.GetNode(id_);
     
     node->mutable_misbehavior()->Misbehaving(id_, kDefaultBanscoreThreshold - 1);
     ASSERT_FALSE(node->misbehavior().should_ban());
@@ -152,8 +146,7 @@ TEST_F(NodeTest, Misbehaving)
 
 TEST_F(NodeTest, HandleInactiveTimeout)
 {
-    Nodes& nodes = SingletonNodes::GetInstance();
-    std::shared_ptr<Node> node = nodes.GetNode(id_);
+    std::shared_ptr<Node> node = nodes_.GetNode(id_);
     ASSERT_NE(node, nullptr);
     node->InactivityTimeoutCb();
     EXPECT_TRUE(node->connection().IsDisconnected());
@@ -161,12 +154,10 @@ TEST_F(NodeTest, HandleInactiveTimeout)
 
 TEST_F(NodeTest, CheckBanned)
 {
-    Nodes& nodes = SingletonNodes::GetInstance();
-    std::shared_ptr<Node> node = nodes.GetNode(id_);
+    std::shared_ptr<Node> node = nodes_.GetNode(id_);
     ASSERT_NE(node, nullptr);
     
     node->mutable_misbehavior()->set_should_ban(true);
-    std::cout << node.use_count() << '\n';
     ASSERT_TRUE(node->CheckBanned());
     EXPECT_TRUE(node->connection().IsDisconnected());
     EXPECT_TRUE(SingletonBanList::GetInstance().IsBanned(addr_));
@@ -176,8 +167,7 @@ TEST_F(NodeTest, CheckBanned)
 
 TEST_F(NodeTest, PushAddrToSend)
 {
-    Nodes& nodes = SingletonNodes::GetInstance();
-    std::shared_ptr<Node> node = nodes.GetNode(id_);
+    std::shared_ptr<Node> node = nodes_.GetNode(id_);
     node->mutable_flooding_addrs()->AddKnownAddr(addr_);
     EXPECT_FALSE(node->mutable_flooding_addrs()->PushAddrToSend(addr_));
     
@@ -185,19 +175,18 @@ TEST_F(NodeTest, PushAddrToSend)
     ASSERT_TRUE(node->mutable_flooding_addrs()->PushAddrToSend(addr_));
     EXPECT_EQ(node->flooding_addrs().addrs_to_send().front(), addr_);
 }
-
+#if 0
 TEST(DisconnectedNode, DisconnectedNodeByPtr)
 {
-    Nodes& nodes = SingletonNodes::GetInstance();
     NetAddr addr;
     
     addr.SetIpv4(inet_addr("1.1.1.1"));
-    auto node = std::make_shared<Node>(nodes.GetNewNodeId(), nullptr, addr);
-    nodes.AddNode(node);
+    auto node = std::make_shared<Node>(nullptr, addr);
+    nodes_.AddNode(node);
     
-    ASSERT_NE(nodes.GetNode(node->id()), nullptr);
+    ASSERT_NE(nodes_.GetNode(node->id()), nullptr);
     DisconnectNode(node);
-    EXPECT_EQ(nodes.GetNode(node->id()), nullptr);
+    EXPECT_EQ(nodes_.GetNode(node->id()), nullptr);
     
     nodes.Clear();
 }
@@ -208,13 +197,13 @@ TEST(DisconnectedNode, DisconnectedNodeBySubnet)
     
     NetAddr addr;    
     addr.SetIpv4(inet_addr("1.1.1.1"));
-    auto node1 = std::make_shared<Node>(nodes.GetNewNodeId(), nullptr, addr);
+    auto node1 = std::make_shared<Node>(nullptr, addr);
     nodes.AddNode(node1);
     addr.SetIpv4(inet_addr("1.1.1.2"));
-    auto node2 = std::make_shared<Node>(nodes.GetNewNodeId(), nullptr, addr);
+    auto node2 = std::make_shared<Node>(nullptr, addr);
     nodes.AddNode(node2);
     addr.SetIpv4(inet_addr("1.1.1.3"));
-    auto node3 = std::make_shared<Node>(nodes.GetNewNodeId(), nullptr, addr);
+    auto node3 = std::make_shared<Node>(nullptr, addr);
     nodes.AddNode(node3);
     
     NetAddr netmask;
@@ -231,6 +220,6 @@ TEST(DisconnectedNode, DisconnectedNodeBySubnet)
 
     nodes.Clear();
 }
-
+#endif
 } // namespace unit_test
 } // namespace btclit

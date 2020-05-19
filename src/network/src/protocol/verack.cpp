@@ -16,7 +16,7 @@ namespace protocol {
 bool Verack::RecvHandler(std::shared_ptr<Node> src_node, 
                          uint32_t magic, bool advertise_local) const
 {
-    if (src_node->protocol().version() >= kSendheadersVersion) {
+    if (src_node->protocol().version >= kSendheadersVersion) {
         // Tell our peer we prefer to receive headers rather than inv's
         // We send this to non-NODE NETWORK peers as well, because even
         // non-NODE NETWORK peers can announce blocks (such as pruning
@@ -24,7 +24,7 @@ bool Verack::RecvHandler(std::shared_ptr<Node> src_node,
         SendHeaders send_headers;
         SendMsg(send_headers, magic, src_node);
     }
-    if (src_node->protocol().version() >= kShortIdsBlocksVersion) {
+    if (src_node->protocol().version >= kShortIdsBlocksVersion) {
         // Tell our peer we are willing to provide version 1 or 2 cmpctblocks
         // However, we do not request new block announcements using
         // cmpctblock messages.
@@ -40,7 +40,7 @@ bool Verack::RecvHandler(std::shared_ptr<Node> src_node,
     
     // send ping
     Ping ping(util::RandUint64());
-    if (src_node->protocol().version() < kBip31Version)
+    if (src_node->protocol().version < kBip31Version)
         ping.set_protocol_version(0);
     SendMsg(ping, magic, src_node);
     // start ping timer

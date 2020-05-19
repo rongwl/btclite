@@ -97,7 +97,7 @@ void LocalService::AdvertiseLocalAddr(std::shared_ptr<Node> node,
     if (node->connection().IsDisconnected())
         return;
     
-    if (!GetLocalAddr(node->connection().addr(), node->protocol().services(), &addr_local))
+    if (!GetLocalAddr(node->connection().addr(), node->services(), &addr_local))
         return;
     
     if (discovered_addr_first && addr_local.IsRoutable()) {

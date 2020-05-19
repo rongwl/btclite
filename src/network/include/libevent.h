@@ -8,6 +8,7 @@
 #include <event2/thread.h>
 
 #include "socket.h"
+#include "node.h"
 
 
 namespace btclite {
@@ -61,6 +62,11 @@ public:
     struct event_base *EvconnlistenerGetBase(struct evconnlistener *lev);
     Socket::Fd EvconnlistenerGetFd(struct evconnlistener *lev);
     void EvconnlistenerFree(struct evconnlistener *lev);
+};
+
+struct Context {
+    Nodes *pnodes = nullptr;
+    const Params *pparams = nullptr;
 };
 
 void ConnReadCb(struct bufferevent *bev, void *ctx);

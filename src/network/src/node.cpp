@@ -84,12 +84,15 @@ void Misbehavior::Misbehaving(NodeId id, int howmuch)
         BTCLOG(LOG_LEVEL_INFO) << "peer " << id << " misbehavior, score:" << score_;
 }
 
-Node::Node(NodeId id, const struct bufferevent *bev, const NetAddr& addr,
+Node::Node(const struct bufferevent *bev, const NetAddr& addr,
            bool is_inbound, bool manual, std::string host_name)
-    : id_(id), local_host_nonce_(util::RandUint64()),
-      connection_(id_, bev, addr, is_inbound, manual, host_name),
+    : id_(GetNewNodeId()), is_inbound_(is_inbound), 
+      local_host_nonce_(util::RandUint64()),
+      connection_(bev, addr, manual, host_name),
       time_(util::GetTimeSeconds())
 {
+    int& n_prefered_download = NPreferedDownload();
+    n_prefered_download += IsPreferedDownload();
     time_.ping_time.min_ping_usec_time = std::numeric_limits<int64_t>::max();
 }
 
@@ -199,7 +202,7 @@ void Node::PingTimeoutCb(uint32_t magic)
     
     // send ping
     protocol::Ping ping(util::RandUint64());
-    if (protocol_.version() < kBip31Version)
+    if (protocol_.version < kBip31Version)
         ping.set_protocol_version(0);
     SendMsg(ping, magic, this->shared_from_this());
 }
@@ -229,7 +232,7 @@ std::shared_ptr<Node> Nodes::InitializeNode(const struct bufferevent *bev,
                                             const NetAddr& addr,
                                             bool is_inbound, bool manual)
 {
-    auto node = std::make_shared<Node>(GetNewNodeId(), bev, addr, is_inbound, manual);
+    auto node = std::make_shared<Node>(bev, addr, is_inbound, manual);
     
     util::TimerMng& timer_mng = util::SingletonTimerMng::GetInstance();
     node->mutable_timers()->no_msg_timer = timer_mng.StartTimer(
@@ -246,7 +249,7 @@ std::shared_ptr<Node> Nodes::InitializeNode(const struct bufferevent *bev,
     return node;
 }
 
-std::shared_ptr<Node> Nodes::GetNode(NodeId id)
+std::shared_ptr<Node> Nodes::GetNode(NodeId id) const
 {
     LOCK(cs_nodes_);
     for (auto it = list_.begin(); it != list_.end(); ++it)
@@ -256,7 +259,7 @@ std::shared_ptr<Node> Nodes::GetNode(NodeId id)
     return nullptr;
 }
 
-std::shared_ptr<Node> Nodes::GetNode(struct bufferevent *bev)
+std::shared_ptr<Node> Nodes::GetNode(struct bufferevent *bev) const
 {
     LOCK(cs_nodes_);
     for (auto it = list_.begin(); it != list_.end(); ++it)
@@ -266,7 +269,7 @@ std::shared_ptr<Node> Nodes::GetNode(struct bufferevent *bev)
     return nullptr;
 }
 
-std::shared_ptr<Node> Nodes::GetNode(const NetAddr& addr)
+std::shared_ptr<Node> Nodes::GetNode(const NetAddr& addr) const
 {
     LOCK(cs_nodes_);
     for (auto it = list_.begin(); it != list_.end(); ++it)
@@ -276,7 +279,7 @@ std::shared_ptr<Node> Nodes::GetNode(const NetAddr& addr)
     return nullptr;
 }
 
-void Nodes::GetNode(const SubNet& subnet, std::vector<std::shared_ptr<Node> > *out)
+void Nodes::GetNode(const SubNet& subnet, std::vector<std::shared_ptr<Node> > *out) const
 {
     if (!out)
         return;
@@ -423,49 +426,9 @@ bool Nodes::AttemptToEvictConnection()
     return true;
 }
 */
-int Nodes::CountInbound()
-{
-    int num = 0;
-    
-    LOCK(cs_nodes_);    
-    for (auto it = list_.begin(); it != list_.end(); ++it) {
-        if (!(*it)->connection().IsDisconnected() && 
-                (*it)->connection().is_inbound())
-            num++;
-    }
-    
-    return num;
-}
 
-int Nodes::CountOutbound()
-{
-    int num = 0;
-    
-    LOCK(cs_nodes_);
-    for (auto it = list_.begin(); it != list_.end(); ++it) {
-        if (!(*it)->connection().IsDisconnected() && 
-                !(*it)->connection().is_inbound())
-            num++;
-    }
-    
-    return num;
-}
 
-int Nodes::CountSyncStarted()
-{
-    int num = 0;
-    
-    LOCK(cs_nodes_);
-    for (auto it = list_.begin(); it != list_.end(); ++it) {
-        if (!(*it)->connection().IsDisconnected() &&
-                (*it)->block_sync_state().sync_started())
-            num++;
-    }
-    
-    return num;
-}
-
-int Nodes::CountPreferredDownload()
+int Nodes::CountPreferredDownload() const
 {
     int num = 0;
     
@@ -479,35 +442,7 @@ int Nodes::CountPreferredDownload()
     return num;
 }
 
-int Nodes::CountValidatedDownload()
-{
-    int num = 0;
-    
-    LOCK(cs_nodes_);
-    for (auto it = list_.begin(); it != list_.end(); ++it) {
-        if (!(*it)->connection().IsDisconnected() &&
-                (*it)->blocks_in_flight().valid_headers_count() > 0)
-            num++;
-    }
-    
-    return num;
-}
-
-int Nodes::CountProtectedOutbound()
-{
-    int num = 0;
-    
-    LOCK(cs_nodes_);
-    for (auto it = list_.begin(); it != list_.end(); ++it) {
-        if (!(*it)->connection().IsDisconnected() &&
-                (*it)->block_sync_timeout().protect())
-            num++;
-    }
-    
-    return num;
-}
-
-bool Nodes::ShouldDnsLookup()
+bool Nodes::ShouldDnsLookup() const
 {
     int count = 0;
     
@@ -515,19 +450,19 @@ bool Nodes::ShouldDnsLookup()
     for (auto it = list_.begin(); it != list_.end(); ++it) {
         if ((*it)->connection().IsHandshakeCompleted() && 
                 !(*it)->connection().manual() && 
-                !(*it)->connection().is_inbound())
+                !(*it)->is_inbound())
             count++;
     }
     
     return (count < 2);
 }
 
-bool Nodes::CheckIncomingNonce(uint64_t nonce)
+bool Nodes::CheckIncomingNonce(uint64_t nonce) const
 {
     LOCK(cs_nodes_);
     for (auto it = list_.begin(); it != list_.end(); ++it) {
         if (!(*it)->connection().IsHandshakeCompleted() && 
-                !(*it)->connection().is_inbound() &&
+                !(*it)->is_inbound() &&
                 (*it)->local_host_nonce() == nonce)
             return false;
     }

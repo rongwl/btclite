@@ -85,7 +85,7 @@ void MessageHeader::Clear()
 bool CheckMisbehaving(const std::string command, std::shared_ptr<Node> src_node)
 {
     // Must have a version message before anything else
-    if (command != msg_command::kMsgVersion && src_node->protocol().version() == 0)
+    if (command != msg_command::kMsgVersion && src_node->protocol().version == 0)
         return false;
     
     // Must have a verack message before anything else

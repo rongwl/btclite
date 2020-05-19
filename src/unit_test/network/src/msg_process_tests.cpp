@@ -237,7 +237,7 @@ TEST_F(MsgProcessTest, SendVersion)
     bufferevent_setcb(pair_[1], ReadCb, NULL, NULL, const_cast<char*>(msg_command::kMsgVersion));
     bufferevent_enable(pair_[1], EV_READ);
     auto node = std::make_shared<Node>(pair_[0], addr_, false);
-    node->mutable_protocol()->set_services(kNodeNetwork);
+    node->set_services(kNodeNetwork);
     EXPECT_TRUE(SendVersion(node, kTestnetMagic));
     
     event_base_dispatch(base_);
@@ -360,8 +360,8 @@ void ParseMsgCb(struct bufferevent *bev, void *ctx)
 {
     NetAddr addr;
     addr.SetIpv4(inet_addr("1.2.3.4"));
-    auto node = std::make_shared<Node>(1, bev, addr, false);
-    node->mutable_protocol()->set_version(kInvalidCbNoBanVersion);
+    auto node = std::make_shared<Node>(bev, addr, false);
+    node->mutable_protocol()->version = kInvalidCbNoBanVersion;
     node->mutable_connection()->set_connection_state(NodeConnection::kEstablished);
     EXPECT_TRUE(ParseMsg(node, *reinterpret_cast<Params*>(ctx)));
 }
@@ -371,7 +371,7 @@ TEST_F(MsgProcessTest, ParseMsg)
     Params params(BtcNet::kTestNet, util::Args(), fs::path("/tmp/foo"));
     bufferevent_setcb(pair_[1], ParseMsgCb, NULL, NULL, reinterpret_cast<void*>(&params));
     bufferevent_enable(pair_[1], EV_READ);
-    auto node = std::make_shared<Node>(1, pair_[0], addr_, false);
+    auto node = std::make_shared<Node>(pair_[0], addr_, false);
     Ping ping(util::RandUint64());
     EXPECT_TRUE(SendMsg(ping, kTestnetMagic, node));
     

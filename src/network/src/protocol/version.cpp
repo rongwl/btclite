@@ -18,16 +18,16 @@ bool Version::RecvHandler(std::shared_ptr<Node> src_node,
     Verack verack;
     
     // Each connection can only send one version message
-    if (src_node->protocol().version() != 0) {
+    if (src_node->protocol().version != 0) {
         src_node->mutable_misbehavior()->Misbehaving(src_node->id(), 1);
         return false;
     }
     
-    if (!src_node->connection().is_inbound()) {
+    if (!src_node->is_inbound()) {
         SingletonPeers::GetInstance().SetServices(src_node->connection().addr(), 
                                                   services_);
     }
-    if (!src_node->connection().is_inbound() && !src_node->connection().manual() 
+    if (!src_node->is_inbound() && !src_node->connection().manual() 
             && !IsServiceFlagDesirable(services_)) {
         BTCLOG(LOG_LEVEL_INFO) << "Disconnecting peer " << src_node->id() 
                                << " for not offering the expected services ("
@@ -62,7 +62,7 @@ bool Version::RecvHandler(std::shared_ptr<Node> src_node,
         return false;
     }
     
-    if (src_node->connection().is_inbound() && 
+    if (src_node->is_inbound() && 
             !SingletonNodes::GetInstance().CheckIncomingNonce(nonce_)) {
         BTCLOG(LOG_LEVEL_INFO) << "Disconnecting peer " << src_node->id()
                                << " for connecting to self at " 
@@ -71,30 +71,30 @@ bool Version::RecvHandler(std::shared_ptr<Node> src_node,
         return true;
     }
     
-    if (src_node->connection().is_inbound()) {
+    if (src_node->is_inbound()) {
         SendVersion(src_node, magic);
     }
     
     SendMsg(verack, magic, src_node);
     
-    src_node->mutable_protocol()->set_services(services_);
+    src_node->set_services(services_);
     src_node->mutable_connection()->set_local_addr(addr_recv_);
-    src_node->mutable_protocol()->set_start_height(start_height_);
+    src_node->mutable_protocol()->start_height = start_height_;
     src_node->mutable_filter()->set_relay_txes(relay_);
-    src_node->mutable_protocol()->set_version(protocol_version_);
+    src_node->mutable_protocol()->version = protocol_version_;
     
     if (services_ & kNodeWitness) {
         src_node->mutable_relay_state()->is_witness = true;
     }
     
-    if (!src_node->connection().is_inbound()) {
+    if (!src_node->is_inbound()) {
         // Advertise our address
         if (advertise_local && !IsInitialBlockDownload()) {
             SingletonLocalService::GetInstance().AdvertiseLocalAddr(src_node, true);
         }
         
         // Get recent addresses
-        if (src_node->protocol().version() >= ProtocolVersion::kAddrTimeVersion || 
+        if (src_node->protocol().version >= ProtocolVersion::kAddrTimeVersion || 
                 SingletonPeers::GetInstance().Size() < 1000) {
             GetAddr getaddr;
             SendMsg(getaddr, magic, src_node);

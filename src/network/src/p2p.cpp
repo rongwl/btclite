@@ -1,5 +1,6 @@
 #include "p2p.h"
 #include "fullnode/include/config.h"
+#include "net.h"
 
 
 namespace btclite {
@@ -12,7 +13,6 @@ P2P::P2P(const util::Configuration& config)
       acceptor_(params_), connector_(params_)
 {
     //SingletonLocalService::GetInstance();
-    //SingletonNodes::GetInstance();
 }
 
 bool P2P::Init()

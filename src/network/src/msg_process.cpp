@@ -69,7 +69,7 @@ bool ParseMsgData(const uint8_t *raw, std::shared_ptr<Node> src_node,
                              std::bind(&GetAddr::RecvHandler, &getaddr, _1));
     }
     else if (header.command() == msg_command::kMsgPing) {
-        Ping ping(0, src_node->protocol().version());
+        Ping ping(0, src_node->protocol().version);
         ping.Deserialize(byte_source);
         auto recv_handler = std::bind(&Ping::RecvHandler, &ping, _1,
                                       params.msg_magic());
@@ -161,7 +161,7 @@ bool ParseMsg(std::shared_ptr<Node> src_node, const Params& params)
 
 bool SendVersion(std::shared_ptr<Node> dst_node, uint32_t magic)
 {
-    ServiceFlags services = dst_node->protocol().services();
+    ServiceFlags services = dst_node->services();
     uint32_t start_height = chain::SingletonChainState::GetInstance().active_chain().Height();
     NetAddr addr_recv(dst_node->connection().addr());
     NetAddr addr_from;

@@ -1,7 +1,6 @@
 #include "acceptor.h"
 
 #include "banlist.h"
-#include "node.h"
 #include "protocol/version.h"
 #include "timer.h"
 
@@ -21,6 +20,8 @@ Acceptor::Acceptor(const Params params)
 
 bool Acceptor::InitEvent()
 {
+    using namespace std::placeholders;
+    
     evthread_use_pthreads();
     
     if (nullptr == (base_ = event_base_new())) {
@@ -28,8 +29,12 @@ bool Acceptor::InitEvent()
         return false;
     }
     
+    static Context ctx;
+    auto& inbounds = Inbounds();
+    ctx.pnodes = &inbounds;
+    ctx.pparams = &params_;
     if (nullptr == (listener_ = evconnlistener_new_bind(base_, 
-                                AcceptConnCb, (void*)&params_,
+                                AcceptConnCb, (void*)&ctx,
                                 LEV_OPT_CLOSE_ON_FREE | LEV_OPT_REUSEABLE, 
                                 SOMAXCONN, 
                                 (const struct sockaddr*)&sock_addr_, sizeof(sock_addr_))))
@@ -37,7 +42,7 @@ bool Acceptor::InitEvent()
         BTCLOG(LOG_LEVEL_ERROR) << "Acceptor create event listener failed.";
         return false;
     }
-    
+
     //Disable Nagle's algorithm
     if (!Socket(evconnlistener_get_fd(listener_)).SetSockNoDelay()) {
         BTCLOG(LOG_LEVEL_ERROR) << "Acceptor setting socket to no-delay failed, error:"
@@ -84,7 +89,7 @@ void Acceptor::AcceptConnCb(struct evconnlistener *listener, evutil_socket_t fd,
         return;
     }
     
-    if (SingletonNodes::GetInstance().CountInbound() >= kMaxInboundConnections) {
+    if (Inbounds().Size() >= kMaxInboundConnections) {
         BTCLOG(LOG_LEVEL_WARNING) << "Can not accept new connection because inbound connections is full";
         evutil_closesocket(fd);
         return;
@@ -102,8 +107,8 @@ void Acceptor::AcceptConnCb(struct evconnlistener *listener, evutil_socket_t fd,
         evutil_closesocket(fd);
         return;
     }
-    
-    if (nullptr == SingletonNodes::GetInstance().InitializeNode(bev, addr)) {
+
+    if (nullptr == Inbounds().InitializeNode(bev, addr)) {
         BTCLOG(LOG_LEVEL_WARNING) << "Initialize new node failed.";
         bufferevent_free(bev);
         return;
@@ -124,6 +129,7 @@ void Acceptor::AcceptErrCb(struct evconnlistener *listener, void *arg)
                               << evutil_socket_error_to_string(err);
 }
 
+#if 0
 void Acceptor::CheckingTimeoutCb(evutil_socket_t fd, short event, void *arg)
 {
     // increase reference count
@@ -160,6 +166,6 @@ void Acceptor::CheckingTimeoutCb(evutil_socket_t fd, short event, void *arg)
         DisconnectNode(pnode);
     }
 }
-
+#endif
 } // namespace network
 } // namespace btclite

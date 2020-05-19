@@ -97,7 +97,7 @@ bool Connector::OutboundTimeOutCb()
     int tries;
     int64_t now;
     
-    if (SingletonNodes::GetInstance().CountOutbound() >= kMaxOutboundConnections)
+    if (outbounds_.Size() >= kMaxOutboundConnections)
         return false;
     
     now = util::GetAdjustedTime();
@@ -167,7 +167,7 @@ bool Connector::DnsLookup(const std::vector<Seed>& seeds, uint16_t default_port)
 {
     int found = 0;
     
-    if (!SingletonNodes::GetInstance().ShouldDnsLookup()) {
+    if (!outbounds_.ShouldDnsLookup()) {
         BTCLOG(LOG_LEVEL_INFO) << "P2P peers available. Skipped DNS seeding.";
         return true;
     }
@@ -231,7 +231,7 @@ bool Connector::ConnectNode(const NetAddr& addr, bool manual)
     }
 
     // Look for an existing connection
-    if (SingletonNodes::GetInstance().GetNode(addr)) {
+    if (outbounds_.GetNode(addr)) {
         BTCLOG(LOG_LEVEL_WARNING) << "Failed to open new connection because it was already connected.";
         return false;
     }
@@ -260,7 +260,7 @@ bool Connector::ConnectNode(const NetAddr& addr, bool manual)
         return false;
     }
 
-    auto node = SingletonNodes::GetInstance().InitializeNode(bev, addr, false, manual);
+    auto node = outbounds_.InitializeNode(bev, addr, false, manual);
     if (!node) {
         BTCLOG(LOG_LEVEL_WARNING) << "Initialize new node failed.";
         bufferevent_free(bev);
@@ -294,7 +294,7 @@ bool Connector::GetHostAddr(const std::string& host_name, NetAddr *out)
     // In that case, drop the connection that was just created, and return the existing Node instead.
     // Also store the name we used to connect in that Node, so that future GetNode() calls to that
     // name catch this early.
-    auto pnode = SingletonNodes::GetInstance().GetNode(addr);
+    auto pnode = outbounds_.GetNode(addr);
     if (pnode)
     {
         pnode->mutable_connection()->set_host_name(host_name);

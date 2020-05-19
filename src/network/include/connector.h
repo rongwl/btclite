@@ -3,7 +3,6 @@
 
 
 #include "libevent.h"
-#include "node.h"
 
 
 namespace btclite {
@@ -11,7 +10,7 @@ namespace network {
 
 // outbound socket connection
 class Connector {
-public:
+public:    
     Connector(const Params params)
         : params_(params), base_(nullptr), bev_(nullptr), 
           outbound_timer_(nullptr) {}
@@ -35,6 +34,12 @@ public:
     bool ConnectNodes(const std::vector<NetAddr>& addrs, bool manual = false);
     bool GetHostAddr(const std::string& host_name, NetAddr *out);
     bool DnsLookup(const std::vector<Seed>& seeds, uint16_t default_port);
+
+    //-------------------------------------------------------------------------
+    const Nodes& outbounds() const
+    {
+        return outbounds_;
+    }
     
 private:
     const Params params_;
@@ -42,6 +47,8 @@ private:
     struct event_base *base_;
     struct bufferevent *bev_;
     util::TimerMng::TimerPtr outbound_timer_;
+    
+    Nodes outbounds_;
     
     bool ConnectNode(const NetAddr& addr, bool manual = false);
 };

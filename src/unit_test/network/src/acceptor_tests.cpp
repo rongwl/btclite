@@ -23,6 +23,8 @@ TEST(AcceptorTest, Constructor)
 
 TEST(AcceptorTest, MethordAcceptConnCb)
 {
+    using namespace std::placeholders;
+    
     network::Params params(BtcNet::kTestNet, util::Args(), fs::path("/tmp/foo"));
     Acceptor acceptor(params);
     struct event_base *base;
@@ -51,32 +53,32 @@ TEST(AcceptorTest, MethordAcceptConnCb)
         inet_pton(AF_INET6, str_addr.c_str(), client_addr.sin6_addr.s6_addr);
         NetAddr addr(client_addr);
         acceptor.AcceptConnCb(listener, fd, (struct sockaddr*)&client_addr, sizeof(client_addr), nullptr);
-        ASSERT_EQ(SingletonNodes::GetInstance().CountInbound(), i);
+        EXPECT_EQ(Acceptor::Inbounds().Size(), i);
         count = i;
         
-        std::shared_ptr<Node> pnode = SingletonNodes::GetInstance().GetNode(addr);
+        std::shared_ptr<Node> pnode = Acceptor::Inbounds().GetNode(addr);
         ASSERT_NE(pnode, nullptr);
-        ASSERT_EQ(pnode->connection().addr(), addr);
+        EXPECT_EQ(pnode->connection().addr(), addr);
     }
     
     inet_pton(AF_INET6, "::ffff:1.2.3.250", client_addr.sin6_addr.s6_addr);
     NetAddr addr(client_addr);
     SingletonBanList::GetInstance().Add(addr, BanList::BanReason::kNodeMisbehaving);
     acceptor.AcceptConnCb(listener, fd, (struct sockaddr*)&client_addr, sizeof(client_addr), nullptr);
-    EXPECT_EQ(SingletonNodes::GetInstance().CountInbound(), count);  
+    EXPECT_EQ(Acceptor::Inbounds().Size(), count);  
     
     SingletonBanList::GetInstance().Erase(addr);
     acceptor.AcceptConnCb(listener, fd, (struct sockaddr*)&client_addr, sizeof(client_addr), nullptr);
-    EXPECT_EQ(SingletonNodes::GetInstance().CountInbound(), ++count);
-    std::shared_ptr<Node> pnode = SingletonNodes::GetInstance().GetNode(addr);
+    EXPECT_EQ(Acceptor::Inbounds().Size(), ++count);
+    std::shared_ptr<Node> pnode = Acceptor::Inbounds().GetNode(addr);
     ASSERT_NE(pnode, nullptr);
     EXPECT_EQ(pnode->connection().addr(), addr);
     
     inet_pton(AF_INET6, "::ffff:1.2.3.251", client_addr.sin6_addr.s6_addr);
     acceptor.AcceptConnCb(listener, fd, (struct sockaddr*)&client_addr, sizeof(client_addr), nullptr);
-    EXPECT_EQ(SingletonNodes::GetInstance().CountInbound(), count);
+    EXPECT_EQ(Acceptor::Inbounds().Size(), count);
     
-    SingletonNodes::GetInstance().Clear();
+    Acceptor::Inbounds().Clear();
     evconnlistener_free(listener);
     event_base_free(base);
 }

@@ -47,7 +47,6 @@ TEST(ConnectorTest, ConnectNode)
     EXPECT_FALSE(connector.ConnectNodes(addrs));
     
     SingletonBanList::GetInstance().Clear();
-    SingletonNodes::GetInstance().Clear();
 }
 
 TEST(ConnectorTest, GetHostAddr)
@@ -60,14 +59,12 @@ TEST(ConnectorTest, GetHostAddr)
     EXPECT_EQ(addr.GetIpv4(), inet_addr("1.2.3.1"));
     
     // node is exist
-    auto& nodes = SingletonNodes::GetInstance();
-    nodes.AddNode(std::make_shared<Node>(nodes.GetNewNodeId(), nullptr, addr));
+    auto& nodes = const_cast<Nodes&>(connector.outbounds());
+    nodes.AddNode(std::make_shared<Node>(nullptr, addr));
     ASSERT_FALSE(connector.GetHostAddr("1.2.3.1", &addr));
     EXPECT_TRUE(connector.GetHostAddr("1.2.3.2", &addr));
     
-    ASSERT_TRUE(connector.GetHostAddr("bitcoin.org", &addr));
-    
-    nodes.Clear();
+    EXPECT_TRUE(connector.GetHostAddr("bitcoin.org", &addr));
 }
 
 TEST(ConnectorTest, ConnectOutbound)

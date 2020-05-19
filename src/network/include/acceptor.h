@@ -3,14 +3,13 @@
 
 
 #include "libevent.h"
-#include "node.h"
 
 
 namespace btclite {
 namespace network {
 
 class Acceptor : util::Uncopyable {
-public:
+public:    
     Acceptor(const Params params);
     
     ~Acceptor()
@@ -34,6 +33,14 @@ public:
     static void AcceptConnCb(struct evconnlistener *listener, evutil_socket_t fd,
                              struct sockaddr *addr, int socklen, void *arg);
     
+    //-------------------------------------------------------------------------
+    static Nodes& Inbounds()
+    {
+        static Nodes inbounds;
+        return inbounds;
+    }
+    
+    //-------------------------------------------------------------------------
     const struct sockaddr_in6& sock_addr() const
     {
         return sock_addr_;
@@ -44,8 +51,9 @@ private:
     
     struct event_base *base_;
     struct evconnlistener *listener_;
-    struct sockaddr_in6 sock_addr_;    
+    struct sockaddr_in6 sock_addr_;
     
+    //-------------------------------------------------------------------------
     static void AcceptErrCb(struct evconnlistener *listener, void *arg);
     static void CheckingTimeoutCb(evutil_socket_t fd, short event, void *arg);
 };
