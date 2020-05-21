@@ -7,7 +7,9 @@
 #include <event2/buffer.h>
 #include <event2/thread.h>
 
+#include "banlist.h"
 #include "socket.h"
+#include "net.h"
 #include "node.h"
 
 
@@ -65,8 +67,11 @@ public:
 };
 
 struct Context {
-    Nodes *pnodes = nullptr;
     const Params *pparams = nullptr;
+    LocalService *plocal_service = nullptr;
+    Nodes *pnodes = nullptr;
+    BanList *pbanlist = nullptr;
+    Peers *ppeers = nullptr;
 };
 
 void ConnReadCb(struct bufferevent *bev, void *ctx);

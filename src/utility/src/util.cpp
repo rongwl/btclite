@@ -15,18 +15,6 @@
 namespace btclite {
 namespace util {
 
-std::promise<int> Terminator::stopping_;
-
-void HandleAllocFail()
-{
-    // Rather than throwing std::bad-alloc if allocation fails, terminate
-    // immediately to (try to) avoid chain corruption.
-    std::set_new_handler(std::terminate);
-    BTCLOG(LOG_LEVEL_ERROR) << "Critical error: out of memory. Terminating.";
-    
-    // The log was successful, terminate now.
-    std::terminate();
-}
 
 void Configuration::PrintUsage(const char* const bin_name) const
 {
@@ -220,12 +208,27 @@ bool Args::IsArgSet(const std::string& arg) const
 
 bool Executor::BasicSetup()
 {    
+    std::signal(SIGINT, HandleStop);
+    std::signal(SIGTERM, HandleStop);
+    std::signal(SIGQUIT, HandleStop);
+    
     // Ignore SIGPIPE, otherwise it will bring the daemon down if the client closes unexpectedly
     std::signal(SIGPIPE, SIG_IGN);
     
     std::set_new_handler(HandleAllocFail);
     
     return BasicSetupCustomized();
+}
+
+void Executor::HandleAllocFail()
+{
+    // Rather than throwing std::bad-alloc if allocation fails, terminate
+    // immediately to (try to) avoid chain corruption.
+    std::set_new_handler(std::terminate);
+    BTCLOG(LOG_LEVEL_ERROR) << "Critical error: out of memory. Terminating.";
+    
+    // The log was successful, terminate now.
+    std::terminate();
 }
 
 void SetupEnvironment()

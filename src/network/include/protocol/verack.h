@@ -3,6 +3,7 @@
 
 
 #include "message.h"
+#include "net.h"
 
 
 namespace btclite {
@@ -12,8 +13,8 @@ namespace protocol {
 
 class Verack {
 public:
-    bool RecvHandler(std::shared_ptr<Node> src_node, 
-                     uint32_t magic, bool advertise_local) const;
+    bool RecvHandler(std::shared_ptr<Node> src_node, uint32_t magic, 
+                     bool advertise_local, const LocalService& local_service) const;
     
     std::string Command() const
     {

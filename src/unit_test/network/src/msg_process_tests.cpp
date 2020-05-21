@@ -358,12 +358,13 @@ TEST_F(MsgProcessTest, SendReject)
 
 void ParseMsgCb(struct bufferevent *bev, void *ctx)
 {
+    Peers peers;
     NetAddr addr;
     addr.SetIpv4(inet_addr("1.2.3.4"));
     auto node = std::make_shared<Node>(bev, addr, false);
     node->mutable_protocol()->version = kInvalidCbNoBanVersion;
     node->mutable_connection()->set_connection_state(NodeConnection::kEstablished);
-    EXPECT_TRUE(ParseMsg(node, *reinterpret_cast<Params*>(ctx)));
+    EXPECT_TRUE(ParseMsg(node, *reinterpret_cast<Params*>(ctx), LocalService(), &peers));
 }
 
 TEST_F(MsgProcessTest, ParseMsg)

@@ -2,6 +2,7 @@
 #define BTCLITE_MSG_PROCESS_H
 
 #include "hash.h"
+#include "net.h"
 #include "network/include/params.h"
 #include "protocol/message.h"
 #include "stream.h"
@@ -10,7 +11,8 @@
 namespace btclite {
 namespace network {
 
-bool ParseMsg(std::shared_ptr<Node> src_node, const Params& params);
+bool ParseMsg(std::shared_ptr<Node> src_node, const Params& params, 
+              const LocalService& local_service, Peers *ppeers);
 
 template <typename Message>
 bool HandleMsgData(std::shared_ptr<Node> src_node, 

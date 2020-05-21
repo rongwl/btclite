@@ -1,6 +1,7 @@
 #include "node_tests.h"
 
 #include "banlist.h"
+#include "block_sync.h"
 
 
 namespace btclite {
@@ -155,14 +156,14 @@ TEST_F(NodeTest, HandleInactiveTimeout)
 TEST_F(NodeTest, CheckBanned)
 {
     std::shared_ptr<Node> node = nodes_.GetNode(id_);
+    BanList banlist;
+    
     ASSERT_NE(node, nullptr);
     
     node->mutable_misbehavior()->set_should_ban(true);
-    ASSERT_TRUE(node->CheckBanned());
+    ASSERT_TRUE(node->CheckBanned(&banlist));
     EXPECT_TRUE(node->connection().IsDisconnected());
-    EXPECT_TRUE(SingletonBanList::GetInstance().IsBanned(addr_));
-
-    SingletonBanList::GetInstance().Clear();
+    EXPECT_TRUE(banlist.IsBanned(addr_));
 }
 
 TEST_F(NodeTest, PushAddrToSend)
@@ -175,22 +176,28 @@ TEST_F(NodeTest, PushAddrToSend)
     ASSERT_TRUE(node->mutable_flooding_addrs()->PushAddrToSend(addr_));
     EXPECT_EQ(node->flooding_addrs().addrs_to_send().front(), addr_);
 }
-#if 0
-TEST(DisconnectedNode, DisconnectedNodeByPtr)
+
+TEST(DisconnectedNode, DisconnectedNodeCb)
 {
     NetAddr addr;
+    Nodes nodes;
+    Peers peers;
+    BlocksInFlight1 blocks_in_flight;
+    Orphans orphans;
     
     addr.SetIpv4(inet_addr("1.1.1.1"));
     auto node = std::make_shared<Node>(nullptr, addr);
-    nodes_.AddNode(node);
+    node->mutable_connection()->RegisterSetStateCb(NodeConnection::kDisconnected,
+                std::bind(DisconnectNodeCb, node, &nodes, &peers, &blocks_in_flight, &orphans));
+    nodes.AddNode(node);
     
-    ASSERT_NE(nodes_.GetNode(node->id()), nullptr);
-    DisconnectNode(node);
-    EXPECT_EQ(nodes_.GetNode(node->id()), nullptr);
+    ASSERT_NE(nodes.GetNode(node->id()), nullptr);
+    node->mutable_connection()->set_connection_state(NodeConnection::kDisconnected);
+    EXPECT_EQ(nodes.GetNode(node->id()), nullptr);
     
     nodes.Clear();
 }
-
+#if 0
 TEST(DisconnectedNode, DisconnectedNodeBySubnet)
 {
     Nodes& nodes = SingletonNodes::GetInstance();

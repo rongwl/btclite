@@ -13,7 +13,6 @@ public:
         : network_(config)
     {
         btclite::chain::SingletonParams::GetInstance(config.btcnet());
-        //SingletonChainState::GetInstance();
     }
 
     //-------------------------------------------------------------------------

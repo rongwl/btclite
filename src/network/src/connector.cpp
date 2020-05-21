@@ -22,7 +22,7 @@ bool Connector::InitEvent()
     }
     
     // default bufferevent, just for event loop keep running
-    if (nullptr == (bev_ = NewSocketEvent())) {
+    if (nullptr == (bev_ = NewSocketEvent(nullptr))) {
         return false;
     }
     
@@ -52,7 +52,7 @@ void Connector::ExitEventLoop()
     event_base_loopexit(base_, &delay);
 }
 
-struct bufferevent *Connector::NewSocketEvent()
+struct bufferevent *Connector::NewSocketEvent(const Context *ctx)
 {
     struct bufferevent *bev;
     
@@ -62,35 +62,42 @@ struct bufferevent *Connector::NewSocketEvent()
         return nullptr;
     }
     
-    bufferevent_setcb(bev, ConnReadCb, NULL, ConnEventCb, (void*)&params_);
+    bufferevent_setcb(bev, ConnReadCb, NULL, ConnEventCb, (void*)ctx);
     bufferevent_enable(bev, EV_READ);
     
     return bev;
 }
 
-bool Connector::StartOutboundTimer()
-{
-    using namespace std::placeholders;
-    
-    if (!SingletonPeers::GetInstance().IsEmpty()) {
-        auto func = std::bind(&Connector::DnsLookup, this, _1, params_.default_port());
-        util::SingletonTimerMng::GetInstance().StartTimer(11000, 0,
-                std::function<bool(const std::vector<Seed>&)>(func), params_.seeds());            
+bool Connector::StartOutboundTimer(const LocalService& local_service,
+                                   const Peers& peers, const BanList& banlist)
+{    
+    if (outbounds_.ShouldDnsLookup()) {
+        if (!peers.IsEmpty()) {
+            auto func = std::bind(&Connector::DnsLookup, this, std::ref(params_.seeds()),
+                                  params_.default_port(), &(const_cast<Peers&>(peers)));
+            util::SingletonTimerMng::GetInstance().StartTimer(11000, 0,
+                                                              std::function<bool()>(func));            
+        }
+        else {
+            auto task = std::bind(&Connector::DnsLookup, this, std::ref(params_.seeds()),
+                                  params_.default_port(), &(const_cast<Peers&>(peers)));
+            util::SingletonThreadPool::GetInstance().AddTask(std::function<bool()>(task));
+        }
     }
     else {
-        auto task = std::bind(&Connector::DnsLookup, this, _1, params_.default_port());
-        util::SingletonThreadPool::GetInstance().AddTask(
-            std::function<bool(const std::vector<Seed>&)>(task), params_.seeds());
-    }
+        BTCLOG(LOG_LEVEL_INFO) << "P2P peers available. Skipped DNS seeding.";
+    }    
     
-    auto func = std::bind(&Connector::OutboundTimeOutCb, this);
+    auto func = std::bind(&Connector::OutboundTimeOutCb, this, std::ref(local_service),
+                          std::ref(banlist), &(const_cast<Peers&>(peers)));
     outbound_timer_ = 
         util::SingletonTimerMng::GetInstance().StartTimer(500, 500, std::function<bool()>(func));
     
     return (outbound_timer_ != nullptr);
 }
 
-bool Connector::OutboundTimeOutCb()
+bool Connector::OutboundTimeOutCb(const LocalService& local_service, 
+                                  const BanList& banlist, Peers *ppeers)
 {
     proto_peers::Peer peer;
     NetAddr conn_addr;
@@ -105,31 +112,31 @@ bool Connector::OutboundTimeOutCb()
         if (SingletonNetInterrupt::GetInstance())
             return false;
         
-        if (!SingletonPeers::GetInstance().Select(&peer))
+        if (ppeers && !ppeers->Select(&peer))
             return false;
         
         const NetAddr& addr = NetAddr(peer.addr());
-        if (!addr.IsValid() || SingletonLocalService::GetInstance().IsLocal(addr))
+        if (!addr.IsValid() || local_service.IsLocal(addr))
             return false;
         
         if (tries <= 30) {
             if (now - peer.last_try() >= 600 &&
                 peer.addr().port() == params_.default_port() &&
                 IsServiceFlagDesirable(peer.addr().services())) {
-                return ConnectNode(addr);
+                return ConnectNode(addr, local_service, banlist, ppeers);
             }
         }
         // consider very recently tried nodes after 30 failed attempts
         else if (tries <= 50) {
             if (peer.addr().port() == params_.default_port() &&
                 IsServiceFlagDesirable(peer.addr().services())) {
-                return ConnectNode(addr);
+                return ConnectNode(addr, local_service, banlist, ppeers);
             }
         }
         // allow non-default ports after 50 failed attempts
         else {
             if (IsServiceFlagDesirable(peer.addr().services())) {
-                return ConnectNode(addr);
+                return ConnectNode(addr, local_service, banlist, ppeers);
             }
         }
     }
@@ -137,7 +144,10 @@ bool Connector::OutboundTimeOutCb()
     return false;
 }
 
-bool Connector::ConnectNodes(const std::vector<std::string>& str_addrs, bool manual)
+bool Connector::ConnectNodes(const std::vector<std::string>& str_addrs, 
+                             const LocalService& local_service,
+                             const BanList& banlist, Peers *ppeers,
+                             bool manual)
 {
     if (str_addrs.empty())
         return false;
@@ -148,28 +158,32 @@ bool Connector::ConnectNodes(const std::vector<std::string>& str_addrs, bool man
         GetHostAddr(*it, &addr);
         addrs.push_back(std::move(addr));
     }
-    return ConnectNodes(addrs, manual);
+    return ConnectNodes(addrs, local_service, banlist, ppeers, manual);
 }
 
-bool Connector::ConnectNodes(const std::vector<NetAddr>& addrs, bool manual)
+bool Connector::ConnectNodes(const std::vector<NetAddr>& addrs, 
+                             const LocalService& local_service,
+                             const BanList& banlist, Peers *ppeers,
+                             bool manual)
 {
     bool ret = true;
     
     for (const NetAddr& addr : addrs) {
-        ret &= ConnectNode(addr, manual);
+        ret &= ConnectNode(addr, local_service, banlist, ppeers, manual);
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
 
     return ret;
 }
 
-bool Connector::DnsLookup(const std::vector<Seed>& seeds, uint16_t default_port)
+bool Connector::DnsLookup(const std::vector<Seed>& seeds, uint16_t default_port,
+                          Peers *ppeers)
 {
     int found = 0;
     
-    if (!outbounds_.ShouldDnsLookup()) {
-        BTCLOG(LOG_LEVEL_INFO) << "P2P peers available. Skipped DNS seeding.";
-        return true;
+    if (!ppeers) {
+        BTCLOG(LOG_LEVEL_WARNING) << "Pass nullptr to " << __func__;
+        return false;
     }
     
     BTCLOG(LOG_LEVEL_INFO) << "Loading addresses from DNS seeds (could take a while)";
@@ -198,7 +212,7 @@ bool Connector::DnsLookup(const std::vector<Seed>& seeds, uint16_t default_port)
             addr.set_timestamp(time);
             found++;
         }
-        SingletonPeers::GetInstance().Add(addrs, source); 
+        ppeers->Add(addrs, source); 
     }
     
     if (!found) {
@@ -211,7 +225,8 @@ bool Connector::DnsLookup(const std::vector<Seed>& seeds, uint16_t default_port)
     return true;
 }
 
-bool Connector::ConnectNode(const NetAddr& addr, bool manual)
+bool Connector::ConnectNode(const NetAddr& addr, const LocalService& local_service,
+                            const BanList& ban_list, Peers *ppeers, bool manual)
 {
     struct bufferevent *bev;
     struct sockaddr_storage sock_addr;
@@ -225,7 +240,7 @@ bool Connector::ConnectNode(const NetAddr& addr, bool manual)
         return false;
     }
 
-    if (SingletonLocalService::GetInstance().IsLocal(addr)) {
+    if (local_service.IsLocal(addr)) {
         BTCLOG(LOG_LEVEL_WARNING) << "Connecting to local address:" << addr.ToString();
         return false;
     }
@@ -236,18 +251,27 @@ bool Connector::ConnectNode(const NetAddr& addr, bool manual)
         return false;
     }
 
-    if (SingletonBanList::GetInstance().IsBanned(addr)) {
+    if (ban_list.IsBanned(addr)) {
         BTCLOG(LOG_LEVEL_WARNING) << "Connecting to banned address:" << addr.ToString();
         return false;
     }
 
-    if (nullptr == (bev = NewSocketEvent())) {
+    static Context ctx;
+    ctx.pnodes = &outbounds_;
+    ctx.ppeers = ppeers;
+    ctx.pbanlist = (BanList*)&ban_list;
+    ctx.pparams = &params_;
+    ctx.plocal_service = (LocalService*)&local_service;
+    if (nullptr == (bev = NewSocketEvent(&ctx))) {
         return false;
     }
 
     BTCLOG(LOG_LEVEL_INFO) << "Trying to connect to " << addr.ToString() 
                            << ':' << addr.port();
-    SingletonPeers::GetInstance().Attempt(addr);
+    
+    if (ppeers) {
+        ppeers->Attempt(addr);
+    }
 
     std::memset(&sock_addr, 0, sizeof(sock_addr));
     addr.ToSockAddr(reinterpret_cast<struct sockaddr*>(&sock_addr));
@@ -266,6 +290,9 @@ bool Connector::ConnectNode(const NetAddr& addr, bool manual)
         bufferevent_free(bev);
         return false;
     }
+    node->mutable_connection()->RegisterSetStateCb(NodeConnection::kDisconnected,
+            std::bind(DisconnectNodeCb, node, &outbounds_, ppeers,
+                      &SingletonBlocksInFlight::GetInstance(), &SingletonOrphans::GetInstance()));
 
     BTCLOG(LOG_LEVEL_INFO) << "Connected to " << addr.ToString() 
                               << ':' << addr.port();

@@ -22,7 +22,8 @@ using namespace std::placeholders;
 using namespace protocol;
 
 bool ParseMsgData(const uint8_t *raw, std::shared_ptr<Node> src_node, 
-                  const MessageHeader& header, const Params& params)
+                  const MessageHeader& header, const Params& params,
+                  const LocalService& local_service, Peers *ppeers)
 {
     std::vector<uint8_t> vec;
     util::ByteSource<std::vector<uint8_t> > byte_source(vec);
@@ -39,7 +40,8 @@ bool ParseMsgData(const uint8_t *raw, std::shared_ptr<Node> src_node,
         version.Deserialize(byte_source);
         auto recv_handler = std::bind(&Version::RecvHandler, &version,
                                       _1, params.msg_magic(), 
-                                      params.advertise_local_addr());
+                                      params.advertise_local_addr(),
+                                      std::ref(local_service), ppeers);
         return HandleMsgData(src_node, header, version, recv_handler);
     }
     else if (header.command() == msg_command::kMsgVerack) {
@@ -47,7 +49,8 @@ bool ParseMsgData(const uint8_t *raw, std::shared_ptr<Node> src_node,
         verack.Deserialize(byte_source);
         auto recv_handler = std::bind(&Verack::RecvHandler, &verack,
                                       _1, params.msg_magic(),
-                                      params.advertise_local_addr());
+                                      params.advertise_local_addr(),
+                                      std::ref(local_service));
         return HandleMsgData(src_node, header, verack, recv_handler);
     }
     else if (header.command() == msg_command::kMsgAddr) {
@@ -108,7 +111,8 @@ bool ParseMsgData(const uint8_t *raw, std::shared_ptr<Node> src_node,
     return true;
 }
 
-bool ParseMsg(std::shared_ptr<Node> src_node, const Params& params)
+bool ParseMsg(std::shared_ptr<Node> src_node, const Params& params, 
+              const LocalService& local_service,Peers *ppeers)
 {
     struct evbuffer *buf;
     uint8_t *raw = nullptr;
@@ -134,13 +138,13 @@ bool ParseMsg(std::shared_ptr<Node> src_node, const Params& params)
         if (header.payload_length() > kMaxMessageSize) {
             BTCLOG(LOG_LEVEL_ERROR) << "Oversized message from peer " << src_node->id()
                                     << ", disconnecting";
-            DisconnectNode(src_node);
+            src_node->mutable_connection()->Disconnect();
             return false;
         }
         if (header.magic() != params.msg_magic()) {
             BTCLOG(LOG_LEVEL_ERROR) << "Invalid message magic " << header.magic()
                                     << " from peer " << src_node->id() << ", disconnecting";
-            DisconnectNode(src_node);
+            src_node->mutable_connection()->Disconnect();
             return false;
         }
         
@@ -150,7 +154,7 @@ bool ParseMsg(std::shared_ptr<Node> src_node, const Params& params)
         }
         
         // construct msg data from raw
-        ret &= ParseMsgData(raw, src_node, header, params);
+        ret &= ParseMsgData(raw, src_node, header, params, local_service, ppeers);
         evbuffer_drain(buf, header.payload_length()); 
       
         raw = evbuffer_pullup(buf, MessageHeader::kSize);

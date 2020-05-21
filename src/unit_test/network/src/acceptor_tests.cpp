@@ -23,14 +23,14 @@ TEST(AcceptorTest, Constructor)
 
 TEST(AcceptorTest, MethordAcceptConnCb)
 {
-    using namespace std::placeholders;
-    
     network::Params params(BtcNet::kTestNet, util::Args(), fs::path("/tmp/foo"));
     Acceptor acceptor(params);
     struct event_base *base;
     struct evconnlistener *listener;
     struct bufferevent *bev;
     Socket::Fd fd;
+    BanList ban_list;
+    struct Context ctx = {nullptr, nullptr, nullptr, &ban_list, nullptr};
     
     evthread_use_pthreads();
     base = event_base_new();
@@ -60,15 +60,15 @@ TEST(AcceptorTest, MethordAcceptConnCb)
         ASSERT_NE(pnode, nullptr);
         EXPECT_EQ(pnode->connection().addr(), addr);
     }
-    
+
     inet_pton(AF_INET6, "::ffff:1.2.3.250", client_addr.sin6_addr.s6_addr);
     NetAddr addr(client_addr);
-    SingletonBanList::GetInstance().Add(addr, BanList::BanReason::kNodeMisbehaving);
-    acceptor.AcceptConnCb(listener, fd, (struct sockaddr*)&client_addr, sizeof(client_addr), nullptr);
+    ban_list.Add(addr, BanList::BanReason::kNodeMisbehaving);
+    acceptor.AcceptConnCb(listener, fd, (struct sockaddr*)&client_addr, sizeof(client_addr), &ctx);
     EXPECT_EQ(Acceptor::Inbounds().Size(), count);  
     
-    SingletonBanList::GetInstance().Erase(addr);
-    acceptor.AcceptConnCb(listener, fd, (struct sockaddr*)&client_addr, sizeof(client_addr), nullptr);
+    ban_list.Erase(addr);
+    acceptor.AcceptConnCb(listener, fd, (struct sockaddr*)&client_addr, sizeof(client_addr), &ctx);
     EXPECT_EQ(Acceptor::Inbounds().Size(), ++count);
     std::shared_ptr<Node> pnode = Acceptor::Inbounds().GetNode(addr);
     ASSERT_NE(pnode, nullptr);
@@ -77,7 +77,7 @@ TEST(AcceptorTest, MethordAcceptConnCb)
     inet_pton(AF_INET6, "::ffff:1.2.3.251", client_addr.sin6_addr.s6_addr);
     acceptor.AcceptConnCb(listener, fd, (struct sockaddr*)&client_addr, sizeof(client_addr), nullptr);
     EXPECT_EQ(Acceptor::Inbounds().Size(), count);
-    
+  
     Acceptor::Inbounds().Clear();
     evconnlistener_free(listener);
     event_base_free(base);

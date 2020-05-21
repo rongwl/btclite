@@ -3,7 +3,6 @@
 
 
 #include "arithmetic.h"
-#include "node.h"
 #include "peers.pb.h"
 #include "random.h"
 #include "sync.h"
@@ -43,7 +42,7 @@ public:
                    int64_t time = util::GetAdjustedTime());
     
     // Choose an address to connect to.
-    bool Select(proto_peers::Peer *out, bool newOnly = false);
+    bool Select(proto_peers::Peer *out, bool newOnly = false) const;
     
     bool SetServices(const NetAddr& addr, uint64_t services);
     
@@ -89,7 +88,7 @@ public:
         return proto_peers_.map_peers().size();
     }
     
-    bool IsEmpty()
+    bool IsEmpty() const
     {
         LOCK(cs_peers_);
         return proto_peers_.map_peers().empty();

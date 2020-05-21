@@ -13,24 +13,24 @@ namespace btclite {
 namespace network {
 
 
-void AdvertiseLocalTimeoutCb(std::shared_ptr<Node> node);
-void RelayFloodingAddrsTimeoutCb(std::shared_ptr<Node> node, uint32_t magic);
-
-// Return a time interavl for send in the future (in microseconds) for exponentially distributed events.
-int64_t IntervalNextSend(int average_interval_seconds);
-
-
 class LocalService {
 public:
     LocalService()
         : service_(ServiceFlags(kNodeNetwork | kNodeBloom | kNodeNetworkLimited)), 
           local_addrs_() {}
+
+    // only for gtest
+    LocalService(const std::vector<NetAddr> addrs)
+        : service_(ServiceFlags(kNodeNetwork | kNodeBloom | kNodeNetworkLimited)), 
+          local_addrs_(addrs) {}
     
     //-------------------------------------------------------------------------
     bool DiscoverLocalAddrs();
-    bool GetLocalAddr(const NetAddr& peer_addr, ServiceFlags services, NetAddr *out);
-    void AdvertiseLocalAddr(std::shared_ptr<Node> node, bool discovered_addr_first);
-    bool IsLocal(const NetAddr& addr);
+    bool GetLocalAddr(const NetAddr& peer_addr, ServiceFlags services,
+                      NetAddr *out) const;
+    void AdvertiseLocalAddr(std::shared_ptr<Node> node, 
+                            bool discovered_addr_first) const;
+    bool IsLocal(const NetAddr& addr) const;
     
     //-------------------------------------------------------------------------
     ServiceFlags service() const
@@ -96,6 +96,14 @@ public:
 private:
     SingletonNetInterrupt() {}
 };
+
+
+void AdvertiseLocalTimeoutCb(std::shared_ptr<Node> node,
+                             const LocalService& local_service);
+void RelayFloodingAddrsTimeoutCb(std::shared_ptr<Node> node, uint32_t magic);
+
+// Return a time interavl for send in the future (in microseconds) for exponentially distributed events.
+int64_t IntervalNextSend(int average_interval_seconds);
 
 
 } // namespace network

@@ -136,7 +136,7 @@ void Node::StopAllTimers()
     }
 }
 
-bool Node::CheckBanned()
+bool Node::CheckBanned(BanList *pbanlist)
 {
     if (!misbehavior_.should_ban())
         return false;
@@ -147,14 +147,15 @@ bool Node::CheckBanned()
                                   << connection_.addr().ToString();
     }
     else {
-        DisconnectNode(this->shared_from_this());
+        connection_.Disconnect();
         if (connection_.addr().IsLocal()) {
             BTCLOG(LOG_LEVEL_WARNING) << "Can not banning local peer "
                                       << connection_.addr().ToString();
         }
         else {
-            SingletonBanList::GetInstance().Add(connection_.addr(),
-                                              BanList::BanReason::kNodeMisbehaving);
+            if (pbanlist) {
+                pbanlist->Add(connection_.addr(), BanList::BanReason::kNodeMisbehaving);
+            }
         }
     }
     
@@ -167,7 +168,7 @@ void Node::InactivityTimeoutCb()
         return;
 
     BTCLOG(LOG_LEVEL_WARNING) << "Peer " << id_ << " inactive timeout.";
-    DisconnectNode(this->shared_from_this());
+    connection_.Disconnect();
 }
 
 void Node::SocketNoMsgTimeoutCb()
@@ -180,7 +181,7 @@ void Node::SocketNoMsgTimeoutCb()
     
     BTCLOG(LOG_LEVEL_WARNING) << "Socket no message in first " << kNoMsgTimeout 
                               << " seconds from peer " << id_;
-    DisconnectNode(this->shared_from_this());
+    connection_.Disconnect();
 }
 
 void Node::PingTimeoutCb(uint32_t magic)
@@ -196,7 +197,7 @@ void Node::PingTimeoutCb(uint32_t magic)
     if (time_.ping_time.ping_nonce_sent) {
         BTCLOG(LOG_LEVEL_WARNING) << "Peer " << id_ << " ping timeout.";
         util::SingletonTimerMng::GetInstance().StopTimer(timers_.ping_timer);
-        DisconnectNode(this->shared_from_this());
+        connection_.Disconnect();
         return;
     }
     
@@ -216,7 +217,7 @@ void Node::ShakeHandsTimeoutCb()
         return;
     
     BTCLOG(LOG_LEVEL_WARNING) << "Peer "<< id_ << " shakehands timeout.";
-    DisconnectNode(this->shared_from_this());
+    connection_.Disconnect();
 }
 
 
@@ -229,8 +230,8 @@ void Nodes::AddNode(std::shared_ptr<Node> node)
 }
 
 std::shared_ptr<Node> Nodes::InitializeNode(const struct bufferevent *bev, 
-                                            const NetAddr& addr,
-                                            bool is_inbound, bool manual)
+        const NetAddr& addr,
+        bool is_inbound, bool manual)
 {
     auto node = std::make_shared<Node>(bev, addr, is_inbound, manual);
     
@@ -238,7 +239,7 @@ std::shared_ptr<Node> Nodes::InitializeNode(const struct bufferevent *bev,
     node->mutable_timers()->no_msg_timer = timer_mng.StartTimer(
             kNoMsgTimeout*1000, 0, std::bind(&Node::SocketNoMsgTimeoutCb, node));
     node->mutable_timers()->shakehands_timer = timer_mng.StartTimer(
-            kShakeHandsTimeout*1000, 0, std::bind(&Node::ShakeHandsTimeoutCb, node));
+                kShakeHandsTimeout*1000, 0, std::bind(&Node::ShakeHandsTimeoutCb, node));
     
     AddNode(node);
     if (!GetNode(node->id())) {
@@ -338,7 +339,7 @@ static bool CompareNodeBlockTime(const NodeEvictionCandidate &a, const NodeEvict
         return a.last_block_time < b.last_block_time;
     if (a.relevant_services != b.relevant_services)
         return b.relevant_services;
-    
+     
     return a.time_connected > b.time_connected;
 }
 
@@ -351,7 +352,7 @@ static bool CompareNodeTXTime(const NodeEvictionCandidate &a, const NodeEviction
         return b.relay_txes;
     if (a.bloom_filter != b.bloom_filter)
         return a.bloom_filter;
-    
+     
     return a.time_connected > b.time_connected;
 }
 */
@@ -378,7 +379,7 @@ bool Nodes::AttemptToEvictConnection()
 {
     std::vector<NodeEvictionCandidate> eviction_candidates;
     MakeEvictionCandidate(&eviction_candidates);
-    
+     
     // Protect connections with certain characteristics
 
     // Deterministically select 4 peers to protect by netgroup.
@@ -396,7 +397,7 @@ bool Nodes::AttemptToEvictConnection()
     // Protect the half of the remaining nodes which have been connected the longest.
     // This replicates the non-eviction implicit behavior, and precludes attacks that start later.
     EraseLastKElements(eviction_candidates, ReverseCompareNodeTimeConnected, eviction_candidates.size() / 2);
-    
+     
     if (eviction_candidates.empty())
         return false;
 
@@ -417,12 +418,12 @@ bool Nodes::AttemptToEvictConnection()
             most_connections_group = node.keyed_net_group;
         }
     }
-    
+     
     // Reduce to the network group with the most connections
     eviction_candidates = std::move(map_netgroup_nodes[most_connections_group]);
     if (!DisconnectNode(eviction_candidates.front().id))
         return false;
-    
+     
     return true;
 }
 */
@@ -474,7 +475,7 @@ bool Nodes::CheckIncomingNonce(uint64_t nonce) const
 void Nodes::MakeEvictionCandidate(std::vector<NodeEvictionCandidate> *out)
 {
     LOCK(cs_nodes_);
-    
+     
     for (auto it = list_.begin(); it != list_.end(); ++it) {
         if (!(*it)->is_inbound())
             continue;
@@ -517,6 +518,32 @@ void DisconnectNode(const SubNet& subnet)
     }
 }
 
+void DisconnectNodeCb(std::shared_ptr<Node> pnode, Nodes *pnodes,
+                      Peers *ppeers, BlocksInFlight1 *pblocks_in_flight,
+                      Orphans *porphans)
+{
+    if (!pnode || !pnodes) {
+        return;
+    }
+    
+    pnode->StopAllTimers();
+    
+    if (ppeers && pnode->ShouldUpdateTime()) {
+        ppeers->UpdateTime(pnode->connection().addr());
+    }
+    
+    if (pblocks_in_flight) {
+        for (auto& entry : pnode->blocks_in_flight().list()) {
+            pblocks_in_flight->Erase(entry.hash);
+        }
+    }
+    
+    if (porphans) {
+        porphans->EraseOrphansFor(pnode->id());
+    }
+    
+    pnodes->EraseNode(pnode);
+}
 
 } // namespace network
 } // namespace btclite

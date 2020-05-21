@@ -129,7 +129,7 @@ TimerMng::TimerPtr TimerMng::StartTimer(uint32_t timeout, uint32_t interval, Fun
         return nullptr;
 
     int64_t now = GetTimeMillis();
-    auto func = std::function<void()>(std::bind(std::forward<Func>(f), std::forward<Args>(args)...));
+    auto func = std::bind(std::forward<Func>(f), std::forward<Args>(args)...);
     std::lock_guard<std::mutex> lock(mutex_);
     timers_.emplace_back(std::make_shared<TimerCfg>(timeout, interval, now+timeout, func));
     return timers_.back();

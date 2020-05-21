@@ -17,34 +17,23 @@ void AddTimeData(const network::NetAddr& addr, int64_t offset_sample);
 
 class TimeOffset {
 public:
-    int64_t time_offset() const
+    int64_t offset() const
     {
-        LOCK(cs_time_offset_);
-        return time_offset_;
+        LOCK(cs_);
+        return offset_;
     }
     
-    void set_time_offset(int64_t offset)
+    void set_offset(int64_t offset)
     {
-        LOCK(cs_time_offset_);
-        time_offset_ = offset;
+        LOCK(cs_);
+        offset_ = offset;
     }
 
 private:
-    mutable CriticalSection cs_time_offset_;
-    int64_t time_offset_;
+    mutable CriticalSection cs_;
+    int64_t offset_;
 };
 
-class SingletonTimeOffset : Uncopyable {
-public:
-    static TimeOffset& GetInstance() 
-    {
-        static TimeOffset time_offset;
-        return time_offset;
-    }
-    
-private:
-    SingletonTimeOffset() {}
-};
 
 } // namespace util
 } // namespace btclite

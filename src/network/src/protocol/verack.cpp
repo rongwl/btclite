@@ -13,8 +13,8 @@ namespace btclite {
 namespace network {
 namespace protocol {
 
-bool Verack::RecvHandler(std::shared_ptr<Node> src_node, 
-                         uint32_t magic, bool advertise_local) const
+bool Verack::RecvHandler(std::shared_ptr<Node> src_node, uint32_t magic, 
+                         bool advertise_local, const LocalService& local_service) const
 {
     if (src_node->protocol().version >= kSendheadersVersion) {
         // Tell our peer we prefer to receive headers rather than inv's
@@ -31,7 +31,7 @@ bool Verack::RecvHandler(std::shared_ptr<Node> src_node,
         // We send this to non-NODE NETWORK peers as well, because
         // they may wish to request compact blocks from us
         SendCmpct send_compact(false, 2);
-        if (SingletonLocalService::GetInstance().service() & ServiceFlags::kNodeWitness)
+        if (local_service.service() & ServiceFlags::kNodeWitness)
             SendMsg(send_compact, magic, src_node);
         send_compact.set_version(1);
         SendMsg(send_compact, magic, src_node);
@@ -53,18 +53,20 @@ bool Verack::RecvHandler(std::shared_ptr<Node> src_node,
     // advertise local address
     if (advertise_local) {
         if (!IsInitialBlockDownload()) {
-            SingletonLocalService::GetInstance().AdvertiseLocalAddr(src_node, false);
+            local_service.AdvertiseLocalAddr(src_node, false);
         }
         src_node->mutable_timers()->advertise_local_addr_timer =
             util::SingletonTimerMng::GetInstance().StartTimer(
                 IntervalNextSend(kAdvertiseLocalInterval)*1000, 0, 
-                                 AdvertiseLocalTimeoutCb, src_node);
+                                 AdvertiseLocalTimeoutCb, 
+                                 src_node, std::ref(local_service));
     }
     
     // relay flooding addresses
     src_node->mutable_timers()->broadcast_addrs_timer = 
         util::SingletonTimerMng::GetInstance().StartTimer(kRelayAddrsInterval*1000, 0, 
-                                                    RelayFloodingAddrsTimeoutCb, src_node, magic);
+                                                          RelayFloodingAddrsTimeoutCb, 
+                                                          src_node, magic);
     
     return true;
 }

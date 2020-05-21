@@ -50,7 +50,7 @@ public:
     
     //-------------------------------------------------------------------------
     void SweepBanned();
-    bool IsBanned(NetAddr addr);
+    bool IsBanned(NetAddr addr) const;
     
     //-------------------------------------------------------------------------
     bool SerializeToOstream(std::ostream *output) const

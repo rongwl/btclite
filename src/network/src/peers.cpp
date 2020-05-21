@@ -177,7 +177,7 @@ bool Peers::MakeTried(const NetAddr& addr, int64_t time)
     return true;
 }
 
-bool Peers::Select(proto_peers::Peer *out, bool new_only)
+bool Peers::Select(proto_peers::Peer *out, bool new_only) const
 {
     if (!out)
         return false;

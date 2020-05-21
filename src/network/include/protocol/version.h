@@ -3,7 +3,7 @@
 
 
 #include "message.h"
-#include "network_address.h"
+#include "net.h"
 #include "stream.h"
 
 #include "btclite-config.h"
@@ -47,8 +47,9 @@ public:
           start_height_(start_height), relay_(relay) {}
     
     //-------------------------------------------------------------------------
-    bool RecvHandler(std::shared_ptr<Node> src_node, 
-                     uint32_t magic, bool advertise_local) const;
+    bool RecvHandler(std::shared_ptr<Node> src_node, uint32_t magic, 
+                     bool advertise_local, const LocalService& local_service,
+                     Peers *ppeers) const;
     
     std::string Command() const
     {

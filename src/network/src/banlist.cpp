@@ -65,7 +65,7 @@ void BanList::SweepBanned()
     }
 }
 
-bool BanList::IsBanned(NetAddr addr)
+bool BanList::IsBanned(NetAddr addr) const
 {
     LOCK(cs_ban_map_);
     

@@ -12,8 +12,9 @@ namespace btclite {
 namespace network {
 namespace protocol{
 
-bool Version::RecvHandler(std::shared_ptr<Node> src_node, 
-                          uint32_t magic, bool advertise_local) const
+bool Version::RecvHandler(std::shared_ptr<Node> src_node, uint32_t magic, 
+                          bool advertise_local, const LocalService& local_service,
+                          Peers *ppeers) const
 {
     Verack verack;
     
@@ -23,9 +24,8 @@ bool Version::RecvHandler(std::shared_ptr<Node> src_node,
         return false;
     }
     
-    if (!src_node->is_inbound()) {
-        SingletonPeers::GetInstance().SetServices(src_node->connection().addr(), 
-                                                  services_);
+    if (!src_node->is_inbound() && ppeers) {
+        ppeers->SetServices(src_node->connection().addr(), services_);
     }
     if (!src_node->is_inbound() && !src_node->connection().manual() 
             && !IsServiceFlagDesirable(services_)) {
@@ -37,7 +37,7 @@ bool Version::RecvHandler(std::shared_ptr<Node> src_node,
         std::stringstream ss;
         ss << "Expected to offer services " << std::showbase << std::hex 
            << kDesirableServiceFlags;
-        DisconnectNode(src_node);
+        src_node->mutable_connection()->Disconnect();
         return false;
     }
     
@@ -47,7 +47,7 @@ bool Version::RecvHandler(std::shared_ptr<Node> src_node,
             // These bits have been used as a flag to indicate that a node is running incompatible
             // consensus rules instead of changing the network magic, so we're stuck disconnecting
             // based on these service bits, at least for a while.
-            DisconnectNode(src_node);
+            src_node->mutable_connection()->Disconnect();
             return false;
         }
     }
@@ -58,7 +58,7 @@ bool Version::RecvHandler(std::shared_ptr<Node> src_node,
                                << protocol_version_  << '.';
         std::stringstream ss;
         ss << "Version must be " << kMinPeerProtoVersion << " or greater";
-        DisconnectNode(src_node);
+        src_node->mutable_connection()->Disconnect();
         return false;
     }
     
@@ -67,7 +67,7 @@ bool Version::RecvHandler(std::shared_ptr<Node> src_node,
         BTCLOG(LOG_LEVEL_INFO) << "Disconnecting peer " << src_node->id()
                                << " for connecting to self at " 
                                << src_node->connection().addr().ToString();
-        DisconnectNode(src_node);
+        src_node->mutable_connection()->Disconnect();
         return true;
     }
     
@@ -90,17 +90,19 @@ bool Version::RecvHandler(std::shared_ptr<Node> src_node,
     if (!src_node->is_inbound()) {
         // Advertise our address
         if (advertise_local && !IsInitialBlockDownload()) {
-            SingletonLocalService::GetInstance().AdvertiseLocalAddr(src_node, true);
+            local_service.AdvertiseLocalAddr(src_node, true);
         }
         
         // Get recent addresses
         if (src_node->protocol().version >= ProtocolVersion::kAddrTimeVersion || 
-                SingletonPeers::GetInstance().Size() < 1000) {
+                (ppeers && ppeers->Size() < 1000)) {
             GetAddr getaddr;
             SendMsg(getaddr, magic, src_node);
             src_node->mutable_flooding_addrs()->set_sent_getaddr(true);
         }
-        SingletonPeers::GetInstance().MakeTried(src_node->connection().addr());
+        if (ppeers) {
+            ppeers->MakeTried(src_node->connection().addr());
+        }
     }
     
     BTCLOG(LOG_LEVEL_INFO) << "Receive version message: version=" << protocol_version_

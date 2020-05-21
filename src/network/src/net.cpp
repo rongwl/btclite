@@ -66,7 +66,7 @@ bool LocalService::DiscoverLocalAddrs()
 }
 
 bool LocalService::GetLocalAddr(const NetAddr& peer_addr, ServiceFlags services,
-                                  NetAddr *out)
+                                NetAddr *out) const
 {
     int best_reachability = -1;
     
@@ -90,7 +90,7 @@ bool LocalService::GetLocalAddr(const NetAddr& peer_addr, ServiceFlags services,
 }
 
 void LocalService::AdvertiseLocalAddr(std::shared_ptr<Node> node, 
-                                   bool discovered_addr_first)
+                                   bool discovered_addr_first) const
 {    
     NetAddr addr_local;
     
@@ -114,7 +114,7 @@ void LocalService::AdvertiseLocalAddr(std::shared_ptr<Node> node,
     }
 }
 
-bool LocalService::IsLocal(const NetAddr& addr)
+bool LocalService::IsLocal(const NetAddr& addr) const
 {
     LOCK(cs_local_service_);
     
@@ -140,7 +140,8 @@ bool LocalService::AddLocalAddr(const NetAddr& addr)
     return true;
 }
 
-void AdvertiseLocalTimeoutCb(std::shared_ptr<Node> node)
+void AdvertiseLocalTimeoutCb(std::shared_ptr<Node> node,
+                             const LocalService& local_service)
 {
     if (SingletonNetInterrupt::GetInstance())
         return;
@@ -154,7 +155,7 @@ void AdvertiseLocalTimeoutCb(std::shared_ptr<Node> node)
         return;
     }
     
-    SingletonLocalService::GetInstance().AdvertiseLocalAddr(node, false);
+    local_service.AdvertiseLocalAddr(node, false);
     
     node->mutable_timers()->advertise_local_addr_timer->set_interval(
                             IntervalNextSend(kAdvertiseLocalInterval)*1000);

@@ -6,6 +6,7 @@
 
 #include "peers.h"
 #include "constants.h"
+#include "node.h"
 
 
 namespace btclite {

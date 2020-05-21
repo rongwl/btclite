@@ -88,9 +88,15 @@ void LibEvent::EvconnlistenerFree(struct evconnlistener *lev)
 void ConnReadCb(struct bufferevent *bev, void *ctx)
 {
     auto *context = reinterpret_cast<struct Context*>(ctx);
-    auto pnode = context->pnodes->GetNode(bev);
-    if (!pnode)
+    if (!context || !context->pnodes || !context->pparams) {
+        BTCLOG(LOG_LEVEL_WARNING) << "Pass nullptr to " << __func__;
         return;
+    }
+    
+    auto pnode = context->pnodes->GetNode(bev);
+    if (!pnode) {
+        return;
+    }
     
     if (pnode->connection().socket_no_msg()) {
         pnode->mutable_connection()->set_socket_no_msg(false);
@@ -108,7 +114,8 @@ void ConnReadCb(struct bufferevent *bev, void *ctx)
                                  std::bind(&Node::InactivityTimeoutCb, pnode));
     }
     
-    auto task = std::bind(ParseMsg, pnode, *(context->pparams));
+    auto task = std::bind(ParseMsg, pnode, std::ref(*(context->pparams)), 
+                          std::ref(*(context->plocal_service)), context->ppeers);
     util::SingletonThreadPool::GetInstance().AddTask(std::function<bool()>(task));
 }
 
@@ -126,7 +133,7 @@ void ConnEventCb(struct bufferevent *bev, short events, void *ctx)
         if (!pnode->connection().IsDisconnected()) {
             BTCLOG(LOG_LEVEL_WARNING) << "peer " << pnode->id() 
                                       << " socket closed";
-            DisconnectNode(pnode);
+            pnode->mutable_connection()->Disconnect();
         }
     }
     else if (events & BEV_EVENT_ERROR) {
@@ -136,7 +143,7 @@ void ConnEventCb(struct bufferevent *bev, short events, void *ctx)
             if (!pnode->connection().IsDisconnected()) {
                 BTCLOG(LOG_LEVEL_ERROR) << "peer " << pnode->id() << " socket recv error:"
                                         << std::string(strerror(errno));
-                DisconnectNode(pnode);
+                pnode->mutable_connection()->Disconnect();
             }
             
         }

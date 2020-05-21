@@ -6,49 +6,39 @@
 namespace btclite {
 namespace network {
 
-P2P::P2P(const util::Configuration& config)
-    : params_(config), 
-      peers_db_(config.path_data_dir()),
-      ban_db_(config.path_data_dir()),
-      acceptor_(params_), connector_(params_)
-{
-    //SingletonLocalService::GetInstance();
-}
 
 bool P2P::Init()
 {
     BTCLOG(LOG_LEVEL_INFO) << "Initializing p2p network...";
     
     if (params_.discover_local_addr()) {
-        SingletonLocalService::GetInstance().DiscoverLocalAddrs();
+        local_service_.DiscoverLocalAddrs();
     }
     
-    if (!acceptor_.InitEvent())
+    if (!acceptor_.InitEvent(local_service_, peers_, ban_list_))
         return false;
     
     if (!connector_.InitEvent())
         return false;
     
-    Peers& peers = SingletonPeers::GetInstance();
-    if (peers_db_.LoadPeers(&peers)) {
-        BTCLOG(LOG_LEVEL_INFO) << "Loaded " << peers.Size() 
+    if (peers_db_.LoadPeers(&peers_)) {
+        BTCLOG(LOG_LEVEL_INFO) << "Loaded " << peers_.Size() 
                                << " addresses from peers.dat";
     }
     else {
         BTCLOG(LOG_LEVEL_INFO) << "Invalid or missing peers.dat; recreating";
-        SingletonPeers::GetInstance().Clear();
-        peers_db_.DumpPeers(SingletonPeers::GetInstance());
+        peers_.Clear();
+        peers_db_.DumpPeers(peers_);
     }
     
-    BanList& ban_list = SingletonBanList::GetInstance();
-    if (ban_db_.LoadBanList(&ban_list)) {
-        ban_list.SweepBanned(); // sweep out unused entries
-        BTCLOG(LOG_LEVEL_INFO) << "Loaded " << ban_list.Size() 
+    if (ban_db_.LoadBanList(&ban_list_)) {
+        ban_list_.SweepBanned(); // sweep out unused entries
+        BTCLOG(LOG_LEVEL_INFO) << "Loaded " << ban_list_.Size() 
                                << " banned node ips/subnets from banlist.dat";
     }
     else {
         BTCLOG(LOG_LEVEL_INFO) << "Invalid or missing banlist.dat; recreating";
-        ban_db_.DumpBanList(ban_list);
+        ban_db_.DumpBanList(ban_list_);
     }
     
     BTCLOG(LOG_LEVEL_INFO) << "Initialized p2p network.";
@@ -63,20 +53,26 @@ bool P2P::Start()
     SingletonNetInterrupt::GetInstance().Reset();
     
     // start acceptor
-    thread_acceptor_loop_ = std::thread(&util::TraceThread<std::function<void()> >, "acceptor",
-                                        std::function<void()>(std::bind(&Acceptor::StartEventLoop, &acceptor_)));
+    thread_acceptor_loop_ = std::thread(&util::TraceThread<std::function<void()> >, 
+                                        "acceptor",
+                                        std::function<void()>(std::bind(
+                                                &Acceptor::StartEventLoop, &acceptor_)));
     
     // start connector
-    thread_connector_loop_ = std::thread(&util::TraceThread<std::function<void()> >, "connector",
-                                         std::function<void()>(std::bind(&Connector::StartEventLoop, &connector_)));
+    thread_connector_loop_ = std::thread(&util::TraceThread<std::function<void()> >, 
+                                         "connector",
+                                         std::function<void()>(std::bind(
+                                                 &Connector::StartEventLoop, &connector_)));
     if (!params_.specified_outgoing().empty()) {
-        if (!connector_.ConnectNodes(params_.specified_outgoing(), true)) {
+        if (!connector_.ConnectNodes(params_.specified_outgoing(), 
+                                     local_service_, ban_list_, 
+                                     &peers_, true)) {
             BTCLOG(LOG_LEVEL_ERROR) << "Connecting specified outgoing failed.";
             return false;
         }
     }
     else  {
-        if (!connector_.StartOutboundTimer()) {
+        if (!connector_.StartOutboundTimer(local_service_, peers_, ban_list_)) {
             BTCLOG(LOG_LEVEL_ERROR) << "Starting outbound timer failed.";
             return false;
         }
@@ -109,8 +105,8 @@ void P2P::Stop()
     if (thread_connector_loop_.joinable())
         thread_connector_loop_.join();
     
-    peers_db_.DumpPeers(SingletonPeers::GetInstance());
-    ban_db_.DumpBanList(SingletonBanList::GetInstance());
+    peers_db_.DumpPeers(peers_);
+    ban_db_.DumpBanList(ban_list_);
     
     BTCLOG(LOG_LEVEL_INFO) << "Stopped p2p network.";
 }

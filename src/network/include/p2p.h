@@ -15,7 +15,11 @@ namespace network {
 
 class P2P : util::Uncopyable {
 public:
-    explicit P2P(const util::Configuration& config);
+    explicit P2P(const util::Configuration& config)
+        : params_(config), 
+          peers_db_(config.path_data_dir()),
+          ban_db_(config.path_data_dir()),
+          acceptor_(params_), connector_(params_) {}
     
     bool Init();
     bool Start();
@@ -24,7 +28,10 @@ public:
     
 private:
     const Params params_;
+    LocalService local_service_;
+    Peers peers_;
     PeersDb peers_db_;
+    BanList ban_list_;
     BanDb ban_db_;
     Acceptor acceptor_;
     Connector connector_;

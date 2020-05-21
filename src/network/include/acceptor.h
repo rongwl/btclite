@@ -20,7 +20,8 @@ public:
             event_base_free(base_);
     }
     
-    bool InitEvent();
+    bool InitEvent(const LocalService& local_service,
+                   const Peers& peers, const BanList& ban_list);
     void StartEventLoop();
     
     void ExitEventLoop()

@@ -44,30 +44,6 @@ protected:
     Uncopyable() {}
 };
 
-class Terminator : Uncopyable {
-public:
-    Terminator()
-    {
-        std::signal(SIGINT, HandleStop);
-        std::signal(SIGTERM, HandleStop);
-        std::signal(SIGQUIT, HandleStop);
-    }    
-    
-    void Wait()
-    {
-        stopping_.get_future().wait();
-    }
-    
-private:
-    static std::promise<int> stopping_;
-    
-    static void HandleStop(int sig)
-    {
-        static std::once_flag stop_mutex;
-        std::call_once(stop_mutex, [&](){ stopping_.set_value(sig); });
-    }
-};
-
 class Args : Uncopyable {
 public:
     std::string GetArg(const std::string& arg, const std::string& arg_default) const;
@@ -149,14 +125,26 @@ public:
     
     void WaitToStop()
     {
-        terminator_.Wait();
+        Stopping().get_future().wait();
         BTCLOG(LOG_LEVEL_INFO) << "Caught an interrupt signal.";
     }
 
 private:
-    Terminator terminator_;
-    
     virtual bool BasicSetupCustomized() = 0;
+    
+    static std::promise<int>& Stopping()
+    {
+        static std::promise<int> stopping;
+        return stopping;
+    }
+    
+    static void HandleStop(int sig)
+    {
+        static std::once_flag stop_mutex;
+        std::call_once(stop_mutex, [&](){ Stopping().set_value(sig); });
+    }
+    
+    static void HandleAllocFail();
 };
 
 /* Merge from bitcoin core 0.16.3. 

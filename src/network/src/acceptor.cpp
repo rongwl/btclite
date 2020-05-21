@@ -18,7 +18,8 @@ Acceptor::Acceptor(const Params params)
     sock_addr_.sin6_scope_id = 0;
 }
 
-bool Acceptor::InitEvent()
+bool Acceptor::InitEvent(const LocalService& local_service,
+                         const Peers& peers, const BanList& ban_list)
 {
     using namespace std::placeholders;
     
@@ -32,7 +33,10 @@ bool Acceptor::InitEvent()
     static Context ctx;
     auto& inbounds = Inbounds();
     ctx.pnodes = &inbounds;
+    ctx.ppeers = (Peers*)&peers;
+    ctx.pbanlist = (BanList*)&ban_list;
     ctx.pparams = &params_;
+    ctx.plocal_service = (LocalService*)&local_service;
     if (nullptr == (listener_ = evconnlistener_new_bind(base_, 
                                 AcceptConnCb, (void*)&ctx,
                                 LEV_OPT_CLOSE_ON_FREE | LEV_OPT_REUSEABLE, 
@@ -68,11 +72,13 @@ void Acceptor::StartEventLoop()
 }
 
 void Acceptor::AcceptConnCb(struct evconnlistener *listener, evutil_socket_t fd,
-                           struct sockaddr *sock_addr, int socklen, void *arg)
+                            struct sockaddr *sock_addr, int socklen, void *arg)
 {
     NetAddr addr;
     struct event_base *base;
     struct bufferevent *bev;
+    auto& inbounds = Inbounds();
+    struct Context *ctx = reinterpret_cast<struct Context*>(arg);
     
     if (!addr.FromSockAddr(sock_addr))
         BTCLOG(LOG_LEVEL_WARNING) << "Accept an unknown socket family address.";
@@ -81,7 +87,7 @@ void Acceptor::AcceptConnCb(struct evconnlistener *listener, evutil_socket_t fd,
     // on all platforms.  Set it again here just to be sure.
     Socket(evconnlistener_get_fd(listener)).SetSockNoDelay();
     
-    if (SingletonBanList::GetInstance().IsBanned(addr))
+    if (ctx && ctx->pbanlist && ctx->pbanlist->IsBanned(addr))
     {
         BTCLOG(LOG_LEVEL_WARNING) << "Accept a dropped(banned) addr:"
                                   << addr.ToString();
@@ -89,7 +95,7 @@ void Acceptor::AcceptConnCb(struct evconnlistener *listener, evutil_socket_t fd,
         return;
     }
     
-    if (Inbounds().Size() >= kMaxInboundConnections) {
+    if (inbounds.Size() >= kMaxInboundConnections) {
         BTCLOG(LOG_LEVEL_WARNING) << "Can not accept new connection because inbound connections is full";
         evutil_closesocket(fd);
         return;
@@ -108,10 +114,17 @@ void Acceptor::AcceptConnCb(struct evconnlistener *listener, evutil_socket_t fd,
         return;
     }
 
-    if (nullptr == Inbounds().InitializeNode(bev, addr)) {
+    auto pnode = inbounds.InitializeNode(bev, addr);
+    if (!pnode) {
         BTCLOG(LOG_LEVEL_WARNING) << "Initialize new node failed.";
         bufferevent_free(bev);
         return;
+    }
+
+    if (ctx) {
+        pnode->mutable_connection()->RegisterSetStateCb(NodeConnection::kDisconnected,
+                std::bind(DisconnectNodeCb, pnode, &inbounds, ctx->ppeers,
+                          &SingletonBlocksInFlight::GetInstance(), &SingletonOrphans::GetInstance()));
     }
     
     bufferevent_setcb(bev, ConnReadCb, NULL, ConnEventCb, arg);
@@ -141,29 +154,29 @@ void Acceptor::CheckingTimeoutCb(evutil_socket_t fd, short event, void *arg)
                                << pnode->time().time_last_recv << " " 
                                << pnode->time().time_last_send << " from " 
                                << pnode->id();
-        DisconnectNode(pnode);
+        pnode->mutable_connection()->Disconnect();
     }
     else if (now - pnode->time().time_last_send > kConnTimeoutInterval) {
         BTCLOG(LOG_LEVEL_INFO) << "socket sending timeout: " 
                                << (now - pnode->time().time_last_send);
-        DisconnectNode(pnode);
+        pnode->mutable_connection()->Disconnect();
     }
     else if (now - pnode->time().time_last_recv > (pnode->protocol().version() > 
              kBip31Version ? kConnTimeoutInterval : 90*60)) {
         BTCLOG(LOG_LEVEL_INFO) << "socket receive timeout: " 
                                << (now - pnode->time().time_last_recv);
-        DisconnectNode(pnode);
+        pnode->mutable_connection()->Disconnect();
     }
     else if (pnode->time().ping_time.ping_nonce_sent &&
              pnode->time().ping_time.ping_usec_start + kConnTimeoutInterval * 1000000 < 
              util::GetTimeMicros()) {
         BTCLOG(LOG_LEVEL_INFO) << "ping timeout: " 
                                << (now - pnode->time().ping_time.ping_usec_start / 1000000);
-        DisconnectNode(pnode);
+        pnode->mutable_connection()->Disconnect();
     }
     else if (!pnode->connection().IsHandshakeCompleted()) {
         BTCLOG(LOG_LEVEL_INFO) << "version handshake timeout from " << pnode->id();
-        DisconnectNode(pnode);
+        pnode->mutable_connection()->Disconnect();
     }
 }
 #endif

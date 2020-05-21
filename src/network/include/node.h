@@ -7,10 +7,12 @@
 #include <functional>
 #include <queue>
 
+#include "banlist.h"
 #include "bloom.h"
 #include "block_chain.h"
 #include "block_sync.h"
 #include "net_base.h"
+#include "peers.h"
 #include "timer.h"
 
 
@@ -133,13 +135,17 @@ public:
     enum ConnectionState {
         kInitialState,
         kEstablished,
-        kDisconnected
+        kDisconnected,
+        kStateMax
     };
+    
+    using SetStateCb = std::function<void()>;
     
     NodeConnection(const struct bufferevent *bev, const NetAddr& addr,
                    bool manual, std::string host_name)
         : bev_(const_cast<struct bufferevent*>(bev)), addr_(addr),
-          host_name_(host_name), manual_(manual) {}
+          host_name_(host_name), manual_(manual), 
+          set_state_cbs_(kStateMax, []{}) {}
     
     ~NodeConnection()
     {
@@ -161,6 +167,16 @@ public:
     bool IsDisconnected() const
     {
         return (connection_state_ == kDisconnected);
+    }
+    
+    void Disconnect()
+    {
+        set_connection_state(kDisconnected);
+    }
+    
+    void RegisterSetStateCb(ConnectionState state, SetStateCb cb)
+    {
+        set_state_cbs_[state] = cb;
     }
     
     //-------------------------------------------------------------------------
@@ -219,7 +235,7 @@ public:
     {
         LOCK(cs_state_);
         connection_state_ = state;
-        SetStateCb_(state);
+        set_state_cbs_[state]();
     }
     
     bool socket_no_msg() const
@@ -247,7 +263,7 @@ private:
     
     mutable util::CriticalSection cs_state_;
     ConnectionState connection_state_ = ConnectionState::kInitialState;
-    std::function<void(ConnectionState)> SetStateCb_ = [](ConnectionState s){};
+    std::vector<SetStateCb> set_state_cbs_;
     
     std::atomic<bool> socket_no_msg_ = true;
 };
@@ -671,7 +687,7 @@ public:
     void StopAllTimers();
     
     //-------------------------------------------------------------------------
-    bool CheckBanned();
+    bool CheckBanned(BanList *pbanlist);
     
     bool ShouldUpdateTime()
     {
@@ -967,6 +983,9 @@ private:
 
 void DisconnectNode(std::shared_ptr<Node> node);
 void DisconnectNode(const SubNet& subnet);
+void DisconnectNodeCb(std::shared_ptr<Node> pnode, Nodes *pnodes,
+                      Peers *ppeers, BlocksInFlight1 *pblocks_in_flight,
+                      Orphans *porphans);
 
 
 } // namespace network
