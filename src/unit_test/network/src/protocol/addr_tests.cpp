@@ -1,4 +1,4 @@
-#include "protocol/address_tests.h"
+#include "protocol/addr_tests.h"
 #include "stream.h"
 
 

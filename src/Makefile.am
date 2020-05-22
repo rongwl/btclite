@@ -56,7 +56,7 @@ BTCLITE_HEADER_FILES = \
                        network/include/connector.h \
                        network/include/libevent.h \
                        network/include/protocol/message.h \
-                       network/include/protocol/address.h \
+                       network/include/protocol/addr.h \
                        network/include/protocol/inventory.h \
                        network/include/protocol/inventory_vector.h \
                        network/include/protocol/getaddr.h \
@@ -173,7 +173,7 @@ network_src_libbtclite_network_a_SOURCES = network/proto/network_address.pb.cc \
                                            network/src/connector.cpp \
                                            network/src/libevent.cpp \
                                            network/src/protocol/message.cpp \
-                                           network/src/protocol/address.cpp \
+                                           network/src/protocol/addr.cpp \
                                            network/src/protocol/inventory.cpp \
                                            network/src/protocol/getaddr.cpp \
                                            network/src/protocol/getblocks.cpp \

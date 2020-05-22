@@ -3,7 +3,7 @@
 #include "chain_state.h"
 #include "msg_process.h"
 #include "net.h"
-#include "protocol/address.h"
+#include "protocol/addr.h"
 #include "protocol/getaddr.h"
 #include "protocol/inventory.h"
 #include "protocol/ping.h"

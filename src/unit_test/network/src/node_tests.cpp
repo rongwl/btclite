@@ -102,12 +102,12 @@ TEST_F(NodesTest, CountSyncStarted)
     auto node1 = nodes_.GetNode(id1_);
     auto node2 = nodes_.GetNode(id2_);
     
-    EXPECT_EQ(node1->block_sync_state().NSyncStarted(), 0);
-    EXPECT_EQ(node2->block_sync_state().NSyncStarted(), 0);
+    EXPECT_EQ(node1->block_sync_state().NumSyncStarted(), 0);
+    EXPECT_EQ(node2->block_sync_state().NumSyncStarted(), 0);
     node1->mutable_block_sync_state()->set_sync_started(true);
     node2->mutable_block_sync_state()->set_sync_started(true);
-    EXPECT_EQ(node1->block_sync_state().NSyncStarted(), 2);
-    EXPECT_EQ(node2->block_sync_state().NSyncStarted(), 2);
+    EXPECT_EQ(node1->block_sync_state().NumSyncStarted(), 2);
+    EXPECT_EQ(node2->block_sync_state().NumSyncStarted(), 2);
 }
 
 TEST_F(NodesTest, CountPreferredDownload)
@@ -115,11 +115,11 @@ TEST_F(NodesTest, CountPreferredDownload)
     auto node1 = nodes_.GetNode(id1_);
     auto node2 = nodes_.GetNode(id2_);
     
-    EXPECT_EQ(node1->NPreferedDownload(), 0);
-    EXPECT_EQ(node2->NPreferedDownload(), 0);
+    EXPECT_EQ(node1->NumPreferedDownload(), 0);
+    EXPECT_EQ(node2->NumPreferedDownload(), 0);
     node1->set_services(kNodeNetwork);
-    EXPECT_EQ(node1->NPreferedDownload(), 1);
-    EXPECT_EQ(node2->NPreferedDownload(), 1);
+    EXPECT_EQ(node1->NumPreferedDownload(), 1);
+    EXPECT_EQ(node2->NumPreferedDownload(), 1);
 }
 
 TEST_F(NodesTest, CountValidatedDownload)
@@ -127,12 +127,12 @@ TEST_F(NodesTest, CountValidatedDownload)
     auto node1 = nodes_.GetNode(id1_);
     auto node2 = nodes_.GetNode(id2_);
     
-    EXPECT_EQ(node1->blocks_in_flight().NValidatedDownload(), 0);
-    EXPECT_EQ(node2->blocks_in_flight().NValidatedDownload(), 0);
-    node1->mutable_blocks_in_flight()->set_n_valid_headers(1);
-    node2->mutable_blocks_in_flight()->set_n_valid_headers(1);
-    EXPECT_EQ(node1->blocks_in_flight().NValidatedDownload(), 2);
-    EXPECT_EQ(node2->blocks_in_flight().NValidatedDownload(), 2);
+    EXPECT_EQ(node1->blocks_in_flight().NumValidatedDownload(), 0);
+    EXPECT_EQ(node2->blocks_in_flight().NumValidatedDownload(), 0);
+    node1->mutable_blocks_in_flight()->set_num_valid_headers(1);
+    node2->mutable_blocks_in_flight()->set_num_valid_headers(1);
+    EXPECT_EQ(node1->blocks_in_flight().NumValidatedDownload(), 2);
+    EXPECT_EQ(node2->blocks_in_flight().NumValidatedDownload(), 2);
 }
 
 TEST_F(NodeTest, Misbehaving)

@@ -43,7 +43,7 @@ unit_test_test_network_SOURCES = unit_test/network/src/test_network.cpp \
                                  unit_test/network/src/banlist_tests.cpp \
                                  unit_test/network/src/peers_tests.cpp \
                                  unit_test/network/src/protocol/message_tests.cpp \
-                                 unit_test/network/src/protocol/address_tests.cpp \
+                                 unit_test/network/src/protocol/addr_tests.cpp \
                                  unit_test/network/src/protocol/getblocks_tests.cpp \
                                  unit_test/network/src/protocol/getheaders_tests.cpp \
                                  unit_test/network/src/protocol/inventory_vector_tests.cpp \
@@ -63,7 +63,7 @@ unit_test_test_network_SOURCES = unit_test/network/src/test_network.cpp \
                                  unit_test/network/include/net_tests.h \
                                  unit_test/network/include/node_tests.h \
                                  unit_test/network/include/protocol/message_tests.h \
-                                 unit_test/network/include/protocol/address_tests.h \
+                                 unit_test/network/include/protocol/addr_tests.h \
                                  unit_test/network/include/protocol/getblocks_tests.h \
                                  unit_test/network/include/protocol/inventory_vector_tests.h \
                                  unit_test/network/include/protocol/version_tests.h \

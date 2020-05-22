@@ -447,10 +447,10 @@ private:
 
 class BlockSyncTimeout {
 public:
-    static int& NProtected()
+    static int& NumProtected()
     {
-        static int n_protected = 0;
-        return n_protected;
+        static int num_protected = 0;
+        return num_protected;
     }
     
     //-------------------------------------------------------------------------
@@ -498,11 +498,11 @@ public:
     
     void set_protect(bool protect)
     {
-        int& n_protected = NProtected();
+        int& num_protected = NumProtected();
         LOCK(cs_);
-        n_protected -= protect_;
+        num_protected -= protect_;
         protect_ = protect;
-        n_protected += protect_;
+        num_protected += protect_;
     }
     
 private:
@@ -523,10 +523,10 @@ private:
 
 class BlockSyncState1 {
 public:
-    static int& NSyncStarted()
+    static int& NumSyncStarted()
     {
-        static int n_sync_started = 0;
-        return n_sync_started;
+        static int num_sync_started = 0;
+        return num_sync_started;
     }
     
     //-------------------------------------------------------------------------
@@ -537,10 +537,10 @@ public:
     
     void set_sync_started(bool sync_started)
     {
-        int& n_sync_started = NSyncStarted();
-        n_sync_started -= sync_started_;
+        int& num_sync_started = NumSyncStarted();
+        num_sync_started -= sync_started_;
         sync_started_ = sync_started;
-        n_sync_started += sync_started_;
+        num_sync_started += sync_started_;
     }
     
     const chain::BlockIndex *best_known_block_index() const
@@ -607,10 +607,10 @@ class NodeBlocksInFlight {
 public:
     using iterator = std::list<QueuedBlock>::iterator;
     
-    static int& NValidatedDownload()
+    static int& NumValidatedDownload()
     {
-        static int n_validated_download = 0;
-        return n_validated_download;
+        static int num_validated_download = 0;
+        return num_validated_download;
     }
     
     //-------------------------------------------------------------------------
@@ -620,19 +620,19 @@ public:
         return list_;
     }
     
-    int n_valid_headers() const
+    int num_valid_headers() const
     {
         LOCK(cs_);
-        return n_valid_headers_;
+        return num_valid_headers_;
     }
     
-    void set_n_valid_headers(int n_valid_headers)
+    void set_num_valid_headers(int num_valid_headers)
     {
-        int& n_validated_download = NValidatedDownload();
+        int& num_validated_download = NumValidatedDownload();
         LOCK(cs_);
-        n_validated_download -= (n_valid_headers_ > 0);
-        n_valid_headers_ = n_valid_headers;
-        n_validated_download += (n_valid_headers_ > 0);
+        num_validated_download -= (num_valid_headers_ > 0);
+        num_valid_headers_ = num_valid_headers;
+        num_validated_download += (num_valid_headers_ > 0);
     }
     
 private:
@@ -642,7 +642,7 @@ private:
     //! When the first entry in BlocksInFlight started downloading. Don't care when BlocksInFlight is empty.
     int64_t downloading_since_ = 0;
     
-    int n_valid_headers_ = 0;
+    int num_valid_headers_ = 0;
 };
 
 struct RelayState {    
@@ -707,10 +707,10 @@ public:
         return (!is_inbound_ && !IsClient());
     }
     
-    static int& NPreferedDownload()
+    static int& NumPreferedDownload()
     {
-        static int n_prefered_download = 0;
-        return n_prefered_download;
+        static int num_prefered_download = 0;
+        return num_prefered_download;
     }
     
     //-------------------------------------------------------------------------
@@ -731,10 +731,10 @@ public:
     
     void set_services(ServiceFlags services)
     {
-        int& n_prefered_download = NPreferedDownload();
-        n_prefered_download -= IsPreferedDownload();
+        int& num_prefered_download = NumPreferedDownload();
+        num_prefered_download -= IsPreferedDownload();
         services_ = services;
-        n_prefered_download += IsPreferedDownload();
+        num_prefered_download += IsPreferedDownload();
     }
     
     uint64_t local_host_nonce() const

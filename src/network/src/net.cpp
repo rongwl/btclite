@@ -13,7 +13,7 @@
 #include "msg_process.h"
 #include "network/include/params.h"
 #include "peers.h"
-#include "protocol/address.h"
+#include "protocol/addr.h"
 #include "random.h"
 
 

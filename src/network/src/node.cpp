@@ -91,7 +91,7 @@ Node::Node(const struct bufferevent *bev, const NetAddr& addr,
       connection_(bev, addr, manual, host_name),
       time_(util::GetTimeSeconds())
 {
-    int& n_prefered_download = NPreferedDownload();
+    int& n_prefered_download = NumPreferedDownload();
     n_prefered_download += IsPreferedDownload();
     time_.ping_time.min_ping_usec_time = std::numeric_limits<int64_t>::max();
 }

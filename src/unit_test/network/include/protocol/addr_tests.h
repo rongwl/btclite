@@ -3,7 +3,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include "protocol/address.h"
+#include "protocol/addr.h"
 
 
 namespace btclite {

@@ -3,7 +3,7 @@
 #include <event2/buffer.h>
 
 #include "chain_state.h"
-#include "protocol/address.h"
+#include "protocol/addr.h"
 #include "protocol/getaddr.h"
 #include "protocol/inventory.h"
 #include "protocol/ping.h"
