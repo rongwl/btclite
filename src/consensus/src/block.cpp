@@ -5,7 +5,7 @@
 
 
 namespace btclite {
-namespace chain {
+namespace consensus {
 
 const util::Hash256& BlockHeader::Hash() const
 {
@@ -149,5 +149,5 @@ Block CreateGenesisBlock(uint32_t time, uint32_t nonce, uint32_t bits, int32_t v
     return CreateGenesisBlock(coinbase, output_script, time, nonce, bits, version, reward);
 }
 
-} // namespace chain
+} // namespace consensus
 } // namespace btclite

@@ -2,7 +2,6 @@
 
 #include <event2/buffer.h>
 
-#include "chain_state.h"
 #include "protocol/addr.h"
 #include "protocol/getaddr.h"
 #include "protocol/inventory.h"
@@ -23,7 +22,8 @@ using namespace protocol;
 
 bool ParseMsgData(const uint8_t *raw, std::shared_ptr<Node> src_node, 
                   const MessageHeader& header, const Params& params,
-                  const LocalService& local_service, Peers *ppeers)
+                  const LocalService& local_service, Peers *ppeers,
+                  chain::ChainState *pchain_state)
 {
     std::vector<uint8_t> vec;
     util::ByteSource<std::vector<uint8_t> > byte_source(vec);
@@ -41,7 +41,9 @@ bool ParseMsgData(const uint8_t *raw, std::shared_ptr<Node> src_node,
         auto recv_handler = std::bind(&Version::RecvHandler, &version,
                                       _1, params.msg_magic(), 
                                       params.advertise_local_addr(),
-                                      std::ref(local_service), ppeers);
+                                      std::ref(local_service), 
+                                      pchain_state->active_chain().Height(),
+                                      ppeers);
         return HandleMsgData(src_node, header, version, recv_handler);
     }
     else if (header.command() == msg_command::kMsgVerack) {
@@ -112,7 +114,8 @@ bool ParseMsgData(const uint8_t *raw, std::shared_ptr<Node> src_node,
 }
 
 bool ParseMsg(std::shared_ptr<Node> src_node, const Params& params, 
-              const LocalService& local_service,Peers *ppeers)
+              const LocalService& local_service, Peers *ppeers,
+              chain::ChainState *pchain_state)
 {
     struct evbuffer *buf;
     uint8_t *raw = nullptr;
@@ -154,7 +157,8 @@ bool ParseMsg(std::shared_ptr<Node> src_node, const Params& params,
         }
         
         // construct msg data from raw
-        ret &= ParseMsgData(raw, src_node, header, params, local_service, ppeers);
+        ret &= ParseMsgData(raw, src_node, header, params, local_service, 
+                            ppeers, pchain_state);
         evbuffer_drain(buf, header.payload_length()); 
       
         raw = evbuffer_pullup(buf, MessageHeader::kSize);
@@ -163,10 +167,9 @@ bool ParseMsg(std::shared_ptr<Node> src_node, const Params& params,
     return ret;
 }
 
-bool SendVersion(std::shared_ptr<Node> dst_node, uint32_t magic)
+bool SendVersion(std::shared_ptr<Node> dst_node, uint32_t magic, uint32_t start_height)
 {
     ServiceFlags services = dst_node->services();
-    uint32_t start_height = chain::SingletonChainState::GetInstance().active_chain().Height();
     NetAddr addr_recv(dst_node->connection().addr());
     NetAddr addr_from;
     

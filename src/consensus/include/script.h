@@ -10,7 +10,7 @@
 
 
 namespace btclite {
-namespace chain {
+namespace consensus {
 
 enum class Opcode : uint8_t {
     // push value
@@ -280,7 +280,7 @@ private:
     std::vector<uint8_t> data_;
 };
 
-} // namespace chain
+} // namespace consensus
 } // namespace btclite
 
 

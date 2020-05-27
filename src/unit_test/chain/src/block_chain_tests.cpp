@@ -35,15 +35,15 @@ TEST(BlockChainTest, GetLocator)
         //EXPECT_EQ(blocks_side[i].height(), blocks_side[i].prev()->height() + 1);
     }
     
-    // Build a CChain for the main branch.
-    chain::BlockChain chain;
+    // Build a Chain for the main branch.
+    chain::Chain chain;
     chain.SetTip(&blocks_main.back());
     
     // Test 100 random starting points for locators.
     for (int n = 0; n < 100; ++n) {
         uint32_t r = util::RandUint64(150000);
         chain::BlockIndex *tip = (r < 100000) ? &blocks_main[r] : &blocks_side[r - 100000];
-        chain::BlockLocator locator;
+        consensus::BlockLocator locator;
         
         ASSERT_TRUE(chain.GetLocator(&locator, tip));
 

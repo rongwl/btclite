@@ -70,7 +70,7 @@ const BlockIndex *BlockIndex::GetAncestor(size_t height) const
     return pindex_walk;
 }
 
-void BlockChain::SetTip(const BlockIndex *pindex)
+void Chain::SetTip(const BlockIndex *pindex)
 {
     if (pindex == nullptr) {
         active_chain_.clear();
@@ -84,7 +84,8 @@ void BlockChain::SetTip(const BlockIndex *pindex)
     }
 }
 
-bool BlockChain::GetLocator(BlockLocator *out, const BlockIndex *pindex) const
+bool Chain::GetLocator(consensus::BlockLocator *out, 
+                       const BlockIndex *pindex) const
 {
     int step = 1;
 
@@ -117,7 +118,7 @@ bool BlockChain::GetLocator(BlockLocator *out, const BlockIndex *pindex) const
     return true;
 }
 
-const BlockIndex *BlockChain::FindFork(const BlockIndex *pindex) const
+const BlockIndex *Chain::FindFork(const BlockIndex *pindex) const
 {
     if (pindex == nullptr) {
         return nullptr;
@@ -132,7 +133,7 @@ const BlockIndex *BlockChain::FindFork(const BlockIndex *pindex) const
     return pindex;
 }
 
-BlockIndex *BlockChain::FindEarliestAtLeast(int64_t time) const
+BlockIndex *Chain::FindEarliestAtLeast(int64_t time) const
 {
     std::vector<BlockIndex*>::const_iterator lower =
         std::lower_bound(active_chain_.begin(), active_chain_.end(), time,
@@ -140,6 +141,24 @@ BlockIndex *BlockChain::FindEarliestAtLeast(int64_t time) const
             bool { return pblock->time_max() < time2; });
     
     return (lower == active_chain_.end() ? nullptr : *lower);
+}
+
+bool BlockChain::Init()
+{
+    return true;
+}
+
+bool BlockChain::Start()
+{
+    return true;
+}
+
+void BlockChain::Interrupt()
+{
+}
+
+void BlockChain::Stop()
+{
 }
 
 } // namespace chain

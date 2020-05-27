@@ -8,7 +8,7 @@ int main(int argc, char **argv)
 {
     btclite::util::logging::InitLogging(argv[0]);
     
-    FullNodeConfig config;
+    btclite::fullnode::FullNodeConfig config;
     try {
         config.ParseParameters(argc, argv);
     }
@@ -26,7 +26,7 @@ int main(int argc, char **argv)
     if (!config.InitDataDir())
         return EXIT_FAILURE;
     
-    FullNodeMain fullnode(config);
+    btclite::fullnode::FullNode fullnode(config);
     bool ret = false;
     try {
         ret = fullnode.Init();

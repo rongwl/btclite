@@ -2,12 +2,12 @@
 
 
 namespace btclite {
-namespace chain {
+namespace consensus {
 
 std::string ScriptWitness::ToString() const
 {
     return "";
 }
 
-} // namespace chain
+} // namespace consensus
 } // namespace btclite

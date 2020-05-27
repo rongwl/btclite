@@ -10,7 +10,7 @@ namespace network {
 
 class Acceptor : util::Uncopyable {
 public:    
-    Acceptor(const Params params);
+    Acceptor(uint16_t listen_port);
     
     ~Acceptor()
     {
@@ -20,8 +20,7 @@ public:
             event_base_free(base_);
     }
     
-    bool InitEvent(const LocalService& local_service,
-                   const Peers& peers, const BanList& ban_list);
+    bool InitEvent(Context *ctx);
     void StartEventLoop();
     
     void ExitEventLoop()
@@ -48,8 +47,6 @@ public:
     }
     
 private:
-    const Params params_;
-    
     struct event_base *base_;
     struct evconnlistener *listener_;
     struct sockaddr_in6 sock_addr_;

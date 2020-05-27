@@ -14,7 +14,7 @@ namespace protocol{
 
 bool Version::RecvHandler(std::shared_ptr<Node> src_node, uint32_t magic, 
                           bool advertise_local, const LocalService& local_service,
-                          Peers *ppeers) const
+                          uint32_t height, Peers *ppeers) const
 {
     Verack verack;
     
@@ -72,7 +72,7 @@ bool Version::RecvHandler(std::shared_ptr<Node> src_node, uint32_t magic,
     }
     
     if (src_node->is_inbound()) {
-        SendVersion(src_node, magic);
+        SendVersion(src_node, magic, height);
     }
     
     SendMsg(verack, magic, src_node);

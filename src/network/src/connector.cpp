@@ -1,12 +1,13 @@
 #include "connector.h"
 
+#include <arpa/inet.h>
+
 #include "banlist.h"
 #include "msg_process.h"
-#include "net.h"
 #include "net_base.h"
 #include "peers.h"
 #include "random.h"
-#include <arpa/inet.h>
+#include "thread.h"
 
 
 namespace btclite {
@@ -22,7 +23,7 @@ bool Connector::InitEvent()
     }
     
     // default bufferevent, just for event loop keep running
-    if (nullptr == (bev_ = NewSocketEvent(nullptr))) {
+    if (nullptr == (bev_ = NewSocketEvent(Context()))) {
         return false;
     }
     
@@ -52,91 +53,107 @@ void Connector::ExitEventLoop()
     event_base_loopexit(base_, &delay);
 }
 
-struct bufferevent *Connector::NewSocketEvent(const Context *ctx)
+struct bufferevent *Connector::NewSocketEvent(const Context& ctx)
 {
     struct bufferevent *bev;
     
-    if (nullptr == (bev = bufferevent_socket_new(
-                              base_, -1, BEV_OPT_THREADSAFE | BEV_OPT_CLOSE_ON_FREE))) {
+    if (nullptr == (bev = bufferevent_socket_new(base_, -1, 
+                              BEV_OPT_THREADSAFE | BEV_OPT_CLOSE_ON_FREE))) {
         BTCLOG(LOG_LEVEL_ERROR) << "Connector create socket event failed.";
         return nullptr;
     }
     
-    bufferevent_setcb(bev, ConnReadCb, NULL, ConnEventCb, (void*)ctx);
+    bufferevent_setcb(bev, ConnReadCb, NULL, ConnEventCb, (void*)&ctx);
     bufferevent_enable(bev, EV_READ);
     
     return bev;
 }
 
-bool Connector::StartOutboundTimer(const LocalService& local_service,
-                                   const Peers& peers, const BanList& banlist)
+bool Connector::StartOutboundTimer(Context *ctx)
 {    
+    if (!ctx || !ctx->IsValid()) {
+        BTCLOG(LOG_LEVEL_WARNING) << "Pass nullptr to " << __func__;
+        return false;
+    }
+    
     if (outbounds_.ShouldDnsLookup()) {
-        if (!peers.IsEmpty()) {
-            auto func = std::bind(&Connector::DnsLookup, this, std::ref(params_.seeds()),
-                                  params_.default_port(), &(const_cast<Peers&>(peers)));
-            util::SingletonTimerMng::GetInstance().StartTimer(11000, 0,
-                                                              std::function<bool()>(func));            
+        if (!ctx->ppeers->IsEmpty()) {
+            auto func = std::bind(&Connector::DnsLookup, this, 
+                                  std::ref(ctx->pparams->seeds()),
+                                  ctx->pparams->default_port(), ctx->ppeers);
+            util::SingletonTimerMng::GetInstance().StartTimer(11000, 0, 
+                    std::function<bool()>(func));            
         }
         else {
-            auto task = std::bind(&Connector::DnsLookup, this, std::ref(params_.seeds()),
-                                  params_.default_port(), &(const_cast<Peers&>(peers)));
-            util::SingletonThreadPool::GetInstance().AddTask(std::function<bool()>(task));
+            auto task = std::bind(&Connector::DnsLookup, this, 
+                                  std::ref(ctx->pparams->seeds()),
+                                  ctx->pparams->default_port(), ctx->ppeers);
+            util::SingletonThreadPool::GetInstance().AddTask(
+                std::function<bool()>(task));
         }
     }
     else {
         BTCLOG(LOG_LEVEL_INFO) << "P2P peers available. Skipped DNS seeding.";
-    }    
+    }
     
-    auto func = std::bind(&Connector::OutboundTimeOutCb, this, std::ref(local_service),
-                          std::ref(banlist), &(const_cast<Peers&>(peers)));
+    ctx->pnodes = &outbounds_;
+    auto func = std::bind(&Connector::OutboundTimeOutCb, this, std::ref(*ctx));
     outbound_timer_ = 
-        util::SingletonTimerMng::GetInstance().StartTimer(500, 500, std::function<bool()>(func));
+        util::SingletonTimerMng::GetInstance().StartTimer(500, 500, 
+                std::function<bool()>(func));
     
     return (outbound_timer_ != nullptr);
 }
 
-bool Connector::OutboundTimeOutCb(const LocalService& local_service, 
-                                  const BanList& banlist, Peers *ppeers)
+bool Connector::OutboundTimeOutCb(const Context& ctx)
 {
     proto_peers::Peer peer;
     NetAddr conn_addr;
     int tries;
     int64_t now;
     
-    if (outbounds_.Size() >= kMaxOutboundConnections)
+    if (!ctx.IsValid()) {
+        BTCLOG(LOG_LEVEL_WARNING) << "Pass nullptr to " << __func__;
         return false;
+    }
+    
+    if (outbounds_.Size() >= kMaxOutboundConnections) {
+        return false;
+    }
     
     now = util::GetAdjustedTime();
     for (tries = 0; tries <= 100; ++tries) {
-        if (SingletonNetInterrupt::GetInstance())
+        if (util::SingletonInterruptor::GetInstance()) {
             return false;
+        }
         
-        if (ppeers && !ppeers->Select(&peer))
+        if (!ctx.ppeers->Select(&peer)) {
             return false;
+        }
         
         const NetAddr& addr = NetAddr(peer.addr());
-        if (!addr.IsValid() || local_service.IsLocal(addr))
+        if (!addr.IsValid() || ctx.plocal_service->IsLocal(addr)) {
             return false;
+        }
         
         if (tries <= 30) {
             if (now - peer.last_try() >= 600 &&
-                peer.addr().port() == params_.default_port() &&
+                peer.addr().port() == ctx.pparams->default_port() &&
                 IsServiceFlagDesirable(peer.addr().services())) {
-                return ConnectNode(addr, local_service, banlist, ppeers);
+                return ConnectNode(addr, ctx);
             }
         }
         // consider very recently tried nodes after 30 failed attempts
         else if (tries <= 50) {
-            if (peer.addr().port() == params_.default_port() &&
+            if (peer.addr().port() == ctx.pparams->default_port() &&
                 IsServiceFlagDesirable(peer.addr().services())) {
-                return ConnectNode(addr, local_service, banlist, ppeers);
+                return ConnectNode(addr, ctx);
             }
         }
         // allow non-default ports after 50 failed attempts
         else {
             if (IsServiceFlagDesirable(peer.addr().services())) {
-                return ConnectNode(addr, local_service, banlist, ppeers);
+                return ConnectNode(addr, ctx);
             }
         }
     }
@@ -145,38 +162,45 @@ bool Connector::OutboundTimeOutCb(const LocalService& local_service,
 }
 
 bool Connector::ConnectNodes(const std::vector<std::string>& str_addrs, 
-                             const LocalService& local_service,
-                             const BanList& banlist, Peers *ppeers,
-                             bool manual)
+                             const Context& ctx, bool manual)
 {
-    if (str_addrs.empty())
+    if (str_addrs.empty()) {
         return false;
+    }
+    
+    if (!ctx.IsValid()) {
+        BTCLOG(LOG_LEVEL_WARNING) << "Pass nullptr to " << __func__;
+        return false;
+    }
     
     std::vector<NetAddr> addrs;
     for (auto it = str_addrs.begin(); it != str_addrs.end(); ++it) {
         NetAddr addr;
-        GetHostAddr(*it, &addr);
+        GetHostAddr(*it, ctx.pparams->default_port(), &addr);
         addrs.push_back(std::move(addr));
     }
-    return ConnectNodes(addrs, local_service, banlist, ppeers, manual);
+    return ConnectNodes(addrs, ctx, manual);
 }
 
 bool Connector::ConnectNodes(const std::vector<NetAddr>& addrs, 
-                             const LocalService& local_service,
-                             const BanList& banlist, Peers *ppeers,
-                             bool manual)
+                             const Context& ctx, bool manual)
 {
     bool ret = true;
     
+    if (!ctx.IsValid()) {
+        BTCLOG(LOG_LEVEL_WARNING) << "Pass nullptr to " << __func__;
+        return false;
+    }
+    
     for (const NetAddr& addr : addrs) {
-        ret &= ConnectNode(addr, local_service, banlist, ppeers, manual);
+        ret &= ConnectNode(addr, ctx, manual);
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
 
     return ret;
 }
 
-bool Connector::DnsLookup(const std::vector<Seed>& seeds, uint16_t default_port,
+bool Connector::DnsLookup(const std::vector<Seed>& seeds, uint16_t port,
                           Peers *ppeers)
 {
     int found = 0;
@@ -189,7 +213,7 @@ bool Connector::DnsLookup(const std::vector<Seed>& seeds, uint16_t default_port,
     BTCLOG(LOG_LEVEL_INFO) << "Loading addresses from DNS seeds (could take a while)";
 
     for (const Seed& seed : seeds) {
-        if (SingletonNetInterrupt::GetInstance())
+        if (util::SingletonInterruptor::GetInstance())
             return false;
 
         std::string host = "x" + std::to_string(kDesirableServiceFlags) + "." + seed.host;
@@ -200,11 +224,11 @@ bool Connector::DnsLookup(const std::vector<Seed>& seeds, uint16_t default_port,
 
         std::vector<NetAddr> addrs;
         // Limits number of addrs learned from a DNS seed
-        if (!LookupHost(host.c_str(), &addrs, 256, true, default_port))
+        if (!LookupHost(host.c_str(), &addrs, 256, true, port))
             continue;
         
         for (NetAddr& addr : addrs) {
-            addr.set_port(default_port);
+            addr.set_port(port);
             addr.set_services(kDesirableServiceFlags);
             // use a random age between 3 and 7 days old
             int64_t time = util::GetTimeSeconds() - 3*24*60*60 
@@ -225,22 +249,22 @@ bool Connector::DnsLookup(const std::vector<Seed>& seeds, uint16_t default_port,
     return true;
 }
 
-bool Connector::ConnectNode(const NetAddr& addr, const LocalService& local_service,
-                            const BanList& ban_list, Peers *ppeers, bool manual)
+bool Connector::ConnectNode(const NetAddr& addr, const Context& ctx, bool manual)
 {
     struct bufferevent *bev;
     struct sockaddr_storage sock_addr;
     socklen_t len;
 
-    if (!base_)
+    if (!base_) {
         return false;
+    }
     
     if (!addr.IsValid()) {
         BTCLOG(LOG_LEVEL_WARNING) << "Connecting to invalide address:" << addr.ToString();
         return false;
     }
 
-    if (local_service.IsLocal(addr)) {
+    if (ctx.plocal_service->IsLocal(addr)) {
         BTCLOG(LOG_LEVEL_WARNING) << "Connecting to local address:" << addr.ToString();
         return false;
     }
@@ -251,27 +275,19 @@ bool Connector::ConnectNode(const NetAddr& addr, const LocalService& local_servi
         return false;
     }
 
-    if (ban_list.IsBanned(addr)) {
+    if (ctx.pbanlist->IsBanned(addr)) {
         BTCLOG(LOG_LEVEL_WARNING) << "Connecting to banned address:" << addr.ToString();
         return false;
     }
 
-    static Context ctx;
-    ctx.pnodes = &outbounds_;
-    ctx.ppeers = ppeers;
-    ctx.pbanlist = (BanList*)&ban_list;
-    ctx.pparams = &params_;
-    ctx.plocal_service = (LocalService*)&local_service;
-    if (nullptr == (bev = NewSocketEvent(&ctx))) {
+    if (nullptr == (bev = NewSocketEvent(ctx))) {
         return false;
     }
 
     BTCLOG(LOG_LEVEL_INFO) << "Trying to connect to " << addr.ToString() 
                            << ':' << addr.port();
     
-    if (ppeers) {
-        ppeers->Attempt(addr);
-    }
+    ctx.ppeers->Attempt(addr);
 
     std::memset(&sock_addr, 0, sizeof(sock_addr));
     addr.ToSockAddr(reinterpret_cast<struct sockaddr*>(&sock_addr));
@@ -291,21 +307,21 @@ bool Connector::ConnectNode(const NetAddr& addr, const LocalService& local_servi
         return false;
     }
     node->mutable_connection()->RegisterSetStateCb(NodeConnection::kDisconnected,
-            std::bind(DisconnectNodeCb, node, &outbounds_, ppeers,
+            std::bind(DisconnectNodeCb, node, &outbounds_, ctx.ppeers,
                       &SingletonBlocksInFlight::GetInstance(), &SingletonOrphans::GetInstance()));
 
     BTCLOG(LOG_LEVEL_INFO) << "Connected to " << addr.ToString() 
                               << ':' << addr.port();
-    SendVersion(node, params_.msg_magic());
+    SendVersion(node, ctx.pparams->msg_magic(), ctx.pchain_state->active_chain().Height());
     
     return true;
 }
 
-bool Connector::GetHostAddr(const std::string& host_name, NetAddr *out)
+bool Connector::GetHostAddr(const std::string& host_name, uint16_t port, NetAddr *out)
 {
     std::vector<NetAddr> addrs;
     
-    if (!LookupHost(host_name.c_str(), &addrs, 256, true, params_.default_port()) || 
+    if (!LookupHost(host_name.c_str(), &addrs, 256, true, port) || 
             addrs.empty())
         return false;
     

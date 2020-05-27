@@ -8,9 +8,9 @@
 #include <queue>
 
 #include "banlist.h"
-#include "bloom.h"
 #include "block_chain.h"
 #include "block_sync.h"
+#include "bloom.h"
 #include "net_base.h"
 #include "peers.h"
 #include "timer.h"
@@ -449,8 +449,15 @@ class BlockSyncTimeout {
 public:
     static int& NumProtected()
     {
+        LOCK(CsNumProtected());
         static int num_protected = 0;
         return num_protected;
+    }
+    
+    static util::CriticalSection& CsNumProtected()
+    {
+        static util::CriticalSection cs;
+        return cs;
     }
     
     //-------------------------------------------------------------------------
@@ -498,6 +505,7 @@ public:
     
     void set_protect(bool protect)
     {
+        LOCK(CsNumProtected());
         int& num_protected = NumProtected();
         LOCK(cs_);
         num_protected -= protect_;
@@ -525,8 +533,15 @@ class BlockSyncState1 {
 public:
     static int& NumSyncStarted()
     {
+        LOCK(CsNumSyncStarted());
         static int num_sync_started = 0;
         return num_sync_started;
+    }
+    
+    static util::CriticalSection& CsNumSyncStarted()
+    {
+        static util::CriticalSection cs;
+        return cs;
     }
     
     //-------------------------------------------------------------------------
@@ -537,6 +552,7 @@ public:
     
     void set_sync_started(bool sync_started)
     {
+        LOCK(CsNumSyncStarted());
         int& num_sync_started = NumSyncStarted();
         num_sync_started -= sync_started_;
         sync_started_ = sync_started;
@@ -609,8 +625,15 @@ public:
     
     static int& NumValidatedDownload()
     {
+        LOCK(CsNumValidatedDownload());
         static int num_validated_download = 0;
         return num_validated_download;
+    }
+    
+    static util::CriticalSection& CsNumValidatedDownload()
+    {
+        static util::CriticalSection cs;
+        return cs;
     }
     
     //-------------------------------------------------------------------------
@@ -628,7 +651,8 @@ public:
     
     void set_num_valid_headers(int num_valid_headers)
     {
-        int& num_validated_download = NumValidatedDownload();
+        LOCK(CsNumValidatedDownload());
+        auto& num_validated_download = NumValidatedDownload();
         LOCK(cs_);
         num_validated_download -= (num_valid_headers_ > 0);
         num_valid_headers_ = num_valid_headers;
@@ -709,8 +733,15 @@ public:
     
     static int& NumPreferedDownload()
     {
+        LOCK(CsNumPreferedDownload());
         static int num_prefered_download = 0;
         return num_prefered_download;
+    }
+    
+    static util::CriticalSection& CsNumPreferedDownload()
+    {
+        static util::CriticalSection cs;
+        return cs;
     }
     
     //-------------------------------------------------------------------------
@@ -731,6 +762,7 @@ public:
     
     void set_services(ServiceFlags services)
     {
+        LOCK(CsNumPreferedDownload());
         int& num_prefered_download = NumPreferedDownload();
         num_prefered_download -= IsPreferedDownload();
         services_ = services;

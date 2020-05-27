@@ -1,7 +1,6 @@
 #include "protocol/ping.h"
 
 #include "msg_process.h"
-#include "net.h"
 #include "protocol/pong.h"
 
 

@@ -49,7 +49,7 @@ public:
     //-------------------------------------------------------------------------
     bool RecvHandler(std::shared_ptr<Node> src_node, uint32_t magic, 
                      bool advertise_local, const LocalService& local_service,
-                     Peers *ppeers) const;
+                     uint32_t height, Peers *ppeers) const;
     
     std::string Command() const
     {

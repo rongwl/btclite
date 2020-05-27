@@ -2,7 +2,6 @@
 
 #include "banlist.h"
 #include "msg_process.h"
-#include "net.h"
 #include "peers.h"
 #include "protocol/ping.h"
 #include "thread.h"
@@ -91,8 +90,8 @@ Node::Node(const struct bufferevent *bev, const NetAddr& addr,
       connection_(bev, addr, manual, host_name),
       time_(util::GetTimeSeconds())
 {
-    int& n_prefered_download = NumPreferedDownload();
-    n_prefered_download += IsPreferedDownload();
+    int& num_prefered_download = NumPreferedDownload();
+    num_prefered_download += IsPreferedDownload();
     time_.ping_time.min_ping_usec_time = std::numeric_limits<int64_t>::max();
 }
 
@@ -164,8 +163,10 @@ bool Node::CheckBanned(BanList *pbanlist)
 
 void Node::InactivityTimeoutCb()
 {
-    if (SingletonNetInterrupt::GetInstance())
+    if (util::SingletonInterruptor::GetInstance() || 
+            connection_.IsDisconnected()) {
         return;
+    }
 
     BTCLOG(LOG_LEVEL_WARNING) << "Peer " << id_ << " inactive timeout.";
     connection_.Disconnect();
@@ -173,8 +174,10 @@ void Node::InactivityTimeoutCb()
 
 void Node::SocketNoMsgTimeoutCb()
 {
-    if (SingletonNetInterrupt::GetInstance())
+    if (util::SingletonInterruptor::GetInstance() || 
+            connection_.IsDisconnected()) {
         return;
+    }
     
     if (!connection_.socket_no_msg())
         return;
@@ -186,11 +189,8 @@ void Node::SocketNoMsgTimeoutCb()
 
 void Node::PingTimeoutCb(uint32_t magic)
 {
-    if (SingletonNetInterrupt::GetInstance())
-        return;
-    
-    if (connection_.IsDisconnected()) {
-        util::SingletonTimerMng::GetInstance().StopTimer(timers_.ping_timer);
+    if (util::SingletonInterruptor::GetInstance() || 
+            connection_.IsDisconnected()) {
         return;
     }
     
@@ -210,11 +210,14 @@ void Node::PingTimeoutCb(uint32_t magic)
 
 void Node::ShakeHandsTimeoutCb()
 {
-    if (SingletonNetInterrupt::GetInstance())
+    if (util::SingletonInterruptor::GetInstance() || 
+            connection_.IsDisconnected()) {
         return;
+    }
     
-    if (connection_.IsHandshakeCompleted())
+    if (connection_.IsHandshakeCompleted()) {
         return;
+    }
     
     BTCLOG(LOG_LEVEL_WARNING) << "Peer "<< id_ << " shakehands timeout.";
     connection_.Disconnect();

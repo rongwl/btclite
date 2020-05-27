@@ -73,31 +73,6 @@ private:
 };
 
 
-class SingletonLocalService : util::Uncopyable {
-public:
-    static LocalService& GetInstance()
-    {
-        static LocalService config;
-        return config;
-    }
-    
-private:
-    SingletonLocalService() {}
-};
-
-class SingletonNetInterrupt : util::Uncopyable {
-public:
-    static util::ThreadInterrupt& GetInstance()
-    {
-        static util::ThreadInterrupt interrupt;
-        return interrupt;
-    }
-    
-private:
-    SingletonNetInterrupt() {}
-};
-
-
 void AdvertiseLocalTimeoutCb(std::shared_ptr<Node> node,
                              const LocalService& local_service);
 void RelayFloodingAddrsTimeoutCb(std::shared_ptr<Node> node, uint32_t magic);

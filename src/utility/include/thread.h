@@ -25,7 +25,7 @@ void SetThreadName(const char* name);
     any current sleep, and after that point operator bool() will return true
     until reset.
 */
-class ThreadInterrupt
+class ThreadInterruptor
 {
 public:
     explicit operator bool() const;
@@ -39,6 +39,18 @@ private:
     std::condition_variable cond_;
     std::mutex mutex_;
     std::atomic<bool> flag_;
+};
+
+class SingletonInterruptor : util::Uncopyable {
+public:
+    static util::ThreadInterruptor& GetInstance()
+    {
+        static util::ThreadInterruptor interrupt;
+        return interrupt;
+    }
+    
+private:
+    SingletonInterruptor() {}
 };
 
 

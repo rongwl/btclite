@@ -1,13 +1,8 @@
-#include <gtest/gtest.h>
+#include "connector_tests.h"
+
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-
-#include "connector.h"
-#include "banlist.h"
-#include "net.h"
-#include "net_base.h"
-#include "peers.h"
 
 
 namespace btclite {
@@ -15,95 +10,82 @@ namespace unit_test {
 
 using namespace network;
 
-TEST(ConnectorTest, ConnectNode)
-{
-    std::vector<NetAddr> addrs;
-    network::Params params(BtcNet::kTestNet, util::Args(), fs::path("/tmp/foo"));
-    Connector connector(params);
-    Peers peers;
-    BanList banlist;
-    
+TEST_F(ConnectorTest, ConnectNode)
+{    
     // init libevent
-    ASSERT_TRUE(connector.InitEvent());
+    ASSERT_TRUE(connector_.InitEvent());
     
     // valid addr
-    addrs.emplace_back(NetAddr());
-    EXPECT_FALSE(connector.ConnectNodes(addrs, LocalService(), banlist, &peers));
+    addrs_.emplace_back(NetAddr());
+    EXPECT_FALSE(connector_.ConnectNodes(addrs_, ctx_));
     
     // local addr
-    addrs[0].SetIpv4(inet_addr("1.2.3.4"));
-    LocalService local_service(addrs);
-    EXPECT_FALSE(connector.ConnectNodes(addrs, local_service, banlist, &peers));
+    addrs_[0].SetIpv4(inet_addr("1.2.3.4"));
+    LocalService local_service2(addrs_);
+    ctx_.plocal_service = &local_service2;
+    EXPECT_FALSE(connector_.ConnectNodes(addrs_, ctx_));
     
     // banned addr
-    banlist.Add(addrs[0], BanList::BanReason::kNodeMisbehaving);
-    EXPECT_FALSE(connector.ConnectNodes(addrs, LocalService(), banlist, &peers));
+    banlist_.Add(addrs_[0], BanList::BanReason::kNodeMisbehaving);
+    ctx_.plocal_service = &local_service_;
+    EXPECT_FALSE(connector_.ConnectNodes(addrs_, ctx_));
     
-    LookupHost(std::string("x9.seed.tbtc.petertodd.org").c_str(), &addrs[0], true, 18333);
-    EXPECT_TRUE(connector.ConnectNodes(addrs, LocalService(), banlist, &peers));
+    LookupHost(std::string("x9.seed.tbtc.petertodd.org").c_str(), &addrs_[0], true, 18333);
+    EXPECT_TRUE(connector_.ConnectNodes(addrs_, ctx_));
     
     // exist addr
-    EXPECT_FALSE(connector.ConnectNodes(addrs, LocalService(), banlist, &peers));
+    EXPECT_FALSE(connector_.ConnectNodes(addrs_, ctx_));
 }
 
-TEST(ConnectorTest, GetHostAddr)
+TEST_F(ConnectorTest, GetHostAddr)
 {
-    network::Params params(BtcNet::kTestNet, util::Args(), fs::path("/tmp/foo"));
-    Connector connector(params);
     NetAddr addr;
     
-    ASSERT_TRUE(connector.GetHostAddr("1.2.3.1", &addr));
+    ASSERT_TRUE(connector_.GetHostAddr("1.2.3.1", 18333, &addr));
     EXPECT_EQ(addr.GetIpv4(), inet_addr("1.2.3.1"));
     
     // node is exist
-    auto& nodes = const_cast<Nodes&>(connector.outbounds());
+    auto& nodes = const_cast<Nodes&>(connector_.outbounds());
     nodes.AddNode(std::make_shared<Node>(nullptr, addr));
-    ASSERT_FALSE(connector.GetHostAddr("1.2.3.1", &addr));
-    EXPECT_TRUE(connector.GetHostAddr("1.2.3.2", &addr));
+    ASSERT_FALSE(connector_.GetHostAddr("1.2.3.1", 18333, &addr));
+    EXPECT_TRUE(connector_.GetHostAddr("1.2.3.2", 18333, &addr));
     
-    EXPECT_TRUE(connector.GetHostAddr("bitcoin.org", &addr));
+    EXPECT_TRUE(connector_.GetHostAddr("bitcoin.org", 18333, &addr));
 }
 
-TEST(ConnectorTest, ConnectOutbound)
+TEST_F(ConnectorTest, ConnectOutbound)
 {
-    network::Params params(BtcNet::kTestNet, util::Args(), fs::path("/tmp/foo"));
-    Connector connector(params);
     NetAddr addr, source;
-    std::vector<NetAddr> addrs;
-    Peers peers;
-    BanList banlist;
     
     // init libevent
-    ASSERT_TRUE(connector.InitEvent());
+    ASSERT_TRUE(connector_.InitEvent());
     
     // peers is null
-    EXPECT_FALSE(connector.OutboundTimeOutCb(LocalService(), banlist, &peers));
+    EXPECT_FALSE(connector_.OutboundTimeOutCb(ctx_));
 
     // connecting peer is local
-    addrs.emplace_back(NetAddr());
-    addrs[0].SetIpv4(inet_addr("1.2.3.4"));
-    LocalService local_service(addrs);
+    addrs_.emplace_back(NetAddr());
+    addrs_[0].SetIpv4(inet_addr("1.2.3.4"));
+    LocalService local_service2(addrs_);
+    ctx_.plocal_service = &local_service2;
     source.SetIpv4(inet_addr("1.2.3.5"));
-    peers.Add(addrs[0], source);
-    EXPECT_FALSE(connector.OutboundTimeOutCb(local_service, banlist, &peers));
-    peers.Clear();
+    peers_.Add(addrs_[0], source);
+    EXPECT_FALSE(connector_.OutboundTimeOutCb(ctx_));
+    peers_.Clear();
   
     LookupHost(std::string("x9.seed.tbtc.petertodd.org").c_str(), &addr, true, 18333);
-    addr.set_port(8333);
+    addr.set_port(18333);
     addr.set_services(kDesirableServiceFlags);
-    peers.Add(addr, source);
-    EXPECT_TRUE(connector.OutboundTimeOutCb(LocalService(), banlist, &peers));
+    peers_.Add(addr, source);
+    ctx_.plocal_service = &local_service_;
+    EXPECT_TRUE(connector_.OutboundTimeOutCb(ctx_));
 
 }
 
-TEST(ConnectorTest, DnsLookup)
-{
-    network::Params params(BtcNet::kTestNet, util::Args(), fs::path("/tmp/foo"));
-    Connector connector(params);
-    Peers peers;
-    
-    ASSERT_TRUE(connector.DnsLookup(params.seeds(), 18333, &peers));
-    EXPECT_FALSE(peers.IsEmpty());
+TEST_F(ConnectorTest, DnsLookup)
+{    
+    ASSERT_TRUE(connector_.DnsLookup(params_.seeds(), 18333, &peers_));
+    EXPECT_FALSE(peers_.IsEmpty());
 }
 
 } // namespace unit_test

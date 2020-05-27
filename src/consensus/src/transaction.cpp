@@ -5,7 +5,7 @@
 
 
 namespace btclite {
-namespace chain {
+namespace consensus {
 
 std::string TxIn::ToString() const
 {
@@ -144,5 +144,5 @@ const util::Hash256& Transaction::WitnessHash() const
     return witness_hash_cache_;
 }
 
-} // namespace chain
+} // namespace consensus
 } // namespace btclite

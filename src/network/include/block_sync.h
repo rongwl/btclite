@@ -369,7 +369,7 @@ struct IterLess
 };
 
 struct OrphanTx {
-    using TxSharedPtr = std::shared_ptr<const chain::Transaction>;
+    using TxSharedPtr = std::shared_ptr<const consensus::Transaction>;
     
     // When modifying, adapt the copy of this definition in unit tests.
     TxSharedPtr tx;
@@ -380,7 +380,7 @@ struct OrphanTx {
 class Orphans : util::Uncopyable {
 public:
     using MapOrphanTxs = std::map<util::Hash256, OrphanTx>;
-    using MapPrevOrphanTxs = std::map<chain::OutPoint, 
+    using MapPrevOrphanTxs = std::map<consensus::OutPoint, 
           std::set<MapOrphanTxs::iterator, IterLess<MapOrphanTxs::iterator> > >;
     
     bool AddOrphanTx(OrphanTx::TxSharedPtr tx, NodeId id);

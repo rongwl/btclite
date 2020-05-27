@@ -7,7 +7,7 @@
 
 
 namespace btclite {
-namespace chain {
+namespace consensus {
 
 class ScriptWitness {
 public:
@@ -77,7 +77,7 @@ private:
     std::vector<std::vector<uint8_t> > stack_;
 };
 
-} // namespace chain
+} // namespace consensus
 } // namespace btclite
 
 #endif // BTCLITE_TRANSACTION_SCRIPT_WITNESS_H

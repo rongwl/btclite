@@ -1,13 +1,12 @@
 #include "p2p.h"
 #include "fullnode/include/config.h"
-#include "net.h"
 
 
 namespace btclite {
 namespace network {
 
 
-bool P2P::Init()
+bool P2P::Init(const chain::ChainState& chain_state)
 {
     BTCLOG(LOG_LEVEL_INFO) << "Initializing p2p network...";
     
@@ -15,7 +14,11 @@ bool P2P::Init()
         local_service_.DiscoverLocalAddrs();
     }
     
-    if (!acceptor_.InitEvent(local_service_, peers_, ban_list_))
+    Nodes nodes;
+    static Context ctx = { &params_, &local_service_, &nodes, 
+                           const_cast<chain::ChainState*>(&chain_state),
+                           &ban_list_, &peers_ };
+    if (!acceptor_.InitEvent(&ctx))
         return false;
     
     if (!connector_.InitEvent())
@@ -41,16 +44,16 @@ bool P2P::Init()
         ban_db_.DumpBanList(ban_list_);
     }
     
-    BTCLOG(LOG_LEVEL_INFO) << "Initialized p2p network.";
+    BTCLOG(LOG_LEVEL_INFO) << "Finished initializing p2p network.";
     
     return true;
 }
 
-bool P2P::Start()
+bool P2P::Start(const chain::ChainState& chain_state)
 {    
     BTCLOG(LOG_LEVEL_INFO) << "Starting p2p network...";
     
-    SingletonNetInterrupt::GetInstance().Reset();
+    util::SingletonInterruptor::GetInstance().Reset();
     
     // start acceptor
     thread_acceptor_loop_ = std::thread(&util::TraceThread<std::function<void()> >, 
@@ -63,22 +66,26 @@ bool P2P::Start()
                                          "connector",
                                          std::function<void()>(std::bind(
                                                  &Connector::StartEventLoop, &connector_)));
+    
+    Nodes nodes;
+    static Context ctx = { &params_, &local_service_, &nodes, 
+                                  const_cast<chain::ChainState*>(&chain_state),
+                                  &ban_list_, &peers_ };
     if (!params_.specified_outgoing().empty()) {
         if (!connector_.ConnectNodes(params_.specified_outgoing(), 
-                                     local_service_, ban_list_, 
-                                     &peers_, true)) {
+                                     ctx, true)) {
             BTCLOG(LOG_LEVEL_ERROR) << "Connecting specified outgoing failed.";
             return false;
         }
     }
     else  {
-        if (!connector_.StartOutboundTimer(local_service_, peers_, ban_list_)) {
+        if (!connector_.StartOutboundTimer(&ctx)) {
             BTCLOG(LOG_LEVEL_ERROR) << "Starting outbound timer failed.";
             return false;
         }
     }
     
-    BTCLOG(LOG_LEVEL_INFO) << "Started p2p network.";
+    BTCLOG(LOG_LEVEL_INFO) << "Finished starting p2p network.";
 
     return true;
 }
@@ -87,12 +94,10 @@ void P2P::Interrupt()
 {
     BTCLOG(LOG_LEVEL_INFO) << "Interrupting p2p network...";
     
-    SingletonNetInterrupt::GetInstance().Interrupt();
-    util::SingletonTimerMng::GetInstance().set_stop(true);
     acceptor_.ExitEventLoop();
     connector_.ExitEventLoop();    
     
-    BTCLOG(LOG_LEVEL_INFO) << "Interrupted p2p network.";
+    BTCLOG(LOG_LEVEL_INFO) << "Finished interrupting p2p network.";
 }
 
 void P2P::Stop()
@@ -108,7 +113,7 @@ void P2P::Stop()
     peers_db_.DumpPeers(peers_);
     ban_db_.DumpBanList(ban_list_);
     
-    BTCLOG(LOG_LEVEL_INFO) << "Stopped p2p network.";
+    BTCLOG(LOG_LEVEL_INFO) << "Finished stoping p2p network.";
 }
 
 } // namespace network

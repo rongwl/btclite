@@ -3,17 +3,18 @@
 
 
 #include "chain/include/params.h"
+#include "block_chain.h"
 #include "fullnode/include/config.h"
 #include "p2p.h"
 
 
-class FullNodeMain final : public btclite::util::Executor {
+namespace btclite {
+namespace fullnode {
+
+class FullNode final : public btclite::util::Executor {
 public:
-    explicit FullNodeMain(const FullNodeConfig& config)
-        : network_(config)
-    {
-        btclite::chain::SingletonParams::GetInstance(config.btcnet());
-    }
+    explicit FullNode(const FullNodeConfig& config)
+        : chain_(config), network_(config) {}
 
     //-------------------------------------------------------------------------
     bool Init();
@@ -22,6 +23,7 @@ public:
     void Stop();
     
 private:
+    btclite::chain::BlockChain chain_;
     btclite::network::P2P network_;
     
     bool BasicSetupCustomized()
@@ -29,6 +31,9 @@ private:
         return true;
     }
 };
+
+} // namespace fullnode
+} // namespace btclite
 
 
 #endif // BTCLITE_FULLNODE_EXECUTOR_H

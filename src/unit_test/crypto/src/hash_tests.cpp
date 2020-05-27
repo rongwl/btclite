@@ -8,7 +8,7 @@ namespace btclite {
 namespace unit_test {
 
 using namespace crypto;
-using namespace chain;
+using namespace consensus;
 
 TEST(HashWStreamTest, Sha256)
 {

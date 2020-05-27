@@ -6,7 +6,7 @@
 namespace btclite {
 namespace network {
 
-using namespace chain;
+using namespace consensus;
 
 #if 0
 void BlockSync::AddSyncState(NodeId id, const NetAddr& addr, const std::string& addr_name)

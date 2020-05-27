@@ -1,48 +1,56 @@
 #include "fullnode/include/executor.h"
 
+#include "thread.h"
 
-bool FullNodeMain::Init()
+
+namespace btclite {
+namespace fullnode {
+
+bool FullNode::Init()
 {
     BTCLOG(LOG_LEVEL_INFO) << "Initializing btc-fullnode...";
     
     if (!BasicSetup())
         return false;
+    
+    if (!network_.Init(chain_.chain_state()))
+        return false;
 
-    BTCLOG(LOG_LEVEL_INFO) << "Initialized btc-fullnode.";
+    BTCLOG(LOG_LEVEL_INFO) << "Finished initializing btc-fullnode.";
     
     return true;
 }
 
-bool FullNodeMain::Start()
+bool FullNode::Start()
 {
     BTCLOG(LOG_LEVEL_INFO) << "Starting btc-fullnode...";
     
-    if (!network_.Init())
+    if (!network_.Start(chain_.chain_state()))
         return false;
     
-    if (!network_.Start())
-        return false;
-    
-    BTCLOG(LOG_LEVEL_INFO) << "Started btc-fullnode.";
+    BTCLOG(LOG_LEVEL_INFO) << "Finished starting btc-fullnode.";
     
     return true;
 }
 
-void FullNodeMain::Interrupt()
+void FullNode::Interrupt()
 {
     BTCLOG(LOG_LEVEL_INFO) << "Interrupting btc-fullnode...";
+    util::SingletonInterruptor::GetInstance().Interrupt();
+    util::SingletonTimerMng::GetInstance().set_stop(true);
     network_.Interrupt();
-    BTCLOG(LOG_LEVEL_INFO) << "Interrupted btc-fullnode.";
+    BTCLOG(LOG_LEVEL_INFO) << "Finished interrupting btc-fullnode.";
 }
 
-void FullNodeMain::Stop()
+void FullNode::Stop()
 {
     BTCLOG(LOG_LEVEL_INFO) << "Stoping btc-fullnode...";
     
     network_.Stop();
     
-    BTCLOG(LOG_LEVEL_INFO) << "Stopped btc-fullnode.";
+    BTCLOG(LOG_LEVEL_INFO) << "Finished stoping btc-fullnode.";
 }
 
-
+} // namespace fullnode
+} // namespace btclite
 

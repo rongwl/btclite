@@ -8,7 +8,7 @@
 
 
 namespace btclite {
-namespace chain {
+namespace consensus {
 
 /** An outpoint - a combination of a transaction hash and an index n into its vout */
 class OutPoint {
@@ -521,7 +521,7 @@ private:
     static constexpr uint32_t default_version = 2;
 };
 
-} // namespace chain
+} // namespace consensus
 } // namespace btclite
 
 #endif // BTCLITE_TRANSACTION_H

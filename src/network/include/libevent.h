@@ -7,7 +7,6 @@
 #include <event2/buffer.h>
 #include <event2/thread.h>
 
-#include "banlist.h"
 #include "socket.h"
 #include "net.h"
 #include "node.h"
@@ -70,8 +69,15 @@ struct Context {
     const Params *pparams = nullptr;
     LocalService *plocal_service = nullptr;
     Nodes *pnodes = nullptr;
+    chain::ChainState *pchain_state = nullptr;
     BanList *pbanlist = nullptr;
     Peers *ppeers = nullptr;
+    
+    bool IsValid() const
+    {
+        return (pparams && plocal_service && pnodes &&
+                pchain_state && pbanlist && ppeers);
+    }
 };
 
 void ConnReadCb(struct bufferevent *bev, void *ctx);

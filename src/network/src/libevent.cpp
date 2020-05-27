@@ -115,7 +115,8 @@ void ConnReadCb(struct bufferevent *bev, void *ctx)
     }
     
     auto task = std::bind(ParseMsg, pnode, std::ref(*(context->pparams)), 
-                          std::ref(*(context->plocal_service)), context->ppeers);
+                          std::ref(*(context->plocal_service)), context->ppeers,
+                          context->pchain_state);
     util::SingletonThreadPool::GetInstance().AddTask(std::function<bool()>(task));
 }
 

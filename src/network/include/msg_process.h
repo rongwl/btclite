@@ -1,6 +1,7 @@
 #ifndef BTCLITE_MSG_PROCESS_H
 #define BTCLITE_MSG_PROCESS_H
 
+#include "block_chain.h"
 #include "hash.h"
 #include "net.h"
 #include "network/include/params.h"
@@ -12,7 +13,8 @@ namespace btclite {
 namespace network {
 
 bool ParseMsg(std::shared_ptr<Node> src_node, const Params& params, 
-              const LocalService& local_service, Peers *ppeers);
+              const LocalService& local_service, Peers *ppeers,
+              chain::ChainState *pchain_state);
 
 template <typename Message>
 bool HandleMsgData(std::shared_ptr<Node> src_node, 
@@ -88,7 +90,7 @@ bool SendMsg(const Message& msg, uint32_t magic, std::shared_ptr<Node> dst_node)
     return true;
 }
 
-bool SendVersion(std::shared_ptr<Node> dst_node, uint32_t magic);
+bool SendVersion(std::shared_ptr<Node> dst_node, uint32_t magic, uint32_t start_height);
 bool SendAddr(std::shared_ptr<Node> dst_node);
 
 

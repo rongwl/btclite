@@ -59,6 +59,8 @@ unit_test_test_network_SOURCES = unit_test/network/src/test_network.cpp \
                                  unit_test/network/src/connector_tests.cpp \
                                  unit_test/network/src/p2p_tests.cpp \
                                  unit_test/network/src/socket_tests.cpp \
+                                 unit_test/network/include/acceptor_tests.h \
+                                 unit_test/network/include/connector_tests.h \
                                  unit_test/network/include/msg_process.h \
                                  unit_test/network/include/net_tests.h \
                                  unit_test/network/include/node_tests.h \
@@ -83,6 +85,7 @@ unit_test_test_network_CPPFLAGS = $(AM_CPPFLAGS) \
 unit_test_test_network_LDADD = $(LIBBTCLITE_FULLNODE) \
                                $(LIBBTCLITE_NETWORK) \
                                $(LIBBTCLITE_CHAIN) \
+                               $(LIBBTCLITE_CONSENSUS) \
                                $(LIBBTCLITE_CRYPTO) \
                                $(LIBBTCLITE_UTIL)
 unit_test_test_network_LDADD += $(GTEST_LIBS) \
@@ -106,7 +109,7 @@ unit_test_test_crypto_CPPFLAGS = $(AM_CPPFLAGS) \
                                  $(BOTAN_CFLAGS) \
                                  $(BTCLITE_INCLUDES)
 unit_test_test_crypto_LDADD = $(LIBBTCLITE_CRYPTO) \
-                              $(LIBBTCLITE_CHAIN) \
+                              $(LIBBTCLITE_CONSENSUS) \
                               $(LIBBTCLITE_UTIL)
 unit_test_test_crypto_LDADD += $(GTEST_LIBS) \
                                $(GLOG_LIBS) \
@@ -126,6 +129,7 @@ unit_test_test_chain_CPPFLAGS = $(AM_CPPFLAGS) \
                                  $(BOTAN_CFLAGS) \
                                  $(BTCLITE_INCLUDES)
 unit_test_test_chain_LDADD = $(LIBBTCLITE_CHAIN) \
+                             $(LIBBTCLITE_CONSENSUS) \
                              $(LIBBTCLITE_UTIL)
 unit_test_test_chain_LDADD += $(GTEST_LIBS) \
                               $(BOTAN_LIBS) \

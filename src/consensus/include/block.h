@@ -6,7 +6,7 @@
 
 
 namespace btclite {
-namespace chain {
+namespace consensus {
 
 using BlockLocator = std::vector<util::Hash256>;
 
@@ -254,7 +254,7 @@ Block CreateGenesisBlock(const std::string& coinbase, const Script& output_scrip
                          uint32_t nonce, uint32_t bits, int32_t version, uint64_t reward);
 Block CreateGenesisBlock(uint32_t time, uint32_t nonce, uint32_t bits, int32_t version, uint64_t reward);
 
-} // namespace chain
+} // namespace consensus
 } // namespace btclite
 
 #endif // BTCLITE_BLOCK_H

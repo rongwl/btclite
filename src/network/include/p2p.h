@@ -4,10 +4,8 @@
 #include <thread>
 
 #include "acceptor.h"
-#include "banlist.h"
 #include "connector.h"
 #include "network/include/params.h"
-#include "peers.h"
 
 
 namespace btclite {
@@ -19,10 +17,10 @@ public:
         : params_(config), 
           peers_db_(config.path_data_dir()),
           ban_db_(config.path_data_dir()),
-          acceptor_(params_), connector_(params_) {}
+          acceptor_(params_.default_port()) {}
     
-    bool Init();
-    bool Start();
+    bool Init(const chain::ChainState& chain_state);
+    bool Start(const chain::ChainState& chain_state);
     void Interrupt();
     void Stop();   
     

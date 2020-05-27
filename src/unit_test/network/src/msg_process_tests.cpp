@@ -1,8 +1,6 @@
 #include "msg_process_tests.h"
 
-#include "chain_state.h"
 #include "msg_process.h"
-#include "net.h"
 #include "protocol/addr.h"
 #include "protocol/getaddr.h"
 #include "protocol/inventory.h"
@@ -359,12 +357,13 @@ TEST_F(MsgProcessTest, SendReject)
 void ParseMsgCb(struct bufferevent *bev, void *ctx)
 {
     Peers peers;
+    chain::ChainState chain_state;
     NetAddr addr;
     addr.SetIpv4(inet_addr("1.2.3.4"));
     auto node = std::make_shared<Node>(bev, addr, false);
     node->mutable_protocol()->version = kInvalidCbNoBanVersion;
     node->mutable_connection()->set_connection_state(NodeConnection::kEstablished);
-    EXPECT_TRUE(ParseMsg(node, *reinterpret_cast<Params*>(ctx), LocalService(), &peers));
+    EXPECT_TRUE(ParseMsg(node, *reinterpret_cast<Params*>(ctx), LocalService(), &peers, &chain_state));
 }
 
 TEST_F(MsgProcessTest, ParseMsg)

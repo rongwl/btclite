@@ -143,7 +143,7 @@ bool LocalService::AddLocalAddr(const NetAddr& addr)
 void AdvertiseLocalTimeoutCb(std::shared_ptr<Node> node,
                              const LocalService& local_service)
 {
-    if (SingletonNetInterrupt::GetInstance())
+    if (util::SingletonInterruptor::GetInstance())
         return;
     
     if (node->connection().IsDisconnected()) 
@@ -163,7 +163,7 @@ void AdvertiseLocalTimeoutCb(std::shared_ptr<Node> node,
 
 void RelayFloodingAddrsTimeoutCb(std::shared_ptr<Node> node, uint32_t magic)
 {
-    if (SingletonNetInterrupt::GetInstance())
+    if (util::SingletonInterruptor::GetInstance())
         return;
     
     if (node->connection().IsDisconnected())

@@ -6,6 +6,9 @@
 #include "util.h"
 
 
+namespace btclite {
+namespace fullnode {
+
 #define FULLNODE_BIN_NAME        "btc-fullnode"
 
 #define FULLNODE_OPTION_CONNECT  "connect"
@@ -29,5 +32,7 @@ private:
     void PrintUsageCustomized() const;
 };
 
+} // namespace fullnode
+} // namespace btclite
 
 #endif // BTCLITE_FULLNODE_CONFIG_H

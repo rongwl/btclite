@@ -7,6 +7,9 @@
 #include "utility/include/logging.h"
 
 
+namespace btclite {
+namespace fullnode {
+
 using namespace btclite::util;
 
 void FullNodeConfig::ParseParameters(int argc, const char* const argv[])
@@ -151,3 +154,6 @@ void FullNodeConfig::CheckArgsCustomized() const
             throw Exception(ErrorCode::kInvalidArg, "invalid ip '" + *result + "'");
     }
 }
+
+} // namespace fullnode
+} // namespace btclite

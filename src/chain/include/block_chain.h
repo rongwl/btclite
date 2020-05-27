@@ -1,8 +1,9 @@
-#ifndef BTCLITE_CHAIN_H
-#define BTCLITE_CHAIN_H
+#ifndef BTCLITE_BLOCK_CHAIN_H
+#define BTCLITE_BLOCK_CHAIN_H
 
 
 #include "block.h"
+#include "chain/include/params.h"
 #include "util.h"
 
 
@@ -59,7 +60,7 @@ class BlockIndex {
 public:
     BlockIndex() = default;
     
-    explicit BlockIndex(const BlockHeader& header)
+    explicit BlockIndex(const consensus::BlockHeader& header)
         : header_(header) {}
     
     //-------------------------------------------------------------------------
@@ -69,7 +70,7 @@ public:
     const BlockIndex *GetAncestor(size_t height) const;
     
     //-------------------------------------------------------------------------
-    const BlockHeader& header() const
+    const consensus::BlockHeader& header() const
     {
         return header_;
     }
@@ -140,7 +141,7 @@ public:
     }
     
 private:
-    BlockHeader header_;
+    consensus::BlockHeader header_;
     
     // the hash of this block
     util::Hash256 block_hash_;
@@ -184,7 +185,7 @@ private:
 };
 
 // An in-memory indexed chain of blocks.
-class BlockChain : util::Uncopyable {
+class Chain : util::Uncopyable {
 public:
     // Returns the index entry for the genesis block of this chain, 
     // or nullptr if none.
@@ -209,13 +210,13 @@ public:
     }
 
     // Compare two chains efficiently.
-    friend bool operator==(const BlockChain& a, const BlockChain& b) 
+    friend bool operator==(const Chain& a, const Chain& b) 
     {
         return a.active_chain_.size() == b.active_chain_.size() &&
                a.active_chain_[a.active_chain_.size() - 1] == b.active_chain_[b.active_chain_.size() - 1];
     }
     
-    friend bool operator!=(const BlockChain& a, const BlockChain& b)
+    friend bool operator!=(const Chain& a, const Chain& b)
     {
         return !(a == b);
     }
@@ -242,7 +243,8 @@ public:
     void SetTip(const BlockIndex *pindex);
 
     // Get a BlockLocator that refers to a block in this chain (by default the tip).
-    bool GetLocator(BlockLocator *out, const BlockIndex *pindex = nullptr) const;
+    bool GetLocator(consensus::BlockLocator *out, 
+                    const BlockIndex *pindex = nullptr) const;
 
     // Find the last common block between this chain and a block index entry.
     const BlockIndex *FindFork(const BlockIndex *pindex) const;
@@ -258,22 +260,68 @@ public:
     
 private:
     std::vector<BlockIndex*> active_chain_;
-    BlockMap map_block_index_;
 };
 
-class SingletonBlockChain : util::Uncopyable {
+class ChainState {
 public:
-    static chain::BlockChain& GetInstance()
+    const Chain& active_chain() const
     {
-        static chain::BlockChain chain;
-        return chain;
+        return active_chain_;
+    }
+    
+    Chain *mutable_active_chain()
+    {
+        return &active_chain_;
+    }
+    
+    const BlockIndex *pindex_best_header() const
+    {
+        LOCK(cs_);
+        return pindex_best_header_;
+    }
+    
+    void set_pindex_best_header(BlockIndex *index)
+    {
+        LOCK(cs_);
+        pindex_best_header_ = index;
     }
     
 private:
-    SingletonBlockChain() {}
+    Chain active_chain_;
+    BlockMap map_block_index_;
+    
+    mutable util::CriticalSection cs_;
+    BlockIndex *pindex_best_header_ = nullptr;
+};
+
+class BlockChain : util::Uncopyable {
+public:
+    BlockChain(const util::Configuration& config)
+        : params_(config.btcnet()) {}
+    
+    //-------------------------------------------------------------------------
+    bool Init();
+    bool Start();
+    void Interrupt();
+    void Stop();
+    
+    //-------------------------------------------------------------------------    
+    const ChainState& chain_state() const
+    {
+        return chain_state_;
+    }
+    
+    ChainState *mutable_chain_state()
+    {
+        return &chain_state_;
+    }
+    
+private:
+    const Params params_;
+    ChainState chain_state_;
 };
 
 } // namespace chain
 } // namespace btclite
 
-#endif // BTCLITE_CHAIN_H
+#endif // BTCLITE_BLOCK_CHAIN_H

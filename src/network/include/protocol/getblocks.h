@@ -13,11 +13,11 @@ class GetBlocks : public MessageData {
 public:
     GetBlocks() = default;
     
-    GetBlocks(ProtocolVersion version, const chain::BlockLocator& hashes,
+    GetBlocks(ProtocolVersion version, const consensus::BlockLocator& hashes,
               const util::Hash256& hash_stop)
         : version_(version), hashes_(hashes), hash_stop_(hash_stop) {}
     
-    GetBlocks(ProtocolVersion version, chain::BlockLocator&& hashes,
+    GetBlocks(ProtocolVersion version, consensus::BlockLocator&& hashes,
               const util::Hash256& hash_stop) noexcept
         : version_(version), hashes_(std::move(hashes)), 
           hash_stop_(hash_stop) {}
@@ -83,17 +83,17 @@ public:
         version_ = version;
     }
     
-    const chain::BlockLocator& hashes() const
+    const consensus::BlockLocator& hashes() const
     {
         return hashes_;
     }
     
-    void set_hashes(const chain::BlockLocator& hashes)
+    void set_hashes(const consensus::BlockLocator& hashes)
     {
         hashes_ = hashes;
     }
     
-    void set_hashes(chain::BlockLocator&& hashes)
+    void set_hashes(consensus::BlockLocator&& hashes)
     {
         hashes_ = std::move(hashes);
     }
@@ -110,7 +110,7 @@ public:
     
 private:
     ProtocolVersion version_ = kUnknownProtoVersion;
-    chain::BlockLocator hashes_;
+    consensus::BlockLocator hashes_;
     util::Hash256 hash_stop_;
 };
 

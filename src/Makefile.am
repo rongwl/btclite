@@ -5,6 +5,7 @@ BTCLITE_CONFIG_INCLUDES = -I$(builddir)/config
 BTCLITE_FULLNODE_INCLUDES = -I$(srcdir)/fullnode/include
 BTCLITE_CHAIN_INCLUDES = -I$(srcdir)/chain/include
 BTCLITE_CHAIN_PROTO_INCLUDES = -I$(srcdir)/chain/proto
+BTCLITE_CONSENSUS_INCLUDES = -I$(srcdir)/consensus/include
 BTCLITE_CRYPTO_INCLUDES = -I$(srcdir)/crypto/include
 BTCLITE_NETWORK_INCLUDES = -I$(srcdir)/network/include
 BTCLITE_NETWORK_PROTO_INCLUDES = -I$(srcdir)/network/proto
@@ -14,6 +15,7 @@ BTCLITE_UTIL_INCLUDES = -I$(srcdir)/utility/include
 BTCLITE_INCLUDES = $(BTCLITE_FULLNODE_INCLUDES) \
                    $(BTCLITE_CHAIN_INCLUDES) \
                    $(BTCLITE_CHAIN_PROTO_INCLUDES) \
+                   $(BTCLITE_CONSENSUS_INCLUDES) \
                    $(BTCLITE_CRYPTO_INCLUDES) \
                    $(BTCLITE_NETWORK_INCLUDES) \
                    $(BTCLITE_NETWORK_PROTO_INCLUDES) \
@@ -23,6 +25,7 @@ BTCLITE_INCLUDES = $(BTCLITE_FULLNODE_INCLUDES) \
 STDCPP_FILESYSTEM_LIBS = -lstdc++fs
 LIBBTCLITE_FULLNODE = fullnode/src/libbtclite_fullnode.a
 LIBBTCLITE_CHAIN = chain/src/libbtclite_chain.a
+LIBBTCLITE_CONSENSUS = consensus/src/libbtclite_consensus.a
 LIBBTCLITE_CRYPTO = crypto/src/libbtclite_crypto.a
 LIBBTCLITE_NETWORK = network/src/libbtclite_network.a
 LIBBTCLITE_UTIL = utility/src/libbtclite_util.a
@@ -30,6 +33,7 @@ LIBBTCLITE_UTIL = utility/src/libbtclite_util.a
 EXTRA_LIBRARIES += \
                    $(LIBBTCLITE_FULLNODE) \
                    $(LIBBTCLITE_CHAIN) \
+                   $(LIBBTCLITE_CONSENSUS) \
                    $(LIBBTCLITE_CRYPTO) \
                    $(LIBBTCLITE_NETWORK) \
                    $(LIBBTCLITE_UTIL)
@@ -38,15 +42,15 @@ bin_PROGRAMS = btc-fullnode
 
 
 BTCLITE_HEADER_FILES = \
-                       chain/include/block.h \
                        chain/include/block_chain.h \
-                       chain/include/chain_state.h \
                        chain/include/compact.h \
                        chain/include/params.h \
-                       chain/include/script.h \
-                       chain/include/script_witness.h \
-                       chain/include/transaction.h \
                        config/btcnet.h \
+                       consensus/include/block.h \
+                       consensus/include/script.h \
+                       consensus/include/script_witness.h \
+                       consensus/include/params.h \
+                       consensus/include/transaction.h \
                        fullnode/include/clientversion.h \
                        fullnode/include/config.h \
                        network/include/acceptor.h \
@@ -135,22 +139,32 @@ utility_src_libbtclite_util_a_SOURCES = utility/src/error.cpp \
                                         utility/src/thread.cpp \
                                         utility/src/timer.cpp \
                                         utility/src/util.cpp \
-                                        utility/src/util_time.cpp 
+                                        utility/src/util_time.cpp
+
+
+consensus_src_libbtclite_consensus_a_CPPFLAGS = $(AM_CXXFLAGS) \
+                                                $(GLOG_CFLAGS) \
+                                                $(BOTAN_CFLAGS) \
+                                                $(BTCLITE_CONSENSUS_INCLUDES) \
+                                                $(BTCLITE_CRYPTO_INCLUDES) \
+                                                $(BTCLITE_UTIL_INCLUDES)
+consensus_src_libbtclite_consensus_a_SOURCES = consensus/src/block.cpp \
+                                               consensus/src/script.cpp \
+                                               consensus/src/script_witness.cpp \
+                                               consensus/src/transaction.cpp \
+                                               consensus/src/params.cpp 
 
 
 chain_src_libbtclite_chain_a_CPPFLAGS = $(AM_CXXFLAGS) \
                                         $(BOTAN_CFLAGS) \
                                         $(GLOG_CFLAGS) \
                                         $(BTCLITE_CHAIN_INCLUDES) \
+                                        $(BTCLITE_CONSENSUS_INCLUDES) \
                                         $(BTCLITE_CRYPTO_INCLUDES) \
                                         $(BTCLITE_NETWORK_INCLUDES) \
                                         $(BTCLITE_UTIL_INCLUDES)
-chain_src_libbtclite_chain_a_SOURCES = chain/src/block.cpp \
-                                       chain/src/block_chain.cpp \
+chain_src_libbtclite_chain_a_SOURCES = chain/src/block_chain.cpp \
                                        chain/src/compact.cpp \
-                                       chain/src/script.cpp \
-                                       chain/src/script_witness.cpp \
-                                       chain/src/transaction.cpp \
                                        chain/src/params.cpp
 
 
@@ -158,6 +172,7 @@ network_src_libbtclite_network_a_CPPFLAGS = $(AM_CXXFLAGS) \
                                             $(BOTAN_CFLAGS) \
                                             $(GLOG_CFLAGS) \
                                             $(BTCLITE_CHAIN_INCLUDES) \
+                                            $(BTCLITE_CONSENSUS_INCLUDES) \
                                             $(BTCLITE_CONFIG_INCLUDES) \
                                             $(BTCLITE_CRYPTO_INCLUDES) \
                                             $(BTCLITE_NETWORK_INCLUDES) \
@@ -200,6 +215,7 @@ fullnode_src_libbtclite_fullnode_a_CPPFLAGS = $(AM_CXXFLAGS) \
                                               $(BOTAN_CFLAGS) \
                                               $(GLOG_CFLAGS) \
                                               $(BTCLITE_CRYPTO_INCLUDES) \
+                                              $(BTCLITE_CONSENSUS_INCLUDES) \
                                               $(BTCLITE_CHAIN_INCLUDES) \
                                               $(BTCLITE_FULLNODE_INCLUDES) \
                                               $(BTCLITE_NETWORK_INCLUDES) \
@@ -220,6 +236,7 @@ btc_fullnode_LDADD = \
                      $(LIBBTCLITE_FULLNODE) \
                      $(LIBBTCLITE_NETWORK) \
                      $(LIBBTCLITE_CHAIN) \
+                     $(LIBBTCLITE_CONSENSUS) \
                      $(LIBBTCLITE_CRYPTO) \
                      $(LIBBTCLITE_UTIL)
 btc_fullnode_LDADD += $(PTHREAD_LIBS) \
@@ -241,8 +258,9 @@ endif
 
 
 MOSTLYCLEANFILES = fullnode/src/*.a \
-                   utility/src/*.a \
                    chain/src/*.a \
+                   consensus/src/*.a \
                    crypto/src/*.a \
+                   network/proto/*.pb.* \
                    network/src/*.a \
-                   network/proto/*.pb.*
+                   utility/src/*.a

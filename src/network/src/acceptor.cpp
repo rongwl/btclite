@@ -8,41 +8,39 @@
 namespace btclite {
 namespace network {
 
-Acceptor::Acceptor(const Params params)
-    : params_(params), base_(nullptr), listener_(nullptr), sock_addr_()
+Acceptor::Acceptor(uint16_t listen_port)
+    : base_(nullptr), listener_(nullptr), sock_addr_()
 {
     memset(&sock_addr_, 0, sizeof(sock_addr_));
     sock_addr_.sin6_family = AF_INET6;
-    sock_addr_.sin6_port = htons(params_.default_port());
+    sock_addr_.sin6_port = htons(listen_port);
     sock_addr_.sin6_addr = in6addr_any;
     sock_addr_.sin6_scope_id = 0;
 }
 
-bool Acceptor::InitEvent(const LocalService& local_service,
-                         const Peers& peers, const BanList& ban_list)
+bool Acceptor::InitEvent(Context *ctx)
 {
     using namespace std::placeholders;
     
     evthread_use_pthreads();
+    
+    if (!ctx || !ctx->IsValid()) {
+        BTCLOG(LOG_LEVEL_WARNING) << "Pass nullptr to " << __func__;
+        return false;
+    }
     
     if (nullptr == (base_ = event_base_new())) {
         BTCLOG(LOG_LEVEL_ERROR) << "Acceptor open event_base failed.";
         return false;
     }
     
-    static Context ctx;
     auto& inbounds = Inbounds();
-    ctx.pnodes = &inbounds;
-    ctx.ppeers = (Peers*)&peers;
-    ctx.pbanlist = (BanList*)&ban_list;
-    ctx.pparams = &params_;
-    ctx.plocal_service = (LocalService*)&local_service;
+    ctx->pnodes = &inbounds;
     if (nullptr == (listener_ = evconnlistener_new_bind(base_, 
-                                AcceptConnCb, (void*)&ctx,
+                                AcceptConnCb, (void*)ctx,
                                 LEV_OPT_CLOSE_ON_FREE | LEV_OPT_REUSEABLE, 
                                 SOMAXCONN, 
-                                (const struct sockaddr*)&sock_addr_, sizeof(sock_addr_))))
-    {
+                                (const struct sockaddr*)&sock_addr_, sizeof(sock_addr_)))) {
         BTCLOG(LOG_LEVEL_ERROR) << "Acceptor create event listener failed.";
         return false;
     }

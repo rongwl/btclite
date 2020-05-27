@@ -2,7 +2,7 @@
 
 
 namespace btclite {
-namespace chain {
+namespace consensus {
 
 ScriptInt::ScriptInt(const std::vector<uint8_t>& v, bool minimal)
 {
@@ -153,5 +153,5 @@ bool Script::Pop(std::vector<uint8_t>::const_iterator& pc, const Opcode& in, std
     return true;
 }
 
-} // namespace chain
+} // namespace consensus
 } // namespace btclite

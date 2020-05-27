@@ -12,10 +12,10 @@ namespace btclite {
 namespace network {
 
 bool LookupHost(const char *psz_name, NetAddr *out, 
-                bool allow_lookup, uint16_t default_port)
+                bool allow_lookup, uint16_t port)
 {
     std::vector<NetAddr> vip;
-    LookupHost(psz_name, &vip, 1, allow_lookup, default_port);
+    LookupHost(psz_name, &vip, 1, allow_lookup, port);
     if(vip.empty())
         return false;
     *out = vip.front();
@@ -25,7 +25,7 @@ bool LookupHost(const char *psz_name, NetAddr *out,
 
 bool LookupHost(const char *psz_name, std::vector<NetAddr> *out,
                                 unsigned int max_solutions, bool allow_lookup,
-                                uint16_t default_port)
+                                uint16_t port)
 {
     std::string str_host(psz_name);
     if (str_host.empty())
@@ -37,17 +37,17 @@ bool LookupHost(const char *psz_name, std::vector<NetAddr> *out,
     }
 
     return LookupIntern(str_host.c_str(), out, max_solutions, 
-                        allow_lookup, default_port);
+                        allow_lookup, port);
 }
 
-bool LookupSubNet(const char* psz_name, uint16_t default_port, SubNet *out)
+bool LookupSubNet(const char* psz_name, uint16_t port, SubNet *out)
 {
     std::string str_subnet(psz_name);
     size_t slash = str_subnet.find_last_of('/');
     std::vector<NetAddr> vip;
 
     std::string str_addr = str_subnet.substr(0, slash);
-    if (LookupHost(str_addr.c_str(), &vip, 1, false, default_port))
+    if (LookupHost(str_addr.c_str(), &vip, 1, false, port))
     {
         NetAddr network = vip[0];
         if (slash != str_subnet.npos)
@@ -64,7 +64,7 @@ bool LookupSubNet(const char* psz_name, uint16_t default_port, SubNet *out)
             {
                 // Never allow lookup for netmask
                 if (LookupHost(str_netmask.c_str(), &vip, 1,
-                               false, default_port)) {
+                               false, port)) {
                     *out = SubNet(network, vip[0]);
                     return out->IsValid();
                 }
@@ -82,7 +82,7 @@ bool LookupSubNet(const char* psz_name, uint16_t default_port, SubNet *out)
 
 bool LookupIntern(const char *psz_name, std::vector<NetAddr> *out,
                                   unsigned int max_solutions, bool allow_lookup,
-                                  uint16_t default_port)
+                                  uint16_t port)
 {
     struct addrinfo aiHint;
     memset(&aiHint, 0, sizeof(struct addrinfo));
@@ -116,7 +116,7 @@ bool LookupIntern(const char *psz_name, std::vector<NetAddr> *out,
         
         /* Never allow resolving to an internal address. Consider any such result invalid */
         if (!resolved.IsInternal()) {
-            resolved.set_port(default_port);
+            resolved.set_port(port);
             out->push_back(resolved);
         }
 

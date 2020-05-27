@@ -1,5 +1,5 @@
-#ifndef BTCLITE_PROTOCOL_ADDRESS_H
-#define BTCLITE_PROTOCOL_ADDRESS_H
+#ifndef BTCLITE_PROTOCOL_ADDR_H
+#define BTCLITE_PROTOCOL_ADDR_H
 
 
 #include "message.h"
@@ -85,4 +85,4 @@ private:
 } // namespace network
 } // namespace btclite
 
-#endif // BTCLITE_PROTOCOL_ADDRESS_H
+#endif // BTCLITE_PROTOCOL_ADDR_H
