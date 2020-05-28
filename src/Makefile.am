@@ -43,6 +43,8 @@ bin_PROGRAMS = btc-fullnode
 
 BTCLITE_HEADER_FILES = \
                        chain/include/block_chain.h \
+                       chain/include/block_index.h \
+                       chain/include/chain_state.h \
                        chain/include/compact.h \
                        chain/include/params.h \
                        config/btcnet.h \
@@ -164,6 +166,8 @@ chain_src_libbtclite_chain_a_CPPFLAGS = $(AM_CXXFLAGS) \
                                         $(BTCLITE_NETWORK_INCLUDES) \
                                         $(BTCLITE_UTIL_INCLUDES)
 chain_src_libbtclite_chain_a_SOURCES = chain/src/block_chain.cpp \
+                                       chain/src/block_index.cpp \
+                                       chain/src/chain_state.cpp \
                                        chain/src/compact.cpp \
                                        chain/src/params.cpp
 

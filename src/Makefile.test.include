@@ -121,7 +121,7 @@ unit_test_test_crypto_LDADD += $(GTEST_LIBS) \
 unit_test_test_chain_SOURCES = unit_test/chain/src/test_chain.cpp \
                                unit_test/chain/src/compact_tests.cpp \
                                unit_test/chain/src/params_tests.cpp \
-                               unit_test/chain/src/block_chain_tests.cpp
+                               unit_test/chain/src/chain_state_tests.cpp 
 
 unit_test_test_chain_CPPFLAGS = $(AM_CPPFLAGS) \
                                  $(GTEST_CFLAGS) \

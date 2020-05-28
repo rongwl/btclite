@@ -1,5 +1,5 @@
-#ifndef BTCLITE_COMPACT_H
-#define BTCLITE_COMPACT_H
+#ifndef BTCLITE_CHAIN_COMPACT_H
+#define BTCLITE_CHAIN_COMPACT_H
 
 
 #include "arithmetic.h"
@@ -78,4 +78,4 @@ private:
 } // namespace chain
 } // namespace btclite
 
-#endif // BTCLITE_COMPACT_H
+#endif // BTCLITE_CHAIN_COMPACT_H
