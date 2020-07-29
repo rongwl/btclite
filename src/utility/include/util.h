@@ -115,7 +115,7 @@ private:
 
 
 class Executor : Uncopyable {
-public:    
+public:
     virtual bool Init() = 0;
     virtual bool Start() = 0;
     virtual void Interrupt() = 0;
@@ -129,7 +129,7 @@ public:
         BTCLOG(LOG_LEVEL_INFO) << "Caught an interrupt signal.";
     }
 
-private:
+private:    
     virtual bool BasicSetupCustomized() = 0;
     
     static std::promise<int>& Stopping()
@@ -144,6 +144,7 @@ private:
         std::call_once(stop_mutex, [&](){ Stopping().set_value(sig); });
     }
     
+    static void HandleAbort(int sig);    
     static void HandleAllocFail();
 };
 
@@ -208,6 +209,29 @@ T MedianFilter<T>::Median() const
         return (sorted_[sorted_size / 2 - 1] + sorted_[sorted_size / 2]) / 2;
     }
 }
+
+
+template<typename T>
+class SetOnce
+{
+public:
+    void Set(const T& other)
+    {
+        std::call_once(once_flag_, [&](){ val_ = other; });
+    }
+
+    const T& Get() 
+    {
+        return val_; 
+    }
+    
+private:
+    T val_;
+    std::once_flag once_flag_;
+};
+
+SetOnce<std::thread::id>& MainThreadId();
+
 
 } // namespace util
 } // namespace btclite

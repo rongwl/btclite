@@ -44,7 +44,8 @@ struct Bip9Params {
     uint32_t miner_confirmation_window;
     Bip9Deployment deployments[Bip9Deployment::MAX_DEPLOYMENTS];
     
-    void UpdateVersionBitsParameters(Bip9Deployment::Deployment d, int64_t start_time, int64_t timeout);
+    void UpdateVersionBitsParameters(Bip9Deployment::Deployment d, 
+                                     int64_t start_time, int64_t timeout);
 };
 
 /*
@@ -88,13 +89,15 @@ public:
 
 private:
     Block genesis_;
-    int subsidy_halving_interval_;
+    int subsidy_halving_interval_; // blocks
     Bip9Params bip9_params_;
     //PowParams pow_params_;
     
-    void CreateGenesisBlock(const std::string& coinbase, const Script& output_script, uint32_t time,
-                            uint32_t nonce, uint32_t bits, int32_t version, uint64_t reward);
-    void CreateGenesisBlock(uint32_t time, uint32_t nonce, uint32_t bits, int32_t version, uint64_t reward);
+    void CreateGenesisBlock(const std::string& coinbase, const Script& output_script, 
+                            uint32_t time, uint32_t nonce, uint32_t bits, 
+                            int32_t version, uint64_t reward);
+    void CreateGenesisBlock(uint32_t time, uint32_t nonce, uint32_t bits, 
+                            int32_t version, uint64_t reward);
 };
 
 

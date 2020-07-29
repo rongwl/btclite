@@ -73,5 +73,15 @@ TEST(MedianFilterTest, MethordMedian)
     EXPECT_EQ(filter.Median(), 7);
 }
 
+TEST(SetOnceTest, SetOnce)
+{
+    SetOnce<int> set_once;
+    
+    set_once.Set(1);
+    set_once.Set(2);
+    set_once.Set(3);
+    EXPECT_EQ(set_once.Get(), 1);
+}
+
 } // namespace unit_test
 } // namespace btclit

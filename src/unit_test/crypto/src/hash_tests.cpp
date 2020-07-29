@@ -10,7 +10,7 @@ namespace unit_test {
 using namespace crypto;
 using namespace consensus;
 
-TEST(HashWStreamTest, Sha256)
+TEST(HashOStreamTest, Sha256)
 {
     Transaction tx;
     HashOStream hs;
@@ -24,7 +24,7 @@ TEST(HashWStreamTest, Sha256)
     EXPECT_EQ(hs.Sha256(), hash);
 }
 
-TEST(HashWStreamTest, DoubleSha256)
+TEST(HashOStreamTest, DoubleSha256)
 {
     Transaction tx;
     HashOStream hs;
@@ -49,8 +49,8 @@ TEST(HashTest, Sha256)
     
     tx.set_version(1);    
     hs << tx;
-    EXPECT_EQ(Sha256(hs.vec()), hash);
-    EXPECT_EQ(Sha256(hs.vec().data(), hs.vec().size()), hash);
+    EXPECT_EQ(hashfuncs::Sha256(hs.vec()), hash);
+    EXPECT_EQ(hashfuncs::Sha256(hs.vec().data(), hs.vec().size()), hash);
 }
 
 TEST(HashTest, DoubleSha256)
@@ -64,8 +64,8 @@ TEST(HashTest, DoubleSha256)
     
     tx.set_version(1);    
     hs << tx;
-    EXPECT_EQ(DoubleSha256(hs.vec()), hash);
-    EXPECT_EQ(DoubleSha256(hs.vec().data(), hs.vec().size()), hash);
+    EXPECT_EQ(hashfuncs::DoubleSha256(hs.vec()), hash);
+    EXPECT_EQ(hashfuncs::DoubleSha256(hs.vec().data(), hs.vec().size()), hash);
 }
 
 
@@ -86,6 +86,31 @@ TEST(SipHasherTest, Constructor2)
     SipHasher sip_hasher(key);
     uint64_t tag = sip_hasher.Update(0x1122334455667788).Final();
     ASSERT_EQ(tag, 0xb0bc17a3d48ce99a);
+}
+
+
+TEST(GetHashTest, GetHash)
+{
+    Transaction tx;
+    util::Hash256 hash({0x96,0xee,0xff,0x56,0x3b,0x31,0x35,0xe3,
+                        0xf7,0x79,0x64,0xe8,0xc0,0x62,0x32,0x8f,
+                        0xd2,0x07,0xc8,0xbc,0x9e,0x75,0x4f,0xc4,
+                       0x23,0xab,0xaf,0x83,0xeb,0x3f,0x14,0x90});
+    
+    tx.set_version(1);
+    EXPECT_EQ(GetHash(tx), hash);
+}
+
+TEST(GetHashTest, GetDoubleHash)
+{
+    Transaction tx;
+    util::Hash256 hash({0x43,0xec,0x7a,0x57,0x9f,0x55,0x61,0xa4,
+                        0x2a,0x7e,0x96,0x37,0xad,0x41,0x56,0x67,
+                        0x27,0x35,0xa6,0x58,0xbe,0x27,0x52,0x18,
+                       0x18,0x01,0xf7,0x23,0xba,0x33,0x16,0xd2});
+    
+    tx.set_version(1);
+    EXPECT_EQ(GetDoubleHash(tx), hash);
 }
 
 } // namespace unit_test

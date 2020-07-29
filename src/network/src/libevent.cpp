@@ -28,7 +28,8 @@ void LibEvent::EventBaseFree(struct event_base *base)
 int LibEvent::EventBaseLoopexit(struct event_base *event_base, const struct timeval *tv)
 {
     if (event_base)
-        event_base_loopexit(event_base, tv);
+        return event_base_loopexit(event_base, tv);
+    return -1;
 }
 
 struct bufferevent *LibEvent::BuffereventSocketNew(struct event_base *base, evutil_socket_t fd, int options)

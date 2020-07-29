@@ -45,10 +45,10 @@ BTCLITE_HEADER_FILES = \
                        chain/include/block_chain.h \
                        chain/include/block_index.h \
                        chain/include/chain_state.h \
-                       chain/include/compact.h \
                        chain/include/params.h \
                        config/btcnet.h \
                        consensus/include/block.h \
+                       consensus/include/compact.h \
                        consensus/include/script.h \
                        consensus/include/script_witness.h \
                        consensus/include/params.h \
@@ -132,7 +132,8 @@ utility_src_libbtclite_util_a_CPPFLAGS = $(AM_CXXFLAGS) \
                                          $(BTCLITE_NETWORK_INCLUDES) \
                                          $(BTCLITE_NETWORK_PROTO_INCLUDES) \
                                          $(BTCLITE_FULLNODE_INCLUDES)
-utility_src_libbtclite_util_a_SOURCES = utility/src/error.cpp \
+utility_src_libbtclite_util_a_SOURCES = utility/src/arithmetic.cpp \
+                                        utility/src/error.cpp \
                                         utility/src/logging.cpp \
                                         utility/src/random.cpp \
                                         utility/src/serialize.cpp \
@@ -151,6 +152,7 @@ consensus_src_libbtclite_consensus_a_CPPFLAGS = $(AM_CXXFLAGS) \
                                                 $(BTCLITE_CRYPTO_INCLUDES) \
                                                 $(BTCLITE_UTIL_INCLUDES)
 consensus_src_libbtclite_consensus_a_SOURCES = consensus/src/block.cpp \
+                                               consensus/src/compact.cpp \
                                                consensus/src/script.cpp \
                                                consensus/src/script_witness.cpp \
                                                consensus/src/transaction.cpp \
@@ -168,7 +170,6 @@ chain_src_libbtclite_chain_a_CPPFLAGS = $(AM_CXXFLAGS) \
 chain_src_libbtclite_chain_a_SOURCES = chain/src/block_chain.cpp \
                                        chain/src/block_index.cpp \
                                        chain/src/chain_state.cpp \
-                                       chain/src/compact.cpp \
                                        chain/src/params.cpp
 
 

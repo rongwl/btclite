@@ -9,21 +9,24 @@ namespace util {
 std::vector<uint8_t> DecodeHex(const std::string& in)
 {
     std::vector<uint8_t> result;
-    
+
     auto it = in.begin();
     while (it != in.end()) {
-        while (isspace(*it))
+        while (std::isspace(*it)) {
             ++it;
-        if (!isxdigit(*it))
-            return std::move(result);
+        }
+        if (!std::isxdigit(*it)) {
+            return result;
+        }
+
         result.push_back(std::stoi(std::string(it, it+1), 0, 16));
-        if (++it != in.end()) {
+        if (++it != in.end() && std::isxdigit(*it)) {
             result.back() = (result.back() <<= 4) | std::stoi(std::string(it, it+1), 0, 16);
             ++it;
         }
     }
-    
-    return std::move(result);
+
+    return result;
 }
 
 bool ParsePrechecks(const std::string& str)

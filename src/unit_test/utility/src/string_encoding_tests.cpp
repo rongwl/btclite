@@ -38,7 +38,7 @@ TEST(StringEncodingTest, DecodeHex)
     EXPECT_EQ(expected, DecodeHex("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f"));
     
     // Spaces between bytes must be supported
-    std::vector<uint8_t>&& result = DecodeHex("12 34 56 78");
+    std::vector<uint8_t> result = DecodeHex("12 34 56 78");
     ASSERT_EQ(result.size(), 4);
     EXPECT_EQ(result[0], 0x12);
     EXPECT_EQ(result[1], 0x34);
@@ -52,6 +52,16 @@ TEST(StringEncodingTest, DecodeHex)
     EXPECT_EQ(result[1], 0x34);
     EXPECT_EQ(result[2], 0x56);
     EXPECT_EQ(result[3], 0x78);
+    
+    // skip ending space
+    result = DecodeHex("89 34 56 7 8   ");
+    ASSERT_EQ(result.size(), 5);
+    EXPECT_EQ(result[0], 0x89);
+    EXPECT_EQ(result[1], 0x34);
+    EXPECT_EQ(result[2], 0x56);
+    EXPECT_EQ(result[3], 0x07);
+    EXPECT_EQ(result[4], 0x08);
+    
 
     // Stop parsing at invalid value
     result = DecodeHex("1234 invalid 1234");

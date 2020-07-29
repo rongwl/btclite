@@ -8,6 +8,12 @@ namespace chain {
 
 bool BlockChain::Init()
 {
+    BTCLOG(LOG_LEVEL_INFO) << "Initializing block chain...";
+    
+    chain_state_.LoadGenesisBlock(params_.consensus_params().GenesisBlock());
+    
+    BTCLOG(LOG_LEVEL_INFO) << "Finished initializing block chain.";
+    
     return true;
 }
 

@@ -15,9 +15,12 @@ using CheckPoint = std::map<uint32_t, util::Hash256>;
  * Used to estimate verification progress during chain sync.
 */
 struct ChainTxData {
-    int64_t nTime;
-    int64_t nTxCount;
-    double dTxRate;
+    // UNIX timestamp of last known number of transactions
+    int64_t timestamp;
+    // total number of transactions between genesis and that timestamp
+    int64_t tx_count;
+    //estimated number of transactions per second after that timestamp
+    double tx_rate;
 };
 
 /*
@@ -40,18 +43,12 @@ public:
         MAX_BASE58_TYPES
     };
     
-    explicit Params(BtcNet btcnet)
-        : consensus_params_(btcnet) {}
+    explicit Params(BtcNet btcnet);
 
     //-------------------------------------------------------------------------
     const consensus::Params& consensus_params() const
     { 
         return consensus_params_;
-    }
-    
-    uint64_t prune_after_height() const
-    {
-        return prune_after_height_;
     }
 
     const std::vector<unsigned char>& base58_prefix(Base58Type type) const
@@ -76,7 +73,6 @@ public:
     
 private:
     consensus::Params consensus_params_;
-    uint64_t prune_after_height_;
     std::vector<unsigned char> base58_prefixes_[MAX_BASE58_TYPES];
     std::string bech32_hrp_;
     CheckPoint checkpoints_;

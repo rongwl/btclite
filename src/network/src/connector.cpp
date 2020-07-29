@@ -312,7 +312,7 @@ bool Connector::ConnectNode(const NetAddr& addr, const Context& ctx, bool manual
 
     BTCLOG(LOG_LEVEL_INFO) << "Connected to " << addr.ToString() 
                               << ':' << addr.port();
-    SendVersion(node, ctx.pparams->msg_magic(), ctx.pchain_state->active_chain().Height());
+    SendVersion(node, ctx.pparams->msg_magic(), ctx.pchain_state->ActiveChainHeight());
     
     return true;
 }

@@ -3,18 +3,12 @@
 
 
 #include "block_index.h"
+#include "chain/include/params.h"
 #include "util.h"
 
 
 namespace btclite {
 namespace chain {
-
-class BlockMap {
-public:
-private:
-    mutable util::CriticalSection cs_;
-    std::unordered_map<util::Hash256, BlockIndex*, crypto::Hasher<util::Hash256> > map_;
-};
 
 // An in-memory indexed chain of blocks.
 class Chain : util::Uncopyable {
@@ -80,9 +74,6 @@ public:
 
     // Find the last common block between this chain and a block index entry.
     const BlockIndex *FindFork(const BlockIndex *pindex) const;
-
-    // Find the earliest block with timestamp equal or greater than the given.
-    BlockIndex *FindEarliestAtLeast(int64_t time) const;
     
     //-------------------------------------------------------------------------
     const std::vector<BlockIndex*>& active_chain() const
@@ -96,34 +87,29 @@ private:
 
 class ChainState {
 public:
-    const Chain& active_chain() const
-    {
-        return active_chain_;
-    }
+    using BlockMap = std::unordered_map<
+                     util::Hash256, BlockIndex*, crypto::Hasher<util::Hash256> >;
     
-    Chain *mutable_active_chain()
-    {
-        return &active_chain_;
-    }
+    bool LoadGenesisBlock(const consensus::Block& genesis_block);
+    void CheckBlockIndex(const BlockIndex *genesis, const BlockIndex *tip);
     
-    const BlockIndex *pindex_best_header() const
+    uint32_t ActiveChainHeight() const
     {
-        LOCK(cs_);
-        return pindex_best_header_;
-    }
-    
-    void set_pindex_best_header(BlockIndex *index)
-    {
-        LOCK(cs_);
-        pindex_best_header_ = index;
-    }
+        LOCK(cs_chain_state_);
+        return active_chain_.Height();
+    }   
     
 private:
-    Chain active_chain_;
-    BlockMap map_block_index_;
-    
-    mutable util::CriticalSection cs_;
+    mutable util::CriticalSection cs_chain_state_;
+    Chain active_chain_;    
+    BlockMap map_block_index_;    
+    std::set<BlockIndex*> set_dirty_block_index_;
+    std::set<BlockIndex*, BlockIndexWorkComparator> set_block_index_candidates_;    
     BlockIndex *pindex_best_header_ = nullptr;
+    
+    BlockIndex *AddToBlockIndex(const consensus::BlockHeader& header);
+    bool ReceivedBlockTransactions(const consensus::Block& block, BlockIndex *pindex);
+    bool ConnectTip(BlockIndex *pindex);
 };
 
 } // namesapce chain

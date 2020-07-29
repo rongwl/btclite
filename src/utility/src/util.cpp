@@ -207,10 +207,11 @@ bool Args::IsArgSet(const std::string& arg) const
 }
 
 bool Executor::BasicSetup()
-{    
-    std::signal(SIGINT, HandleStop);
-    std::signal(SIGTERM, HandleStop);
-    std::signal(SIGQUIT, HandleStop);
+{
+    std::signal(SIGINT, HandleStop); // for 'ctrl-c'
+    std::signal(SIGTERM, HandleStop); // for command 'kill'
+    std::signal(SIGQUIT, HandleStop); // for 'ctrl-\'    
+    std::signal(SIGABRT, HandleAbort); // for assert, std::abort, std::terminate
     
     // Ignore SIGPIPE, otherwise it will bring the daemon down if the client closes unexpectedly
     std::signal(SIGPIPE, SIG_IGN);
@@ -220,13 +221,26 @@ bool Executor::BasicSetup()
     return BasicSetupCustomized();
 }
 
+void Executor::HandleAbort(int sig)
+{
+    if (std::this_thread::get_id() != MainThreadId().Get()) {
+        HandleStop(sig);
+        // wait for main thread to exit
+        while (1) {
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+        }
+    }
+}
+
 void Executor::HandleAllocFail()
 {
     // Rather than throwing std::bad-alloc if allocation fails, terminate
     // immediately to (try to) avoid chain corruption.
-    std::set_new_handler(std::terminate);
+    std::set_new_handler(nullptr);
+    
     BTCLOG(LOG_LEVEL_ERROR) << "Critical error: out of memory. Terminating.";
     
+    std::signal(SIGABRT, [](int){});
     // The log was successful, terminate now.
     std::terminate();
 }
@@ -238,6 +252,12 @@ void SetupEnvironment()
     } catch (const std::runtime_error&) {
         setenv("LC_ALL", "C", 1);
     }
+}
+
+SetOnce<std::thread::id>& MainThreadId()
+{
+    static auto *p_main_thread_id = new SetOnce<std::thread::id>();
+    return *p_main_thread_id;
 }
 
 } // namespace util

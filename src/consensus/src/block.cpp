@@ -3,19 +3,29 @@
 #include <memory>
 #include <sstream>
 
+#include "compact.h"
+
 
 namespace btclite {
 namespace consensus {
 
-const util::Hash256& BlockHeader::Hash() const
+
+util::uint256_t BlockHeader::GetBlockProof() const
 {
-    if (hash_cache_.IsNull()) {
-        crypto::HashOStream hs;
-        hs << *this;
-        hs.DoubleSha256(&hash_cache_);
+    Compact compact(nBits_);
+    util::uint256_t target = compact.normal();
+    
+    if (compact.negative() || 
+            compact.overflowed() || 
+            target == 0) {
+        return 0;
     }
     
-    return hash_cache_;
+    // We need to compute 2**256 / (target+1), but we can't represent 2**256
+    // as it's too large for an util::uint256_t. However, as 2**256 is at least
+    // as large as target+1, it is equal to ((2**256 - target - 1) / (target+1)) + 1,
+    // or ~target / (target+1) + 1.
+    return (~target / (target + 1)) + 1;
 }
 
 BlockHeader& BlockHeader::operator=(const BlockHeader& b)
@@ -26,7 +36,6 @@ BlockHeader& BlockHeader::operator=(const BlockHeader& b)
     time_ = b.time_;
     nBits_ = b.nBits_;
     nonce_ = b.nonce_;
-    hash_cache_.Clear();
     
     return *this;
 }
@@ -40,7 +49,6 @@ BlockHeader& BlockHeader::operator=(BlockHeader&& b) noexcept
         time_ = b.time_;
         nBits_ = b.nBits_;
         nonce_ = b.nonce_;
-        hash_cache_.Clear();
     }
     
     return *this;
@@ -58,10 +66,10 @@ Block& Block::operator=(Block&& b) noexcept
 std::string Block::ToString() const
 {
     std::stringstream ss;
-    ss << "Block(hash=" << header_.Hash().ToString().substr(0,10) << ", "
+    ss << "Block(hash=" << header_.GetHash().ToString().substr(0,12) << ", "
        << "ver=" << "0x" << std::hex << std::setw(8) << std::setfill('0') << header_.version() << ", "
-       << "hashPrevBlock=" << header_.hashPrevBlock().ToString().substr(0,10) << ", "
-       << "hashMerkleRoot=" << header_.hashMerkleRoot().ToString().substr(0,10) << ", "
+       << "hashPrevBlock=" << header_.hashPrevBlock().ToString().substr(0,12) << ", "
+       << "hashMerkleRoot=" << header_.hashMerkleRoot().ToString().substr(0,12) << ", "
        << "nTime=" << std::dec << header_.time() << ", "
        << "bits=" << std::hex << std::setw(8) << std::setfill('0') << header_.bits() << ", "
        << "nNonce=" << std::dec << header_.nonce() << ", "
@@ -88,7 +96,7 @@ util::Hash256 Block::ComputeMerkleRoot() const
             leaves.push_back(leaves.back());
         for (auto it = leaves.begin(); it != leaves.end(); it += 2) {
             util::Hash256 hash;
-            crypto::DoubleSha256(it[0].ToString()+it[1].ToString(), &hash);
+            crypto::hashfuncs::DoubleSha256(it[0].ToString()+it[1].ToString(), &hash);
             swap.push_back(hash);
         }
         std::swap(leaves, swap);

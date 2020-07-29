@@ -8,7 +8,7 @@
 namespace btclite {
 namespace chain {
 
-enum BlockStatus: uint32_t {
+enum BlockStatus : uint32_t {
     //! Unused.
     kBlockValidUnknown      =    0,
 
@@ -55,7 +55,7 @@ enum BlockStatus: uint32_t {
  * to it, but at most one of them can be part of the currently active branch.
  */
 class BlockIndex {
-public:
+public:    
     BlockIndex() = default;
     
     explicit BlockIndex(const consensus::BlockHeader& header)
@@ -66,6 +66,21 @@ public:
     bool IsValid(BlockStatus upto = kBlockValidTransactions) const;
     std::string ToString() const;
     const BlockIndex *GetAncestor(size_t height) const;
+    //! Raise the validity level of this block index entry.
+    //! Returns true if the validity was changed.
+    bool RaiseValidity(BlockStatus up_to);
+    
+    BlockIndex *GetAncestor(size_t height)
+    {
+        return const_cast<BlockIndex*>(GetAncestor(height));
+    }
+    
+    void BuildSkip()
+    {
+        if (pprev_) {
+            pskip_ = pprev_->GetAncestor(GetSkipHeight(height_));
+        }
+    }
     
     //-------------------------------------------------------------------------
     const consensus::BlockHeader& header() const
@@ -83,14 +98,14 @@ public:
         block_hash_ = hash;
     }
     
-    const BlockIndex *prev() const
+    const BlockIndex *pprev() const
     {
-        return prev_;
+        return pprev_;
     }
     
-    void set_prev(BlockIndex *prev)
+    void set_pprev(BlockIndex *pprev)
     {
-        prev_ = prev;
+        pprev_ = pprev;
     }
     
     const BlockIndex* pskip() const
@@ -113,9 +128,19 @@ public:
         return chain_work_;
     }
     
+    void set_chain_work(const util::uint256_t& chain_work)
+    {
+        chain_work_ = chain_work;
+    }
+    
     uint32_t tx_num() const
     {
         return tx_num_;
+    }
+    
+    void set_tx_num(uint32_t num)
+    {
+        tx_num_ = num;
     }
     
     uint32_t chain_tx_num() const
@@ -123,9 +148,19 @@ public:
         return chain_tx_num_;
     }
     
-    BlockStatus status() const
+    void set_chain_tx_num(uint32_t num)
+    {
+        chain_tx_num_ = num;
+    }
+    
+    std::underlying_type_t<BlockStatus> status() const
     {
         return status_;
+    }
+    
+    void set_status(std::underlying_type_t<BlockStatus> status)
+    {
+        status_ = status;
     }
     
     int32_t sequence_id() const
@@ -133,9 +168,9 @@ public:
         return sequence_id_;
     }
     
-    uint32_t time_max() const
+    void set_sequence_id(int32_t id)
     {
-        return time_max_;
+        sequence_id_ = id;
     }
     
 private:
@@ -145,7 +180,7 @@ private:
     util::Hash256 block_hash_;
     
     // pointer to the index of the predecessor of this block
-    BlockIndex *prev_ = nullptr;
+    BlockIndex *pprev_ = nullptr;
     
     // pointer to the index of some further predecessor of this block
     BlockIndex *pskip_ = nullptr;
@@ -166,13 +201,11 @@ private:
     uint32_t chain_tx_num_ = 0;
 
     // Verification status of this block. See enum BlockStatus
-    BlockStatus status_ = kBlockValidUnknown;
+    std::underlying_type_t<BlockStatus> status_ = kBlockValidUnknown;
     
     //! (memory only) Sequential id assigned to distinguish order in which blocks are received.
     int32_t sequence_id_ = 0;
 
-    // (memory only) Maximum nTime in the chain up to and including this block.
-    uint32_t time_max_ = 0;
     
     // Turn the lowest '1' bit in the binary representation of a number into a '0'.
     inline int InvertLowestOne(int n) const
@@ -191,6 +224,40 @@ private:
         // up to 2**18 blocks).
         return (height & 1) ? 
                InvertLowestOne(InvertLowestOne(height - 1)) + 1 : InvertLowestOne(height);
+    }
+};
+
+struct BlockIndexWorkComparator
+{
+    bool operator()(const BlockIndex *pa, const BlockIndex *pb) const 
+    {
+        // First sort by most total work, ...
+        if (pa->chain_work() > pb->chain_work()) {
+            return false;
+        }
+        if (pa->chain_work() < pb->chain_work()) {
+            return true;
+        }
+
+        // ... then by earliest time received, ...
+        if (pa->sequence_id() < pb->sequence_id()) {
+            return false;
+        }
+        if (pa->sequence_id() > pb->sequence_id()) {
+            return true;
+        }
+
+        // Use pointer address as tie breaker (should only happen with blocks
+        // loaded from disk, as those all have id 0).
+        if (pa < pb) {
+            return false;
+        }
+        if (pa > pb) {
+            return true;
+        }
+
+        // Identical blocks.
+        return false;
     }
 };
 

@@ -73,12 +73,7 @@ public:
         s.read(reinterpret_cast<char*>(&this->front()), this->size());
     }
     
-    //-------------------------------------------------------------------------    
-    std::string ToString() const
-    {
-        return std::move(Hex());
-    }
-
+    //-------------------------------------------------------------------------
     uint64_t Uint64(int pos) const
     {
         auto it = this->begin() + pos * 8;
@@ -91,16 +86,6 @@ public:
                (*(it+6) << 48) | 
                (*(it+7) << 56);
     }
-    
-    std::string Hex() const
-    {
-        return std::move(util::EncodeHex(this->begin(), this->end()));
-    }
-    /*void SetHex(const std::string& str)
-    {
-        Clear();
-        util::DecodeHex(str, this->begin(), this->end());
-    }*/
 
 private:
     uint32_t width_ = nBITS / 8;

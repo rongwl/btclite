@@ -1,5 +1,5 @@
-#ifndef BTCLITE_TRANSACTION_SCRIPT_WITNESS_H
-#define BTCLITE_TRANSACTION_SCRIPT_WITNESS_H
+#ifndef BTCLITE_CONSENSUS_SCRIPT_WITNESS_H
+#define BTCLITE_CONSENSUS_SCRIPT_WITNESS_H
 
 #include <string>
 #include <vector>
@@ -80,4 +80,4 @@ private:
 } // namespace consensus
 } // namespace btclite
 
-#endif // BTCLITE_TRANSACTION_SCRIPT_WITNESS_H
+#endif // BTCLITE_CONSENSUS_SCRIPT_WITNESS_H

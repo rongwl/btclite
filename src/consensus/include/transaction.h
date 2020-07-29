@@ -1,5 +1,5 @@
-#ifndef BTCLITE_TRANSACTION_H
-#define BTCLITE_TRANSACTION_H
+#ifndef BTCLITE_CONSENSUS_TRANSACTION_H
+#define BTCLITE_CONSENSUS_TRANSACTION_H
 
 #include "hash.h"
 #include "script.h"
@@ -47,7 +47,7 @@ public:
     {
         std::stringstream ss;
         ss << "OutPoint(" << prev_hash_.ToString().substr(0, 10) << ", " << index_ << ")";
-        return std::move(ss.str());
+        return ss.str();
     }
     
     //-------------------------------------------------------------------------
@@ -524,4 +524,4 @@ private:
 } // namespace consensus
 } // namespace btclite
 
-#endif // BTCLITE_TRANSACTION_H
+#endif // BTCLITE_CONSENSUS_TRANSACTION_H

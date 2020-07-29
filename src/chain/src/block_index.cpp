@@ -15,7 +15,7 @@ bool BlockIndex::IsValid(BlockStatus upto) const
 std::string BlockIndex::ToString() const
 {
     std::stringstream ss;
-    ss << "BlockIndex(pprev=" << prev_ << ", height=" << height_
+    ss << "BlockIndex(pprev=" << pprev_ << ", height=" << height_
        << ", merkle=" << header_.hashMerkleRoot().ToString()
        << ", hashBlock=" << block_hash_.ToString() << ")";
     
@@ -41,13 +41,30 @@ const BlockIndex *BlockIndex::GetAncestor(size_t height) const
             pindex_walk = pindex_walk->pskip();
             height_walk = height_skip;
         } else {
-            assert(pindex_walk->prev());
-            pindex_walk = pindex_walk->prev();
+            assert(pindex_walk->pprev());
+            pindex_walk = pindex_walk->pprev();
             height_walk--;
         }
     }
     
     return pindex_walk;
+}
+
+bool BlockIndex::RaiseValidity(BlockStatus up_to)
+{
+    // Only validity flags allowed.
+    assert(!(up_to & ~kBlockValidMask));
+    
+    if (status_ & kBlockFailedMask) {
+        return false;
+    }
+    
+    if ((status_ & kBlockValidMask) < up_to) {
+        status_ = (status_ & ~kBlockValidMask) | up_to;
+        return true;
+    }
+    
+    return false;
 }
 
 } // namesapce chain

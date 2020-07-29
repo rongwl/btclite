@@ -11,17 +11,20 @@ std::string TxIn::ToString() const
 {
     std::stringstream ss;
     ss << "TxIn(" << prevout_.ToString() << ", ";
-    if (prevout_.IsNull())
-        ss << "coinbase=" << util::EncodeHex(
+    if (prevout_.IsNull()) {
+        ss << "scriptsig=" << util::EncodeHex(
                script_sig_.begin(), script_sig_.end());
-    else
-        ss << "scriptSig=" << util::EncodeHex(
+    }
+    else {
+        ss << "scriptsig=" << util::EncodeHex(
                script_sig_.begin(), script_sig_.end()).substr(0, 24);
-    if (sequence_no_ != default_sequence_no)
+    }
+    if (sequence_no_ != default_sequence_no) {
         ss << ", sequence_no=" << sequence_no_;
+    }
     ss << ")";
     
-    return std::move(ss.str());
+    return ss.str();
 }
 
 std::string TxOut::ToString() const
@@ -33,7 +36,7 @@ std::string TxOut::ToString() const
        << util::EncodeHex(script_pub_key_.begin(),
                script_pub_key_.end()) 
        << ")";
-    return std::move(ss.str());
+    return ss.str();
 }
 
 template <typename Stream>
@@ -125,7 +128,7 @@ std::string Transaction::ToString() const
     for (const auto& tx_out : outputs_)
         ss << "    " << tx_out.ToString() << "\n";
     
-    return std::move(ss.str());
+    return ss.str();
 }
 
 const util::Hash256& Transaction::Hash() const

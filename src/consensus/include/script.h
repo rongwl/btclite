@@ -1,5 +1,5 @@
-#ifndef BTCLITE_SCRIPT_H
-#define BTCLITE_SCRIPT_H
+#ifndef BTCLITE_CONSENSUS_SCRIPT_H
+#define BTCLITE_CONSENSUS_SCRIPT_H
 
 #include <stdexcept>
 #include <vector>
@@ -284,4 +284,4 @@ private:
 } // namespace btclite
 
 
-#endif // BTCLITE_SCRIPT_H
+#endif // BTCLITE_CONSENSUS_SCRIPT_H

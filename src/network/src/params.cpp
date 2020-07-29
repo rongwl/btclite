@@ -62,11 +62,13 @@ Params::Params(BtcNet btcnet, const util::Args& args,
             break;
         }
         default :
+        {
             msg_magic_ = 0;
             default_port_ = 0;
             seeds_.clear();
             
             break;
+        }
     }
 }
 

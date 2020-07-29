@@ -42,7 +42,7 @@ bool ParseMsgData(const uint8_t *raw, std::shared_ptr<Node> src_node,
                                       _1, params.msg_magic(), 
                                       params.advertise_local_addr(),
                                       std::ref(local_service), 
-                                      pchain_state->active_chain().Height(),
+                                      pchain_state->ActiveChainHeight(),
                                       ppeers);
         return HandleMsgData(src_node, header, version, recv_handler);
     }

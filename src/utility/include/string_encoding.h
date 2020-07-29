@@ -66,7 +66,7 @@ std::string EncodeHex(Iterator begin, Iterator end, bool fSpaces=false)
         rv.push_back(hexmap[val&15]);
     }
 
-    return std::move(rv);
+    return rv;
 }
 /*
 template <typename Iterator>

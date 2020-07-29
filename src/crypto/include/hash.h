@@ -23,6 +23,7 @@ public:
     }
 };
 
+namespace hashfuncs {
 
 void Sha256(const uint8_t in[], size_t length, util::Hash256 *out);
 util::Hash256 Sha256(const uint8_t in[], size_t length);
@@ -31,10 +32,12 @@ util::Hash256 Sha256(const std::vector<uint8_t>& in);
 
 void DoubleSha256(const uint8_t in[], size_t length, util::Hash256 *out);
 util::Hash256 DoubleSha256(const uint8_t in[], size_t length);
-void DoubleSha256(const std::vector<uint8_t> &in, util::Hash256 *out);
-util::Hash256 DoubleSha256(const std::vector<uint8_t> &in);
-void DoubleSha256(const std::string &in, util::Hash256 *out);
-util::Hash256 DoubleSha256(const std::string &in);
+void DoubleSha256(const std::vector<uint8_t>& in, util::Hash256 *out);
+util::Hash256 DoubleSha256(const std::vector<uint8_t>& in);
+void DoubleSha256(const std::string& in, util::Hash256 *out);
+util::Hash256 DoubleSha256(const std::string& in);
+
+} // namespace hashfuncs
 
 
 // A writer stream (for serialization) that computes a 256-bit hash.
@@ -46,11 +49,32 @@ public:
     HashOStream()
         : vec_(), byte_sink_(vec_) {}
     
-    void Sha256(util::Hash256 *out) const; 
-    util::Hash256 Sha256() const;
-    void DoubleSha256(util::Hash256 *out) const;
-    util::Hash256 DoubleSha256() const;
+    //-------------------------------------------------------------------------
+    void Sha256(util::Hash256 *out) const
+    {
+        hashfuncs::Sha256(vec_, out);
+    }
     
+    util::Hash256 Sha256() const
+    {
+        util::Hash256 hash;        
+        Sha256(&hash);        
+        return hash;
+    }
+    
+    void DoubleSha256(util::Hash256 *out) const
+    {
+        hashfuncs::DoubleSha256(vec_, out);
+    }
+    
+    util::Hash256 DoubleSha256() const
+    {
+        util::Hash256 hash;        
+        DoubleSha256(&hash);        
+        return hash;
+    }
+    
+    //-------------------------------------------------------------------------
     template <typename T>
     HashOStream& operator<<(const T& obj)
     {
@@ -59,6 +83,7 @@ public:
         return *this;
     }
     
+    //-------------------------------------------------------------------------
     size_t Size() const
     {
         return vec_.size();
@@ -115,14 +140,17 @@ private:
 template <typename T>
 util::Hash256 GetHash(const T& obj)
 {
-    std::vector<uint8_t> vec;
-    util::Hash256 hash;
-    util::ByteSink<std::vector<uint8_t> > byte_sink(vec);
-    
-    obj.Serialize(byte_sink);
-    crypto::Sha256(vec, &hash);
-    
-    return hash;
+    HashOStream hs;
+    hs << obj;
+    return hs.Sha256();
+}
+
+template <typename T>
+util::Hash256 GetDoubleHash(const T& obj)
+{
+    HashOStream hs;
+    hs << obj;
+    return hs.DoubleSha256();
 }
 
 } // namespace crypto

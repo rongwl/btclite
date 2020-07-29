@@ -6,6 +6,7 @@
 
 int main(int argc, char **argv)
 {
+    btclite::util::MainThreadId().Set(std::this_thread::get_id());
     btclite::util::logging::InitLogging(argv[0]);
     
     btclite::fullnode::FullNodeConfig config;
@@ -20,18 +21,21 @@ int main(int argc, char **argv)
         exit(e.code().value());
     }
     
-    if (!config.InitArgs())
+    if (!config.InitArgs()) {
         return EXIT_FAILURE;
+    }
     
-    if (!config.InitDataDir())
+    if (!config.InitDataDir()) {
         return EXIT_FAILURE;
+    }
     
     btclite::fullnode::FullNode fullnode(config);
     bool ret = false;
     try {
         ret = fullnode.Init();
-        if (ret)
+        if (ret) {
             ret = fullnode.Start();
+        }
     }
     catch (const btclite::util::Exception& e) {
         fprintf(stderr, "Error: %s\n", e.what());
@@ -42,7 +46,7 @@ int main(int argc, char **argv)
     catch (...) {
         
     }
-
+    
     if (ret) {
         fullnode.WaitToStop();
     }
@@ -50,7 +54,7 @@ int main(int argc, char **argv)
     fullnode.Interrupt();
     fullnode.Stop();
     
-    //Block genesis = CreateGenesisBlock(1231006505, 2083236893, 0x1d00ffff, 1, 50*kSatoshiPerBitcoin);
+    //btclite::consensus::Block genesis = btclite::consensus::CreateGenesisBlock(1231006505, 2083236893, 0x1d00ffff, 1, 50*btclite::kSatoshiPerBitcoin);
     //std::cout << genesis.ToString() << std::endl;
     
     return EXIT_SUCCESS;

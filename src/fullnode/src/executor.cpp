@@ -10,11 +10,17 @@ bool FullNode::Init()
 {
     BTCLOG(LOG_LEVEL_INFO) << "Initializing btc-fullnode...";
     
-    if (!BasicSetup())
+    if (!BasicSetup()) {
         return false;
+    }
     
-    if (!network_.Init(chain_.chain_state()))
+    if (!chain_.Init()) {
         return false;
+    }
+    
+    if (!network_.Init(chain_.chain_state())) {
+        return false;
+    }
 
     BTCLOG(LOG_LEVEL_INFO) << "Finished initializing btc-fullnode.";
     

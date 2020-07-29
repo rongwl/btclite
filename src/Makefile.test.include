@@ -1,10 +1,12 @@
 TESTS = unit_test/test_util \
         unit_test/test_crypto \
+        unit_test/test_consensus \
         unit_test/test_chain \
         unit_test/test_network \
         unit_test/test_fullnode
 bin_PROGRAMS += unit_test/test_util \
                 unit_test/test_crypto \
+                unit_test/test_consensus \
                 unit_test/test_chain \
                 unit_test/test_network \
                 unit_test/test_fullnode 
@@ -117,9 +119,22 @@ unit_test_test_crypto_LDADD += $(GTEST_LIBS) \
                                $(BOTAN_LIBS)
 
 
+# test_consensus binary #
+unit_test_test_consensus_SOURCES = unit_test/consensus/src/test_consensus.cpp \
+                                   unit_test/consensus/src/compact_tests.cpp
+
+unit_test_test_consensus_CPPFLAGS = $(AM_CPPFLAGS) \
+                                    $(GTEST_CFLAGS) \
+                                    $(GLOG_CFLAGS) \
+                                    $(BTCLITE_INCLUDES)
+unit_test_test_consensus_LDADD = $(LIBBTCLITE_CONSENSUS) \
+                                 $(LIBBTCLITE_UTIL)
+unit_test_test_consensus_LDADD += $(GTEST_LIBS) \
+                                  $(GLOG_LIBS) 
+
+
 # test_chain binary #
 unit_test_test_chain_SOURCES = unit_test/chain/src/test_chain.cpp \
-                               unit_test/chain/src/compact_tests.cpp \
                                unit_test/chain/src/params_tests.cpp \
                                unit_test/chain/src/chain_state_tests.cpp 
 
@@ -130,6 +145,7 @@ unit_test_test_chain_CPPFLAGS = $(AM_CPPFLAGS) \
                                  $(BTCLITE_INCLUDES)
 unit_test_test_chain_LDADD = $(LIBBTCLITE_CHAIN) \
                              $(LIBBTCLITE_CONSENSUS) \
+                             $(LIBBTCLITE_CRYPTO) \
                              $(LIBBTCLITE_UTIL)
 unit_test_test_chain_LDADD += $(GTEST_LIBS) \
                               $(BOTAN_LIBS) \
@@ -138,6 +154,7 @@ unit_test_test_chain_LDADD += $(GTEST_LIBS) \
 
 # test_util binary #
 unit_test_test_util_SOURCES = unit_test/utility/src/test_util.cpp \
+                              unit_test/utility/src/arithmetic_tests.cpp \
                               unit_test/utility/src/circular_buffer_tests.cpp \
                               unit_test/utility/src/string_encoding_tests.cpp \
                               unit_test/utility/src/random_tests.cpp \

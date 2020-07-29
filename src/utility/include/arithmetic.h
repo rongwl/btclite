@@ -66,10 +66,12 @@ class Uint256 : public Blob<256> {
 public:
     using Blob<256>::Blob;
     
-    Uint256(uint64_t b)
+    explicit Uint256(uint64_t b)
     {
         std::memcpy(this->begin(), reinterpret_cast<uint8_t*>(&b), sizeof(b));
     }
+    
+    explicit Uint256(const std::string& s);
     
     Uint256(const Uint128& low, const Uint128& high)
     {
@@ -78,6 +80,11 @@ public:
     }   
     
     //-------------------------------------------------------------------------
+    std::string ToString() const
+    {
+        return "0x" + util::EncodeHex(this->rbegin(), this->rend());
+    }
+    
     uint64_t GetLow64() const
     {
         const uint64_t *x = reinterpret_cast<const uint64_t*>(this->data());

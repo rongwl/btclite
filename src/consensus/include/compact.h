@@ -1,12 +1,12 @@
-#ifndef BTCLITE_CHAIN_COMPACT_H
-#define BTCLITE_CHAIN_COMPACT_H
+#ifndef BTCLITE_CONSENSUS_COMPACT_H
+#define BTCLITE_CONSENSUS_COMPACT_H
 
 
 #include "arithmetic.h"
 
 
 namespace btclite {
-namespace chain {
+namespace consensus {
 
 /*
  * The "compact" format is a representation of a whole
@@ -45,12 +45,6 @@ public:
     }
     
     //-------------------------------------------------------------------------
-    static bool Negative(uint32_t compact)
-    {
-        return ((compact & 0x007fffff) && (compact & 0x00800000));
-    }
-    
-    //-------------------------------------------------------------------------
     const util::uint256_t& normal() const
     {
         return normal_;
@@ -59,6 +53,11 @@ public:
     uint32_t compact() const
     {
         return compact_;
+    }
+    
+    bool negative() const
+    {
+        return negative_;
     }
         
     bool overflowed() const
@@ -69,13 +68,14 @@ public:
 private:
     util::uint256_t normal_ = 0;
     uint32_t compact_ = 0;
+    bool negative_ = false;
     bool overflowed_ = false;
     
     void SetCompact(uint32_t compact);
     void GetCompact();
 };
 
-} // namespace chain
+} // namespace consensus
 } // namespace btclite
 
-#endif // BTCLITE_CHAIN_COMPACT_H
+#endif // BTCLITE_CONSENSUS_COMPACT_H

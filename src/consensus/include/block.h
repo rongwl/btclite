@@ -1,5 +1,5 @@
-#ifndef BTCLITE_BLOCK_H
-#define BTCLITE_BLOCK_H
+#ifndef BTCLITE_CONSENSUS_BLOCK_H
+#define BTCLITE_CONSENSUS_BLOCK_H
 
 
 #include "transaction.h"
@@ -28,18 +28,12 @@ public:
                 uint32_t time, uint32_t bits, uint32_t nonce)
         : version_(version), 
           prev_block_hash_(prev_block_hash), merkle_root_hash_(merkle_root_hash),
-          time_(time), nBits_(bits), nonce_(nonce)
-    {
-        Hash();
-    }
+          time_(time), nBits_(bits), nonce_(nonce) {}
     
     BlockHeader(const BlockHeader& h)
         : version_(h.version_), 
           prev_block_hash_(h.prev_block_hash_), merkle_root_hash_(h.merkle_root_hash_),
-          time_(h.time_), nBits_(h.nBits_), nonce_(h.nonce_)
-    {
-        Hash();
-    }
+          time_(h.time_), nBits_(h.nBits_), nonce_(h.nonce_) {}
     
     //-------------------------------------------------------------------------
     void Clear()
@@ -50,19 +44,24 @@ public:
         time_ = 0;
         nBits_ = 0;
         nonce_ = 0;
-        hash_cache_.Clear();
-    }    
+    }
+    
     bool IsNull() const
     {
         return (nBits_ == 0);
     }
+    
+    util::uint256_t GetBlockProof() const;
     
     //-------------------------------------------------------------------------
     template <typename Stream> void Serialize(Stream& os) const;
     template <typename Stream> void Deserialize(Stream& is);
     
     //-------------------------------------------------------------------------
-    const util::Hash256& Hash() const;
+    util::Hash256 GetHash() const
+    {
+        return crypto::GetDoubleHash(*this);
+    }
     
     //-------------------------------------------------------------------------
     BlockHeader& operator=(const BlockHeader& b);
@@ -76,7 +75,6 @@ public:
     void set_version(int32_t v)
     {
         version_ = v;
-        hash_cache_.Clear();
     }
     
     const util::Hash256& hashPrevBlock() const
@@ -86,18 +84,15 @@ public:
     void set_hashPrevBlock(const util::Hash256& hash)
     {
         prev_block_hash_ = hash;
-        hash_cache_.Clear();
     }
     
     const util::Hash256& hashMerkleRoot() const
     {
         return merkle_root_hash_;
-        hash_cache_.Clear();
     }
     void set_hashMerkleRoot(const util::Hash256& hash)
     {
         merkle_root_hash_ = hash;
-        hash_cache_.Clear();
     }
     
     uint32_t time() const
@@ -107,7 +102,6 @@ public:
     void set_time(uint32_t t)
     {
         time_ = t;
-        hash_cache_.Clear();
     }
     
     uint32_t bits() const
@@ -117,7 +111,6 @@ public:
     void set_bits(uint32_t b)
     {
         nBits_ = b;
-        hash_cache_.Clear();
     }
     
     uint32_t nonce() const
@@ -127,7 +120,6 @@ public:
     void set_nonce(uint32_t n)
     {
         nonce_ = n;
-        hash_cache_.Clear();
     }
     
 private:
@@ -137,8 +129,6 @@ private:
     uint32_t time_;
     uint32_t nBits_;
     uint32_t nonce_;
-    
-    mutable util::Hash256 hash_cache_;
 };
 
 template <typename Stream>
@@ -193,6 +183,12 @@ public:
         header_.Clear();
         transactions_.clear();
     }
+    
+    util::Hash256 GetHash() const
+    {
+        return header_.GetHash();
+    }
+    
     std::string ToString() const;
     util::Hash256 ComputeMerkleRoot() const;
     
@@ -257,4 +253,4 @@ Block CreateGenesisBlock(uint32_t time, uint32_t nonce, uint32_t bits, int32_t v
 } // namespace consensus
 } // namespace btclite
 
-#endif // BTCLITE_BLOCK_H
+#endif // BTCLITE_CONSENSUS_BLOCK_H

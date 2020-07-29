@@ -1,7 +1,7 @@
 #include "compact.h"
 
 namespace btclite {
-namespace chain {
+namespace consensus {
 
 inline size_t LogicalSize(util::uint256_t value)
 {
@@ -25,10 +25,11 @@ void Compact::SetCompact(uint32_t compact)
         normal_ = word;
         normal_ <<= 8 * (size - 3);
     }
-    
-    overflowed_ = word != 0 && ((size > 34) ||
+
+    negative_ = (word != 0 && (compact & 0x00800000) != 0);
+    overflowed_ = (word != 0 && ((size > 34) ||
                                 (word > 0xff && size > 33) ||
-                                (word > 0xffff && size > 32));
+                                (word > 0xffff && size > 32)));
 }
 
 void Compact::GetCompact()
@@ -53,5 +54,5 @@ void Compact::GetCompact()
     compact_ |= size << 24;
 }
 
-} // namespace chain
+} // namespace consensus
 } // namespace btclite
