@@ -19,7 +19,7 @@ TEST(RandomTest, MethodGetUint64)
 
 TEST(RandomTest, MethodGetUint256)
 {
-    util::Uint256 new_num, old_num;
+    util::Hash256 new_num, old_num;
     old_num = RandHash256();
     for (int i = 0; i < 1000; i++) {
         new_num = RandHash256();

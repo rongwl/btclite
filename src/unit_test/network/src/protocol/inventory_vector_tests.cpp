@@ -10,7 +10,7 @@ using namespace network::protocol;
 TEST_F(InvVectTest, Constructor)
 {
     EXPECT_EQ(inv_vect1_.type(), 0);
-    EXPECT_TRUE(inv_vect1_.hash().IsNull());
+    EXPECT_EQ(inv_vect1_.hash(), crypto::null_hash);
     
     EXPECT_EQ(inv_vect2_.type(), type_);
     EXPECT_EQ(inv_vect2_.hash(), hash_);

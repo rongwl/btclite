@@ -5,8 +5,8 @@
 #include <endian.h>
 #include <limits>
 
-#include "util_assert.h"
 #include "blob.h"
+#include "util_assert.h"
 
 
 namespace btclite {
@@ -17,109 +17,9 @@ using uint128_t = boost::multiprecision::uint128_t;
 using int256_t = boost::multiprecision::int256_t;
 using uint256_t = boost::multiprecision::uint256_t;
 
-class Uint128 : public Blob<128> {
-public:
-    using Blob<128>::Blob;
+using Hash256 = Bytes<32>;
 
-    Uint128(uint64_t low, uint64_t high) 
-    { 
-        std::memcpy(this->begin(), &low, sizeof(uint64_t));
-        std::memcpy(this->begin()+sizeof(uint64_t), &high, sizeof(uint64_t));
-    }
-    
-    //-------------------------------------------------------------------------
-    uint64_t GetLow64() const
-    {
-        const uint64_t *x = reinterpret_cast<const uint64_t*>(this->data());
-        return *x;
-    }
-    
-    uint32_t GetLow32() const
-    {
-        const uint32_t *x = reinterpret_cast<const uint32_t*>(this->data());
-        return *x;
-    }
-    
-    //-------------------------------------------------------------------------
-    friend bool operator==(const Uint128& a, const Uint128& b)
-    {
-        return (a.Compare(b) == 0);
-    }
-    
-    friend bool operator!=(const Uint128& a, const Uint128& b)
-    {
-        return !(a == b);
-    }
-    
-    friend bool operator<(const Uint128& a, const Uint128& b)
-    {
-        return (a.Compare(b) < 0);
-    }
-    
-    friend bool operator>(const Uint128& a, const Uint128& b)
-    {
-        return (a.Compare(b) > 0);
-    }
-};
-
-class Uint256 : public Blob<256> {
-public:
-    using Blob<256>::Blob;
-    
-    explicit Uint256(uint64_t b)
-    {
-        std::memcpy(this->begin(), reinterpret_cast<uint8_t*>(&b), sizeof(b));
-    }
-    
-    explicit Uint256(const std::string& s);
-    
-    Uint256(const Uint128& low, const Uint128& high)
-    {
-        std::memcpy(this->begin(), low.begin(), low.size());
-        std::memcpy(this->begin()+low.size(), high.begin(), high.size());
-    }   
-    
-    //-------------------------------------------------------------------------
-    std::string ToString() const
-    {
-        return "0x" + util::EncodeHex(this->rbegin(), this->rend());
-    }
-    
-    uint64_t GetLow64() const
-    {
-        const uint64_t *x = reinterpret_cast<const uint64_t*>(this->data());
-        return *x;
-    }
-    
-    uint32_t GetLow32() const
-    {
-        const uint32_t *x = reinterpret_cast<const uint32_t*>(this->data());
-        return *x;
-    }
-    
-    //-------------------------------------------------------------------------
-    friend bool operator==(const Uint256& a, const Uint256& b)
-    {
-        return (a.Compare(b) == 0);
-    }
-    
-    friend bool operator!=(const Uint256& a, const Uint256& b)
-    {
-        return !(a == b);
-    }
-    
-    friend bool operator<(const Uint256& a, const Uint256& b)
-    {
-        return (a.Compare(b) < 0);
-    }
-    
-    friend bool operator>(const Uint256& a, const Uint256& b)
-    {
-        return (a.Compare(b) > 0);
-    }
-};
-
-using Hash256 = Uint256;
+Hash256 StrToHash256(const std::string& s);
 
 
 template <typename T>

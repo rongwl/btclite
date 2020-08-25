@@ -383,7 +383,7 @@ uint64_t Peers::MakeMapKey(const NetAddr& addr, bool by_group)
         hs << key_ << vec_addr;
     }
     
-    return hs.Sha256().GetLow64();
+    return util::FromLittleEndian<uint64_t>(hs.Sha256().data());
 }
 
 void Peers::Clear()

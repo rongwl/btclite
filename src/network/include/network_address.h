@@ -6,7 +6,6 @@
 #include <netinet/in.h>
 #include <netinet/ip.h> 
 
-#include "blob.h"
 #include "constants.h"
 #include "hash.h"
 #include "network_address.pb.h"

@@ -12,7 +12,7 @@ TEST_F(RejectTest, Constructor)
     EXPECT_EQ(reject1_.message(), "");
     EXPECT_EQ(reject1_.ccode(), CCode::kRejectUnknown);
     EXPECT_EQ(reject1_.reason(), "");
-    EXPECT_TRUE(reject1_.data().IsNull());
+    EXPECT_EQ(reject1_.data(), crypto::null_hash);
     
     EXPECT_EQ(reject2_.message(), message_);
     EXPECT_EQ(reject2_.ccode(), ccode_);

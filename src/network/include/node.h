@@ -282,7 +282,7 @@ public:
     {
         LOCK(cs_);
         return (std::find(known_addrs_.begin(), known_addrs_.end(), 
-                          addr.GetHash().GetLow64()) != known_addrs_.end());
+                          util::FromLittleEndian<uint64_t>(addr.GetHash().data())) != known_addrs_.end());
     }
     
     //-------------------------------------------------------------------------

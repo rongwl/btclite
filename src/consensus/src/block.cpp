@@ -66,10 +66,13 @@ Block& Block::operator=(Block&& b) noexcept
 std::string Block::ToString() const
 {
     std::stringstream ss;
-    ss << "Block(hash=" << header_.GetHash().ToString().substr(0,12) << ", "
+    util::Hash256 hash = header_.GetHash();
+    util::Hash256 hash_prev_ = header_.hashPrevBlock();
+    util::Hash256 hash_merkle = header_.hashMerkleRoot();
+    ss << "Block(hash=" << util::EncodeHex(hash.rbegin(), hash.rend()).substr(0,12) << ", "
        << "ver=" << "0x" << std::hex << std::setw(8) << std::setfill('0') << header_.version() << ", "
-       << "hashPrevBlock=" << header_.hashPrevBlock().ToString().substr(0,12) << ", "
-       << "hashMerkleRoot=" << header_.hashMerkleRoot().ToString().substr(0,12) << ", "
+       << "hashPrevBlock=" << util::EncodeHex(hash_prev_.rbegin(), hash_prev_.rend()).substr(0,12) << ", "
+       << "hashMerkleRoot=" << util::EncodeHex(hash_merkle.rbegin(), hash_merkle.rend()).substr(0,12) << ", "
        << "nTime=" << std::dec << header_.time() << ", "
        << "bits=" << std::hex << std::setw(8) << std::setfill('0') << header_.bits() << ", "
        << "nNonce=" << std::dec << header_.nonce() << ", "
@@ -87,7 +90,7 @@ util::Hash256 Block::ComputeMerkleRoot() const
     std::vector<util::Hash256> leaves;
     std::vector<util::Hash256> swap;
     for_each(transactions_.begin(), transactions_.end(), [&leaves](const Transaction& tx)
-                                                         { leaves.push_back(tx.Hash()); });
+                                                         { leaves.push_back(tx.GetHash()); });
     
     swap.reserve((leaves.size() + 1) / 2);
     while (leaves.size() > 1) {
@@ -95,9 +98,9 @@ util::Hash256 Block::ComputeMerkleRoot() const
         if (leaves.size() % 2 != 0)
             leaves.push_back(leaves.back());
         for (auto it = leaves.begin(); it != leaves.end(); it += 2) {
-            util::Hash256 hash;
-            crypto::hashfuncs::DoubleSha256(it[0].ToString()+it[1].ToString(), &hash);
-            swap.push_back(hash);
+            swap.push_back(crypto::hashfuncs::DoubleSha256(
+                               util::EncodeHex(it[0].rbegin(), it[0].rend()) + 
+                               util::EncodeHex(it[1].rbegin(), it[1].rend())));
         }
         std::swap(leaves, swap);
         swap.clear();

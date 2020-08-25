@@ -9,6 +9,8 @@
 #include <map>
 
 #include "constants.h"
+#include "logging.h"
+#include "thread.h"
 #include "util_endian.h"
 
 
@@ -119,16 +121,18 @@ private:
     std::enable_if_t<std::is_arithmetic<T>::value> Serialize(const std::vector<T>& in)
     {
         SerWriteVarInt(in.size());
-        if (!in.empty())
+        if (!in.empty()) {
             stream_.write(reinterpret_cast<const char*>(in.data()), in.size()*sizeof(T));
+        }
     }
     
     // for string vector
     void Serialize(const std::vector<std::string>& in)
     {
         SerWriteVarInt(in.size());
-        for (auto it = in.begin(); it != in.end(); it++)
+        for (auto it = in.begin(); it != in.end(); it++) {
             Serialize(*it);
+        }
     }
     
     // for class vector
@@ -136,8 +140,9 @@ private:
     std::enable_if_t<std::is_class<T>::value> Serialize(const std::vector<T>& in)
     {
         SerWriteVarInt(in.size());
-        for (auto it = in.begin(); it != in.end(); it++)
-            it->Serialize(stream_);
+        for (auto it = in.begin(); it != in.end(); it++) {
+            Serialize(*it);
+        }
     }
     
     // for integral RepeatedField
@@ -185,9 +190,9 @@ template <typename Stream>
 template <typename T>
 void Serializer<Stream>::SerWriteData(const T& obj)
 {
-    Bytes<sizeof(T)> data;
-    ToLittleEndian(obj, &data);
-    stream_.write(reinterpret_cast<const char*>(&data[0]), sizeof data);
+    uint8_t data[sizeof(T)];
+    ToLittleEndian(obj, data);
+    stream_.write(reinterpret_cast<const char*>(data), sizeof data);
 }
 
 template <typename Stream>
@@ -198,78 +203,59 @@ public:
     
     // interface for Deserialize
     template <typename T>
-    void SerialRead(T *obj)
+    size_t SerialRead(T *obj)
     {
-        Deserialize(obj);
+        return Deserialize(obj);
     }
     
 private:
     Stream& stream_;
     
     //-------------------------------------------------------------------------
-    // for double
-    void Deserialize(double *out) 
-    {
-        uint64_t i;
-        SerReadData(&i);
-        *out = BinaryToDouble(i);        
-    }
-    
-    // for float
-    void Deserialize(float *out) 
-    {
-        uint32_t i;
-        SerReadData(&i);
-        *out = BinaryToFloat(i);
-    }
-    
-    // for string
-    void Deserialize(std::string *out);
+    size_t Deserialize(double *out); // for double
+    size_t Deserialize(float *out); // for float
+    size_t Deserialize(std::string *out); // for string
     
     // for integral type
     template <typename T>
-    std::enable_if_t<std::is_integral<T>::value> Deserialize(T *out) 
+    size_t Deserialize(T *out, std::enable_if_t<std::is_integral<T>::value>* = 0) 
     {
-        SerReadData(out);
+        return SerReadData(out);
     }
     
     // for enum
     template <typename T>
-    std::enable_if_t<std::is_enum_v<T> > Deserialize(T *out)
+    size_t Deserialize(T *out, std::enable_if_t<std::is_enum_v<T> >* = 0)
     {
-        SerReadData(reinterpret_cast<std::underlying_type_t<T>*>(out));
+        return SerReadData(reinterpret_cast<std::underlying_type_t<T>*>(out));
     }
     
     // for arithmetic std::array
     template <typename T, size_t N>
-    std::enable_if_t<std::is_arithmetic<T>::value> Deserialize(std::array<T, N> *out)
-    {
-        for (auto it = out->begin(); it != out->end(); it++)
-            Deserialize(&(*it));
-    }
+    size_t Deserialize(std::array<T, N> *out, 
+                       std::enable_if_t<std::is_arithmetic<T>::value>* = 0);
     
     // for arithmetic vector
     template <typename T> 
-    std::enable_if_t<std::is_arithmetic<T>::value> Deserialize(std::vector<T> *out); 
+    size_t Deserialize(std::vector<T> *out, 
+                       std::enable_if_t<std::is_arithmetic<T>::value>* = 0); 
     
     // for string vector
-    void Deserialize(std::vector<std::string> *out);
+    size_t Deserialize(std::vector<std::string> *out);
     
     // for class vector
     template <typename T> 
-    std::enable_if_t<std::is_class<T>::value> Deserialize(std::vector<T> *out); 
+    size_t Deserialize(std::vector<T> *out,
+                       std::enable_if_t<std::is_class<T>::value>* = 0); 
     
     // for integral RepeatedField
     template <typename T>
-    std::enable_if_t<std::is_integral<T>::value> Deserialize(::google::protobuf::RepeatedField<T> *out)
-    {
-        for (uint8_t *p = reinterpret_cast<uint8_t*>(out->begin()); p != reinterpret_cast<uint8_t*>(out->end()); p++)
-            Deserialize(p);
-    }
+    size_t Deserialize(::google::protobuf::RepeatedField<T> *out,
+                       std::enable_if_t<std::is_integral<T>::value>* = 0);
     
     // default to calling member function
     template <typename T>
-    std::enable_if_t<std::is_class<T>::value> Deserialize(T *obj) 
+    size_t Deserialize(T *obj, std::enable_if_t<std::is_class<T>::value>* = 0) 
     {
         obj->Deserialize(stream_);
     }
@@ -278,11 +264,31 @@ private:
     uint64_t SerReadVarInt();
     
     // Lowest-level deserialization and conversion.
-    template <typename T> void SerReadData(T*);
+    template <typename T> size_t SerReadData(T*);
 };
 
 template <typename Stream>
-void Deserializer<Stream>::Deserialize(std::string *out)
+size_t Deserializer<Stream>::Deserialize(double *out) 
+{
+    uint64_t i;
+    size_t size = SerReadData(&i);
+    *out = BinaryToDouble(i);  
+    
+    return size;
+}
+
+template <typename Stream>
+size_t Deserializer<Stream>::Deserialize(float *out) 
+{
+    uint32_t i;
+    size_t size = SerReadData(&i);
+    *out = BinaryToFloat(i);
+    
+    return size;
+}
+
+template <typename Stream>
+size_t Deserializer<Stream>::Deserialize(std::string *out)
 {
     size_t size = SerReadVarInt();
     char c;
@@ -292,55 +298,106 @@ void Deserializer<Stream>::Deserialize(std::string *out)
     out->reserve(size);
     for (size_t i = 0; i < size; i++) {
         stream_.read(&c, 1);
-        if (c == '\0')
+        if (c == '\0') {
             break;
+        }
         out->push_back(c);
     }
+    
+    return size + 1;
+}
+
+template <typename Stream>
+template <typename T, size_t N>
+size_t Deserializer<Stream>::Deserialize(std::array<T, N> *out,
+                                         std::enable_if_t<std::is_arithmetic<T>::value>*)
+{
+    size_t size = 0;
+    
+    for (auto it = out->begin(); it != out->end(); it++) {
+        size += Deserialize(&(*it));
+    }
+    
+    return size;
 }
 
 template <typename Stream>
 template <typename T>
-std::enable_if_t<std::is_arithmetic<T>::value> Deserializer<Stream>::Deserialize(std::vector<T> *out)
+size_t Deserializer<Stream>::Deserialize(std::vector<T> *out,
+                                         std::enable_if_t<std::is_arithmetic<T>::value>*)
 {
     // Limit size per read so bogus size value won't cause out of memory
+    size_t size = 0;
     uint64_t count = SerReadVarInt();
-    if (count*sizeof(T) > kMaxBlockSize)
-        throw std::ios_base::failure("vector size larger than max block size");
+    if (count*sizeof(T) > kMaxBlockSize) {
+        BTCLOG(LOG_LEVEL_ERROR) << "vector size larger than max block size";
+        SingletonInterruptor::GetInstance().Interrupt();
+    }
+    size += 1;
+    
     out->clear();
     out->resize(count);
-    for (auto it = out->begin(); it != out->end(); ++it)
-        Deserialize(&(*it));
+    for (auto it = out->begin(); it != out->end(); ++it) {
+        size += Deserialize(&(*it));
+    }
+    
+    return size;
 }
 
 template <typename Stream>
-void Deserializer<Stream>::Deserialize(std::vector<std::string> *out)
+size_t Deserializer<Stream>::Deserialize(std::vector<std::string> *out)
 {
     uint64_t count = SerReadVarInt();
-    size_t size = 0;    
+    size_t size = 1;   
+    
     out->clear();
     out->resize(count);
     for (auto it = out->begin(); it != out->end(); ++it) {
         Deserialize(&(*it));
         size += it->size();
-        if (size > kMaxBlockSize)
-            throw std::ios_base::failure("vector size larger than max block size");
+        if (size > kMaxBlockSize) {
+            BTCLOG(LOG_LEVEL_ERROR) << "vector size larger than max block size";
+            SingletonInterruptor::GetInstance().Interrupt();
+        }
     }
+    
+    return size;
 }
 
 template <typename Stream>
 template <typename T> 
-std::enable_if_t<std::is_class<T>::value> Deserializer<Stream>::Deserialize(std::vector<T> *out)
+size_t Deserializer<Stream>::Deserialize(std::vector<T> *out,
+                                         std::enable_if_t<std::is_class<T>::value>*)
 {
     uint64_t count = SerReadVarInt();
-    size_t size = 0;    
+    size_t size = 1;   
+    
     out->clear();
     out->resize(count);
     for (auto it = out->begin(); it != out->end(); ++it) {
-        it->Deserialize(stream_);
-        size += it->SerializedSize();
-        if (size > kMaxBlockSize)
-            throw std::ios_base::failure("vector size larger than max block size");
+        size += Deserialize(&(*it));
+        if (size > kMaxBlockSize) {
+            BTCLOG(LOG_LEVEL_ERROR) << "vector size larger than max block size";
+            SingletonInterruptor::GetInstance().Interrupt();
+        }
     }
+    
+    return size;
+}
+
+template <typename Stream>
+template <typename T>
+size_t Deserializer<Stream>::Deserialize(::google::protobuf::RepeatedField<T> *out,
+                                         std::enable_if_t<std::is_integral<T>::value>*)
+{
+    size_t size = 0;
+    
+    for (uint8_t *p = reinterpret_cast<uint8_t*>(out->begin()); 
+            p != reinterpret_cast<uint8_t*>(out->end()); p++) {
+        size += Deserialize(p);
+    }
+    
+    return size;
 }
 
 template <typename Stream>
@@ -355,32 +412,38 @@ uint64_t Deserializer<Stream>::SerReadVarInt()
     }
     else if (count == kVarint16bits) {
         SerReadData(reinterpret_cast<uint16_t*>(&varint));
-        if (varint < kVarint16bits)
+        if (varint < kVarint16bits) {
             throw std::ios_base::failure("non-canonical SerReadVarInt()");
+        }
     }
     else if (count == kVarint32bits) {
         SerReadData(reinterpret_cast<uint32_t*>(&varint));
-        if (varint <= std::numeric_limits<uint16_t>::max())
+        if (varint <= std::numeric_limits<uint16_t>::max()) {
             throw std::ios_base::failure("non-canonical SerReadVarInt()");
+        }
     }
     else {
         SerReadData(&varint);
-        if (varint <= std::numeric_limits<uint32_t>::max())
+        if (varint <= std::numeric_limits<uint32_t>::max()) {
             throw std::ios_base::failure("non-canonical SerReadVarInt()");
+        }
     }
-    if (varint > kMaxVardataSize)
+    if (varint > kMaxVardataSize) {
         throw std::ios_base::failure("SerReadVarInt(): size too large");
+    }
     
     return varint;
 }
 
 template <typename Stream>
 template <typename T>
-void Deserializer<Stream>::SerReadData(T *obj)
+size_t Deserializer<Stream>::SerReadData(T *obj)
 {
-    Bytes<sizeof(T)> data;
-    stream_.read(reinterpret_cast<char*>(&data[0]), sizeof data);
-    FromLittleEndian(data.begin(), data.end(), obj);
+    uint8_t data[sizeof(T)];
+    size_t size = stream_.read(reinterpret_cast<char*>(&data[0]), sizeof data);
+    *obj = FromLittleEndian<T>(data);
+    
+    return size;
 }
 
 } // namespace util

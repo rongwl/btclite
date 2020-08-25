@@ -24,7 +24,8 @@ public:
         Clear();
     }
     
-    BlockHeader(int32_t version, const util::Hash256& prev_block_hash, const util::Hash256& merkle_root_hash,
+    BlockHeader(int32_t version, const util::Hash256& prev_block_hash, 
+                const util::Hash256& merkle_root_hash,
                 uint32_t time, uint32_t bits, uint32_t nonce)
         : version_(version), 
           prev_block_hash_(prev_block_hash), merkle_root_hash_(merkle_root_hash),
@@ -39,8 +40,8 @@ public:
     void Clear()
     {
         version_ = 0;
-        prev_block_hash_.Clear();
-        merkle_root_hash_.Clear();
+        prev_block_hash_.fill(0);
+        merkle_root_hash_.fill(0);
         time_ = 0;
         nBits_ = 0;
         nonce_ = 0;
@@ -77,7 +78,7 @@ public:
         version_ = v;
     }
     
-    const util::Hash256& hashPrevBlock() const
+    util::Hash256 hashPrevBlock() const
     {
         return prev_block_hash_;
     }
@@ -86,7 +87,7 @@ public:
         prev_block_hash_ = hash;
     }
     
-    const util::Hash256& hashMerkleRoot() const
+    util::Hash256 hashMerkleRoot() const
     {
         return merkle_root_hash_;
     }

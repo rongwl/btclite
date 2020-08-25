@@ -814,7 +814,7 @@ bool Orphans::AddOrphanTx(OrphanTx::TxSharedPtr tx, NodeId id)
 {
     LOCK(cs_orphans_);
 
-    const util::Hash256& hash = tx->Hash();
+    const util::Hash256& hash = tx->GetHash();
     if (map_orphan_txs_.count(hash))
         return false;
 
@@ -855,7 +855,7 @@ void Orphans::EraseOrphansFor(NodeId id)
         auto maybe_erase = it++; // increment to avoid iterator becoming invalid
         if (maybe_erase->second.from_peer == id)
         {
-            erased_count += EraseOrphanTx(maybe_erase->second.tx->Hash());
+            erased_count += EraseOrphanTx(maybe_erase->second.tx->GetHash());
         }
     }
     if (erased_count > 0)
@@ -878,7 +878,7 @@ uint32_t Orphans::LimitOrphanTxSize(uint32_t max_orphans)
         {
             auto maybe_erase = it++;
             if (maybe_erase->second.time_expire <= now) {
-                erased_count += EraseOrphanTx(maybe_erase->second.tx->Hash());
+                erased_count += EraseOrphanTx(maybe_erase->second.tx->GetHash());
             } else {
                 min_expire_time = std::min(maybe_erase->second.time_expire, min_expire_time);
             }
@@ -892,7 +892,7 @@ uint32_t Orphans::LimitOrphanTxSize(uint32_t max_orphans)
     while (map_orphan_txs_.size() > max_orphans)
     {
         // Evict a random orphan:
-        util::Uint256 randomhash = util::RandHash256();
+        util::Hash256 randomhash = util::RandHash256();
         auto it = map_orphan_txs_.lower_bound(randomhash);
         if (it == map_orphan_txs_.end())
             it = map_orphan_txs_.begin();

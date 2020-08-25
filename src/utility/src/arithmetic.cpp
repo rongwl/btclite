@@ -4,9 +4,10 @@
 namespace btclite {
 namespace util {
 
-Uint256::Uint256(const std::string& s)
+Hash256 StrToHash256(const std::string& s)
 {
     std::vector<uint8_t> vec;
+    Hash256 result;
     auto start_it = s.begin();
     auto end_it = s.end()-1;
     
@@ -31,12 +32,14 @@ Uint256::Uint256(const std::string& s)
     std::string sub_str = s.substr(start_it - s.begin(), end_it - start_it + 1);    
     vec = DecodeHex((sub_str.size() % 2 == 0) ? sub_str : "0" + sub_str);
     
-    if (vec.size() > this->Size()) {
-        std::copy(vec.rbegin(), vec.rbegin() + this->Size(), this->begin());
+    if (vec.size() > result.size()) {
+        std::copy(vec.rbegin(), vec.rbegin() + result.size(), result.begin());
     }
     else {
-        std::copy(vec.rbegin(), vec.rend(), this->begin());
+        std::copy(vec.rbegin(), vec.rend(), result.begin());
     }
+    
+    return result;
 }
 
 } // namespace util

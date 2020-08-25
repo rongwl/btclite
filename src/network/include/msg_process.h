@@ -21,10 +21,10 @@ bool HandleMsgData(std::shared_ptr<Node> src_node,
                    const protocol::MessageHeader& header, const Message& msg, 
                    std::function<bool(std::shared_ptr<Node>)> recv_handler)
 {
-    if (header.checksum() != msg.GetHash().GetLow32()) {
+    if (header.checksum() != util::FromLittleEndian<uint32_t>(msg.GetHash().data())) {
         BTCLOG(LOG_LEVEL_WARNING) << msg.Command() << " message checksum error: expect "
                                   << header.checksum() << ", received "
-                                  << msg.GetHash().GetLow32();
+                                  << util::FromLittleEndian<uint32_t>(msg.GetHash().data());
         return false;
     }
     
@@ -58,7 +58,8 @@ bool SendMsg(const Message& msg, uint32_t magic, std::shared_ptr<Node> dst_node)
         dst_node->mutable_connection()->set_socket_no_msg(false);
     }
 
-    MessageHeader header(magic, msg.Command(), msg.SerializedSize(), msg.GetHash().GetLow32());
+    MessageHeader header(magic, msg.Command(), msg.SerializedSize(), 
+                         util::FromLittleEndian<uint32_t>(msg.GetHash().data()));
     ms << header << msg;
 
     if (ms.Size() != MessageHeader::kSize + msg.SerializedSize()) {

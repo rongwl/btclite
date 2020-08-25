@@ -88,7 +88,7 @@ public:
         return header_;
     }
     
-    const util::Hash256& block_hash() const
+    util::Hash256 block_hash() const
     {
         return block_hash_;
     }

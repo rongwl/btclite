@@ -160,6 +160,7 @@ unit_test_test_util_SOURCES = unit_test/utility/src/test_util.cpp \
                               unit_test/utility/src/random_tests.cpp \
                               unit_test/utility/src/stream_tests.cpp \
                               unit_test/utility/src/serialize_tests.cpp \
+                              unit_test/utility/src/util_endian_tests.cpp \
                               unit_test/utility/src/util_tests.cpp \
                               unit_test/utility/src/util_tests.h
 

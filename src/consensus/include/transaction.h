@@ -29,13 +29,14 @@ public:
     //-------------------------------------------------------------------------
     void Clear()
     {
-        prev_hash_.Clear();
+        prev_hash_.fill(0);
         index_ = std::numeric_limits<uint32_t>::max();
     }
     
     bool IsNull() const
     {
-        return (prev_hash_.IsNull() && index_ == std::numeric_limits<uint32_t>::max());
+        return (prev_hash_ == crypto::null_hash &&
+                index_ == std::numeric_limits<uint32_t>::max());
     }
     
     size_t Size() const
@@ -46,7 +47,9 @@ public:
     std::string ToString() const
     {
         std::stringstream ss;
-        ss << "OutPoint(" << prev_hash_.ToString().substr(0, 10) << ", " << index_ << ")";
+        ss << "OutPoint(" 
+           << util::EncodeHex(prev_hash_.rbegin(), prev_hash_.rend()).substr(0, 10) 
+           << ", " << index_ << ")";
         return ss.str();
     }
     
@@ -400,26 +403,26 @@ public:
                 const std::vector<TxOut>& outputs, uint32_t lock_time)
         : version_(version), inputs_(inputs), outputs_(outputs), lock_time_(lock_time)
     {
-        Hash();
+        GetHash();
     }
     Transaction(uint32_t version, std::vector<TxIn>&& inputs,
                 std::vector<TxOut>&& outputs, uint32_t lock_time) noexcept
         : version_(version), inputs_(std::move(inputs)),
           outputs_(std::move(outputs)), lock_time_(lock_time)
     {
-        Hash();
+        GetHash();
     }
     Transaction(const Transaction& t)
         : version_(t.version_), inputs_(t.inputs_), outputs_(t.outputs_),
           lock_time_(t.lock_time_)
     {
-        Hash();
+        GetHash();
     }
     Transaction(Transaction&& t) noexcept
         : version_(t.version_), inputs_(std::move(t.inputs_)), outputs_(std::move(t.outputs_)),
           lock_time_(t.lock_time_)
     {
-        Hash();
+        GetHash();
     }
     
     //-------------------------------------------------------------------------
@@ -429,7 +432,7 @@ public:
     //-------------------------------------------------------------------------
     bool operator==(const Transaction& b) const
     {
-        return this->Hash() == b.Hash();
+        return this->GetHash() == b.GetHash();
     }
     bool operator!=(const Transaction& b) const
     {
@@ -439,8 +442,8 @@ public:
     Transaction& operator=(Transaction&& b) noexcept;
     
     //-------------------------------------------------------------------------
-    const util::Hash256& Hash() const;
-    const util::Hash256& WitnessHash() const;
+    util::Hash256 GetHash() const;
+    util::Hash256 GetWitnessHash() const;
     
     //-------------------------------------------------------------------------
     bool IsNull() const
@@ -465,7 +468,7 @@ public:
     void set_version(uint32_t v)
     {
         version_ = v;
-        hash_cache_.Clear();
+        hash_cache_.fill(0);
     }
     
     const std::vector<TxIn>& inputs() const
@@ -475,12 +478,12 @@ public:
     void set_inputs(const std::vector<TxIn>& inputs)
     {
         inputs_ = inputs;
-        hash_cache_.Clear();
+        hash_cache_.fill(0);
     }
     void set_inputs(std::vector<TxIn>&& inputs)
     {
         inputs_ = std::move(inputs);
-        hash_cache_.Clear();
+        hash_cache_.fill(0);
     }
     
     const std::vector<TxOut>& outputs() const
@@ -490,12 +493,12 @@ public:
     void set_outputs(const std::vector<TxOut>& outputs)
     {
         outputs_ = outputs;
-        hash_cache_.Clear();
+        hash_cache_.fill(0);
     }
     void set_outputs(std::vector<TxOut>&& outputs)
     {
         outputs_ = std::move(outputs);
-        hash_cache_.Clear();
+        hash_cache_.fill(0);
     }
     
     uint32_t lock_time() const
@@ -505,10 +508,10 @@ public:
     void set_lockTime(uint32_t t)
     {
         lock_time_ = t;
-        hash_cache_.Clear();
+        hash_cache_.fill(0);
     }
     
-private:
+private:    
     uint32_t version_;
     std::vector<TxIn> inputs_;
     std::vector<TxOut> outputs_;

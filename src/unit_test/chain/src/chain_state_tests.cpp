@@ -17,7 +17,8 @@ TEST(BlockChainTest, GetLocator)
     std::vector<BlockIndex> blocks_main(100000);
     blocks_main[0].set_block_hash(hash_main[0]);
     for (uint32_t i = 1; i < blocks_main.size(); ++i) {
-        hash_main[i] = util::Hash256(i); // Set the hash equal to the height, so we can quickly check the distances.
+        // Set the hash equal to the height, so we can quickly check the distances.
+        std::memcpy(hash_main[i].data(), reinterpret_cast<uint8_t*>(&i), sizeof(i));
         blocks_main[i].set_height(i);
         blocks_main[i].set_pprev(&blocks_main[i - 1]);
         blocks_main[i].set_block_hash(hash_main[i]);
@@ -29,7 +30,9 @@ TEST(BlockChainTest, GetLocator)
     std::vector<util::Hash256> hash_side(50000);
     std::vector<BlockIndex> blocks_side(50000);
     for (uint32_t i = 0; i < blocks_side.size(); ++i) {
-        hash_side[i] = util::Hash256(i + 50000 + (1UL << 32));// Add 1<<32 to the hashes, so GetLow32() still returns the height.
+        // Add 1<<32 to the hashes, so GetLow32() still returns the height.
+        uint64_t hash = i + 50000 + (1UL << 32);
+        std::memcpy(hash_side[i].data(), reinterpret_cast<uint8_t*>(&hash), sizeof(hash));
         blocks_side[i].set_height(i + 50000);
         blocks_side[i].set_pprev((i ? &blocks_side[i - 1] : &blocks_main[49999]));
         blocks_side[i].set_block_hash(hash_side[i]);
@@ -55,13 +58,13 @@ TEST(BlockChainTest, GetLocator)
 
         // Entries 1 through 11 (inclusive) go back one step each.
         for (uint32_t i = 1; i < 12 && i < locator.size() - 1; ++i) {
-            EXPECT_EQ(locator[i].GetLow32(), tip->height() - i);
+            EXPECT_EQ(util::FromLittleEndian<uint32_t>(locator[i].data()), tip->height() - i);
         }
 
         // The further ones (excluding the last one) go back with exponential steps.
         uint32_t dist = 2;
         for (uint32_t i = 12; i < locator.size() - 1; ++i) {
-            EXPECT_EQ(locator[i-1].GetLow32() - locator[i].GetLow32(), dist);
+            EXPECT_EQ(util::FromLittleEndian<uint32_t>(locator[i-1].data()) - util::FromLittleEndian<uint32_t>(locator[i].data()), dist);
             dist *= 2;
         }
     }

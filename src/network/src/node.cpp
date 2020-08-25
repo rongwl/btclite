@@ -21,7 +21,7 @@ bool FloodingAddrs::PushAddrToSend(const NetAddr& addr)
     
     if (!addr.IsValid() || 
             std::find(known_addrs_.begin(), known_addrs_.end(), 
-                      addr.GetHash().GetLow64()) != known_addrs_.end())
+                      util::FromLittleEndian<uint64_t>(addr.GetHash().data())) != known_addrs_.end())
         return false;
     
     if (addrs_to_send_.size() >= kMaxAddrToSend) {
@@ -50,7 +50,7 @@ bool FloodingAddrs::AddKnownAddr(const NetAddr& addr)
     if (!addr.IsValid())
         return false;
     
-    known_addrs_.push_back(addr.GetHash().GetLow64());
+    known_addrs_.push_back(util::FromLittleEndian<uint64_t>(addr.GetHash().data()));
     
     return true;
 }

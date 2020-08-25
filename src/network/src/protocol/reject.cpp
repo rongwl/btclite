@@ -30,7 +30,7 @@ void Reject::Clear()
     message_.clear();
     ccode_ = CCode::kRejectUnknown;
     reason_.clear();
-    data_.Clear();
+    data_.fill(0);
 }
 
 size_t Reject::SerializedSize() const

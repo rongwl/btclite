@@ -1,7 +1,7 @@
 #ifndef BTCLITE_STREAM_H
 #define BTCLITE_STREAM_H
 
-
+#include "blob.h"
 #include "serialize.h"
 #include "util.h"
 

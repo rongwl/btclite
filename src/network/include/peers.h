@@ -25,7 +25,7 @@ public:
         : key_(util::RandHash256())
     {
         proto_peers_.mutable_key()->Resize(4, 0);
-        std::memcpy(proto_peers_.mutable_key()->begin(), key_.begin(), key_.Size());
+        std::memcpy(proto_peers_.mutable_key()->begin(), key_.begin(), key_.size());
     }
     
     //-------------------------------------------------------------------------
@@ -107,7 +107,7 @@ public:
         return rand_order_keys_;
     }
     
-    const util::Uint256& key() const
+    util::Hash256 key() const
     {
         return key_;
     }
@@ -124,7 +124,7 @@ private:
     std::vector<uint64_t> rand_order_keys_;
     
     // clone of the peers_.key for writing hash stream
-    const util::Uint256 key_;
+    const util::Hash256 key_;
     
     void EraseRand(uint64_t key);
 };

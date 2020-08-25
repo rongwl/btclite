@@ -65,7 +65,7 @@ Transaction& Transaction::operator=(const Transaction& b)
     inputs_ = b.inputs_;
     outputs_ = b.outputs_;
     lock_time_ = b.lock_time_;
-    hash_cache_.Clear();
+    hash_cache_.fill(0);
     
     return *this;
 }
@@ -77,7 +77,7 @@ Transaction& Transaction::operator=(Transaction&& b) noexcept
         inputs_ = std::move(b.inputs_);
         outputs_ = std::move(b.outputs_);
         lock_time_ = std::move(b.lock_time_);
-        hash_cache_.Clear();
+        hash_cache_.fill(0);
     }
     
     return *this;
@@ -116,7 +116,9 @@ size_t Transaction::SerializedSize() const
 std::string Transaction::ToString() const
 {
     std::stringstream ss;
-    ss << "Transaction(hash=" << Hash().ToString().substr(0,10) << ", "
+    util::Hash256 hash = GetHash();
+    ss << "Transaction(hash=" 
+       << util::EncodeHex(hash.rbegin(), hash.rend()).substr(0,10) << ", "
        << "ver=" << version_ << ", "
        << "inputs.size=" << inputs_.size() << ", "
        << "outputs.size=" << outputs_.size() << ", "
@@ -131,18 +133,18 @@ std::string Transaction::ToString() const
     return ss.str();
 }
 
-const util::Hash256& Transaction::Hash() const
+util::Hash256 Transaction::GetHash() const
 {
-    if (hash_cache_.IsNull()) {
+    if (hash_cache_ == crypto::null_hash) {
         crypto::HashOStream hs;
         hs << *this;
-        hs.DoubleSha256(&hash_cache_);
+        hash_cache_ = hs.DoubleSha256();
     }
     
     return hash_cache_;
 }
 
-const util::Hash256& Transaction::WitnessHash() const
+util::Hash256 Transaction::GetWitnessHash() const
 {
     return witness_hash_cache_;
 }

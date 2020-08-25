@@ -93,15 +93,18 @@ void Script::Push(const std::vector<uint8_t>& b)
     }
     else if (b.size() <= 0xffff) {
         data_.push_back(static_cast<uint8_t>(Opcode::OP_PUSHDATA2));
-        util::Bytes<sizeof(uint16_t)> bytes;
-        util::ToLittleEndian(static_cast<uint16_t>(b.size()), &bytes);
-        data_.insert(data_.end(), bytes.begin(), bytes.end());
+        uint8_t size[2];
+        util::ToLittleEndian(static_cast<uint16_t>(b.size()), size);
+        data_.push_back(size[0]);
+        data_.push_back(size[1]);
     }
     else {
         data_.push_back(static_cast<uint8_t>(Opcode::OP_PUSHDATA4));
-        util::Bytes<sizeof(uint32_t)> bytes;
-        util::ToLittleEndian(static_cast<uint32_t>(b.size()), &bytes);
-        data_.insert(data_.end(), bytes.begin(), bytes.end());
+        uint8_t size[4];
+        util::ToLittleEndian(static_cast<uint32_t>(b.size()), size);
+        for (auto elem : size) {
+            data_.push_back(elem);
+        }
     }
     data_.insert(data_.end(), b.begin(), b.end());
 }
@@ -136,13 +139,13 @@ bool Script::Pop(std::vector<uint8_t>::const_iterator& pc, const Opcode& in, std
     else if (in == Opcode::OP_PUSHDATA2) {
         if (pc + 2 > data_.end())
             return false;
-        size = util::FromLittleEndian<uint16_t>(pc);
+        size = util::FromLittleEndian<uint16_t>(&(*pc));
         pc += 2;
     }
     else if (in == Opcode::OP_PUSHDATA4) {
         if (pc + 4 > data_.end())
             return false;
-        size = util::FromLittleEndian<uint32_t>(pc);
+        size = util::FromLittleEndian<uint32_t>(&(*pc));
         pc += 4;
     }
     

@@ -2,76 +2,64 @@
 #define BTCLITE_UTIL_ENDIAN_H
 
 #include <cstddef>
+#include <cstdint>
+
 #include "util_assert.h"
-#include "blob.h"
 
 
 namespace btclite {
 namespace util {
 
 template <typename T>
-void ToBigEndian(T in, Bytes<sizeof(T)> *out)
+void ToBigEndian(T in, uint8_t *out_low)
 {
-    ASSERT_NULL(out);
-    for (auto it = out->rbegin(); it != out->rend(); ++it) {
-        *it = static_cast<uint8_t>(in);
+    auto out_high = out_low + sizeof(T) - 1;
+    while (out_high >= out_low) {
+        *out_high = static_cast<uint8_t>(in);
         in >>= 8;
+        out_high--;
     }
 }
 
 template <typename T>
-void ToLittleEndian(T in, Bytes<sizeof(T)> *out)
+void ToLittleEndian(T in, uint8_t *out_low)
 {
-    ASSERT_NULL(out);
-    for (auto it = out->begin(); it != out->end(); ++it) {
-        *it = static_cast<uint8_t>(in);
+    auto out_high = out_low + sizeof(T) - 1;
+    while (out_low <= out_high) {
+        *out_low = static_cast<uint8_t>(in);
         in >>= 8;
+        out_low++;
     }
 }
 
-template <typename T, typename Iterator>
-T FromBigEndian(Iterator begin)
+template <typename T>
+T FromBigEndian(const uint8_t *low)
 {
     //ASSERT_UNSIGNED(T);    
     T out = 0;
-    auto end = begin + sizeof(T);
-    while (begin != end)
-        out = (out << 8) | static_cast<T>(*begin++);
+    auto high = low + sizeof(T) - 1;
+    while (low <= high) {
+        out = (out << 8) | static_cast<T>(*low);
+        low++;
+    }
     
     return out;
 }
 
-template <typename T, typename Iterator>
-void FromBigEndian(Iterator begin, Iterator end, T *out)
-{
-    //ASSERT_UNSIGNED(T);
-    ASSERT_NULL(out);
-    *out = 0;
-    while (begin != end)
-        *out = (*out << 8) | static_cast<T>(*begin++);
-}
 
-template <typename T, typename Iterator>
-T FromLittleEndian(Iterator begin)
+template <typename T>
+T FromLittleEndian(const uint8_t *low)
 {
     //ASSERT_UNSIGNED(T);    
     T out = 0;
     size_t i = 0;
-    while (i < sizeof(T)) 
-        out |= static_cast<T>(*begin++) << (8 * i++);
+    while (i < sizeof(T)) {
+        out |= static_cast<T>(*low) << (8 * i);
+        low++;
+        i++;
+    }
     
     return out;
-}
-
-template <typename T, typename Iterator>
-void FromLittleEndian(Iterator begin, Iterator end, T *out)
-{
-    //ASSERT_UNSIGNED(T);
-    ASSERT_NULL(out);
-    size_t i = 0;
-    *out = 0;
-    while (i < sizeof(T) && begin != end) 
-        *out |= (static_cast<T>(*begin++) << (8 * i++));
 }
 
 } // namespace util

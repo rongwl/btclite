@@ -15,9 +15,11 @@ bool BlockIndex::IsValid(BlockStatus upto) const
 std::string BlockIndex::ToString() const
 {
     std::stringstream ss;
+    util::Hash256 hash_merkle_root = header_.hashMerkleRoot();
     ss << "BlockIndex(pprev=" << pprev_ << ", height=" << height_
-       << ", merkle=" << header_.hashMerkleRoot().ToString()
-       << ", hashBlock=" << block_hash_.ToString() << ")";
+       << ", merkle=" << util::EncodeHex(hash_merkle_root.rbegin(), hash_merkle_root.rend())
+       << ", hashBlock=" << util::EncodeHex(block_hash_.rbegin(), block_hash_.rend()) 
+       << ")";
     
     return ss.str();
 }

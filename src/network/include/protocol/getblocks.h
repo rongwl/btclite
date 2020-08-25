@@ -40,13 +40,13 @@ public:
     {
         version_ = kUnknownProtoVersion;
         hashes_.clear();
-        hash_stop_.Clear();
+        hash_stop_.fill(0);
     }
     
     size_t SerializedSize() const
     {
         return sizeof(version_) + util::VarIntSize(hashes_.size()) +
-               hashes_.size()*kHashSize + hash_stop_.Size();
+               hashes_.size()*kHashSize + hash_stop_.size();
     }
     
     util::Hash256 GetHash() const
