@@ -17,17 +17,8 @@ void AddTimeData(const network::NetAddr& addr, int64_t offset_sample);
 
 class TimeOffset {
 public:
-    int64_t offset() const
-    {
-        LOCK(cs_);
-        return offset_;
-    }
-    
-    void set_offset(int64_t offset)
-    {
-        LOCK(cs_);
-        offset_ = offset;
-    }
+    int64_t offset() const;    
+    void set_offset(int64_t offset);
 
 private:
     mutable CriticalSection cs_;

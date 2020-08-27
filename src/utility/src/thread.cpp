@@ -45,6 +45,13 @@ bool ThreadInterruptor::Sleep_for(std::chrono::minutes rel_time)
 }
 
 
+ThreadGroup::~ThreadGroup()
+{
+    for (auto it = threads_.begin(), end = threads_.end(); it != end; ++it) {
+        delete *it;
+    }
+}
+
 bool ThreadGroup::IsThisThreadIn()
 {
     std::thread::id id = std::this_thread::get_id();
@@ -99,6 +106,12 @@ void ThreadGroup::JoinAll()
     }
 }
 
+ssize_t ThreadGroup::Size() const
+{
+    std::lock_guard<std::mutex> guard(mutex_);
+    return threads_.size();
+}
+
 ThreadPool::ThreadPool(size_t threads)
     : stop_(false)
 {
@@ -135,6 +148,12 @@ ThreadPool::~ThreadPool()
     condition_.notify_all();
     for(std::thread &worker: threads_)
         worker.join();
+}
+
+ThreadPool& SingletonThreadPool::GetInstance()
+{
+    static ThreadPool thread_pool(2 * std::thread::hardware_concurrency() + 1);
+    return thread_pool;
 }
 
 } // namespace util

@@ -107,6 +107,21 @@ bool Configuration::InitArgs()
     return InitArgsCustomized();
 }
 
+BtcNet Configuration::btcnet() const
+{
+    return btcnet_;
+}
+
+const Args& Configuration::args() const
+{
+    return args_;
+}
+
+const fs::path& Configuration::path_data_dir() const
+{
+    return path_data_dir_;
+}
+
 /* Check options that getopt_long() can not print totally */
 void Configuration::CheckOptions(int argc, const char* const argv[])
 {
@@ -152,6 +167,13 @@ bool Configuration::ParseFromFile(const fs::path& path) const
 bool Configuration::LockDataDir()
 {
     return true;
+}
+
+void Args::Clear()
+{
+    LOCK(cs_args_);
+    map_args_.clear();
+    map_multi_args_.clear();
 }
 
 std::string Args::GetArg(const std::string& arg, const std::string& arg_default) const
@@ -219,6 +241,24 @@ bool Executor::BasicSetup()
     std::set_new_handler(HandleAllocFail);
     
     return BasicSetupCustomized();
+}
+
+void Executor::WaitToStop()
+{
+    Stopping().get_future().wait();
+    BTCLOG(LOG_LEVEL_INFO) << "Caught an interrupt signal.";
+}
+
+std::promise<int>& Executor::Stopping()
+{
+    static std::promise<int> stopping;
+    return stopping;
+}
+
+void Executor::HandleStop(int sig)
+{
+    static std::once_flag stop_mutex;
+    std::call_once(stop_mutex, [&](){ Stopping().set_value(sig); });
 }
 
 void Executor::HandleAbort(int sig)

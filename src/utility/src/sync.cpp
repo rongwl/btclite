@@ -143,6 +143,104 @@ void LeaveCritical()
     PopLock();
 }
 
+CriticalSection::~CriticalSection()
+{
+    DeleteLock((void*)this);
+}
+
+Semaphore::Semaphore(int init) 
+    : value(init) 
+{
+}
+
+void Semaphore::wait()
+{
+    std::unique_lock<std::mutex> lock(mutex_);
+    condition_.wait(lock, [&]() { return value >= 1; });
+    value--;
+}
+
+bool Semaphore::try_wait()
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (value < 1)
+        return false;
+    value--;
+    return true;
+}
+
+void Semaphore::post()
+{
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        value++;
+    }
+    condition_.notify_one();
+}
+
+SemaphoreGrant::SemaphoreGrant()
+    : sem_(nullptr), have_grant_(false) 
+{
+}
+
+SemaphoreGrant::SemaphoreGrant(Semaphore& sem, bool fTry)
+    : sem_(&sem), have_grant_(false)
+{
+    if (fTry) {
+        TryAcquire();
+    }
+    else {
+        Acquire();
+    }
+}
+
+SemaphoreGrant::~SemaphoreGrant()
+{
+    Release();
+}
+
+void SemaphoreGrant::Acquire()
+{
+    if (have_grant_) {
+        return;
+    }
+    
+    sem_->wait();
+    have_grant_ = true;
+}
+
+void SemaphoreGrant::Release()
+{
+    if (!have_grant_) {
+        return;
+    }
+    
+    sem_->post();
+    have_grant_ = false;
+}
+
+bool SemaphoreGrant::TryAcquire()
+{
+    if (!have_grant_ && sem_->try_wait()) {
+        have_grant_ = true;
+    }
+    
+    return have_grant_;
+}
+
+void SemaphoreGrant::MoveTo(SemaphoreGrant& grant)
+{
+    grant.Release();
+    grant.sem_ = sem_;
+    grant.have_grant_ = have_grant_;
+    have_grant_ = false;
+}
+
+SemaphoreGrant::operator bool() const
+{
+    return have_grant_;
+}
+
 } // namespace util
 } // namespace btclite
 

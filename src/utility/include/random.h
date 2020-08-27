@@ -26,9 +26,7 @@ public:
     explicit FastRandomContext(bool deterministic = false);
 
     /** Initialize with explicit seed (only for testing) */
-    explicit FastRandomContext(const util::Hash256& seed)
-        :  rng_(Botan::secure_vector<uint8_t>(seed.begin(), seed.end())), 
-           requires_seed_(false), bytebuf_size_(0), bitbuf_size_(0) {}
+    explicit FastRandomContext(const util::Hash256& seed);
 
     //-------------------------------------------------------------------------
     /** Generate a random (bits)-bit integer. */
@@ -41,49 +39,23 @@ public:
     std::vector<unsigned char> RandBytes(size_t len);
 
     /** Generate a random 32-bit integer. */
-    uint32_t Rand32()
-    {
-        return RandBits(32);
-    }
+    uint32_t Rand32();
     
     /** Generate a random 64-bit integer. */
-    uint64_t Rand64()
-    {
-        if (bytebuf_size_ < 8)
-            FillByteBuffer();
-        uint64_t ret = FromLittleEndian<uint64_t>(bytebuf_ + 64 - bytebuf_size_);
-        bytebuf_size_ -= 8;
-        return ret;
-    }
+    uint64_t Rand64();
 
     /** generate a random uint256. */
     util::Hash256 Rand256();
 
     /** Generate a random boolean. */
-    bool RandBool()
-    {
-        return RandBits(1);
-    }
+    bool RandBool();
 
-    bool requires_seed() const
-    {
-        return requires_seed_;
-    }
+    //-------------------------------------------------------------------------
+    bool requires_seed() const;    
+    int bytebuf_size() const;
+    uint64_t bitbuf() const;    
+    int bitbuf_size() const;
     
-    int bytebuf_size() const
-    {
-        return bytebuf_size_;
-    }
-    
-    uint64_t bitbuf() const
-    {
-        return bitbuf_;
-    }
-    
-    int bitbuf_size() const
-    {
-        return bitbuf_size_;
-    }
 private:
     Botan::ChaCha_RNG rng_;
     bool requires_seed_;
@@ -95,11 +67,7 @@ private:
     void RandomSeed();
     void FillByteBuffer();    
     uint64_t CountBits(uint64_t x);
-    void FillBitBuffer()
-    {
-        bitbuf_ = Rand64();
-        bitbuf_size_ = 64;
-    }
+    void FillBitBuffer();
 };
 
 } // namespace util

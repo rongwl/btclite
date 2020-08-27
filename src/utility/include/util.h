@@ -53,12 +53,7 @@ public:
     void SetArgs(const std::string& arg, const std::string& arg_val);
     bool IsArgSet(const std::string& arg) const;
     
-    void Clear()
-    {
-        LOCK(cs_args_);
-        map_args_.clear();
-        map_multi_args_.clear();
-    }
+    void Clear();
 
 private:
     mutable CriticalSection cs_args_;
@@ -83,20 +78,10 @@ public:
         return (home_path) ? fs::path(home_path) : fs::path("/");
     }
     
-    BtcNet btcnet() const
-    {
-        return btcnet_;
-    }
-    
-    const Args& args() const
-    {
-        return args_;
-    }
-    
-    const fs::path& path_data_dir() const
-    {
-        return path_data_dir_;
-    }
+    //-------------------------------------------------------------------------
+    BtcNet btcnet() const;  
+    const Args& args() const;    
+    const fs::path& path_data_dir() const;
 
 protected:
     BtcNet btcnet_;
@@ -121,29 +106,14 @@ public:
     virtual void Interrupt() = 0;
     virtual void Stop() = 0;
     
-    bool BasicSetup();
-    
-    void WaitToStop()
-    {
-        Stopping().get_future().wait();
-        BTCLOG(LOG_LEVEL_INFO) << "Caught an interrupt signal.";
-    }
+    bool BasicSetup();    
+    void WaitToStop();
 
 private:    
     virtual bool BasicSetupCustomized() = 0;
     
-    static std::promise<int>& Stopping()
-    {
-        static std::promise<int> stopping;
-        return stopping;
-    }
-    
-    static void HandleStop(int sig)
-    {
-        static std::once_flag stop_mutex;
-        std::call_once(stop_mutex, [&](){ Stopping().set_value(sig); });
-    }
-    
+    static std::promise<int>& Stopping();    
+    static void HandleStop(int sig);    
     static void HandleAbort(int sig);    
     static void HandleAllocFail();
 };

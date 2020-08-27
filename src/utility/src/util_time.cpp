@@ -71,5 +71,17 @@ void AddTimeData(const network::NetAddr& addr, int64_t offset_sample)
     }    
 }
 
+int64_t TimeOffset::offset() const
+{
+    LOCK(cs_);
+    return offset_;
+}
+
+void TimeOffset::set_offset(int64_t offset)
+{
+    LOCK(cs_);
+    offset_ = offset;
+}
+
 } // namespace util
 } // namespace btclite

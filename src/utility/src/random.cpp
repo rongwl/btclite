@@ -28,6 +28,11 @@ util::Hash256 RandHash256()
     return hash;
 }
 
+FastRandomContext::FastRandomContext(const util::Hash256& seed)
+    :  rng_(Botan::secure_vector<uint8_t>(seed.begin(), seed.end())), 
+       requires_seed_(false), bytebuf_size_(0), bitbuf_size_(0) 
+{
+}
 
 FastRandomContext::FastRandomContext(bool deterministic)
     : rng_(), requires_seed_(!deterministic), bytebuf_size_(0), bitbuf_size_(0)
@@ -84,6 +89,20 @@ std::vector<unsigned char> FastRandomContext::RandBytes(size_t len)
     return ret;
 }
 
+uint32_t FastRandomContext::Rand32()
+{
+    return RandBits(32);
+}
+
+uint64_t FastRandomContext::Rand64()
+{
+    if (bytebuf_size_ < 8)
+        FillByteBuffer();
+    uint64_t ret = FromLittleEndian<uint64_t>(bytebuf_ + 64 - bytebuf_size_);
+    bytebuf_size_ -= 8;
+    return ret;
+}
+
 util::Hash256 FastRandomContext::Rand256()
 {
     if (bytebuf_size_ < 32) {
@@ -94,6 +113,31 @@ util::Hash256 FastRandomContext::Rand256()
     bytebuf_size_ -= 32;
     
     return ret;
+}
+
+bool FastRandomContext::RandBool()
+{
+    return RandBits(1);
+}
+
+bool FastRandomContext::requires_seed() const
+{
+    return requires_seed_;
+}
+
+int FastRandomContext::bytebuf_size() const
+{
+    return bytebuf_size_;
+}
+
+uint64_t FastRandomContext::bitbuf() const
+{
+    return bitbuf_;
+}
+
+int FastRandomContext::bitbuf_size() const
+{
+    return bitbuf_size_;
 }
 
 void FastRandomContext::FillByteBuffer()
@@ -115,6 +159,12 @@ uint64_t FastRandomContext::CountBits(uint64_t x)
     }
     
     return ret;
+}
+
+void FastRandomContext::FillBitBuffer()
+{
+    bitbuf_ = Rand64();
+    bitbuf_size_ = 64;
 }
 
 } // namespace util

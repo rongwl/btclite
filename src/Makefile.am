@@ -96,7 +96,6 @@ BTCLITE_HEADER_FILES = \
                        utility/include/serialize.h \
                        utility/include/sync.h \
                        utility/include/thread.h \
-                       utility/include/tinyformat.h \
                        utility/include/util.h \
                        utility/include/stream.h \
                        utility/include/string_encoding.h \
@@ -137,6 +136,7 @@ utility_src_libbtclite_util_a_SOURCES = utility/src/arithmetic.cpp \
                                         utility/src/logging.cpp \
                                         utility/src/random.cpp \
                                         utility/src/serialize.cpp \
+                                        utility/src/stream.cpp \
                                         utility/src/string_encoding.cpp \
                                         utility/src/sync.cpp \
                                         utility/src/thread.cpp \

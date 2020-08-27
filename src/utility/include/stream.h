@@ -16,8 +16,7 @@ public:
     using ByteSinkType = ByteSink<Container>;
     using ByteSourceType = ByteSource<Container>;
     
-    MemoryStream()
-        : vec_(), byte_sink_(vec_), byte_source_(vec_) {}
+    MemoryStream();
     
     template <typename T>
     MemoryStream& operator<<(const T& obj)
@@ -35,20 +34,9 @@ public:
         return *this;
     }
     
-    uint8_t *Data()
-    {
-        return vec_.data();
-    }
-    
-    void Clear()
-    {
-        vec_.clear();
-    }
-    
-    size_t Size()
-    {
-        return vec_.size();
-    }
+    uint8_t *Data();    
+    void Clear();    
+    size_t Size();
     
 private:
     Container vec_;

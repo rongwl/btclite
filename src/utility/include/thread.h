@@ -56,12 +56,8 @@ private:
 
 class ThreadGroup : Uncopyable {
 public:
-    ThreadGroup() {}
-    ~ThreadGroup()
-    {
-        for (auto it = threads_.begin(), end = threads_.end(); it != end; ++it)
-            delete *it;
-    }
+    ThreadGroup() = default;
+    ~ThreadGroup();
 
     //-------------------------------------------------------------------------
     bool IsThisThreadIn();
@@ -75,11 +71,7 @@ public:
     void JoinAll();
 
     //-------------------------------------------------------------------------
-    ssize_t Size() const
-    {
-        std::lock_guard<std::mutex> guard(mutex_);
-        return threads_.size();
-    }
+    ssize_t Size() const;
 
 private:
     mutable std::mutex mutex_;
@@ -142,11 +134,7 @@ std::future<typename std::result_of<Func(Args...)>::type> ThreadPool::AddTask(Fu
 
 class SingletonThreadPool : Uncopyable {
 public:
-    static ThreadPool& GetInstance()
-    {
-        static ThreadPool thread_pool(2 * std::thread::hardware_concurrency() + 1);
-        return thread_pool;
-    }
+    static ThreadPool& GetInstance();
     
 private:
     SingletonThreadPool() {}

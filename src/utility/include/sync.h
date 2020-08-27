@@ -72,10 +72,7 @@ private:
 
 class CriticalSection : public std::recursive_mutex {
 public:
-    ~CriticalSection()
-    {
-        DeleteLock((void*)this);
-    }
+    ~CriticalSection();
 };
 
 using CriticalBlock = MutexLock<CriticalSection>;
@@ -90,32 +87,10 @@ using CriticalBlock = MutexLock<CriticalSection>;
 class Semaphore
 {
 public:
-    explicit Semaphore(int init) : value(init) {}
-
-    void wait()
-    {
-        std::unique_lock<std::mutex> lock(mutex_);
-        condition_.wait(lock, [&]() { return value >= 1; });
-        value--;
-    }
-
-    bool try_wait()
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        if (value < 1)
-            return false;
-        value--;
-        return true;
-    }
-
-    void post()
-    {
-        {
-            std::lock_guard<std::mutex> lock(mutex_);
-            value++;
-        }
-        condition_.notify_one();
-    }
+    explicit Semaphore(int init);
+    void wait();
+    bool try_wait();
+    void post();
     
 private:
     std::condition_variable condition_;
@@ -127,58 +102,16 @@ private:
 class SemaphoreGrant
 {
 public:
-    SemaphoreGrant()
-        : sem_(nullptr), have_grant_(false) {}
-
-    explicit SemaphoreGrant(Semaphore& sem, bool fTry = false)
-        : sem_(&sem), have_grant_(false)
-    {
-        if (fTry)
-            TryAcquire();
-        else
-            Acquire();
-    }
-
-    ~SemaphoreGrant()
-    {
-        Release();
-    }
+    SemaphoreGrant();
+    explicit SemaphoreGrant(Semaphore& sem, bool fTry = false);
+    ~SemaphoreGrant();
     
-    void Acquire()
-    {
-        if (have_grant_)
-            return;
-        sem_->wait();
-        have_grant_ = true;
-    }
+    void Acquire();
+    void Release();
+    bool TryAcquire();
+    void MoveTo(SemaphoreGrant& grant);
 
-    void Release()
-    {
-        if (!have_grant_)
-            return;
-        sem_->post();
-        have_grant_ = false;
-    }
-
-    bool TryAcquire()
-    {
-        if (!have_grant_ && sem_->try_wait())
-            have_grant_ = true;
-        return have_grant_;
-    }
-
-    void MoveTo(SemaphoreGrant& grant)
-    {
-        grant.Release();
-        grant.sem_ = sem_;
-        grant.have_grant_ = have_grant_;
-        have_grant_ = false;
-    }
-
-    operator bool() const
-    {
-        return have_grant_;
-    }
+    operator bool() const;
 
 private:
     Semaphore *sem_;
