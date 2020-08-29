@@ -13,6 +13,19 @@
 namespace btclite {
 namespace network {
 
+Connector::Connector()
+    : base_(nullptr), bev_(nullptr), 
+      outbound_timer_(nullptr)
+{
+}
+
+Connector::~Connector()
+{
+    if (base_) {
+        event_base_free(base_);
+    }
+}    
+
 bool Connector::InitEvent()
 {
     evthread_use_pthreads();
@@ -348,6 +361,11 @@ bool Connector::GetHostAddr(const std::string& host_name, uint16_t port, NetAddr
     *out = addr;
     
     return true;
+}
+
+const Nodes& Connector::outbounds() const
+{
+    return outbounds_;
 }
 
 } // namespace network

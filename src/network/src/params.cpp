@@ -6,6 +6,20 @@
 namespace btclite {
 namespace network {
 
+bool Seed::operator==(const Seed& b) const
+{
+    return (host == b.host && port == b.port);
+}
+
+bool Seed::operator!=(const Seed& b) const
+{
+    return !(*this == b);
+}
+
+Params::Params(const util::Configuration& config)
+    : Params(config.btcnet(), config.args(), config.path_data_dir())
+{
+}
 
 Params::Params(BtcNet btcnet, const util::Args& args, 
                const fs::path& path_data_dir)
@@ -70,6 +84,46 @@ Params::Params(BtcNet btcnet, const util::Args& args,
             break;
         }
     }
+}
+
+uint32_t Params::msg_magic() const
+{
+    return msg_magic_;
+}
+
+uint16_t Params::default_port() const
+{
+    return default_port_;
+}
+
+const std::vector<Seed>& Params::seeds() const
+{
+    return seeds_;
+}
+
+bool Params::advertise_local_addr() const
+{
+    return advertise_local_addr_;
+}
+
+bool Params::discover_local_addr() const
+{
+    return discover_local_addr_;
+}
+
+bool Params::use_dnsseed() const
+{
+    return use_dnsseed_;
+}
+
+const std::vector<std::string>& Params::specified_outgoing() const
+{
+    return specified_outgoing_;
+}
+
+const fs::path& Params::path_data_dir() const
+{
+    return path_data_dir_;
 }
 
 } // namespace network

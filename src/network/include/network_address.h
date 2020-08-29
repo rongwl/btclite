@@ -41,20 +41,14 @@ enum AddrCategory {
     
 class NetAddr {
 public:
-    NetAddr()
-        : proto_addr_()
-    {
-        proto_addr_.mutable_ip()->Resize(ip_uint32_size, 0);
-    }
+    NetAddr();
     
     NetAddr(const struct sockaddr_in& addr);    
     NetAddr(const struct sockaddr_in6& addr6);    
     NetAddr(const struct sockaddr_storage& addr);
     
-    NetAddr(const proto_netaddr::NetAddr& proto_addr)
-        : proto_addr_(proto_addr) {}
-    NetAddr(proto_netaddr::NetAddr&& proto_addr) noexcept
-        : proto_addr_(std::move(proto_addr)) {}
+    NetAddr(const proto_netaddr::NetAddr& proto_addr);
+    NetAddr(proto_netaddr::NetAddr&& proto_addr) noexcept;
     
     NetAddr(uint32_t timestamp, uint64_t services, IpAddr& ip, uint16_t port);
     NetAddr(uint32_t timestamp, uint64_t services, IpAddr&& ip, uint16_t port) noexcept;
@@ -85,13 +79,8 @@ public:
     void Clear();
     std::string ToString() const;
     bool ToSockAddr(struct sockaddr* out) const;
-    bool FromSockAddr(const struct sockaddr *in);
-    
-    size_t SerializedSize() const
-    {
-        return sizeof(proto_addr_.timestamp()) + sizeof(proto_addr_.services()) +
-               kIpByteSize + sizeof(uint16_t);
-    }
+    bool FromSockAddr(const struct sockaddr *in);    
+    size_t SerializedSize() const;
     
     //-------------------------------------------------------------------------
     uint8_t GetByte(int n) const;
@@ -132,50 +121,19 @@ public:
     }
     
     //-------------------------------------------------------------------------    
-    uint16_t port() const
-    {
-        return static_cast<uint16_t>(proto_addr_.port());
-    }
+    uint16_t port() const;    
+    void set_port(uint16_t port);
     
-    void set_port(uint16_t port)
-    {
-        proto_addr_.set_port(port);
-    }
+    uint32_t scope_id() const;    
+    void set_scope_id(uint32_t id);
     
-    uint32_t scope_id() const
-    {
-        return proto_addr_.scope_id();
-    }
+    uint64_t services() const;    
+    void set_services(uint64_t services);
     
-    void set_scope_id(uint32_t id)
-    {
-        proto_addr_.set_scope_id(id);
-    }
+    uint32_t timestamp() const;    
+    void set_timestamp(uint32_t timestamp);
     
-    uint64_t services() const
-    {
-        return proto_addr_.services();
-    }
-    
-    void set_services(uint64_t services)
-    {
-        proto_addr_.set_services(services);
-    }
-    
-    uint32_t timestamp() const
-    {
-        return proto_addr_.timestamp();
-    }
-    
-    void set_timestamp(uint32_t timestamp)
-    {
-        proto_addr_.set_timestamp(timestamp);
-    }
-    
-    const proto_netaddr::NetAddr& proto_addr() const
-    {
-        return proto_addr_;
-    }
+    const proto_netaddr::NetAddr& proto_addr() const;
 
 private:
     size_t ip_uint32_size = 4;
@@ -224,40 +182,17 @@ class SubNet {
 public:
     static constexpr size_t netmask_byte_size = 16;
     
-    SubNet()
-        : net_addr_(), valid_(false)
-    {
-        std::memset(netmask_, 0, sizeof(netmask_));
-    }
+    SubNet();
     
-    SubNet(const NetAddr& addr)
-        : net_addr_(addr), valid_(addr.IsValid())
-    {
-        std::memset(netmask_, 0xff, sizeof(netmask_));
-    }
-    
-    SubNet(NetAddr&& addr) noexcept
-        : net_addr_(std::move(addr)), valid_(addr.IsValid())
-    {
-        std::memset(netmask_, 0xff, sizeof(netmask_));
-    }
+    SubNet(const NetAddr& addr);
+    SubNet(NetAddr&& addr) noexcept;
     
     SubNet(const NetAddr& addr, int32_t mask);
     SubNet(const NetAddr &addr, const NetAddr &mask);
     
     //-------------------------------------------------------------------------
-    bool IsValid() const
-    {
-        return valid_;
-    }
-    
-    void Clear()
-    {
-        net_addr_.Clear();
-        std::memset(netmask_, 0, sizeof(netmask_));
-        valid_ = false;
-    }
-    
+    bool IsValid() const;    
+    void Clear();    
     bool Match(const NetAddr& addr) const;
     std::string ToString() const;
     
@@ -273,15 +208,9 @@ public:
     }
     
     //-------------------------------------------------------------------------
-    const NetAddr& net_addr() const
-    {
-        return net_addr_;
-    }
+    const NetAddr& net_addr() const;
     
-    const uint8_t* const netmask() const
-    {
-        return netmask_;
-    }
+    const uint8_t* const netmask() const;
     
 private:
     NetAddr net_addr_;

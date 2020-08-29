@@ -19,10 +19,8 @@ public:
         kManuallyAdded    = 2
     };
     
-    BanList() = default;
-    
-    BanList(const proto_banmap::BanMap& ban_map)
-        : ban_map_(ban_map) {}
+    BanList() = default;    
+    BanList(const proto_banmap::BanMap& ban_map);
     
     //-------------------------------------------------------------------------
     bool Add(const NetAddr& addr, const BanReason& ban_reason);
@@ -30,47 +28,20 @@ public:
     bool Erase(const NetAddr& addr);
     bool Erase(const SubNet& sub_net);
     
-    void Clear()
-    {
-        LOCK(cs_ban_map_);
-        ban_map_.clear_map();
-    }
-    
-    size_t Size() const
-    {
-        LOCK(cs_ban_map_);
-        return ban_map_.map().size();
-    }
-    
-    bool IsEmpty() const
-    {
-        LOCK(cs_ban_map_);
-        return ban_map_.map().empty();
-    }
+    void Clear();    
+    size_t Size() const;    
+    bool IsEmpty() const;
     
     //-------------------------------------------------------------------------
     void SweepBanned();
     bool IsBanned(NetAddr addr) const;
     
     //-------------------------------------------------------------------------
-    bool SerializeToOstream(std::ostream *output) const
-    {
-        LOCK(cs_ban_map_);
-        return ban_map_.SerializeToOstream(output);
-    }
-    
-    bool ParseFromIstream(std::istream *input)
-    {
-        LOCK(cs_ban_map_);
-        return ban_map_.ParseFromIstream(input);
-    }
+    bool SerializeToOstream(std::ostream *output) const;    
+    bool ParseFromIstream(std::istream *input);
     
     //-------------------------------------------------------------------------    
-    proto_banmap::BanMap ban_map() const // thread safe copy
-    {
-        LOCK(cs_ban_map_);
-        return ban_map_;
-    }
+    proto_banmap::BanMap ban_map() const;
     
 private:
     mutable util::CriticalSection cs_ban_map_;
@@ -81,11 +52,7 @@ private:
 
 class SingletonBanList : util::Uncopyable {
 public:
-    static BanList& GetInstance()
-    {
-        static BanList ban_list;
-        return ban_list;
-    }
+    static BanList& GetInstance();
     
 private:
     SingletonBanList() {}
@@ -101,10 +68,7 @@ public:
     bool LoadBanList(BanList *ban_list);
     
     //-------------------------------------------------------------------------
-    const fs::path& path_ban_list() const
-    {
-        return path_ban_list_;
-    }
+    const fs::path& path_ban_list() const;
     
 private:
     const std::string default_ban_list = "banlist.dat";

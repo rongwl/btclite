@@ -11,15 +11,8 @@ namespace network {
 // outbound socket connection
 class Connector {
 public:    
-    Connector()
-        : base_(nullptr), bev_(nullptr), 
-          outbound_timer_(nullptr) {}
-    
-    ~Connector()
-    {
-        if (base_)
-            event_base_free(base_);
-    }    
+    Connector();    
+    ~Connector();
     
     //-------------------------------------------------------------------------
     bool InitEvent();
@@ -39,10 +32,7 @@ public:
                    Peers *ppeers);
 
     //-------------------------------------------------------------------------
-    const Nodes& outbounds() const
-    {
-        return outbounds_;
-    }
+    const Nodes& outbounds() const;
     
 private:
     struct event_base *base_;

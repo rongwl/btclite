@@ -12,65 +12,33 @@ struct Seed {
     std::string host;
     uint16_t port;
     
-    bool operator==(const Seed& b) const
-    {
-        return (host == b.host && port == b.port);
-    }
-    
-    bool operator!=(const Seed& b) const
-    {
-        return !(*this == b);
-    }
+    bool operator==(const Seed& b) const;
+    bool operator!=(const Seed& b) const;
 };
 
 class Params {
 public:
-    explicit Params(const util::Configuration& config)
-        : Params(config.btcnet(), config.args(), config.path_data_dir()) {}
+    explicit Params(const util::Configuration& config);
     
     Params(BtcNet btcnet, const util::Args& args, 
            const fs::path& path_data_dir);
     
     //-------------------------------------------------------------------------
-    uint32_t msg_magic() const
-    {
-        return msg_magic_;
-    }
+    uint32_t msg_magic() const;
     
-    uint16_t default_port() const
-    {
-        return default_port_;
-    }
+    uint16_t default_port() const;
     
-    const std::vector<Seed>& seeds() const
-    {
-        return seeds_;
-    }
+    const std::vector<Seed>& seeds() const;
     
-    bool advertise_local_addr() const
-    {
-        return advertise_local_addr_;
-    }
+    bool advertise_local_addr() const;
     
-    bool discover_local_addr() const
-    {
-        return discover_local_addr_;
-    }
+    bool discover_local_addr() const;
     
-    bool use_dnsseed() const
-    {
-        return use_dnsseed_;
-    }
+    bool use_dnsseed() const;
     
-    const std::vector<std::string>& specified_outgoing() const
-    {
-        return specified_outgoing_;
-    }
+    const std::vector<std::string>& specified_outgoing() const;
     
-    const fs::path& path_data_dir() const
-    {
-        return path_data_dir_;
-    }
+    const fs::path& path_data_dir() const;
     
 private:
     uint32_t msg_magic_ = 0; // little endian

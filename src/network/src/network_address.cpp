@@ -10,6 +10,12 @@
 namespace btclite {
 namespace network {
 
+NetAddr::NetAddr()
+    : proto_addr_()
+{
+    proto_addr_.mutable_ip()->Resize(ip_uint32_size, 0);
+}
+
 NetAddr::NetAddr(const struct sockaddr_in& addr)
     : proto_addr_()
 {
@@ -43,6 +49,17 @@ NetAddr::NetAddr(const struct sockaddr_storage& addr)
         proto_addr_.set_scope_id(addr6->sin6_scope_id);
     }
 }
+
+NetAddr::NetAddr(const proto_netaddr::NetAddr& proto_addr)
+    : proto_addr_(proto_addr)
+{
+}
+
+NetAddr::NetAddr(proto_netaddr::NetAddr&& proto_addr) noexcept
+    : proto_addr_(std::move(proto_addr))
+{
+}
+
 
 NetAddr::NetAddr(uint32_t timestamp, uint64_t services, IpAddr& ip, uint16_t port)
     : proto_addr_()
@@ -288,6 +305,12 @@ bool NetAddr::FromSockAddr(const struct sockaddr *in)
     }
     
     return false;
+}
+
+size_t NetAddr::SerializedSize() const
+{
+    return sizeof(proto_addr_.timestamp()) + sizeof(proto_addr_.services()) +
+           kIpByteSize + sizeof(uint16_t);
 }
 
 void NetAddr::Clear()
@@ -562,6 +585,69 @@ util::Hash256 NetAddr::GetHash() const
     return hs.Sha256();
 }
 
+uint16_t NetAddr::port() const
+{
+    return static_cast<uint16_t>(proto_addr_.port());
+}
+
+void NetAddr::set_port(uint16_t port)
+{
+    proto_addr_.set_port(port);
+}
+
+uint32_t NetAddr::scope_id() const
+{
+    return proto_addr_.scope_id();
+}
+
+void NetAddr::set_scope_id(uint32_t id)
+{
+    proto_addr_.set_scope_id(id);
+}
+
+uint64_t NetAddr::services() const
+{
+    return proto_addr_.services();
+}
+
+void NetAddr::set_services(uint64_t services)
+{
+    proto_addr_.set_services(services);
+}
+
+uint32_t NetAddr::timestamp() const
+{
+    return proto_addr_.timestamp();
+}
+
+void NetAddr::set_timestamp(uint32_t timestamp)
+{
+    proto_addr_.set_timestamp(timestamp);
+}
+
+const proto_netaddr::NetAddr& NetAddr::proto_addr() const
+{
+    return proto_addr_;
+}
+
+SubNet::SubNet()
+    : net_addr_(), valid_(false)
+{
+    std::memset(netmask_, 0, sizeof(netmask_));
+}
+
+SubNet::SubNet(const NetAddr& addr)
+    : net_addr_(addr), valid_(addr.IsValid())
+{
+    std::memset(netmask_, 0xff, sizeof(netmask_));
+}
+
+SubNet::SubNet(NetAddr&& addr) noexcept
+    : net_addr_(std::move(addr)), valid_(addr.IsValid())
+{
+    std::memset(netmask_, 0xff, sizeof(netmask_));
+}
+
 SubNet::SubNet(const NetAddr& addr, int32_t mask)
     : net_addr_(addr), valid_(true)
 {
@@ -601,6 +687,18 @@ SubNet::SubNet(const NetAddr &addr, const NetAddr &mask)
     // Normalize network according to netmask
     for(int x = 0; x < netmask_byte_size; ++x)
         net_addr_.SetByte(x, (net_addr_.GetByte(x) & netmask_[x]));
+}
+
+bool SubNet::IsValid() const
+{
+    return valid_;
+}
+
+void SubNet::Clear()
+{
+    net_addr_.Clear();
+    std::memset(netmask_, 0, sizeof(netmask_));
+    valid_ = false;
 }
 
 bool SubNet::Match(const NetAddr& addr) const
@@ -650,6 +748,16 @@ std::string SubNet::ToString() const
     }
 
     return net_addr_.ToString() + "/" + os.str();
+}
+
+const NetAddr& SubNet::net_addr() const
+{
+    return net_addr_;
+}
+
+const uint8_t* const SubNet::netmask() const
+{
+    return netmask_;
 }
 
 int SubNet::NetmaskBits(uint8_t x) const

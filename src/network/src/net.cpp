@@ -20,6 +20,18 @@
 namespace btclite {
 namespace network {
 
+LocalService::LocalService()
+    : service_(ServiceFlags(kNodeNetwork | kNodeBloom | kNodeNetworkLimited)), 
+      local_addrs_()
+{
+}
+
+LocalService::LocalService(const std::vector<NetAddr> addrs)
+    : service_(ServiceFlags(kNodeNetwork | kNodeBloom | kNodeNetworkLimited)), 
+      local_addrs_(addrs) 
+{
+}
+
 bool LocalService::DiscoverLocalAddrs()
 {
     // Get local host ip
@@ -126,6 +138,23 @@ bool LocalService::IsLocal(const NetAddr& addr) const
     return false;
 }
 
+ServiceFlags LocalService::service() const
+{
+    LOCK(cs_local_service_);
+    return service_;
+}
+void LocalService::set_services(ServiceFlags flags)
+{
+    LOCK(cs_local_service_);
+    service_ = flags;
+}
+
+std::vector<NetAddr> LocalService::local_addrs() const // thread safe copy
+{
+    LOCK(cs_local_service_);
+    return local_addrs_;
+}
+
 bool LocalService::AddLocalAddr(const NetAddr& addr)
 {
     if (!addr.IsRoutable())
@@ -138,6 +167,13 @@ bool LocalService::AddLocalAddr(const NetAddr& addr)
     local_addrs_.push_back(addr);
 
     return true;
+}
+
+CollectionTimer::CollectionTimer()
+    : disconnected_nodes_timer_(
+          util::SingletonTimerMng::GetInstance().StartTimer(
+              60*1000, 60*1000, CheckDisconnectedNodes)) 
+{
 }
 
 void AdvertiseLocalTimeoutCb(std::shared_ptr<Node> node,

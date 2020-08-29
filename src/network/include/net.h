@@ -15,14 +15,8 @@ namespace network {
 
 class LocalService {
 public:
-    LocalService()
-        : service_(ServiceFlags(kNodeNetwork | kNodeBloom | kNodeNetworkLimited)), 
-          local_addrs_() {}
-
-    // only for gtest
-    LocalService(const std::vector<NetAddr> addrs)
-        : service_(ServiceFlags(kNodeNetwork | kNodeBloom | kNodeNetworkLimited)), 
-          local_addrs_(addrs) {}
+    LocalService();
+    LocalService(const std::vector<NetAddr> addrs); // only for gtest
     
     //-------------------------------------------------------------------------
     bool DiscoverLocalAddrs();
@@ -33,22 +27,10 @@ public:
     bool IsLocal(const NetAddr& addr) const;
     
     //-------------------------------------------------------------------------
-    ServiceFlags service() const
-    {
-        LOCK(cs_local_service_);
-        return service_;
-    }
-    void set_services(ServiceFlags flags)
-    {
-        LOCK(cs_local_service_);
-        service_ = flags;
-    }
+    ServiceFlags service() const;
+    void set_services(ServiceFlags flags);
     
-    std::vector<NetAddr> local_addrs() const // thread safe copy
-    {
-        LOCK(cs_local_service_);
-        return local_addrs_;
-    }
+    std::vector<NetAddr> local_addrs() const;
     
 private:
     mutable util::CriticalSection cs_local_service_;
@@ -61,10 +43,7 @@ private:
 
 class CollectionTimer : util::Uncopyable {
 public:
-    CollectionTimer()
-        : disconnected_nodes_timer_(
-              util::SingletonTimerMng::GetInstance().StartTimer(
-                  60*1000, 60*1000, CheckDisconnectedNodes)) {}
+    CollectionTimer();
     
     static void CheckDisconnectedNodes();
     

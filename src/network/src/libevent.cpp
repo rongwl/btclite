@@ -86,6 +86,12 @@ void LibEvent::EvconnlistenerFree(struct evconnlistener *lev)
         evconnlistener_free(lev);
 }
 
+bool Context::IsValid() const
+{
+    return (pparams && plocal_service && pnodes &&
+            pchain_state && pbanlist && ppeers);
+}
+
 void ConnReadCb(struct bufferevent *bev, void *ctx)
 {
     auto *context = reinterpret_cast<struct Context*>(ctx);

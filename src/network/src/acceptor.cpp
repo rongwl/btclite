@@ -18,6 +18,14 @@ Acceptor::Acceptor(uint16_t listen_port)
     sock_addr_.sin6_scope_id = 0;
 }
 
+Acceptor::~Acceptor()
+{
+    if (listener_)
+        evconnlistener_free(listener_);
+    if (base_)
+        event_base_free(base_);
+}
+
 bool Acceptor::InitEvent(Context *ctx)
 {
     using namespace std::placeholders;
@@ -67,6 +75,13 @@ void Acceptor::StartEventLoop()
         BTCLOG(LOG_LEVEL_ERROR) << "Event base for loop is null.";            
     
     BTCLOG(LOG_LEVEL_WARNING) << "Exited acceptor event loop.";
+}
+
+void Acceptor::ExitEventLoop()
+{
+    struct timeval delay = {2, 0};
+    BTCLOG(LOG_LEVEL_INFO) << "Exit acceptor event loop in 2s...";
+    event_base_loopexit(base_, &delay);
 }
 
 void Acceptor::AcceptConnCb(struct evconnlistener *listener, evutil_socket_t fd,
@@ -130,6 +145,17 @@ void Acceptor::AcceptConnCb(struct evconnlistener *listener, evutil_socket_t fd,
 
     BTCLOG(LOG_LEVEL_VERBOSE) << "Accept connection from " << addr.ToString() 
                               << " successfully.";
+}
+
+Nodes& Acceptor::Inbounds()
+{
+    static Nodes inbounds;
+    return inbounds;
+}
+
+const struct sockaddr_in6& Acceptor::sock_addr() const
+{
+    return sock_addr_;
 }
 
 void Acceptor::AcceptErrCb(struct evconnlistener *listener, void *arg)

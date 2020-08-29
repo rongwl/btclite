@@ -6,6 +6,11 @@
 namespace btclite {
 namespace network {
 
+BanList::BanList(const proto_banmap::BanMap& ban_map)
+    : ban_map_(ban_map) 
+{
+}
+
 bool BanList::Add(const NetAddr& addr, const BanReason& ban_reason)
 {
     return Add(SubNet(addr), ban_reason);
@@ -37,6 +42,24 @@ bool BanList::Erase(const SubNet& sub_net)
         return false;
     
     return true;
+}
+
+void BanList::Clear()
+{
+    LOCK(cs_ban_map_);
+    ban_map_.clear_map();
+}
+
+size_t BanList::Size() const
+{
+    LOCK(cs_ban_map_);
+    return ban_map_.map().size();
+}
+
+bool BanList::IsEmpty() const
+{
+    LOCK(cs_ban_map_);
+    return ban_map_.map().empty();
 }
 
 bool BanList::Add_(const SubNet& sub_net, const proto_banmap::BanEntry& ban_entry)
@@ -79,6 +102,30 @@ bool BanList::IsBanned(NetAddr addr) const
     return false;
 }
 
+bool BanList::SerializeToOstream(std::ostream *output) const
+{
+    LOCK(cs_ban_map_);
+    return ban_map_.SerializeToOstream(output);
+}
+
+bool BanList::ParseFromIstream(std::istream *input)
+{
+    LOCK(cs_ban_map_);
+    return ban_map_.ParseFromIstream(input);
+}
+
+proto_banmap::BanMap BanList::ban_map() const // thread safe copy
+{
+    LOCK(cs_ban_map_);
+    return ban_map_;
+}
+
+BanList& SingletonBanList::GetInstance()
+{
+    static BanList ban_list;
+    return ban_list;
+}
+
 bool BanDb::DumpBanList(BanList& ban_list)
 {
     ban_list.SweepBanned(); // clean unused entries (if bantime has expired)   
@@ -107,6 +154,11 @@ bool BanDb::LoadBanList(BanList *ban_list)
         return false;
     }
     return ban_list->ParseFromIstream(&fs);
+}
+
+const fs::path& BanDb::path_ban_list() const
+{
+    return path_ban_list_;
 }
 
 

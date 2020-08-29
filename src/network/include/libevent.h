@@ -73,11 +73,7 @@ struct Context {
     BanList *pbanlist = nullptr;
     Peers *ppeers = nullptr;
     
-    bool IsValid() const
-    {
-        return (pparams && plocal_service && pnodes &&
-                pchain_state && pbanlist && ppeers);
-    }
+    bool IsValid() const;
 };
 
 void ConnReadCb(struct bufferevent *bev, void *ctx);

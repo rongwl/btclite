@@ -38,6 +38,13 @@ bool IsTerriblePeer(const proto_peers::Peer& peer, int64_t now)
 
 } // namespace peer
 
+Peers::Peers()
+    : key_(util::RandHash256())
+{
+    proto_peers_.mutable_key()->Resize(4, 0);
+    std::memcpy(proto_peers_.mutable_key()->begin(), key_.begin(), key_.size());
+}
+
 bool Peers::Add(const NetAddr &addr, 
                          const NetAddr& source, int64_t time_penalty)
 {
@@ -386,6 +393,18 @@ uint64_t Peers::MakeMapKey(const NetAddr& addr, bool by_group)
     return util::FromLittleEndian<uint64_t>(hs.Sha256().data());
 }
 
+bool Peers::SerializeToOstream(std::ostream * output) const
+{
+    LOCK(cs_peers_);
+    return proto_peers_.SerializeToOstream(output);
+}
+
+bool Peers::ParseFromIstream(std::istream * input)
+{
+    LOCK(cs_peers_);
+    return proto_peers_.ParseFromIstream(input);
+}
+
 void Peers::Clear()
 {
     LOCK(cs_peers_);
@@ -393,6 +412,35 @@ void Peers::Clear()
     proto_peers_.mutable_tried_tbl()->clear();
     proto_peers_.mutable_map_peers()->clear();
     rand_order_keys_.clear();
+}
+
+size_t Peers::Size() const
+{
+    LOCK(cs_peers_);
+    return proto_peers_.map_peers().size();
+}
+
+bool Peers::IsEmpty() const
+{
+    LOCK(cs_peers_);
+    return proto_peers_.map_peers().empty();
+}
+
+proto_peers::Peers Peers::proto_peers() const // thread safe copy
+{
+    LOCK(cs_peers_);
+    return proto_peers_;
+}
+
+std::vector<uint64_t> Peers::rand_order_keys() const
+{
+    LOCK(cs_peers_);
+    return rand_order_keys_;
+}
+
+util::Hash256 Peers::key() const
+{
+    return key_;
 }
 
 void Peers::EraseRand(uint64_t key)
@@ -408,6 +456,17 @@ void Peers::EraseRand(uint64_t key)
         std::swap(*pos, rand_order_keys_[rand_order_keys_.size()-1]);
         rand_order_keys_.pop_back();
     }
+}
+
+Peers& SingletonPeers::GetInstance()
+{
+    static Peers peers;
+    return peers;
+}
+
+PeersDb::PeersDb(const fs::path& path)
+    : path_peers_(path / default_peers_file)
+{
 }
 
 bool PeersDb::DumpPeers(const Peers& peers)
@@ -437,6 +496,11 @@ bool PeersDb::LoadPeers(Peers *peers)
     }
     
     return peers->ParseFromIstream(&fs);
+}
+
+const fs::path& PeersDb::path_peers() const
+{
+    return path_peers_;
 }
 
 } // namespace network

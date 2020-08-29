@@ -13,12 +13,9 @@ namespace network {
 
 class P2P : util::Uncopyable {
 public:
-    explicit P2P(const util::Configuration& config)
-        : params_(config), 
-          peers_db_(config.path_data_dir()),
-          ban_db_(config.path_data_dir()),
-          acceptor_(params_.default_port()) {}
+    explicit P2P(const util::Configuration& config);
     
+    //-------------------------------------------------------------------------
     bool Init(const chain::ChainState& chain_state);
     bool Start(const chain::ChainState& chain_state);
     void Interrupt();

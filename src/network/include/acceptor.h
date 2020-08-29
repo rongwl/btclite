@@ -10,41 +10,21 @@ namespace network {
 
 class Acceptor : util::Uncopyable {
 public:    
-    Acceptor(uint16_t listen_port);
-    
-    ~Acceptor()
-    {
-        if (listener_)
-            evconnlistener_free(listener_);
-        if (base_)
-            event_base_free(base_);
-    }
+    Acceptor(uint16_t listen_port);    
+    ~Acceptor();
     
     bool InitEvent(Context *ctx);
-    void StartEventLoop();
-    
-    void ExitEventLoop()
-    {
-        struct timeval delay = {2, 0};
-        BTCLOG(LOG_LEVEL_INFO) << "Exit acceptor event loop in 2s...";
-        event_base_loopexit(base_, &delay);
-    }
+    void StartEventLoop();    
+    void ExitEventLoop();
     
     static void AcceptConnCb(struct evconnlistener *listener, evutil_socket_t fd,
                              struct sockaddr *addr, int socklen, void *arg);
     
     //-------------------------------------------------------------------------
-    static Nodes& Inbounds()
-    {
-        static Nodes inbounds;
-        return inbounds;
-    }
+    static Nodes& Inbounds();
     
     //-------------------------------------------------------------------------
-    const struct sockaddr_in6& sock_addr() const
-    {
-        return sock_addr_;
-    }
+    const struct sockaddr_in6& sock_addr() const;
     
 private:
     struct event_base *base_;

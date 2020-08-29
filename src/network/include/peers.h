@@ -21,12 +21,7 @@ bool IsTerriblePeer(const proto_peers::Peer& peer,
 
 class Peers {
 public:
-    Peers()
-        : key_(util::RandHash256())
-    {
-        proto_peers_.mutable_key()->Resize(4, 0);
-        std::memcpy(proto_peers_.mutable_key()->begin(), key_.begin(), key_.size());
-    }
+    Peers();
     
     //-------------------------------------------------------------------------
     // Add a single address.
@@ -68,49 +63,20 @@ public:
     uint64_t MakeMapKey(const NetAddr& addr, bool by_group = false);
     
     //-------------------------------------------------------------------------
-    bool SerializeToOstream(std::ostream * output) const
-    {
-        LOCK(cs_peers_);
-        return proto_peers_.SerializeToOstream(output);
-    }
-    
-    bool ParseFromIstream(std::istream * input)
-    {
-        LOCK(cs_peers_);
-        return proto_peers_.ParseFromIstream(input);
-    }
+    bool SerializeToOstream(std::ostream * output) const;    
+    bool ParseFromIstream(std::istream * input);
     
     //-------------------------------------------------------------------------
     void Clear();
-    size_t Size() const
-    {
-        LOCK(cs_peers_);
-        return proto_peers_.map_peers().size();
-    }
-    
-    bool IsEmpty() const
-    {
-        LOCK(cs_peers_);
-        return proto_peers_.map_peers().empty();
-    }
+    size_t Size() const;
+    bool IsEmpty() const;
         
     //-------------------------------------------------------------------------
-    proto_peers::Peers proto_peers() const // thread safe copy
-    {
-        LOCK(cs_peers_);
-        return proto_peers_;
-    }
+    proto_peers::Peers proto_peers() const;
     
-    std::vector<uint64_t> rand_order_keys() const
-    {
-        LOCK(cs_peers_);
-        return rand_order_keys_;
-    }
+    std::vector<uint64_t> rand_order_keys() const;
     
-    util::Hash256 key() const
-    {
-        return key_;
-    }
+    util::Hash256 key() const;
 
 private:
     static constexpr uint32_t max_new_tbl_size = 1024*64;
@@ -131,11 +97,7 @@ private:
 
 class SingletonPeers : util::Uncopyable {
 public:
-    static Peers& GetInstance()
-    {
-        static Peers peers;
-        return peers;
-    }
+    static Peers& GetInstance();
     
 private:
     SingletonPeers() {}
@@ -143,18 +105,14 @@ private:
 
 class PeersDb : util::Uncopyable {
 public:
-    explicit PeersDb(const fs::path& path)
-        : path_peers_(path / default_peers_file) {}
+    explicit PeersDb(const fs::path& path);
     
     //-------------------------------------------------------------------------
     bool DumpPeers(const Peers& peers);
     bool LoadPeers(Peers *peers);
     
     //-------------------------------------------------------------------------
-    const fs::path& path_peers() const
-    {
-        return path_peers_;
-    }
+    const fs::path& path_peers() const;
     
 private:
     const std::string default_peers_file = "peers.dat";

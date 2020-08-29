@@ -5,6 +5,13 @@
 namespace btclite {
 namespace network {
 
+P2P::P2P(const util::Configuration& config)
+    : params_(config), 
+      peers_db_(config.path_data_dir()),
+      ban_db_(config.path_data_dir()),
+      acceptor_(params_.default_port()) 
+{
+}
 
 bool P2P::Init(const chain::ChainState& chain_state)
 {
