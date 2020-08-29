@@ -4,6 +4,11 @@
 namespace btclite {
 namespace consensus {
 
+ScriptInt::ScriptInt(const int64_t& n)
+{
+    set_value(n);
+}
+
 ScriptInt::ScriptInt(const std::vector<uint8_t>& v, bool minimal)
 {
     if (v.size() == 0)
@@ -42,6 +47,20 @@ ScriptInt::ScriptInt(const std::vector<uint8_t>& v, bool minimal)
     set_value(value);
 }
 
+int ScriptInt::IntValue() const
+{
+    if (value() > std::numeric_limits<int32_t>::max())
+        return std::numeric_limits<int32_t>::max();
+    if (value() < std::numeric_limits<int32_t>::min())
+        return std::numeric_limits<int32_t>::min();
+    return value();
+}
+
+std::vector<uint8_t> ScriptInt::BytesValue() const
+{
+    return BytesEncoding(value());
+}
+
 std::vector<uint8_t> ScriptInt::BytesEncoding(const uint64_t& value)
 {
     if (value == 0)
@@ -73,6 +92,26 @@ std::vector<uint8_t> ScriptInt::BytesEncoding(const uint64_t& value)
     return result;
 }
 
+Script::Script(std::vector<uint8_t>&& v) noexcept
+    : data_(std::move(v)) 
+{
+}
+
+Script::Script(const std::vector<uint8_t>& v)
+    : data_(v) 
+{
+}
+
+Script::Script(Script&& s) noexcept
+    : data_(std::move(s.data_)) 
+{
+}
+
+Script::Script(const Script& s)
+    : data_(s.data_)
+{
+}
+
 void Script::Push(const uint64_t& b)
 {
     if (b == -1 || (b >= 1 && b <= 16))
@@ -82,6 +121,16 @@ void Script::Push(const uint64_t& b)
     else
         this->Push(ScriptInt::BytesEncoding(b));
 }
+
+void Script::Push(const Opcode& code)
+{
+    data_.push_back(static_cast<uint8_t>(code));
+}
+
+void Script::Push(const ScriptInt& sint)
+{
+    this->Push(sint.BytesValue());
+}    
 
 void Script::Push(const std::vector<uint8_t>& b)
 {
@@ -107,6 +156,11 @@ void Script::Push(const std::vector<uint8_t>& b)
         }
     }
     data_.insert(data_.end(), b.begin(), b.end());
+}
+
+void Script::clear()
+{
+    data_.clear();
 }
 
 bool Script::Pop(std::vector<uint8_t>::const_iterator& pc, Opcode *out) const
@@ -154,6 +208,57 @@ bool Script::Pop(std::vector<uint8_t>::const_iterator& pc, const Opcode& in, std
     out->assign(pc, pc+size);
     
     return true;
+}
+
+std::vector<uint8_t>::const_iterator Script::begin() const
+{
+    return data_.begin();
+}
+
+std::vector<uint8_t>::const_iterator Script::end() const
+{
+    return data_.end();
+}
+
+std::vector<uint8_t>::const_reverse_iterator Script::rbegin() const
+{
+    return data_.rbegin();
+}
+
+std::vector<uint8_t>::const_reverse_iterator Script::rend() const
+{
+    return data_.rend();
+}
+
+bool Script::operator==(const Script& b) const
+{
+    return data_ == b.data_;
+}
+
+bool Script::operator!=(const Script& b) const
+{
+    return !(*this == b);
+}
+
+Script& Script::operator=(const Script& b)
+{
+    data_ = b.data_;
+    return *this;
+}
+
+Script& Script::operator=(Script&& b) noexcept
+{
+    if (this != &b) {
+        data_ = std::move(b.data_);
+    }
+    return *this;
+}
+
+size_t Script::SerializedSize() const
+{
+    size_t result = data_.size();
+    result += util::VarIntSize(result);
+    return result;
 }
 
 } // namespace consensus

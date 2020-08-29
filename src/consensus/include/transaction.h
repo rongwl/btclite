@@ -13,45 +13,19 @@ namespace consensus {
 /** An outpoint - a combination of a transaction hash and an index n into its vout */
 class OutPoint {
 public:
-    OutPoint()
-        : index_(std::numeric_limits<uint32_t>::max()) {}
+    OutPoint();
     
-    OutPoint(const util::Hash256& hash, uint32_t index)
-        : prev_hash_(hash), index_(index) {}
-    OutPoint(util::Hash256&& hash, uint32_t index) noexcept
-        : prev_hash_(std::move(hash)), index_(index) {}
+    OutPoint(const util::Hash256& hash, uint32_t index);
+    OutPoint(util::Hash256&& hash, uint32_t index) noexcept;
     
-    OutPoint(const OutPoint& op)
-        : prev_hash_(op.prev_hash_), index_(op.index_) {}
-    OutPoint(OutPoint&& op) noexcept
-        : prev_hash_(std::move(op.prev_hash_)), index_(op.index_) {}
+    OutPoint(const OutPoint& op);
+    OutPoint(OutPoint&& op) noexcept;
     
     //-------------------------------------------------------------------------
-    void Clear()
-    {
-        prev_hash_.fill(0);
-        index_ = std::numeric_limits<uint32_t>::max();
-    }
-    
-    bool IsNull() const
-    {
-        return (prev_hash_ == crypto::null_hash &&
-                index_ == std::numeric_limits<uint32_t>::max());
-    }
-    
-    size_t Size() const
-    {
-        return prev_hash_.size() + sizeof(index_);
-    }
-    
-    std::string ToString() const
-    {
-        std::stringstream ss;
-        ss << "OutPoint(" 
-           << util::EncodeHex(prev_hash_.rbegin(), prev_hash_.rend()).substr(0, 10) 
-           << ", " << index_ << ")";
-        return ss.str();
-    }
+    void Clear();
+    bool IsNull() const;    
+    size_t Size() const;
+    std::string ToString() const;
     
     //-------------------------------------------------------------------------
     friend bool operator==(const OutPoint& a, const OutPoint& b)
@@ -74,21 +48,8 @@ public:
         return (a > b || (a == b && a.index_ > b.index_));
     }
     
-    OutPoint& operator=(const OutPoint& b)
-    {
-        prev_hash_ = b.prev_hash_;
-        index_ = b.index_;
-        return *this;
-    }
-    
-    OutPoint& operator=(OutPoint&& b) noexcept
-    {
-        if (this != &b) {
-            prev_hash_ = std::move(b.prev_hash_);
-            index_ = b.index_;
-        }
-        return *this;
-    }
+    OutPoint& operator=(const OutPoint& b);    
+    OutPoint& operator=(OutPoint&& b) noexcept;
     
     //-------------------------------------------------------------------------
     template <typename Stream>
@@ -108,27 +69,12 @@ public:
     }
     
     //-------------------------------------------------------------------------
-    const util::Hash256& prev_hash() const
-    {
-        return prev_hash_;
-    }
-    void set_prevHash(const util::Hash256& hash)
-    {
-        prev_hash_ = hash;
-    }
-    void set_prevHash(util::Hash256&& hash)
-    {
-        prev_hash_ = std::move(hash);
-    }
+    const util::Hash256& prev_hash() const;
+    void set_prevHash(const util::Hash256& hash);
+    void set_prevHash(util::Hash256&& hash);
     
-    uint32_t index() const
-    {
-        return index_;
-    }
-    void set_index(uint32_t index)
-    {
-        index_ = index;
-    }
+    uint32_t index() const;
+    void set_index(uint32_t index);
     
 private:
     util::Hash256 prev_hash_;
@@ -146,24 +92,17 @@ public:
     static constexpr uint32_t default_sequence_no = 0xffffffff;
 
     //-------------------------------------------------------------------------
-    TxIn()
-        : sequence_no_(default_sequence_no) {}
+    TxIn();
     
-    TxIn(const OutPoint& prevout, const Script& script_sig, uint32_t sequence_no=default_sequence_no,
-         const ScriptWitness& script_witness = ScriptWitness())
-        : prevout_(prevout), script_sig_(script_sig),
-          sequence_no_(sequence_no), script_witness_(script_witness) {}
-    TxIn(OutPoint&& prevout, Script&& script_sig, uint32_t sequence_no=default_sequence_no,
-         ScriptWitness&& script_witness = ScriptWitness()) noexcept
-        : prevout_(std::move(prevout)), script_sig_(std::move(script_sig)),
-          sequence_no_(sequence_no), script_witness_(std::move(script_witness)) {}
+    TxIn(const OutPoint& prevout, const Script& script_sig, 
+         uint32_t sequence_no=default_sequence_no,
+         const ScriptWitness& script_witness = ScriptWitness());
+    TxIn(OutPoint&& prevout, Script&& script_sig, 
+         uint32_t sequence_no=default_sequence_no,
+         ScriptWitness&& script_witness = ScriptWitness()) noexcept;
     
-    TxIn(const TxIn& input)
-        : prevout_(input.prevout_), script_sig_(input.script_sig_), 
-          sequence_no_(input.sequence_no_), script_witness_(input.script_witness_) {}
-    TxIn(TxIn&& input) noexcept
-        : prevout_(std::move(input.prevout_)), script_sig_(std::move(input.script_sig_)),
-          sequence_no_(input.sequence_no_), script_witness_(std::move(input.script_witness_)) {}
+    TxIn(const TxIn& input);
+    TxIn(TxIn&& input) noexcept;
     
     //-------------------------------------------------------------------------
     template <typename Stream>
@@ -185,97 +124,32 @@ public:
     }
     
     //-------------------------------------------------------------------------
-    bool operator==(const TxIn& b) const
-    {
-        return (prevout_ == b.prevout_ &&
-                script_sig_ == b.script_sig_ &&
-                sequence_no_ == b.sequence_no_);
-    }
+    bool operator==(const TxIn& b) const; 
+    bool operator!=(const TxIn& b) const;
     
-    bool operator!=(const TxIn& b) const
-    {
-        return !(*this == b);
-    }
-    
-    TxIn& operator=(const TxIn& b)
-    {
-        prevout_ = b.prevout_;
-        script_sig_ = b.script_sig_;
-        sequence_no_ = b.sequence_no_;
-        return *this;
-    }
-    
-    TxIn& operator=(TxIn&& b) noexcept
-    {
-        if (this != &b) {
-            prevout_ = std::move(b.prevout_);
-            script_sig_ = std::move(b.script_sig_);
-            sequence_no_ = b.sequence_no_;
-        }
-        return *this;
-    }
+    TxIn& operator=(const TxIn& b);
+    TxIn& operator=(TxIn&& b) noexcept;
     
     //-------------------------------------------------------------------------
-    std::string ToString() const;
-    
-    size_t SerializedSize() const
-    {
-        return prevout_.Size() + script_sig_.SerializedSize() + sizeof(sequence_no_);
-    }
-    
-    bool HasWitness() const
-    {
-        return false;
-    }
+    std::string ToString() const;    
+    size_t SerializedSize() const;    
+    bool HasWitness() const;
     
     //-------------------------------------------------------------------------
-    const OutPoint& prevout() const
-    {
-        return prevout_;
-    }
-    void set_prevout(const OutPoint& prevout)
-    {
-        prevout_ = prevout;
-    }
-    void set_prevout(const OutPoint&& prevout)
-    {
-        prevout_ = std::move(prevout);
-    }
+    const OutPoint& prevout() const;
+    void set_prevout(const OutPoint& prevout);
+    void set_prevout(const OutPoint&& prevout);
     
-    const Script& script_sig() const
-    {
-        return script_sig_;
-    }
-    void set_scriptSig(const Script& script)
-    {
-        script_sig_ = script;
-    }
-    void set_scriptSig(const Script&& script)
-    {
-        script_sig_ = std::move(script);
-    }
+    const Script& script_sig() const;
+    void set_scriptSig(const Script& script);
+    void set_scriptSig(const Script&& script);
     
-    uint32_t sequence_no() const
-    {
-        return sequence_no_;
-    }
-    void set_sequenceNo(uint32_t sequence)
-    {
-        sequence_no_ = sequence;
-    }
+    uint32_t sequence_no() const;
+    void set_sequenceNo(uint32_t sequence);
     
-    const ScriptWitness& script_witness() const
-    {
-        return script_witness_;
-    }
-    void set_scriptWitness(const ScriptWitness& script_witness)
-    {
-        script_witness_ = script_witness;
-    }
-    void set_scriptWitness(ScriptWitness&& script_witness)
-    {
-        script_witness_ = std::move(script_witness);
-    }
+    const ScriptWitness& script_witness() const;
+    void set_scriptWitness(const ScriptWitness& script_witness);
+    void set_scriptWitness(ScriptWitness&& script_witness);
     
 private:
     OutPoint prevout_;
@@ -289,40 +163,19 @@ private:
  */
 class TxOut {
 public:
-    TxOut()
-        : value_(null_value)
-    {
-        script_pub_key_.clear();
-    }
+    TxOut();
     
-    TxOut(uint64_t value, const Script& script)
-        : value_(value), script_pub_key_(script) {}
-    TxOut(uint64_t value, Script&& script) noexcept
-        : value_(value), script_pub_key_(std::move(script)) {}
+    TxOut(uint64_t value, const Script& script);
+    TxOut(uint64_t value, Script&& script) noexcept;
     
-    TxOut(const TxOut& output)
-        : value_(output.value_), script_pub_key_(output.script_pub_key_) {}
-    TxOut(TxOut&& output) noexcept
-        : value_(output.value_), script_pub_key_(std::move(output.script_pub_key_)) {}
+    TxOut(const TxOut& output);
+    TxOut(TxOut&& output) noexcept;
     
     //-------------------------------------------------------------------------
-    void Clear()
-    {
-        value_ = null_value;
-        script_pub_key_.clear();
-    }
-    
-    bool IsNull()
-    {
-        return value_ == null_value;
-    }
-    
-    std::string ToString() const;
-    
-    size_t SerializedSize() const
-    {
-        return script_pub_key_.SerializedSize() + sizeof(value_);
-    }
+    void Clear();    
+    bool IsNull();    
+    std::string ToString() const;    
+    size_t SerializedSize() const;
     
     //-------------------------------------------------------------------------
     template <typename Stream>
@@ -332,6 +185,7 @@ public:
         serializer.SerialWrite(value_);
         serializer.SerialWrite(script_pub_key_);
     }
+    
     template <typename Stream>
     void Deserialize(Stream& is)
     {
@@ -341,52 +195,19 @@ public:
     }
     
     //-------------------------------------------------------------------------
-    bool operator==(const TxOut& b) const
-    {
-        return (value_ == b.value_ &&
-                script_pub_key_ == b.script_pub_key_);
-    }
-    bool operator!=(const TxOut& b) const
-    {
-        return !(*this == b);
-    }
-    TxOut& operator=(const TxOut& b)
-    {
-        value_ = b.value_;
-        script_pub_key_ = b.script_pub_key_;
-        return *this;
-    }
-    TxOut& operator=(TxOut&& b) noexcept
-    {
-        if (this != &b) {
-            value_ = b.value_;
-            script_pub_key_ = std::move(b.script_pub_key_);
-        }
-        return *this;
-    }
+    bool operator==(const TxOut& b) const;
+    bool operator!=(const TxOut& b) const;
+    
+    TxOut& operator=(const TxOut& b);
+    TxOut& operator=(TxOut&& b) noexcept;
     
     //-------------------------------------------------------------------------
-    uint64_t value() const
-    {
-        return value_;
-    }
-    void set_value(uint64_t value)
-    {
-        value_ = value;
-    }
+    uint64_t value() const;
+    void set_value(uint64_t value);
     
-    const Script& script_pub_key() const
-    {
-        return script_pub_key_;
-    }
-    void set_scriptPubKey(const Script& script)
-    {
-        script_pub_key_ = script;
-    }
-    void set_scriptPubKey(Script&& script)
-    {
-        script_pub_key_ = std::move(script);
-    }
+    const Script& script_pub_key() const;
+    void set_scriptPubKey(const Script& script);
+    void set_scriptPubKey(Script&& script);
     
 private:
     uint64_t value_;
@@ -397,47 +218,24 @@ private:
 
 class Transaction {
 public:
-    Transaction()
-        : version_(default_version), inputs_(), outputs_(), lock_time_(0), hash_cache_() {}
+    Transaction();
+    
     Transaction(uint32_t version, const std::vector<TxIn>& inputs,
-                const std::vector<TxOut>& outputs, uint32_t lock_time)
-        : version_(version), inputs_(inputs), outputs_(outputs), lock_time_(lock_time)
-    {
-        GetHash();
-    }
+                const std::vector<TxOut>& outputs, uint32_t lock_time);
     Transaction(uint32_t version, std::vector<TxIn>&& inputs,
-                std::vector<TxOut>&& outputs, uint32_t lock_time) noexcept
-        : version_(version), inputs_(std::move(inputs)),
-          outputs_(std::move(outputs)), lock_time_(lock_time)
-    {
-        GetHash();
-    }
-    Transaction(const Transaction& t)
-        : version_(t.version_), inputs_(t.inputs_), outputs_(t.outputs_),
-          lock_time_(t.lock_time_)
-    {
-        GetHash();
-    }
-    Transaction(Transaction&& t) noexcept
-        : version_(t.version_), inputs_(std::move(t.inputs_)), outputs_(std::move(t.outputs_)),
-          lock_time_(t.lock_time_)
-    {
-        GetHash();
-    }
+                std::vector<TxOut>&& outputs, uint32_t lock_time) noexcept;
+        
+    Transaction(const Transaction& t);    
+    Transaction(Transaction&& t) noexcept;
     
     //-------------------------------------------------------------------------
     template <typename Stream> void Serialize(Stream& os, bool witness = false) const;
     template <typename Stream> void Deserialize(Stream& is, bool witness = false);
     
     //-------------------------------------------------------------------------
-    bool operator==(const Transaction& b) const
-    {
-        return this->GetHash() == b.GetHash();
-    }
-    bool operator!=(const Transaction& b) const
-    {
-        return !(*this == b);
-    }
+    bool operator==(const Transaction& b) const;
+    bool operator!=(const Transaction& b) const;
+    
     Transaction& operator=(const Transaction& b);
     Transaction& operator=(Transaction&& b) noexcept;
     
@@ -446,70 +244,27 @@ public:
     util::Hash256 GetWitnessHash() const;
     
     //-------------------------------------------------------------------------
-    bool IsNull() const
-    {
-        return inputs_.empty() && outputs_.empty();
-    }
-    
-    bool IsCoinBase() const
-    {
-        return (inputs_.size() == 1 && inputs_[0].prevout().IsNull());
-    }
+    bool IsNull() const;    
+    bool IsCoinBase() const;
     
     size_t SerializedSize() const;
     uint64_t OutputsAmount() const;
     std::string ToString() const;
     
     //-------------------------------------------------------------------------
-    uint32_t version() const
-    {
-        return version_;
-    }
-    void set_version(uint32_t v)
-    {
-        version_ = v;
-        hash_cache_.fill(0);
-    }
+    uint32_t version() const;
+    void set_version(uint32_t v);
     
-    const std::vector<TxIn>& inputs() const
-    {
-        return inputs_;
-    }
-    void set_inputs(const std::vector<TxIn>& inputs)
-    {
-        inputs_ = inputs;
-        hash_cache_.fill(0);
-    }
-    void set_inputs(std::vector<TxIn>&& inputs)
-    {
-        inputs_ = std::move(inputs);
-        hash_cache_.fill(0);
-    }
+    const std::vector<TxIn>& inputs() const;
+    void set_inputs(const std::vector<TxIn>& inputs);
+    void set_inputs(std::vector<TxIn>&& inputs);
     
-    const std::vector<TxOut>& outputs() const
-    {
-        return outputs_;
-    }
-    void set_outputs(const std::vector<TxOut>& outputs)
-    {
-        outputs_ = outputs;
-        hash_cache_.fill(0);
-    }
-    void set_outputs(std::vector<TxOut>&& outputs)
-    {
-        outputs_ = std::move(outputs);
-        hash_cache_.fill(0);
-    }
+    const std::vector<TxOut>& outputs() const;
+    void set_outputs(const std::vector<TxOut>& outputs);
+    void set_outputs(std::vector<TxOut>&& outputs);
     
-    uint32_t lock_time() const
-    {
-        return lock_time_;
-    }
-    void set_lockTime(uint32_t t)
-    {
-        lock_time_ = t;
-        hash_cache_.fill(0);
-    }
+    uint32_t lock_time() const;
+    void set_lockTime(uint32_t t);
     
 private:    
     uint32_t version_;

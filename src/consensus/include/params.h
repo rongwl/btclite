@@ -72,20 +72,9 @@ class Params {
 public:
     explicit Params(BtcNet btcnet);
     
-    const Block& GenesisBlock() const
-    {
-        return genesis_;
-    }
-    
-    int SubsideHalvingInterval() const
-    {
-        return subsidy_halving_interval_;
-    }
-    
-    const Bip9Params& Bip9params() const
-    {
-        return bip9_params_;
-    }
+    const Block& GenesisBlock() const;    
+    int SubsideHalvingInterval() const;    
+    const Bip9Params& Bip9params() const;
 
 private:
     Block genesis_;

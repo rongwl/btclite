@@ -12,8 +12,7 @@ namespace chain {
 
 class BlockChain : util::Uncopyable {
 public:
-    BlockChain(const util::Configuration& config)
-        : params_(config.btcnet()) {}
+    BlockChain(const util::Configuration& config);
     
     //-------------------------------------------------------------------------
     bool Init();
@@ -22,15 +21,8 @@ public:
     void Stop();
     
     //-------------------------------------------------------------------------    
-    const ChainState& chain_state() const
-    {
-        return chain_state_;
-    }
-    
-    ChainState *mutable_chain_state()
-    {
-        return &chain_state_;
-    }
+    const ChainState& chain_state() const;    
+    ChainState *mutable_chain_state();
     
 private:
     const Params params_;

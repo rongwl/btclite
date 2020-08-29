@@ -161,39 +161,24 @@ class ScriptInt : public util::Integral<int64_t> {
 public:
     static constexpr size_t max_size = 4;
     
-    explicit ScriptInt(const int64_t& n)
-    {
-        set_value(n);
-    }    
+    explicit ScriptInt(const int64_t& n);   
     explicit ScriptInt(const std::vector<uint8_t>&, bool);
     
     //-------------------------------------------------------------------------
-    int IntValue() const
-    {
-        if (value() > std::numeric_limits<int32_t>::max())
-            return std::numeric_limits<int32_t>::max();
-        if (value() < std::numeric_limits<int32_t>::min())
-            return std::numeric_limits<int32_t>::min();
-        return value();
-    }
-    std::vector<uint8_t> BytesValue() const
-    {
-        return BytesEncoding(value());
-    }
+    int IntValue() const;
+    std::vector<uint8_t> BytesValue() const;
     static std::vector<uint8_t> BytesEncoding(const uint64_t&);
 };
 
 class Script {
 public:
-    Script() {}
-    Script(std::vector<uint8_t>&& v) noexcept
-        : data_(std::move(v)) {}
-    Script(const std::vector<uint8_t>& v)
-        : data_(v) {}
-    Script(Script&& s) noexcept
-        : data_(std::move(s.data_)) {}
-    Script(const Script& s)
-        : data_(s.data_) {}
+    Script() = default;
+    
+    Script(std::vector<uint8_t>&& v) noexcept;
+    Script(const std::vector<uint8_t>& v);
+    
+    Script(Script&& s) noexcept;
+    Script(const Script& s);
     
     //-------------------------------------------------------------------------
     template <typename Stream>
@@ -202,6 +187,7 @@ public:
         util::Serializer<Stream> serializer(os);
         serializer.SerialWrite(data_);
     }
+    
     template <typename Stream>
     void Deserialize(Stream& is)
     {
@@ -211,70 +197,31 @@ public:
     
     //-------------------------------------------------------------------------
     void Push(const uint64_t&);    
-    void Push(const Opcode& code)
-    {
-        data_.push_back(static_cast<uint8_t>(code));
-    }    
-    void Push(const ScriptInt& sint)
-    {
-        this->Push(sint.BytesValue());
-    }    
+    void Push(const Opcode& code);   
+    void Push(const ScriptInt& sint);
     void Push(const std::vector<uint8_t>&);
-    void clear()
-    {
-        data_.clear();
-    }
+    void clear();
     
     //-------------------------------------------------------------------------
     bool Pop(std::vector<uint8_t>::const_iterator&, Opcode*) const;
     bool Pop(std::vector<uint8_t>::const_iterator&, const Opcode&, std::vector<uint8_t>*) const;
     
     //-------------------------------------------------------------------------
-    std::vector<uint8_t>::const_iterator begin() const
-    {
-        return data_.begin();
-    }
-    std::vector<uint8_t>::const_iterator end() const
-    {
-        return data_.end();
-    }
-    std::vector<uint8_t>::const_reverse_iterator rbegin() const
-    {
-        return data_.rbegin();
-    }
-    std::vector<uint8_t>::const_reverse_iterator rend() const
-    {
-        return data_.rend();
-    }
+    std::vector<uint8_t>::const_iterator begin() const;
+    std::vector<uint8_t>::const_iterator end() const;
+    
+    std::vector<uint8_t>::const_reverse_iterator rbegin() const;
+    std::vector<uint8_t>::const_reverse_iterator rend() const;
     
     //-------------------------------------------------------------------------
-    bool operator==(const Script& b) const
-    {
-        return data_ == b.data_;
-    }
-    bool operator!=(const Script& b) const
-    {
-        return !(*this == b);
-    }
-    Script& operator=(const Script& b)
-    {
-        data_ = b.data_;
-        return *this;
-    }
-    Script& operator=(Script&& b) noexcept
-    {
-        if (this != &b)
-            data_ = std::move(b.data_);
-        return *this;
-    }
+    bool operator==(const Script& b) const;
+    bool operator!=(const Script& b) const;
+    
+    Script& operator=(const Script& b);
+    Script& operator=(Script&& b) noexcept;
     
     //-------------------------------------------------------------------------
-    size_t SerializedSize() const
-    {
-        size_t result = data_.size();
-        result += util::VarIntSize(result);
-        return result;
-    }
+    size_t SerializedSize() const;
     
 private:
     std::vector<uint8_t> data_;

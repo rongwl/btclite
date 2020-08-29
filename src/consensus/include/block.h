@@ -19,39 +19,15 @@ using BlockLocator = std::vector<util::Hash256>;
  */
 class BlockHeader {
 public:
-    BlockHeader()
-    {
-        Clear();
-    }
-    
+    BlockHeader();    
     BlockHeader(int32_t version, const util::Hash256& prev_block_hash, 
                 const util::Hash256& merkle_root_hash,
-                uint32_t time, uint32_t bits, uint32_t nonce)
-        : version_(version), 
-          prev_block_hash_(prev_block_hash), merkle_root_hash_(merkle_root_hash),
-          time_(time), nBits_(bits), nonce_(nonce) {}
-    
-    BlockHeader(const BlockHeader& h)
-        : version_(h.version_), 
-          prev_block_hash_(h.prev_block_hash_), merkle_root_hash_(h.merkle_root_hash_),
-          time_(h.time_), nBits_(h.nBits_), nonce_(h.nonce_) {}
+                uint32_t time, uint32_t bits, uint32_t nonce);    
+    BlockHeader(const BlockHeader& h);
     
     //-------------------------------------------------------------------------
-    void Clear()
-    {
-        version_ = 0;
-        prev_block_hash_.fill(0);
-        merkle_root_hash_.fill(0);
-        time_ = 0;
-        nBits_ = 0;
-        nonce_ = 0;
-    }
-    
-    bool IsNull() const
-    {
-        return (nBits_ == 0);
-    }
-    
+    void Clear();    
+    bool IsNull() const;    
     util::uint256_t GetBlockProof() const;
     
     //-------------------------------------------------------------------------
@@ -59,69 +35,30 @@ public:
     template <typename Stream> void Deserialize(Stream& is);
     
     //-------------------------------------------------------------------------
-    util::Hash256 GetHash() const
-    {
-        return crypto::GetDoubleHash(*this);
-    }
+    util::Hash256 GetHash() const;
     
     //-------------------------------------------------------------------------
     BlockHeader& operator=(const BlockHeader& b);
     BlockHeader& operator=(BlockHeader&& b) noexcept;
     
     //-------------------------------------------------------------------------
-    int32_t version() const
-    {
-        return version_;
-    }
-    void set_version(int32_t v)
-    {
-        version_ = v;
-    }
+    int32_t version() const;
+    void set_version(int32_t v);
     
-    util::Hash256 hashPrevBlock() const
-    {
-        return prev_block_hash_;
-    }
-    void set_hashPrevBlock(const util::Hash256& hash)
-    {
-        prev_block_hash_ = hash;
-    }
+    util::Hash256 hashPrevBlock() const;
+    void set_hashPrevBlock(const util::Hash256& hash);
     
-    util::Hash256 hashMerkleRoot() const
-    {
-        return merkle_root_hash_;
-    }
-    void set_hashMerkleRoot(const util::Hash256& hash)
-    {
-        merkle_root_hash_ = hash;
-    }
+    util::Hash256 hashMerkleRoot() const;
+    void set_hashMerkleRoot(const util::Hash256& hash);
     
-    uint32_t time() const
-    {
-        return time_;
-    }
-    void set_time(uint32_t t)
-    {
-        time_ = t;
-    }
+    uint32_t time() const;
+    void set_time(uint32_t t);
     
-    uint32_t bits() const
-    {
-        return nBits_;
-    }
-    void set_bits(uint32_t b)
-    {
-        nBits_ = b;
-    }
+    uint32_t bits() const;
+    void set_bits(uint32_t b);
     
-    uint32_t nonce() const
-    {
-        return nonce_;
-    }
-    void set_nonce(uint32_t n)
-    {
-        nonce_ = n;
-    }
+    uint32_t nonce() const;
+    void set_nonce(uint32_t n);
     
 private:
     int32_t version_;
@@ -158,38 +95,20 @@ void BlockHeader::Deserialize(Stream& is)
 
 class Block {
 public:
-    Block()
-    {
-        Clear();
-    }
+    Block();
     
-    Block(const std::vector<Transaction>& transactions)
-        : header_(BlockHeader()), transactions_(transactions) {}
-    Block(std::vector<Transaction>&& transactions) noexcept
-        : header_(BlockHeader()), transactions_(std::move(transactions)) {}
+    Block(const std::vector<Transaction>& transactions);
+    Block(std::vector<Transaction>&& transactions) noexcept;
     
-    Block(const BlockHeader& header, const std::vector<Transaction>& transactions)
-        : header_(header), transactions_(transactions) {}
-    Block(BlockHeader&& header, std::vector<Transaction>&& transactions) noexcept
-        : header_(std::move(header)), transactions_(std::move(transactions)) {}
+    Block(const BlockHeader& header, const std::vector<Transaction>& transactions);
+    Block(BlockHeader&& header, std::vector<Transaction>&& transactions) noexcept;
     
-    Block(const Block& b)
-        : header_(b.header_), transactions_(b.transactions_) {}
-    Block(Block&& b) noexcept
-        : header_(std::move(b.header_)), transactions_(std::move(b.transactions_)) {}
+    Block(const Block& b);
+    Block(Block&& b) noexcept;
     
     //-------------------------------------------------------------------------
-    void Clear()
-    {
-        header_.Clear();
-        transactions_.clear();
-    }
-    
-    util::Hash256 GetHash() const
-    {
-        return header_.GetHash();
-    }
-    
+    void Clear();    
+    util::Hash256 GetHash() const;    
     std::string ToString() const;
     util::Hash256 ComputeMerkleRoot() const;
     
@@ -215,31 +134,13 @@ public:
     Block& operator=(Block&& b) noexcept;
 
     //-------------------------------------------------------------------------
-    const BlockHeader& header() const
-    {
-        return header_;
-    }
-    void set_header(const BlockHeader& header)
-    {
-        header_ = header;
-    }
-    void set_header(BlockHeader&& header)
-    {
-        header_ = std::move(header);
-    }
+    const BlockHeader& header() const;
+    void set_header(const BlockHeader& header);
+    void set_header(BlockHeader&& header);
     
-    const std::vector<Transaction>& transactions() const
-    {
-        return transactions_;
-    }
-    void set_transactions(const std::vector<Transaction>& transactions)
-    {
-        transactions_ = transactions;
-    }
-    void set_transactions(std::vector<Transaction>&& transactions)
-    {
-        transactions_ = std::move(transactions);
-    }
+    const std::vector<Transaction>& transactions() const;
+    void set_transactions(const std::vector<Transaction>& transactions);
+    void set_transactions(std::vector<Transaction>&& transactions);
     
 private:
     BlockHeader header_;

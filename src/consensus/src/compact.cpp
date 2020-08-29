@@ -3,7 +3,39 @@
 namespace btclite {
 namespace consensus {
 
-inline size_t LogicalSize(util::uint256_t value)
+Compact::Compact(uint32_t compact)
+{
+    SetCompact(compact);
+    GetCompact();
+}
+
+Compact::Compact(const util::uint256_t& normal)
+    : normal_(normal)
+{
+    GetCompact();
+}
+
+util::uint256_t Compact::normal() const
+{
+    return normal_;
+}
+
+uint32_t Compact::compact() const
+{
+    return compact_;
+}
+
+bool Compact::negative() const
+{
+    return negative_;
+}
+
+bool Compact::overflowed() const
+{
+    return overflowed_;
+}
+
+size_t Compact::LogicalSize(util::uint256_t value)
 {
     size_t byte = 0;
 

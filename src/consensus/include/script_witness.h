@@ -11,67 +11,30 @@ namespace consensus {
 
 class ScriptWitness {
 public:
-    ScriptWitness() {}
+    ScriptWitness() = default;
     
-    ScriptWitness(const ScriptWitness& witness)
-        : stack_(witness.stack_) {}
-    ScriptWitness(ScriptWitness&& witness) noexcept
-        : stack_(std::move(witness.stack_)) {}
+    ScriptWitness(const ScriptWitness& witness);
+    ScriptWitness(ScriptWitness&& witness) noexcept;
     
-    explicit ScriptWitness(const std::vector<std::vector<uint8_t> >& stack)
-        : stack_(stack) {}
-    explicit ScriptWitness(std::vector<std::vector<uint8_t> >&& stack) noexcept
-        : stack_(std::move(stack)) {}
+    explicit ScriptWitness(const std::vector<std::vector<uint8_t> >& stack);
+    explicit ScriptWitness(std::vector<std::vector<uint8_t> >&& stack) noexcept;
     
     //-------------------------------------------------------------------------
-    bool IsNull() const
-    {
-        return stack_.empty();
-    }
-
-    void Clear()
-    {
-        stack_.clear();
-        stack_.shrink_to_fit();
-    }
-
+    bool IsNull() const;
+    void Clear();
     std::string ToString() const;
     
     //-------------------------------------------------------------------------
-    bool operator==(const ScriptWitness& b) const
-    {
-        return stack_ == b.stack_;
-    }
-    bool operator!=(const ScriptWitness& b) const
-    {
-        return !(*this == b);
-    }
+    bool operator==(const ScriptWitness& b) const;
+    bool operator!=(const ScriptWitness& b) const;
     
-    ScriptWitness& operator=(const ScriptWitness& b)
-    {
-        stack_ = b.stack_;
-        return *this;
-    }
-    ScriptWitness& operator=(ScriptWitness&& b)
-    {
-        if (this != &b)
-            stack_ = std::move(b.stack_);
-        return *this;
-    }
+    ScriptWitness& operator=(const ScriptWitness& b);
+    ScriptWitness& operator=(ScriptWitness&& b);
     
     //-------------------------------------------------------------------------
-    const std::vector<std::vector<uint8_t> >& stack() const
-    {
-        return stack_;
-    }
-    void set_stack(const std::vector<std::vector<uint8_t> >& stack)
-    {
-        stack_ = stack;
-    }
-    void set_stack(std::vector<std::vector<uint8_t> >&& stack)
-    {
-        stack_ = std::move(stack);
-    }
+    const std::vector<std::vector<uint8_t> >& stack() const;
+    void set_stack(const std::vector<std::vector<uint8_t> >& stack);
+    void set_stack(std::vector<std::vector<uint8_t> >&& stack);
     
 private:
     std::vector<std::vector<uint8_t> > stack_;

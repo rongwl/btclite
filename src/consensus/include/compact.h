@@ -31,39 +31,16 @@ namespace consensus {
 class Compact {
 public:
     // Construct from a 32 bit compact number.
-    explicit Compact(uint32_t compact)
-    {
-        SetCompact(compact);
-        GetCompact();
-    }
+    explicit Compact(uint32_t compact);
 
     // Construct from a 256 bit number
-    explicit Compact(const util::uint256_t& normal)
-        : normal_(normal)
-    {
-        GetCompact();
-    }
+    explicit Compact(const util::uint256_t& normal);
     
     //-------------------------------------------------------------------------
-    const util::uint256_t& normal() const
-    {
-        return normal_;
-    }
-    
-    uint32_t compact() const
-    {
-        return compact_;
-    }
-    
-    bool negative() const
-    {
-        return negative_;
-    }
-        
-    bool overflowed() const
-    {
-        return overflowed_;
-    }
+    util::uint256_t normal() const;
+    uint32_t compact() const;    
+    bool negative() const;        
+    bool overflowed() const;
     
 private:
     util::uint256_t normal_ = 0;
@@ -73,6 +50,7 @@ private:
     
     void SetCompact(uint32_t compact);
     void GetCompact();
+    size_t LogicalSize(util::uint256_t value);
 };
 
 } // namespace consensus

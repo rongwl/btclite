@@ -49,6 +49,11 @@ util::Hash256 DoubleSha256(const std::string& in)
 } // namespace hashfuncs
 
 
+HashOStream::HashOStream()
+    : vec_(), byte_sink_(vec_)
+{
+}
+
 util::Hash256 HashOStream::Sha256()
 {     
     return hashfuncs::Sha256(vec_);

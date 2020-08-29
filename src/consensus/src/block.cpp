@@ -9,6 +9,41 @@
 namespace btclite {
 namespace consensus {
 
+BlockHeader::BlockHeader()
+{
+    Clear();
+}
+      
+BlockHeader::BlockHeader(int32_t version, const util::Hash256& prev_block_hash, 
+            const util::Hash256& merkle_root_hash,
+            uint32_t time, uint32_t bits, uint32_t nonce)
+    : version_(version), 
+      prev_block_hash_(prev_block_hash), merkle_root_hash_(merkle_root_hash),
+      time_(time), nBits_(bits), nonce_(nonce)
+{
+}
+      
+BlockHeader::BlockHeader(const BlockHeader& h)
+    : version_(h.version_), 
+      prev_block_hash_(h.prev_block_hash_), merkle_root_hash_(h.merkle_root_hash_),
+      time_(h.time_), nBits_(h.nBits_), nonce_(h.nonce_)
+{
+}
+
+void BlockHeader::Clear()
+{
+    version_ = 0;
+    prev_block_hash_.fill(0);
+    merkle_root_hash_.fill(0);
+    time_ = 0;
+    nBits_ = 0;
+    nonce_ = 0;
+}
+
+bool BlockHeader::IsNull() const
+{
+    return (nBits_ == 0);
+}
 
 util::uint256_t BlockHeader::GetBlockProof() const
 {
@@ -26,6 +61,11 @@ util::uint256_t BlockHeader::GetBlockProof() const
     // as large as target+1, it is equal to ((2**256 - target - 1) / (target+1)) + 1,
     // or ~target / (target+1) + 1.
     return (~target / (target + 1)) + 1;
+}
+
+util::Hash256 BlockHeader::GetHash() const
+{
+    return crypto::GetDoubleHash(*this);
 }
 
 BlockHeader& BlockHeader::operator=(const BlockHeader& b)
@@ -52,6 +92,112 @@ BlockHeader& BlockHeader::operator=(BlockHeader&& b) noexcept
     }
     
     return *this;
+}
+
+int32_t BlockHeader::version() const
+{
+    return version_;
+}
+
+void BlockHeader::set_version(int32_t v)
+{
+    version_ = v;
+}
+
+util::Hash256 BlockHeader::hashPrevBlock() const
+{
+    return prev_block_hash_;
+}
+
+void BlockHeader::set_hashPrevBlock(const util::Hash256& hash)
+{
+    prev_block_hash_ = hash;
+}
+
+util::Hash256 BlockHeader::hashMerkleRoot() const
+{
+    return merkle_root_hash_;
+}
+
+void BlockHeader::set_hashMerkleRoot(const util::Hash256& hash)
+{
+    merkle_root_hash_ = hash;
+}
+
+uint32_t BlockHeader::time() const
+{
+    return time_;
+}
+
+void BlockHeader::set_time(uint32_t t)
+{
+    time_ = t;
+}
+
+uint32_t BlockHeader::bits() const
+{
+    return nBits_;
+}
+
+void BlockHeader::set_bits(uint32_t b)
+{
+    nBits_ = b;
+}
+
+uint32_t BlockHeader::nonce() const
+{
+    return nonce_;
+}
+
+void BlockHeader::set_nonce(uint32_t n)
+{
+    nonce_ = n;
+}
+
+Block::Block()
+{
+    Clear();
+}
+    
+Block::Block(const std::vector<Transaction>& transactions)
+    : header_(BlockHeader()), transactions_(transactions) 
+{
+}
+
+Block::Block(std::vector<Transaction>&& transactions) noexcept
+    : header_(BlockHeader()), transactions_(std::move(transactions))
+{
+}
+    
+Block::Block(const BlockHeader& header, const std::vector<Transaction>& transactions)
+    : header_(header), transactions_(transactions)
+{
+}
+
+Block::Block(BlockHeader&& header, std::vector<Transaction>&& transactions) noexcept
+    : header_(std::move(header)), transactions_(std::move(transactions))
+{
+}
+    
+Block::Block(const Block& b)
+    : header_(b.header_), transactions_(b.transactions_) 
+{
+}
+
+Block::Block(Block&& b) noexcept
+    : header_(std::move(b.header_)), transactions_(std::move(b.transactions_))
+{
+}
+
+void Block::Clear()
+{
+    header_.Clear();
+    transactions_.clear();
+}
+
+util::Hash256 Block::GetHash() const
+{
+    return header_.GetHash();
 }
 
 Block& Block::operator=(Block&& b) noexcept
@@ -108,6 +254,36 @@ util::Hash256 Block::ComputeMerkleRoot() const
     
     // There is now only one item in the list.
     return leaves.front();
+}
+
+const BlockHeader& Block::header() const
+{
+    return header_;
+}
+
+void Block::set_header(const BlockHeader& header)
+{
+    header_ = header;
+}
+
+void Block::set_header(BlockHeader&& header)
+{
+    header_ = std::move(header);
+}
+
+const std::vector<Transaction>& Block::transactions() const
+{
+    return transactions_;
+}
+
+void Block::set_transactions(const std::vector<Transaction>& transactions)
+{
+    transactions_ = transactions;
+}
+
+void Block::set_transactions(std::vector<Transaction>&& transactions)
+{
+    transactions_ = std::move(transactions);
 }
 
 Block CreateGenesisBlock(const std::string& coinbase, const Script& output_script,

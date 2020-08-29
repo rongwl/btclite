@@ -50,8 +50,7 @@ public:
     using Container = std::vector<uint8_t>;
     using ByteSinkType = util::ByteSink<Container>;
     
-    HashOStream()
-        : vec_(), byte_sink_(vec_) {}
+    HashOStream();
     
     //-------------------------------------------------------------------------
     util::Hash256 Sha256();    

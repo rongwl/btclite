@@ -41,6 +41,21 @@ Params::Params(BtcNet btcnet)
     }
 }
 
+const Block& Params::GenesisBlock() const
+{
+    return genesis_;
+}
+
+int Params::SubsideHalvingInterval() const
+{
+    return subsidy_halving_interval_;
+}
+
+const Bip9Params& Params::Bip9params() const
+{
+    return bip9_params_;
+}
+
 void Params::CreateGenesisBlock(const std::string& coinbase, const Script& output_script,
                                 uint32_t time, uint32_t nonce, uint32_t bits, int32_t version,
                                 uint64_t reward)
