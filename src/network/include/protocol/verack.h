@@ -14,29 +14,12 @@ namespace protocol {
 class Verack {
 public:
     bool RecvHandler(std::shared_ptr<Node> src_node, uint32_t magic, 
-                     bool advertise_local, const LocalService& local_service) const;
-    
-    std::string Command() const
-    {
-        return msg_command::kMsgVerack;
-    }
-    
-    bool IsValid() const
-    {
-        return true;
-    }
-    
-    void Clear() {}
-    
-    size_t SerializedSize() const
-    {
-        return 0;
-    }
-    
-    util::Hash256 GetHash() const
-    {
-        return crypto::GetHash(*this);
-    }
+                     bool advertise_local, const LocalService& local_service) const;    
+    std::string Command() const;    
+    bool IsValid() const;    
+    void Clear();    
+    size_t SerializedSize() const;    
+    util::Hash256 GetHash() const;
     
     //-------------------------------------------------------------------------
     template <typename Stream>

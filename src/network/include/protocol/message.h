@@ -23,20 +23,9 @@ public:
     MessageHeader() = default;
     
     MessageHeader(uint32_t magic, const std::string& command,
-                  uint32_t payload_length, uint32_t checksum)
-        : magic_(magic), payload_length_(payload_length),
-          checksum_(checksum)
-    {
-        set_command(command);
-    }
-    
+                  uint32_t payload_length, uint32_t checksum);    
     MessageHeader(uint32_t magic, std::string&& command,
-                  uint32_t payload_length, uint32_t checksum) noexcept
-        : magic_(magic), payload_length_(payload_length),
-          checksum_(checksum)
-    {
-        set_command(std::move(command));
-    }
+                  uint32_t payload_length, uint32_t checksum) noexcept;
     
     explicit MessageHeader(const uint8_t *raw);
     
@@ -51,66 +40,23 @@ public:
     void Deserialize(Stream& in);
     
     //-------------------------------------------------------------------------
-    bool operator==(const MessageHeader& b) const
-    {
-        return (magic_ == b.magic_) &&
-               (command_ == b.command_) &&
-               (payload_length_ == b.payload_length_) &&
-               (checksum_ == b.checksum_);
-    }
-    
-    bool operator!=(const MessageHeader& b) const
-    {
-        return !(*this == b);
-    }
+    bool operator==(const MessageHeader& b) const;    
+    bool operator!=(const MessageHeader& b) const;
     
     //-------------------------------------------------------------------------
-    uint32_t magic() const
-    {
-        return magic_;
-    }
-    void set_magic(uint32_t magic)
-    {
-        magic_ = magic;
-    }
+    uint32_t magic() const;
+    void set_magic(uint32_t magic);
 
-    std::string command() const
-    {
-        const char *end = (const char*)std::memchr(command_.begin(), '\0', kCommandSize);
-        size_t size = end ? (end - command_.begin()) : kCommandSize;
-        return std::string(command_.begin(), size);
-    }
+    std::string command() const;
     
-    void set_command(const std::string& command)
-    {
-        std::memset(command_.begin(), 0, kCommandSize);
-        size_t size = command.size() < kCommandSize ? command.size() : kCommandSize;
-        std::memcpy(command_.begin(), command.data(), size);
-    }
-    void set_command(std::string&& command) noexcept
-    {
-        std::memset(command_.begin(), 0, kCommandSize);
-        size_t size = command.size() < kCommandSize ? command.size() : kCommandSize;
-        std::memmove(command_.begin(), command.data(), size);
-    }
+    void set_command(const std::string& command);
+    void set_command(std::string&& command) noexcept;
 
-    uint32_t payload_length() const
-    {
-        return payload_length_;
-    }
-    void set_payload_length(uint32_t payload_length)
-    {
-        payload_length_ = payload_length;
-    }
+    uint32_t payload_length() const;
+    void set_payload_length(uint32_t payload_length);
 
-    uint32_t checksum() const
-    {
-        return checksum_;
-    }
-    void set_checksum(uint32_t checksum)
-    {
-        checksum_ = checksum;
-    }
+    uint32_t checksum() const;
+    void set_checksum(uint32_t checksum);
     
 private:    
     uint32_t magic_ = 0;

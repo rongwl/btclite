@@ -71,6 +71,30 @@ bool Verack::RecvHandler(std::shared_ptr<Node> src_node, uint32_t magic,
     return true;
 }
 
+std::string Verack::Command() const
+{
+    return msg_command::kMsgVerack;
+}
+
+bool Verack::IsValid() const
+{
+    return true;
+}
+
+void Verack::Clear() 
+{
+}
+
+size_t Verack::SerializedSize() const
+{
+    return 0;
+}
+
+util::Hash256 Verack::GetHash() const
+{
+    return crypto::GetHash(*this);
+}
+
 
 } // namespace protocol
 } // namespace network

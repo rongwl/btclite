@@ -195,6 +195,7 @@ network_src_libbtclite_network_a_SOURCES = network/proto/network_address.pb.cc \
                                            network/src/protocol/message.cpp \
                                            network/src/protocol/addr.cpp \
                                            network/src/protocol/inventory.cpp \
+                                           network/src/protocol/inventory_vector.cpp \
                                            network/src/protocol/getaddr.cpp \
                                            network/src/protocol/getblocks.cpp \
                                            network/src/protocol/getheaders.cpp \

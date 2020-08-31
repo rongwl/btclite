@@ -12,40 +12,16 @@ namespace protocol {
 
 class Inv {
 public:
-    bool RecvHandler(std::shared_ptr<Node> src_node) const;
-    
-    std::string Command() const
-    {
-        return msg_command::kMsgInv;
-    }
-    
-    size_t SerializedSize() const;
-    
-    util::Hash256 GetHash() const
-    {
-        return crypto::GetHash(*this);
-    }
-    
-    bool IsValid() const
-    {
-        return !inv_vects_.empty();
-    }
-    
-    void Clear()
-    {
-        inv_vects_.clear();
-    }
+    bool RecvHandler(std::shared_ptr<Node> src_node) const;    
+    std::string Command() const;    
+    size_t SerializedSize() const;    
+    util::Hash256 GetHash() const;
+    bool IsValid() const;
+    void Clear();
     
     //-------------------------------------------------------------------------
-    bool operator==(const Inv& b) const
-    {
-        return (inv_vects_ == b.inv_vects_);
-    }
-    
-    bool operator!=(const Inv& b) const
-    {
-        return !(*this == b);
-    }
+    bool operator==(const Inv& b) const;
+    bool operator!=(const Inv& b) const;
     
     //-------------------------------------------------------------------------
     template <typename Stream>
@@ -63,15 +39,8 @@ public:
     }
     
     //-------------------------------------------------------------------------
-    const std::vector<InvVect>& inv_vects() const
-    {
-        return inv_vects_;
-    }
-    
-    std::vector<InvVect> *mutable_inv_vects()
-    {
-        return &inv_vects_;
-    }
+    const std::vector<InvVect>& inv_vects() const;
+    std::vector<InvVect> *mutable_inv_vects();
     
 private:
     std::vector<InvVect> inv_vects_;

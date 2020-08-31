@@ -13,8 +13,7 @@ namespace fullnode {
 
 class FullNode final : public btclite::util::Executor {
 public:
-    FullNode(const FullNodeConfig& config)
-        : chain_(config), network_(config) {}
+    FullNode(const FullNodeConfig& config);
 
     //-------------------------------------------------------------------------
     bool Init();
@@ -27,10 +26,7 @@ private:
     btclite::chain::BlockChain chain_;
     btclite::network::P2P network_;
     
-    bool BasicSetupCustomized()
-    {
-        return true;
-    }
+    bool BasicSetupCustomized();
 };
 
 } // namespace fullnode

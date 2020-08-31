@@ -6,6 +6,11 @@
 namespace btclite {
 namespace fullnode {
 
+FullNode::FullNode(const FullNodeConfig& config)
+    : chain_(config), network_(config) 
+{
+}
+
 bool FullNode::Init()
 {
     BTCLOG(LOG_LEVEL_INFO) << "Initializing btc-fullnode...";
@@ -55,6 +60,11 @@ void FullNode::Stop()
     network_.Stop();
     
     BTCLOG(LOG_LEVEL_INFO) << "Finished stoping btc-fullnode.";
+}
+
+bool FullNode::BasicSetupCustomized()
+{
+    return true;
 }
 
 } // namespace fullnode

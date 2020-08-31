@@ -29,38 +29,21 @@ class Reject {
 public:
     Reject() = default;
     
-    Reject(const std::string& message, CCode ccode, const std::string& reason)
-        : message_(message), ccode_(ccode), reason_(reason), data_() {}
-    
-    Reject(std::string&& message, CCode ccode, std::string&& reason) noexcept
-        : message_(std::move(message)), ccode_(ccode), reason_(std::move(reason)),
-          data_() {}
+    Reject(const std::string& message, CCode ccode, const std::string& reason);
+    Reject(std::string&& message, CCode ccode, std::string&& reason) noexcept;
     
     Reject(const std::string& message, CCode ccode, const std::string& reason,
-           const util::Hash256& data)
-        : message_(message), ccode_(ccode), reason_(reason), data_(data) {}
-    
+           const util::Hash256& data);    
     Reject(std::string&& message, CCode ccode, std::string&& reason,
-           const util::Hash256& data) noexcept
-        : message_(std::move(message)), ccode_(ccode), reason_(std::move(reason)),
-          data_(data) {}
+           const util::Hash256& data) noexcept;
     
     //-------------------------------------------------------------------------
-    bool RecvHandler(std::shared_ptr<Node> src_node) const;
-    
-    std::string Command() const
-    {
-        return msg_command::kMsgReject;
-    }
-    
+    bool RecvHandler(std::shared_ptr<Node> src_node) const;    
+    std::string Command() const;    
     bool IsValid() const;
     void Clear();
-    size_t SerializedSize() const;
-    
-    util::Hash256 GetHash() const
-    {
-        return crypto::GetHash(*this);
-    }
+    size_t SerializedSize() const;    
+    util::Hash256 GetHash() const;
     
     //-------------------------------------------------------------------------
     template <typename Stream>
@@ -73,49 +56,19 @@ public:
     bool operator!=(const Reject& b) const;
     
     //-------------------------------------------------------------------------
-    const std::string& message() const
-    {
-        return message_;
-    }
-    void set_message(const std::string& message)
-    {
-        message_ = message;
-    }
-    void set_message(std::string&& message) noexcept
-    {
-        message_ = std::move(message);
-    }
+    const std::string& message() const;
+    void set_message(const std::string& message);
+    void set_message(std::string&& message) noexcept;
     
-    CCode ccode() const
-    {
-        return ccode_;
-    }
-    void set_ccode(CCode ccode)
-    {
-        ccode_ = ccode;
-    }
+    CCode ccode() const;
+    void set_ccode(CCode ccode);
     
-    const std::string& reason() const
-    {
-        return reason_;
-    }
-    void set_reason(const std::string& reason)
-    {
-        reason_ = reason;
-    }
-    void set_reason(std::string&& reason) noexcept
-    {
-        reason_ = std::move(reason);
-    }
+    const std::string& reason() const;
+    void set_reason(const std::string& reason);
+    void set_reason(std::string&& reason) noexcept;
     
-    const util::Hash256& data() const
-    {
-        return data_;
-    }
-    void set_data(const util::Hash256& data)
-    {
-        data_ = data;
-    }    
+    const util::Hash256& data() const;
+    void set_data(const util::Hash256& data);  
     
 private:
     std::string message_;

@@ -12,6 +12,28 @@ namespace btclite {
 namespace network {
 namespace protocol{
 
+Version::Version(ProtocolVersion version, ServiceFlags services, uint64_t timestamp,
+        const NetAddr& addr_recv, const NetAddr& addr_from,
+        uint64_t nonce, const std::string& user_agent,
+        uint32_t start_height, bool relay)
+    : protocol_version_(version), services_(services), timestamp_(timestamp),
+      addr_recv_(addr_recv), addr_from_(addr_from), nonce_(nonce),
+      user_agent_(user_agent), start_height_(start_height), relay_(relay) 
+{
+}
+      
+Version::Version(ProtocolVersion version, ServiceFlags services, uint64_t timestamp,
+        NetAddr&& addr_recv,
+        NetAddr&& addr_from,
+        uint64_t nonce, std::string&& user_agent,
+        uint32_t start_height, bool relay) noexcept
+    : protocol_version_(version), services_(services), timestamp_(timestamp),
+      addr_recv_(std::move(addr_recv)), addr_from_(std::move(addr_from)),
+      nonce_(nonce), user_agent_(std::move(user_agent)),
+      start_height_(start_height), relay_(relay) 
+{
+}
+
 bool Version::RecvHandler(std::shared_ptr<Node> src_node, uint32_t magic, 
                           bool advertise_local, const LocalService& local_service,
                           uint32_t height, Peers *ppeers) const
@@ -116,6 +138,11 @@ bool Version::RecvHandler(std::shared_ptr<Node> src_node, uint32_t magic,
     return true;
 }
 
+std::string Version::Command() const
+{
+    return msg_command::kMsgVersion;
+}
+
 bool Version::IsValid() const
 {
     return (protocol_version_ != kUnknownProtoVersion &&
@@ -139,6 +166,24 @@ void Version::Clear()
     relay_ = false;
 }
 
+size_t Version::SerializedSize() const
+{
+    size_t size = sizeof(protocol_version_) + sizeof(services_) + 
+                  sizeof(timestamp_) + addr_recv_.SerializedSize() + 
+                  addr_from_.SerializedSize() + sizeof(nonce_) + 
+                  util::VarIntSize(user_agent_.size()) +
+                  user_agent_.size() + sizeof(start_height_);
+    if (protocol_version_ >= kRelayedTxsVersion)
+        size += sizeof(bool);
+    
+    return size;
+}
+
+util::Hash256 Version::GetHash() const
+{
+    return crypto::GetHash(*this);
+}
+
 Version& Version::operator=(const Version& b)
 {
     protocol_version_ = b.protocol_version_;
@@ -151,19 +196,6 @@ Version& Version::operator=(const Version& b)
     start_height_ = b.start_height_;
     relay_ = b.relay_;
     return *this;
-}
-
-size_t Version::SerializedSize() const
-{
-    size_t size = sizeof(protocol_version_) + sizeof(services_) + 
-                  sizeof(timestamp_) + addr_recv_.SerializedSize() + 
-                  addr_from_.SerializedSize() + sizeof(nonce_) + 
-                  util::VarIntSize(user_agent_.size()) +
-                  user_agent_.size() + sizeof(start_height_);
-    if (protocol_version_ >= kRelayedTxsVersion)
-        size += sizeof(bool);
-    
-    return size;
 }
 
 Version& Version::operator=(Version&& b) noexcept
@@ -200,6 +232,111 @@ bool Version::operator==(const Version& b) const
 bool Version::operator!=(const Version& b) const
 {
     return !(*this == b);
+}
+
+ProtocolVersion Version::protocol_version() const
+{
+    return protocol_version_;
+}
+
+void Version::set_protocol_version(ProtocolVersion version)
+{
+    protocol_version_ = version;
+}
+
+ServiceFlags Version::services() const
+{
+    return services_;
+}
+
+void Version::set_services(ServiceFlags services)
+{
+    services_ = services;
+}
+
+uint64_t Version::timestamp() const
+{
+    return timestamp_;
+}
+
+void Version::set_timestamp(uint64_t timestamp)
+{
+    timestamp_ = timestamp;
+}
+
+const NetAddr& Version::addr_recv() const
+{
+    return addr_recv_;
+}
+
+void Version::set_addr_recv(const NetAddr& addr)
+{
+    addr_recv_ = addr;
+}
+
+void Version::set_addr_recv(NetAddr&& addr) noexcept
+{
+    addr_recv_ = std::move(addr);
+}
+
+const NetAddr& Version::addr_from() const
+{
+    return addr_from_;
+}
+
+void Version::set_addr_from(const NetAddr& addr)
+{
+    addr_from_ = addr;
+}
+
+void Version::set_addr_from(NetAddr&& addr) noexcept
+{
+    addr_from_ = std::move(addr);
+}
+
+uint64_t Version::nonce() const
+{
+    return nonce_;
+}
+
+void Version::set_nonce(uint64_t nonce)
+{
+    nonce_ = nonce;
+}
+
+const std::string& Version::user_agent() const
+{
+    return user_agent_;
+}
+
+void Version::set_user_agent(const std::string& agent)
+{
+    user_agent_ = agent;
+}
+
+void Version::set_user_agent(std::string&& agent) noexcept
+{
+    user_agent_ = std::move(agent);
+}
+
+uint32_t Version::start_height() const
+{
+    return start_height_;
+}
+
+void Version::set_start_height(uint32_t height)
+{
+    start_height_ = height;
+}
+
+bool Version::relay() const
+{
+    return relay_;
+}
+
+void Version::set_relay(bool relay)
+{
+    relay_ = relay;
 }
 
 

@@ -8,6 +8,16 @@ namespace btclite {
 namespace network {
 namespace protocol {
 
+Ping::Ping(uint64_t nonce)
+    : nonce_(nonce) 
+{
+}
+    
+Ping::Ping(uint64_t nonce, uint32_t protocol_version)
+    : nonce_(nonce), protocol_version_(protocol_version) 
+{
+}
+
 bool Ping::RecvHandler(std::shared_ptr<Node> src_node, uint32_t magic) const
 {
     if (src_node->protocol().version >= kBip31Version)
@@ -28,6 +38,65 @@ bool Ping::RecvHandler(std::shared_ptr<Node> src_node, uint32_t magic) const
     }
     
     return true;
+}
+
+std::string Ping::Command() const
+{
+    return msg_command::kMsgPing;
+}
+
+bool Ping::IsValid() const
+{
+    if (protocol_version_ < kBip31Version)
+        return true;
+    return (nonce_ != 0);
+}
+
+void Ping::Clear()
+{
+    nonce_ = 0;
+}
+
+size_t Ping::SerializedSize() const
+{
+    if (protocol_version_ < kBip31Version)
+        return 0;
+    return sizeof(nonce_);
+}
+
+util::Hash256 Ping::GetHash() const
+{
+    return crypto::GetHash(*this);
+}
+
+bool Ping::operator==(const Ping& b) const
+{
+    return nonce_ == b.nonce_;
+}
+
+bool Ping::operator!=(const Ping& b) const
+{
+    return !(*this == b);
+}
+
+uint64_t Ping::nonce() const
+{
+    return nonce_;
+}
+
+void Ping::set_nonce(uint64_t nonce)
+{
+    nonce_ = nonce;
+}
+
+uint32_t Ping::protocol_version() const
+{
+    return protocol_version_;
+}
+
+void Ping::set_protocol_version(uint32_t version)
+{
+    protocol_version_ = version;
 }
 
 } // namespace protocol

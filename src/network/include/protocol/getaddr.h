@@ -11,29 +11,12 @@ namespace protocol {
 
 class GetAddr {
 public:
-    bool RecvHandler(std::shared_ptr<Node> src_node) const;
-    
-    std::string Command() const
-    {
-        return msg_command::kMsgGetAddr;
-    }
-    
-    bool IsValid() const
-    {
-        return true;
-    }
-    
-    void Clear() {}
-    
-    size_t SerializedSize() const
-    {
-        return 0;
-    }
-    
-    util::Hash256 GetHash() const
-    {
-        return crypto::GetHash(*this);
-    }
+    bool RecvHandler(std::shared_ptr<Node> src_node) const;    
+    std::string Command() const;    
+    bool IsValid() const;    
+    void Clear();    
+    size_t SerializedSize() const;    
+    util::Hash256 GetHash() const;
     
     //-------------------------------------------------------------------------
     template <typename Stream>

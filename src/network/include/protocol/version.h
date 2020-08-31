@@ -31,39 +31,21 @@ public:
     Version(ProtocolVersion version, ServiceFlags services, uint64_t timestamp,
             const NetAddr& addr_recv, const NetAddr& addr_from,
             uint64_t nonce, const std::string& user_agent,
-            uint32_t start_height, bool relay)
-        : protocol_version_(version), services_(services), timestamp_(timestamp),
-          addr_recv_(addr_recv), addr_from_(addr_from), nonce_(nonce),
-          user_agent_(user_agent), start_height_(start_height), relay_(relay) {}
-    
+            uint32_t start_height, bool relay);    
     Version(ProtocolVersion version, ServiceFlags services, uint64_t timestamp,
-            NetAddr&& addr_recv,
-            NetAddr&& addr_from,
+            NetAddr&& addr_recv, NetAddr&& addr_from,
             uint64_t nonce, std::string&& user_agent,
-            uint32_t start_height, bool relay) noexcept
-        : protocol_version_(version), services_(services), timestamp_(timestamp),
-          addr_recv_(std::move(addr_recv)), addr_from_(std::move(addr_from)),
-          nonce_(nonce), user_agent_(std::move(user_agent)),
-          start_height_(start_height), relay_(relay) {}
+            uint32_t start_height, bool relay) noexcept;
     
     //-------------------------------------------------------------------------
     bool RecvHandler(std::shared_ptr<Node> src_node, uint32_t magic, 
                      bool advertise_local, const LocalService& local_service,
-                     uint32_t height, Peers *ppeers) const;
-    
-    std::string Command() const
-    {
-        return msg_command::kMsgVersion;
-    }
-    
+                     uint32_t height, Peers *ppeers) const;    
+    std::string Command() const;    
     bool IsValid() const;
     void Clear();
-    size_t SerializedSize() const;
-    
-    util::Hash256 GetHash() const
-    {
-        return crypto::GetHash(*this);
-    }
+    size_t SerializedSize() const;    
+    util::Hash256 GetHash() const;
     
     //-------------------------------------------------------------------------
     Version& operator=(const Version& b);
@@ -78,98 +60,35 @@ public:
     void Deserialize(Stream& in);
     
     //-------------------------------------------------------------------------
-    ProtocolVersion protocol_version() const
-    {
-        return protocol_version_;
-    }
-    void set_protocol_version(ProtocolVersion version)
-    {
-        protocol_version_ = version;
-    }
+    ProtocolVersion protocol_version() const;
+    void set_protocol_version(ProtocolVersion version);
 
-    ServiceFlags services() const
-    {
-        return services_;
-    }
-    void set_services(ServiceFlags services)
-    {
-        services_ = services;
-    }
+    ServiceFlags services() const;
+    void set_services(ServiceFlags services);
 
-    uint64_t timestamp() const
-    {
-        return timestamp_;
-    }
-    void set_timestamp(uint64_t timestamp)
-    {
-        timestamp_ = timestamp;
-    }
+    uint64_t timestamp() const;
+    void set_timestamp(uint64_t timestamp);
     
-    const NetAddr& addr_recv() const
-    {
-        return addr_recv_;
-    }
-    void set_addr_recv(const NetAddr& addr)
-    {
-        addr_recv_ = addr;
-    }
-    void set_addr_recv(NetAddr&& addr) noexcept
-    {
-        addr_recv_ = std::move(addr);
-    }
+    const NetAddr& addr_recv() const;
+    void set_addr_recv(const NetAddr& addr);
+    void set_addr_recv(NetAddr&& addr) noexcept;
 
-    const NetAddr& addr_from() const
-    {
-        return addr_from_;
-    }
-    void set_addr_from(const NetAddr& addr)
-    {
-        addr_from_ = addr;
-    }
-    void set_addr_from(NetAddr&& addr) noexcept
-    {
-        addr_from_ = std::move(addr);
-    }
+    const NetAddr& addr_from() const;
+    void set_addr_from(const NetAddr& addr);
+    void set_addr_from(NetAddr&& addr) noexcept;
     
-    uint64_t nonce() const
-    {
-        return nonce_;
-    }
-    void set_nonce(uint64_t nonce)
-    {
-        nonce_ = nonce;
-    }
+    uint64_t nonce() const;
+    void set_nonce(uint64_t nonce);
 
-    const std::string& user_agent() const
-    {
-        return user_agent_;
-    }
-    void set_user_agent(const std::string& agent)
-    {
-        user_agent_ = agent;
-    }
-    void set_user_agent(std::string&& agent) noexcept
-    {
-        user_agent_ = std::move(agent);
-    }
+    const std::string& user_agent() const;
+    void set_user_agent(const std::string& agent);
+    void set_user_agent(std::string&& agent) noexcept;
 
-    uint32_t start_height() const
-    {
-        return start_height_;
-    }
-    void set_start_height(uint32_t height)
-    {
-        start_height_ = height;
-    }
+    uint32_t start_height() const;
+    void set_start_height(uint32_t height);
 
-    bool relay() const
-    {
-        return relay_;
-    }
-    void set_relay(bool relay)
-    {
-        relay_ = relay;
-    }
+    bool relay() const;
+    void set_relay(bool relay);
 
 private:
     ProtocolVersion protocol_version_ = kUnknownProtoVersion;

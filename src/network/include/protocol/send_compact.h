@@ -13,49 +13,19 @@ class SendCmpct {
 public:
     SendCmpct() = default;
     
-    SendCmpct(bool high_bandwidth_mode, uint64_t version)
-        : high_bandwidth_mode_(high_bandwidth_mode), version_(version) {}
+    SendCmpct(bool high_bandwidth_mode, uint64_t version);
     
     //-------------------------------------------------------------------------
-    bool RecvHandler(std::shared_ptr<Node> src_node) const;
-    
-    std::string Command() const
-    {
-        return msg_command::kMsgSendCmpct;
-    }
-    
-    bool IsValid() const
-    {
-        return (version_ == 1 || version_ == 2);
-    }
-    
-    void Clear() 
-    {
-        high_bandwidth_mode_ = false;
-        version_ = 0;
-    }
-    
-    size_t SerializedSize() const
-    {
-        return sizeof(high_bandwidth_mode_) + sizeof(version_);
-    }
-    
-    util::Hash256 GetHash() const
-    {
-        return crypto::GetHash(*this);
-    }
+    bool RecvHandler(std::shared_ptr<Node> src_node) const;    
+    std::string Command() const;
+    bool IsValid() const;
+    void Clear();
+    size_t SerializedSize() const;
+    util::Hash256 GetHash() const;
     
     //-------------------------------------------------------------------------
-    bool operator==(const SendCmpct& b) const
-    {
-        return (high_bandwidth_mode_ == b.high_bandwidth_mode_ &&
-                version_ == b.version_);
-    }
-    
-    bool operator!=(const SendCmpct &b) const
-    {
-        return !(*this == b);
-    }
+    bool operator==(const SendCmpct& b) const;
+    bool operator!=(const SendCmpct &b) const;
     
     //-------------------------------------------------------------------------
     template <typename Stream>
@@ -75,25 +45,11 @@ public:
     }
     
     //-------------------------------------------------------------------------
-    bool high_bandwidth_mode() const
-    {
-        return high_bandwidth_mode_;
-    }
+    bool high_bandwidth_mode() const;
+    void set_high_bandwidth_mode(bool high_bandwidth_mode);
     
-    void set_high_bandwidth_mode(bool high_bandwidth_mode)
-    {
-        high_bandwidth_mode_ = high_bandwidth_mode;
-    }
-    
-    uint64_t version() const
-    {
-        return version_;
-    }
-    
-    void set_version(uint64_t version)
-    {
-        version_ = version;
-    }
+    uint64_t version() const;
+    void set_version(uint64_t version);
     
 private:
     bool high_bandwidth_mode_ = false;

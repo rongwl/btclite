@@ -14,47 +14,19 @@ class Pong {
 public:
     Pong() = default;
     
-    explicit Pong(uint64_t nonce)
-        : nonce_(nonce) {}
+    explicit Pong(uint64_t nonce);
     
     //-------------------------------------------------------------------------
-    bool RecvHandler(std::shared_ptr<Node> src_node) const;
-    
-    std::string Command() const
-    {
-        return msg_command::kMsgPong;
-    }
-    
-    bool IsValid() const
-    {
-        return (nonce_ != 0);
-    }
-    
-    void Clear()
-    {
-        nonce_ = 0;
-    }
-    
-    size_t SerializedSize() const
-    {
-        return sizeof(nonce_);
-    }
-    
-    util::Hash256 GetHash() const
-    {
-        return crypto::GetHash(*this);
-    }
+    bool RecvHandler(std::shared_ptr<Node> src_node) const;    
+    std::string Command() const;
+    bool IsValid() const;
+    void Clear();
+    size_t SerializedSize() const;
+    util::Hash256 GetHash() const;
     
     //-------------------------------------------------------------------------
-    bool operator==(const Pong& b) const
-    {
-        return nonce_ == b.nonce_;
-    }
-    
-    bool operator!=(const Pong& b) const
-    {
-        return !(*this == b);
-    }
+    bool operator==(const Pong& b) const;
+    bool operator!=(const Pong& b) const;
     
     //-------------------------------------------------------------------------
     template <typename Stream>
@@ -72,15 +44,8 @@ public:
     }
     
     //-------------------------------------------------------------------------
-    uint64_t nonce() const
-    {
-        return nonce_;
-    }
-    
-    void set_nonce(uint64_t nonce)
-    {
-        nonce_ = nonce;
-    }
+    uint64_t nonce() const;
+    void set_nonce(uint64_t nonce);
     
 private:
     uint64_t nonce_ = 0;

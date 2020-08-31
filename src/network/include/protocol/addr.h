@@ -15,40 +15,16 @@ public:
     using List = std::vector<NetAddr>;
     
     //-------------------------------------------------------------------------
-    bool RecvHandler(std::shared_ptr<Node> src_node) const;
-    
-    std::string Command() const
-    {
-        return msg_command::kMsgAddr;
-    }
-    
-    bool IsValid() const
-    {
-        return !addr_list_.empty();
-    }
-    
-    void Clear()
-    {
-        addr_list_.clear();
-    }
-    
-    size_t SerializedSize() const;
-    
-    util::Hash256 GetHash() const
-    {
-        return crypto::GetHash(*this);
-    }
+    bool RecvHandler(std::shared_ptr<Node> src_node) const;    
+    std::string Command() const;    
+    bool IsValid() const;    
+    void Clear();    
+    size_t SerializedSize() const;    
+    util::Hash256 GetHash() const;
     
     //-------------------------------------------------------------------------
-    bool operator==(const Addr& b) const
-    {
-        return (addr_list_ == b.addr_list_);
-    }
-    
-    bool operator!=(const Addr& b) const
-    {
-        return !(*this == b);
-    }
+    bool operator==(const Addr& b) const;
+    bool operator!=(const Addr& b) const;
     
     //-------------------------------------------------------------------------
     template <typename Stream>
@@ -66,15 +42,8 @@ public:
     }
     
     //-------------------------------------------------------------------------
-    const List& addr_list() const
-    {
-        return addr_list_;
-    }
-    
-    List *mutable_addr_list()
-    {
-        return &addr_list_;
-    }
+    const List& addr_list() const;    
+    List *mutable_addr_list();
     
 private:
     List addr_list_;

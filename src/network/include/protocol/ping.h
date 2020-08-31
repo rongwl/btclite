@@ -14,54 +14,21 @@ class Ping {
 public:
     Ping() = default;
     
-    explicit Ping(uint64_t nonce)
-        : nonce_(nonce) {}
+    explicit Ping(uint64_t nonce);
     
-    Ping(uint64_t nonce, uint32_t protocol_version)
-        : nonce_(nonce), protocol_version_(protocol_version) {}
+    Ping(uint64_t nonce, uint32_t protocol_version);
     
     //-------------------------------------------------------------------------
-    bool RecvHandler(std::shared_ptr<Node> src_node, uint32_t magic) const;
-    
-    std::string Command() const
-    {
-        return msg_command::kMsgPing;
-    }
-    
-    bool IsValid() const
-    {
-        if (protocol_version_ < kBip31Version)
-            return true;
-        return (nonce_ != 0);
-    }
-    
-    void Clear()
-    {
-        nonce_ = 0;
-    }
-    
-    size_t SerializedSize() const
-    {
-        if (protocol_version_ < kBip31Version)
-            return 0;
-        return sizeof(nonce_);
-    }
-    
-    util::Hash256 GetHash() const
-    {
-        return crypto::GetHash(*this);
-    }
+    bool RecvHandler(std::shared_ptr<Node> src_node, uint32_t magic) const;    
+    std::string Command() const;
+    bool IsValid() const;
+    void Clear();
+    size_t SerializedSize() const;
+    util::Hash256 GetHash() const;
     
     //-------------------------------------------------------------------------
-    bool operator==(const Ping& b) const
-    {
-        return nonce_ == b.nonce_;
-    }
-    
-    bool operator!=(const Ping& b) const
-    {
-        return !(*this == b);
-    }
+    bool operator==(const Ping& b) const;
+    bool operator!=(const Ping& b) const;
     
     //-------------------------------------------------------------------------
     template <typename Stream>
@@ -70,25 +37,11 @@ public:
     void Deserialize(Stream& in);
     
     //-------------------------------------------------------------------------
-    uint64_t nonce() const
-    {
-        return nonce_;
-    }
+    uint64_t nonce() const;
+    void set_nonce(uint64_t nonce);
     
-    void set_nonce(uint64_t nonce)
-    {
-        nonce_ = nonce;
-    }
-    
-    uint32_t protocol_version() const
-    {
-        return protocol_version_;
-    }
-    
-    void set_protocol_version(uint32_t version)
-    {
-        protocol_version_ = version;
-    }
+    uint32_t protocol_version() const;
+    void set_protocol_version(uint32_t version);
     
 private:
     uint64_t nonce_ = 0;

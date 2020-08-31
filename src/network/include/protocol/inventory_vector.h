@@ -30,31 +30,15 @@ class InvVect {
 public:
     InvVect() = default;
     
-    InvVect(DataMsgType type, const util::Hash256& hash)
-        : type_(type), hash_(hash) {}
+    InvVect(DataMsgType type, const util::Hash256& hash);
     
     //-------------------------------------------------------------------------
-    size_t SerializedSize() const
-    {
-        return sizeof(type_) + hash_.size();
-    }
-    
-    void Clear()
-    {
-        type_ = kUndefined;
-        hash_.fill(0);
-    }
+    size_t SerializedSize() const;
+    void Clear();
     
     //-------------------------------------------------------------------------
-    bool operator==(const InvVect& b) const
-    {
-        return (type_ == b.type_ && hash_ == b.hash_);
-    }
-    
-    bool operator!=(const InvVect& b) const
-    {
-        return !(*this == b);
-    }
+    bool operator==(const InvVect& b) const;
+    bool operator!=(const InvVect& b) const;
     
     //-------------------------------------------------------------------------
     template <typename Stream>
@@ -74,15 +58,8 @@ public:
     }
     
     //-------------------------------------------------------------------------
-    DataMsgType type() const
-    {
-        return type_;
-    }
-    
-    const util::Hash256& hash() const
-    {
-        return hash_;
-    }
+    DataMsgType type() const;    
+    const util::Hash256& hash() const;
     
 private:
     DataMsgType type_ = kUndefined;

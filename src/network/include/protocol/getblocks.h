@@ -14,57 +14,21 @@ public:
     GetBlocks() = default;
     
     GetBlocks(ProtocolVersion version, const consensus::BlockLocator& hashes,
-              const util::Hash256& hash_stop)
-        : version_(version), hashes_(hashes), hash_stop_(hash_stop) {}
-    
+              const util::Hash256& hash_stop);    
     GetBlocks(ProtocolVersion version, consensus::BlockLocator&& hashes,
-              const util::Hash256& hash_stop) noexcept
-        : version_(version), hashes_(std::move(hashes)), 
-          hash_stop_(hash_stop) {}
+              const util::Hash256& hash_stop) noexcept;
     
     //-------------------------------------------------------------------------
-    bool RecvHandler(std::shared_ptr<Node> src_node, const Params& params) const;
-    
-    std::string Command() const
-    {
-        return msg_command::kMsgGetBlocks;
-    }
-    
-    bool IsValid() const
-    {
-        return (version_ != kUnknownProtoVersion && 
-                (!hashes_.empty() || hashes_.size() > kMaxBlockLoactorSize));
-    }
-    
-    void Clear() 
-    {
-        version_ = kUnknownProtoVersion;
-        hashes_.clear();
-        hash_stop_.fill(0);
-    }
-    
-    size_t SerializedSize() const
-    {
-        return sizeof(version_) + util::VarIntSize(hashes_.size()) +
-               hashes_.size()*kHashSize + hash_stop_.size();
-    }
-    
-    util::Hash256 GetHash() const
-    {
-        return crypto::GetHash(*this);
-    }
+    bool RecvHandler(std::shared_ptr<Node> src_node, const Params& params) const;    
+    std::string Command() const;
+    bool IsValid() const;
+    void Clear();
+    size_t SerializedSize() const;
+    util::Hash256 GetHash() const;
     
     //-------------------------------------------------------------------------
-    bool operator==(const GetBlocks& b) const
-    {
-        return (version_ == b.version_ && hashes_ == b.hashes_ &&
-                hash_stop_ == b.hash_stop_);
-    }
-    
-    bool operator!=(const GetBlocks& b) const
-    {
-        return !(*this == b);
-    }
+    bool operator==(const GetBlocks& b) const;
+    bool operator!=(const GetBlocks& b) const;
     
     //-------------------------------------------------------------------------
     template <typename Stream>
@@ -73,40 +37,15 @@ public:
     void Deserialize(Stream& in);
     
     //-------------------------------------------------------------------------
-    ProtocolVersion version() const
-    {
-        return version_;
-    }
+    ProtocolVersion version() const;
+    void set_version(ProtocolVersion version);
     
-    void set_version(ProtocolVersion version)
-    {
-        version_ = version;
-    }
+    const consensus::BlockLocator& hashes() const;
+    void set_hashes(const consensus::BlockLocator& hashes);
+    void set_hashes(consensus::BlockLocator&& hashes);
     
-    const consensus::BlockLocator& hashes() const
-    {
-        return hashes_;
-    }
-    
-    void set_hashes(const consensus::BlockLocator& hashes)
-    {
-        hashes_ = hashes;
-    }
-    
-    void set_hashes(consensus::BlockLocator&& hashes)
-    {
-        hashes_ = std::move(hashes);
-    }
-    
-    const util::Hash256& hash_stop() const
-    {
-        return hash_stop_;
-    }
-    
-    void set_hash_stop(const util::Hash256& hash_stop)
-    {
-        hash_stop_ = hash_stop;
-    }
+    const util::Hash256& hash_stop() const;
+    void set_hash_stop(const util::Hash256& hash_stop);
     
 private:
     ProtocolVersion version_ = kUnknownProtoVersion;

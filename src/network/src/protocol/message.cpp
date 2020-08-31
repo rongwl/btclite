@@ -7,6 +7,22 @@ namespace btclite {
 namespace network {
 namespace protocol {
 
+MessageHeader::MessageHeader(uint32_t magic, const std::string& command,
+              uint32_t payload_length, uint32_t checksum)
+    : magic_(magic), payload_length_(payload_length),
+      checksum_(checksum)
+{
+    set_command(command);
+}
+
+MessageHeader::MessageHeader(uint32_t magic, std::string&& command,
+              uint32_t payload_length, uint32_t checksum) noexcept
+    : magic_(magic), payload_length_(payload_length),
+      checksum_(checksum)
+{
+    set_command(std::move(command));
+}
+
 MessageHeader::MessageHeader(const uint8_t *raw_data)
 {
     std::vector<uint8_t> vec;
@@ -80,6 +96,70 @@ void MessageHeader::Clear()
     std::memset(command_.begin(), 0, kCommandSize);
     payload_length_ = 0;
     checksum_ = 0;
+}
+
+bool MessageHeader::operator==(const MessageHeader& b) const
+{
+    return (magic_ == b.magic_) &&
+           (command_ == b.command_) &&
+           (payload_length_ == b.payload_length_) &&
+           (checksum_ == b.checksum_);
+}
+
+bool MessageHeader::operator!=(const MessageHeader& b) const
+{
+    return !(*this == b);
+}
+
+uint32_t MessageHeader::magic() const
+{
+    return magic_;
+}
+
+void MessageHeader::set_magic(uint32_t magic)
+{
+    magic_ = magic;
+}
+
+std::string MessageHeader::command() const
+{
+    const char *end = (const char*)std::memchr(command_.begin(), '\0', kCommandSize);
+    size_t size = end ? (end - command_.begin()) : kCommandSize;
+    return std::string(command_.begin(), size);
+}
+
+void MessageHeader::set_command(const std::string& command)
+{
+    std::memset(command_.begin(), 0, kCommandSize);
+    size_t size = command.size() < kCommandSize ? command.size() : kCommandSize;
+    std::memcpy(command_.begin(), command.data(), size);
+}
+
+void MessageHeader::set_command(std::string&& command) noexcept
+{
+    std::memset(command_.begin(), 0, kCommandSize);
+    size_t size = command.size() < kCommandSize ? command.size() : kCommandSize;
+    std::memmove(command_.begin(), command.data(), size);
+}
+
+uint32_t MessageHeader::payload_length() const
+{
+    return payload_length_;
+}
+
+void MessageHeader::set_payload_length(uint32_t payload_length)
+{
+    payload_length_ = payload_length;
+}
+
+uint32_t MessageHeader::checksum() const
+{
+    return checksum_;
+}
+
+void MessageHeader::set_checksum(uint32_t checksum)
+{
+    checksum_ = checksum;
 }
 
 bool CheckMisbehaving(const std::string command, std::shared_ptr<Node> src_node)
